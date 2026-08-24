@@ -1,0 +1,40 @@
+name: Browser smoke
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+jobs:
+  browser-smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @roofing-crm-challenge/web exec playwright install chromium --with-deps
+
+      - name: Run hosted smoke tests
+        env:
+          PLAYWRIGHT_BASE_URL: https://feature-foundation.d1bpqan659uzbk.amplifyapp.com
+        run: pnpm --filter @roofing-crm-challenge/web test:browser

@@ -1,0 +1,11 @@
+**/node_modules
+**/.git
+**/cdk.out
+**/dist
+**/.turbo
+apps/web
+graphify-out
+**/*.test.ts
+**/*.test.tsx
+.cursor
+.agent

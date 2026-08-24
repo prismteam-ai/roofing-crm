@@ -1,0 +1,37 @@
+graphify-out/
+
+# Node / Turborepo (after metagross scaffold)
+node_modules/
+.pnpm-store/
+.turbo/
+dist/
+.output/
+coverage/
+*.tsbuildinfo
+
+# CDK / SAM local
+cdk.out/
+.cdk.staging/
+samconfig.toml
+.aws-sam/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+
+# Tests / Playwright
+playwright-report/
+test-results/
+blob-report/
+.staging/
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# Local agent / design tooling (not part of the product)
+.ai-squads/
+.impeccable/

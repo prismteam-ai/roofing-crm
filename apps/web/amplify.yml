@@ -1,0 +1,29 @@
+# Amplify Hosting spec when the console sets app root = apps/web.
+# Prefer the repo-root amplify.yml (applications + appRoot) for a default connect.
+# Branch env: VITE_API_URL (execute-api URL, no trailing slash), NODE_VERSION=22.
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm install 22
+        - nvm use 22
+        - npm install -g pnpm@9.15.0
+        - cd ../..
+        - pnpm install --frozen-lockfile
+    build:
+      commands:
+        - pnpm turbo run build --filter=@roofing-crm-challenge/web...
+  artifacts:
+    baseDirectory: dist
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+      - ../../node_modules/**/*
+      - ../../.pnpm-store/**/*
+customRules:
+  - source: "</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>"
+    target: /index.html
+    status: "200"

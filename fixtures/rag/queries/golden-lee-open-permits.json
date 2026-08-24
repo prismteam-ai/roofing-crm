@@ -1,0 +1,17 @@
+{
+  "caseId": "golden-lee-open-permits",
+  "description": "Ask for long-open roofing permits in Lee. Citations must use elephant://lee/property/{id} sourceUri values from the fixture corpus.",
+  "input": {
+    "question": "Which properties near Fort Myers have open roofing permits older than five years?",
+    "countyHint": "lee"
+  },
+  "expected": {
+    "indexState": "fixture_only_not_production",
+    "retrievedChunkIds": [
+      "lee-prop-202#property-summary",
+      "lee-prop-202#permit-roofing"
+    ],
+    "sourceUris": ["elephant://lee/property/lee-prop-202"],
+    "mustNotClaim": ["chester", "production OpenSearch index", "Coatesville"]
+  }
+}

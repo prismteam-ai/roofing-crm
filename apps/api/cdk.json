@@ -1,0 +1,10 @@
+{
+  "app": "npx tsx cdk/bin/app.ts",
+  "context": {
+    "@aws-cdk/core:newStyleStackSynthesis": true
+  },
+  "requireApproval": "never",
+  "tags": {
+    "project_name": "roofing-crm-challenge"
+  }
+}

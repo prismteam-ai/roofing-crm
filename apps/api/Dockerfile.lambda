@@ -1,0 +1,76 @@
+# Container image for the tRPC Lambda (elephant-mcp + DuckDB exceed zip size limits).
+
+# Lee property query table (~229 MB Parquet) staged at build time so DuckDB reads
+# a local file instead of cold IPFS/httpfs (30–90s). Ingestion stays out of scope.
+ARG LEE_QUERY_TABLE_URL=https://ipfs.filebase.io/ipns/k51qzi5uqu5djd4ohcf3qm87dhlt0e270xw8ejhkyia62edr76uj0u05hrf7m5
+FROM public.ecr.aws/lambda/nodejs:22 AS lee-data
+ARG LEE_QUERY_TABLE_URL
+RUN mkdir -p /data \
+  && curl -fL -o /data/lee-query-table.parquet "${LEE_QUERY_TABLE_URL}" \
+  && test "$(stat -c%s /data/lee-query-table.parquet)" -gt 200000000 \
+  && test "$(head -c 4 /data/lee-query-table.parquet)" = "PAR1"
+
+FROM public.ecr.aws/lambda/nodejs:22 AS build
+
+WORKDIR /repo
+
+RUN npm install -g pnpm@9.15.0 esbuild@0.25.0
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/
+COPY packages/elephant-client/package.json packages/elephant-client/
+COPY packages/shared/package.json packages/shared/
+
+RUN pnpm install --frozen-lockfile --filter @roofing-crm-challenge/api...
+
+COPY apps/api/src apps/api/src
+COPY apps/api/tsconfig.json apps/api/
+COPY packages/elephant-client/src packages/elephant-client/src
+COPY packages/elephant-client/tsconfig.json packages/elephant-client/
+COPY packages/shared/src packages/shared/src
+COPY packages/shared/tsconfig.json packages/shared/
+COPY tsconfig.json ./
+
+RUN esbuild apps/api/src/handler.ts \
+  --bundle \
+  --platform=node \
+  --target=node22 \
+  --format=cjs \
+  --outfile=/asset/index.js \
+  --define:import.meta.url=\"'file:///var/task/index.js'\" \
+  --external:@elephant-xyz/mcp \
+  --external:@duckdb/node-api \
+  --external:@modelcontextprotocol/sdk \
+  --minify
+
+# RAG indexer entrypoint shares this image (MCP + DuckDB + Lee parquet); the
+# RagStack Lambda overrides CMD to indexer.handler.
+RUN esbuild apps/api/src/rag/index-published-roofing-chunks.ts \
+  --bundle \
+  --platform=node \
+  --target=node22 \
+  --format=cjs \
+  --outfile=/asset/indexer.js \
+  --define:import.meta.url=\"'file:///var/task/indexer.js'\" \
+  --external:@elephant-xyz/mcp \
+  --external:@duckdb/node-api \
+  --external:@modelcontextprotocol/sdk \
+  --minify
+
+RUN pnpm --filter @roofing-crm-challenge/api deploy --prod /asset/deploy
+
+# Lambda runs on Amazon Linux (glibc); drop musl DuckDB bindings to save space.
+RUN rm -rf /asset/deploy/node_modules/@duckdb/node-bindings-linux-x64-musl
+
+FROM public.ecr.aws/lambda/nodejs:22
+
+WORKDIR ${LAMBDA_TASK_ROOT}
+
+COPY --from=build /asset/index.js ./index.js
+COPY --from=build /asset/indexer.js ./indexer.js
+COPY --from=build /asset/deploy/node_modules ./node_modules
+COPY --from=lee-data /data/lee-query-table.parquet ./data/lee-query-table.parquet
+COPY fixtures/rag/corpus ./fixtures/rag/corpus
+COPY fixtures/chester-demo ./fixtures/chester-demo
+
+CMD ["index.handler"]

@@ -1,0 +1,16 @@
+{
+  "caseId": "golden-chester-demo-open-permits",
+  "description": "Ask for long-open synthetic roofing permits near West Chester on chester-demo. Citations must use elephant://chester-demo/property/{id} and label synthetic demo data.",
+  "input": {
+    "question": "Which properties near West Chester have open roofing permits at least five years?",
+    "countyHint": "chester-demo",
+    "center": { "lat": 39.9607, "lng": -75.6055 },
+    "radiusMiles": 1
+  },
+  "expected": {
+    "retrievedChunkIds": ["1-10-67.24#permit-SYNTHETIC-CHESTER-0006"],
+    "sourceUris": ["elephant://chester-demo/property/1-10-67.24"],
+    "mustNotClaim": ["lee county", "fort myers", "chester county is not included"],
+    "mustContain": ["synthetic", "1-10-67.24"]
+  }
+}
