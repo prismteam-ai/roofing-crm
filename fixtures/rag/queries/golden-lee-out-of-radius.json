@@ -1,0 +1,17 @@
+{
+  "caseId": "golden-lee-out-of-radius",
+  "description": "Out-of-radius fixture parcel must not appear in citations for pin-constrained asks.",
+  "input": {
+    "question": "Which properties near Fort Myers have open roofing permits older than five years?",
+    "countyHint": "lee"
+  },
+  "expected": {
+    "indexState": "fixture_only_not_production",
+    "retrievedChunkIds": [
+      "lee-prop-202#property-summary",
+      "lee-prop-202#permit-roofing"
+    ],
+    "sourceUris": ["elephant://lee/property/lee-prop-202"],
+    "mustNotClaim": ["lee-prop-out", "chester"]
+  }
+}

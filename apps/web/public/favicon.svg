@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="RoofRadar">
+  <!-- Lucide Target: same three rings as the county-center map control. Linen #e8e2d6, india ink #2c2a26. -->
+  <title>RoofRadar</title>
+  <rect width="24" height="24" fill="#e8e2d6"/>
+  <g
+    fill="none"
+    stroke="#2c2a26"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    transform="translate(2.2 2.2) scale(0.8167)"
+  >
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="6"/>
+    <circle cx="12" cy="12" r="2"/>
+  </g>
+</svg>

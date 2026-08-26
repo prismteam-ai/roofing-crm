@@ -1,0 +1,14 @@
+{
+  "caseId": "golden-lee-missing-map-context",
+  "description": "Structured geo ask without pin/radius must refuse before retrieval.",
+  "input": {
+    "question": "Which properties have open roofing permits older than five years?",
+    "countyHint": "lee"
+  },
+  "expected": {
+    "indexState": "fixture_only_not_production",
+    "retrievedChunkIds": [],
+    "sourceUris": [],
+    "mustNotClaim": ["chester", "lee-prop-202"]
+  }
+}

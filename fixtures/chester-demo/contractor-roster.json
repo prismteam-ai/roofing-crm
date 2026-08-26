@@ -1,0 +1,107 @@
+[
+  {
+    "name": "Avondale Demo Heritage Roofing Inc",
+    "bbbGrade": "A-",
+    "bbbScore": 89,
+    "complaintCount": 2,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Brandywine Demo Roofing LLC",
+    "bbbGrade": "A+",
+    "bbbScore": 97,
+    "complaintCount": 0,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Coatesville Demo CoverAll Roofing",
+    "bbbGrade": "C+",
+    "bbbScore": 72,
+    "complaintCount": 5,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Downingtown Demo Peak Roofing",
+    "bbbGrade": "A+",
+    "bbbScore": 98,
+    "complaintCount": 0,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Exton Demo WeatherShield Roofing",
+    "bbbGrade": "B-",
+    "bbbScore": 78,
+    "complaintCount": 4,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Honey Brook Demo Capstone Roofing",
+    "bbbGrade": "B",
+    "bbbScore": 84,
+    "complaintCount": 1,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Kennett Square Demo Roof Pros",
+    "bbbGrade": "A-",
+    "bbbScore": 91,
+    "complaintCount": 0,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Malvern Demo Roofing Co",
+    "bbbGrade": "A",
+    "bbbScore": 95,
+    "complaintCount": 0,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Oxford Demo StormShield LLC",
+    "bbbGrade": "B+",
+    "bbbScore": 86,
+    "complaintCount": 2,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Paoli Demo Ridge Line Roofing",
+    "bbbGrade": "A-",
+    "bbbScore": 90,
+    "complaintCount": 1,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Parkesburg Demo Roof Masters",
+    "bbbGrade": "A",
+    "bbbScore": 93,
+    "complaintCount": 0,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Phoenixville Demo Roof Guard LLC",
+    "bbbGrade": "B",
+    "bbbScore": 82,
+    "complaintCount": 3,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Unionville Demo Summit Roof Care",
+    "bbbGrade": "C",
+    "bbbScore": 68,
+    "complaintCount": 6,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "Valley Forge Demo Exteriors Inc",
+    "bbbGrade": "A",
+    "bbbScore": 94,
+    "complaintCount": 1,
+    "provenance": "synthetic_demo"
+  },
+  {
+    "name": "West Chester Demo Shingle Works",
+    "bbbGrade": "B+",
+    "bbbScore": 88,
+    "complaintCount": 2,
+    "provenance": "synthetic_demo"
+  }
+]

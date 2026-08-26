@@ -1,0 +1,10 @@
+dist
+node_modules
+cdk.out
+graphify-out
+.impeccable
+.turbo
+coverage
+pnpm-lock.yaml
+.staging
+apps/web/test-results

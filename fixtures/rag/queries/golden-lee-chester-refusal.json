@@ -1,0 +1,17 @@
+{
+  "caseId": "golden-lee-chester-refusal",
+  "description": "Lee index must still refuse Chester geography questions with zero citations.",
+  "input": {
+    "question": "Which roofs in West Chester have open permits?",
+    "countyHint": "lee",
+    "center": { "lat": 26.6406, "lng": -81.8723 },
+    "radiusMiles": 5
+  },
+  "expected": {
+    "refusal": true,
+    "retrievedChunkIds": [],
+    "sourceUris": [],
+    "mustNotClaim": [],
+    "mustContain": ["west chester"]
+  }
+}

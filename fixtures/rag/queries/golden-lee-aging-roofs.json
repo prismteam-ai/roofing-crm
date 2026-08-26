@@ -1,0 +1,20 @@
+{
+  "caseId": "golden-lee-aging-roofs",
+  "description": "Ask for aging roofs near the Fort Myers Lee pin. Expected retrieval is Lee property chunks only; not a Chester claim.",
+  "input": {
+    "question": "Show me structures built before 2011 within five miles of Fort Myers.",
+    "countyHint": "lee"
+  },
+  "expected": {
+    "indexState": "fixture_only_not_production",
+    "retrievedChunkIds": [
+      "lee-prop-101#property-summary",
+      "lee-prop-301#property-summary"
+    ],
+    "sourceUris": [
+      "elephant://lee/property/lee-prop-101",
+      "elephant://lee/property/lee-prop-301"
+    ],
+    "mustNotClaim": ["chester", "production OpenSearch index", "West Chester"]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "roofing-crm-challenge",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "description": "Hosted Amplify map CRM over Elephant MCP. Primary AWS region: us-east-2. Hosting uses Amplify and API Gateway default URLs only — no custom domain.",
+  "engines": {
+    "node": ">=22"
+  },
+  "config": {
+    "awsRegion": "us-east-2",
+    "customDomain": false
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint && prettier --check \"**/*.{ts,tsx,js,mjs,json,md,yml,yaml}\" --ignore-path .prettierignore",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.9.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
+    "turbo": "^2.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.68.0"
+  }
+}
