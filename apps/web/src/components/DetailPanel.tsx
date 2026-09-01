@@ -13,6 +13,9 @@ function formatMoney(v: number | null): string {
 interface Props {
   candidate: LeadCandidate | null;
   onClose: () => void;
+  /** Null when this candidate is not yet saved as a lead. */
+  existingLeadId: string | null;
+  onAddToLeads: (candidate: LeadCandidate) => void;
 }
 
 /**
@@ -21,7 +24,7 @@ interface Props {
  * is published yet -- shown honestly rather than fabricated or hidden, same
  * rule as an UNKNOWN roof-age basis.
  */
-export function DetailPanel({ candidate, onClose }: Props) {
+export function DetailPanel({ candidate, onClose, existingLeadId, onAddToLeads }: Props) {
   if (!candidate) return null;
   const permit = isOpenPermitCandidate(candidate) ? candidate : null;
 
@@ -40,6 +43,15 @@ export function DetailPanel({ candidate, onClose }: Props) {
       </div>
 
       <p className="note">{TIER_DESCRIPTIONS[candidate.tier]}</p>
+
+      <button
+        type="button"
+        className="btn btn--full"
+        disabled={existingLeadId !== null}
+        onClick={() => onAddToLeads(candidate)}
+      >
+        {existingLeadId !== null ? 'Already in pipeline' : 'Add to leads'}
+      </button>
 
       <h3 className="panel__sub">Permit</h3>
       {permit ? (

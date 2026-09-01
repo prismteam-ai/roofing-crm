@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { LatLon } from '@roofing-crm/shared';
+import { addNote, advanceStage, type CrmLead, type CrmStage, type LatLon } from '@roofing-crm/shared';
 import { BREVARD, DEFAULT_RADIUS_MILES, DEFAULT_ROOF_AGE_THRESHOLD } from './config.js';
 import { loadDataset, type DatasetState } from './lib/dataset.js';
 import { queryLeadCandidates, type LeadCandidate } from './lib/leads.js';
 import { countUnlocatableOpenRoofingPermits, queryOpenRoofingPermitLeads } from './lib/permits.js';
+import {
+  createLeadFromCandidate, deleteLead, exportLeadsJson, importLeadsJson,
+  listLeads, putLead, seedDemoLeadsIfNeeded,
+} from './lib/crmStore.js';
 import { MapView } from './components/MapView.js';
 import { Nav, type ActiveView } from './components/Nav.js';
 import { DataStatus } from './components/DataStatus.js';
 import { CandidateList, type CandidatesState } from './components/CandidateList.js';
 import { DetailPanel } from './components/DetailPanel.js';
+import { Pipeline } from './components/Pipeline.js';
+
+const OWNER_STORAGE_KEY = 'roofing-crm:owner-name';
 
 export function App() {
   const [view, setView] = useState<ActiveView>('leads');
@@ -20,8 +27,28 @@ export function App() {
   const [candidates, setCandidates] = useState<CandidatesState>({ status: 'idle' });
   const [selectedParcelId, setSelectedParcelId] = useState<string | null>(null);
   const [unlocatableOpenPermits, setUnlocatableOpenPermits] = useState<number | null>(null);
+  const [leads, setLeads] = useState<CrmLead[]>([]);
+  const [ownerName, setOwnerName] = useState<string>(
+    () => (typeof localStorage !== 'undefined' && localStorage.getItem(OWNER_STORAGE_KEY)) || 'Alex',
+  );
 
   useEffect(() => { void loadDataset().then(setDataset); }, []);
+  useEffect(() => { localStorage.setItem(OWNER_STORAGE_KEY, ownerName); }, [ownerName]);
+
+  const refreshLeads = useCallback(() => { void listLeads().then(setLeads); }, []);
+  useEffect(() => { refreshLeads(); }, [refreshLeads]);
+
+  // One-time, real-data seed so the pipeline board isn't empty on arrival --
+  // a wide search around the county centre, independent of the user's own
+  // search state. See crmStore.seedDemoLeadsIfNeeded for the honesty rules.
+  useEffect(() => {
+    if (dataset.status !== 'ready') return;
+    void seedDemoLeadsIfNeeded(() =>
+      queryOpenRoofingPermitLeads(dataset.source, dataset.manifest, {
+        center: BREVARD.center, radiusMiles: 25, limit: 10,
+      }),
+    ).then((seeded) => { if (seeded.length > 0) refreshLeads(); });
+  }, [dataset, refreshLeads]);
 
   // County-wide, not radius-scoped -- computed once per dataset, not per search.
   useEffect(() => {
@@ -81,8 +108,52 @@ export function App() {
     setSelectedParcelId(null);
   }, []);
 
+  const handleAddToLeads = useCallback((candidate: LeadCandidate) => {
+    void putLead(createLeadFromCandidate(candidate, ownerName)).then(refreshLeads);
+  }, [ownerName, refreshLeads]);
+
+  const handleAdvanceStage = useCallback((lead: CrmLead, stage: CrmStage) => {
+    void putLead(advanceStage(lead, stage, ownerName)).then(refreshLeads);
+  }, [ownerName, refreshLeads]);
+
+  const handleAddNote = useCallback((lead: CrmLead, text: string) => {
+    void putLead(addNote(lead, text, ownerName)).then(refreshLeads);
+  }, [ownerName, refreshLeads]);
+
+  const handleDeleteLead = useCallback((lead: CrmLead) => {
+    void deleteLead(lead.id).then(refreshLeads);
+  }, [refreshLeads]);
+
+  const handleExport = useCallback(() => {
+    void exportLeadsJson().then((json) => {
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `roofing-crm-leads-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }, []);
+
+  const handleImport = useCallback((file: File) => {
+    void file.text()
+      .then((json) => importLeadsJson(json))
+      .then(refreshLeads)
+      .catch((err: unknown) => {
+        window.alert(`Import failed: ${err instanceof Error ? err.message : String(err)}`);
+      });
+  }, [refreshLeads]);
+
+  const handleViewOnMap = useCallback((lead: CrmLead) => {
+    setView('leads');
+    setCenter({ lat: lead.lat, lon: lead.lon });
+  }, []);
+
   const selectedCandidate = selectedParcelId && candidates.status === 'ready'
     ? candidates.candidates.find((c) => c.parcelId === selectedParcelId) ?? null
+    : null;
+  const existingLeadId = selectedCandidate
+    ? leads.find((l) => l.parcelId === selectedCandidate.parcelId)?.id ?? null
     : null;
 
   return (
@@ -99,61 +170,84 @@ export function App() {
           </div>
         </header>
 
-        <div className="workspace">
-          <div className="workspace__map">
-            <MapView
-              center={center}
-              radiusMiles={radiusMiles}
-              candidates={candidates.status === 'ready' ? candidates.candidates : []}
-              selectedParcelId={selectedParcelId}
-              onPinDrop={setCenter}
-              onSelectCandidate={setSelectedParcelId}
-            />
-            <DetailPanel candidate={selectedCandidate} onClose={() => setSelectedParcelId(null)} />
+        {view === 'leads' ? (
+          <div className="workspace">
+            <div className="workspace__map">
+              <MapView
+                center={center}
+                radiusMiles={radiusMiles}
+                candidates={candidates.status === 'ready' ? candidates.candidates : []}
+                selectedParcelId={selectedParcelId}
+                onPinDrop={setCenter}
+                onSelectCandidate={setSelectedParcelId}
+              />
+              <DetailPanel
+                candidate={selectedCandidate}
+                onClose={() => setSelectedParcelId(null)}
+                existingLeadId={existingLeadId}
+                onAddToLeads={handleAddToLeads}
+              />
+            </div>
+
+            <aside className="workspace__side">
+              <section className="panel">
+                <h2 className="panel__title">Search area</h2>
+                <div className="row">
+                  <button type="button" className="btn" onClick={useMyLocation}>Use my location</button>
+                  <button type="button" className="btn btn--ghost" onClick={clearSearch} disabled={!center}>
+                    Clear
+                  </button>
+                </div>
+                <p className="muted">
+                  {center
+                    ? `Centred on ${center.lat.toFixed(4)}, ${center.lon.toFixed(4)}`
+                    : 'Click the map to drop a pin, or use your current location.'}
+                </p>
+                {geoError ? <p className="alert">{geoError}</p> : null}
+
+                <label className="field" htmlFor="radius">
+                  <span>Radius <strong>{radiusMiles} mi</strong></span>
+                  <input
+                    id="radius" type="range" min={0.5} max={25} step={0.5} value={radiusMiles}
+                    onChange={(e) => setRadiusMiles(Number(e.target.value))}
+                  />
+                </label>
+
+                <label className="field" htmlFor="roofage">
+                  <span>Roof older than <strong>{roofAge} yrs</strong></span>
+                  <input
+                    id="roofage" type="range" min={0} max={60} step={1} value={roofAge}
+                    onChange={(e) => setRoofAge(Number(e.target.value))}
+                  />
+                </label>
+              </section>
+
+              <CandidateList
+                state={candidates}
+                selectedParcelId={selectedParcelId}
+                onSelect={setSelectedParcelId}
+              />
+
+              <DataStatus state={dataset} unlocatableOpenPermits={unlocatableOpenPermits} />
+            </aside>
           </div>
-
-          <aside className="workspace__side">
-            <section className="panel">
-              <h2 className="panel__title">Search area</h2>
-              <div className="row">
-                <button type="button" className="btn" onClick={useMyLocation}>Use my location</button>
-                <button type="button" className="btn btn--ghost" onClick={clearSearch} disabled={!center}>
-                  Clear
-                </button>
-              </div>
-              <p className="muted">
-                {center
-                  ? `Centred on ${center.lat.toFixed(4)}, ${center.lon.toFixed(4)}`
-                  : 'Click the map to drop a pin, or use your current location.'}
-              </p>
-              {geoError ? <p className="alert">{geoError}</p> : null}
-
-              <label className="field" htmlFor="radius">
-                <span>Radius <strong>{radiusMiles} mi</strong></span>
-                <input
-                  id="radius" type="range" min={0.5} max={25} step={0.5} value={radiusMiles}
-                  onChange={(e) => setRadiusMiles(Number(e.target.value))}
-                />
-              </label>
-
-              <label className="field" htmlFor="roofage">
-                <span>Roof older than <strong>{roofAge} yrs</strong></span>
-                <input
-                  id="roofage" type="range" min={0} max={60} step={1} value={roofAge}
-                  onChange={(e) => setRoofAge(Number(e.target.value))}
-                />
-              </label>
-            </section>
-
-            <CandidateList
-              state={candidates}
-              selectedParcelId={selectedParcelId}
-              onSelect={setSelectedParcelId}
-            />
-
-            <DataStatus state={dataset} unlocatableOpenPermits={unlocatableOpenPermits} />
-          </aside>
-        </div>
+        ) : view === 'pipeline' ? (
+          <Pipeline
+            leads={leads}
+            ownerName={ownerName}
+            onOwnerNameChange={setOwnerName}
+            onAdvanceStage={handleAdvanceStage}
+            onAddNote={handleAddNote}
+            onDelete={handleDeleteLead}
+            onExport={handleExport}
+            onImport={handleImport}
+            onViewOnMap={handleViewOnMap}
+          />
+        ) : (
+          <div className="pipeline">
+            <p className="muted">The natural-language agent lands in the next phase.</p>
+          </div>
+        )}
       </main>
     </div>
   );
