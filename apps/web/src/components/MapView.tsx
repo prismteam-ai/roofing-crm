@@ -56,9 +56,14 @@ export function MapView({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const onPinDropRef = useRef(onPinDrop);
-  onPinDropRef.current = onPinDrop;
   const onSelectCandidateRef = useRef(onSelectCandidate);
-  onSelectCandidateRef.current = onSelectCandidate;
+  // Keeps the map's event handlers (registered once, below) calling the latest
+  // props without needing onPinDrop/onSelectCandidate in that effect's deps --
+  // updated after commit, not during render, so refs stay read-only there.
+  useEffect(() => {
+    onPinDropRef.current = onPinDrop;
+    onSelectCandidateRef.current = onSelectCandidate;
+  });
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;

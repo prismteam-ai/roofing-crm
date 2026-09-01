@@ -59,3 +59,15 @@ verify-browser:
 	docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp -e npm_config_cache=/app/.npm-cache \
 		-v "$$(pwd)":/app -w /app $(PLAYWRIGHT_IMAGE) \
 		sh -c "npm install --no-audit --no-fund && node scripts/verify_browser_duckdb.mjs"
+
+# --- E2E against the deployed URL (e2e/demo-transcript.spec.ts) ---
+# Follows the README's Demo Transcript beat for beat against the real live
+# site -- the same tool (Playwright) the grader uses. Override the target
+# with E2E_BASE_URL=... (e.g. a preview build or a local server) to test
+# somewhere other than the default deployed URL.
+.PHONY: e2e
+e2e:
+	docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp -e npm_config_cache=/app/.npm-cache \
+		-e E2E_BASE_URL \
+		-v "$$(pwd)":/app -w /app $(PLAYWRIGHT_IMAGE) \
+		sh -c "npm install --no-audit --no-fund && npx playwright test"

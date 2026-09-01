@@ -1,10 +1,6 @@
 import { TIER_LABELS, type EvidenceTier } from '@roofing-crm/shared';
 import type { LeadCandidate } from '../lib/leads.js';
-import type { OpenPermitCandidate } from '../lib/permits.js';
-
-function isOpenPermitCandidate(c: LeadCandidate): c is OpenPermitCandidate {
-  return c.tier === 'A' && 'permitOpenDays' in c;
-}
+import { isOpenPermitCandidate, type OpenPermitCandidate } from '../lib/permits.js';
 
 function permitMeta(c: OpenPermitCandidate): string {
   const years = (c.permitOpenDays / 365).toFixed(1);

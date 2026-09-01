@@ -17,7 +17,7 @@ import { parseIntent, type LatLon, type QueryIntent } from '@roofing-crm/shared'
 import { AGENT_PROXY_URL, BREVARD, DEFAULT_RADIUS_MILES, DEFAULT_ROOF_AGE_THRESHOLD } from '../config.js';
 import { getConnection, getDuckDB, registerTableFiles, runQuery } from './duckdb.js';
 import { queryLeadCandidates, type LeadCandidate } from './leads.js';
-import { queryOpenRoofingPermitLeads, type OpenPermitCandidate } from './permits.js';
+import { isOpenPermitCandidate, queryOpenRoofingPermitLeads } from './permits.js';
 
 export interface PlaceInfo extends LatLon {
   name: string;
@@ -74,10 +74,6 @@ export interface AgentAnswer {
   centerUsed: LatLon;
 }
 
-function isPermitCandidate(c: LeadCandidate): c is OpenPermitCandidate {
-  return 'permitOpenDays' in c;
-}
-
 function buildDeterministicText(intent: QueryIntent, center: LatLon, radiusMiles: number, results: LeadCandidate[]): string {
   const placeLabel = intent.place ? ` of ${intent.place}` : ` of ${center.lat.toFixed(3)}, ${center.lon.toFixed(3)}`;
   if (results.length === 0) {
@@ -86,7 +82,7 @@ function buildDeterministicText(intent: QueryIntent, center: LatLon, radiusMiles
   const kind = intent.wantsOpenPermits ? 'open roofing permits' : 'matching properties';
   const lines = [`Found ${results.length} ${kind} within ${radiusMiles} miles${placeLabel}.`];
   for (const c of results.slice(0, 5)) {
-    if (isPermitCandidate(c)) {
+    if (isOpenPermitCandidate(c)) {
       lines.push(
         `• ${c.address ?? c.parcelId} — permit ${c.permitNumber}, open ${(c.permitOpenDays / 365).toFixed(1)} yrs`
         + (c.issuedDate ? ` (since ${c.issuedDate})` : ''),
@@ -189,7 +185,7 @@ export async function answerQuestion(
 
   const citations: Citation[] = results.slice(0, 10).map((c) => ({
     parcelId: c.parcelId,
-    permitNumber: isPermitCandidate(c) ? c.permitNumber : null,
+    permitNumber: isOpenPermitCandidate(c) ? c.permitNumber : null,
     label: c.address ?? c.parcelId,
   }));
 
@@ -197,7 +193,7 @@ export async function answerQuestion(
 
   if (results.length === 0) return { text: deterministicText, citations, usedLlm: false, centerUsed: center };
 
-  const summary = results.slice(0, 8).map((c) => (isPermitCandidate(c)
+  const summary = results.slice(0, 8).map((c) => (isOpenPermitCandidate(c)
     ? `${c.address ?? c.parcelId} | permit ${c.permitNumber} | open ${(c.permitOpenDays / 365).toFixed(1)} yrs | parcel ${c.parcelId}`
     : `${c.address ?? c.parcelId} | roof ${c.roofAgeYears ?? 'unknown'} yrs (${c.roofAgeBasis}) | parcel ${c.parcelId}`
   )).join('\n');

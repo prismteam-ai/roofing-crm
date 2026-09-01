@@ -1,10 +1,6 @@
 import { TIER_DESCRIPTIONS, TIER_LABELS } from '@roofing-crm/shared';
 import type { LeadCandidate } from '../lib/leads.js';
-import type { OpenPermitCandidate } from '../lib/permits.js';
-
-function isOpenPermitCandidate(c: LeadCandidate): c is OpenPermitCandidate {
-  return c.tier === 'A' && 'permitOpenDays' in c;
-}
+import { isOpenPermitCandidate } from '../lib/permits.js';
 
 function formatMoney(v: number | null): string {
   return v === null ? 'not available' : `$${v.toLocaleString()}`;

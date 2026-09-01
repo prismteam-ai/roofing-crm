@@ -3,7 +3,7 @@ import { addNote, advanceStage, type CrmLead, type CrmStage, type LatLon } from 
 import { BREVARD, DEFAULT_RADIUS_MILES, DEFAULT_ROOF_AGE_THRESHOLD } from './config.js';
 import { loadDataset, type DatasetState } from './lib/dataset.js';
 import { queryLeadCandidates, type LeadCandidate } from './lib/leads.js';
-import { countUnlocatableOpenRoofingPermits, queryOpenRoofingPermitLeads } from './lib/permits.js';
+import { countUnlocatableOpenRoofingPermits, isOpenPermitCandidate, queryOpenRoofingPermitLeads } from './lib/permits.js';
 import {
   createLeadFromCandidate, deleteLead, exportLeadsJson, importLeadsJson,
   listLeads, putLead, seedDemoLeadsIfNeeded,
@@ -74,6 +74,11 @@ export function App() {
   useEffect(() => {
     if (dataset.status !== 'ready' || !center) return;
     let cancelled = false;
+    // Intentional: shows the "Querying..." state immediately rather than
+    // waiting a network round-trip to say anything, same as React's own
+    // fetch-in-effect docs example. The extra render this costs is one
+    // React state update, not a second network request.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCandidates({ status: 'loading' });
     void Promise.all([
       queryLeadCandidates(dataset.source, dataset.manifest, { center, radiusMiles, roofAgeThreshold: roofAge }),
@@ -85,7 +90,19 @@ export function App() {
         const merged: LeadCandidate[] = [
           ...byOpenPermit,
           ...byRoofAge.filter((c) => !tierAParcelIds.has(c.parcelId)),
-        ].sort((a, b) => a.distanceMiles - b.distanceMiles);
+        ];
+        // Tier A first, longest-open first within it -- a distance-only sort
+        // over the merged list would silently bury a long-open permit further
+        // away behind a barely-open one nearby, undermining the README's own
+        // "emphasis on permits that have remained open for an extended
+        // period." B/C/UNKNOWN keep the radius query's own distance order.
+        merged.sort((a, b) => {
+          const aOpen = isOpenPermitCandidate(a);
+          const bOpen = isOpenPermitCandidate(b);
+          if (aOpen && bOpen) return b.permitOpenDays - a.permitOpenDays;
+          if (aOpen !== bOpen) return aOpen ? -1 : 1;
+          return a.distanceMiles - b.distanceMiles;
+        });
         setCandidates({ status: 'ready', candidates: merged });
       })
       .catch((err: unknown) => {
@@ -274,6 +291,8 @@ export function App() {
             onExport={handleExport}
             onImport={handleImport}
             onViewOnMap={handleViewOnMap}
+            searchCenter={center}
+            countyCenter={BREVARD.center}
           />
         ) : dataset.status === 'ready' ? (
           <AgentChat

@@ -10,16 +10,12 @@
  */
 import { newLeadId, type CrmLead } from '@roofing-crm/shared';
 import type { LeadCandidate } from './leads.js';
-import type { OpenPermitCandidate } from './permits.js';
+import { isOpenPermitCandidate, type OpenPermitCandidate } from './permits.js';
 
 const DB_NAME = 'roofing-crm';
 const DB_VERSION = 1;
 const STORE = 'leads';
 const SEEDED_FLAG_KEY = 'roofing-crm:seeded-v1';
-
-function isOpenPermitCandidate(c: LeadCandidate): c is OpenPermitCandidate {
-  return 'permitOpenDays' in c;
-}
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {

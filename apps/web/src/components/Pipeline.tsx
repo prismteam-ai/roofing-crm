@@ -1,5 +1,10 @@
-import { useRef, useState } from 'react';
-import { CRM_STAGES, TIER_LABELS, type CrmLead, type CrmStage } from '@roofing-crm/shared';
+import { useMemo, useRef, useState } from 'react';
+import {
+  CRM_STAGES, TIER_LABELS, haversineMiles,
+  type CrmLead, type CrmStage, type EvidenceTier, type LatLon,
+} from '@roofing-crm/shared';
+
+const TIER_ORDER: EvidenceTier[] = ['A', 'B', 'C', 'UNKNOWN'];
 
 interface Props {
   leads: CrmLead[];
@@ -11,6 +16,9 @@ interface Props {
   onExport: () => void;
   onImport: (file: File) => void;
   onViewOnMap: (lead: CrmLead) => void;
+  /** Used as the centre for the location-radius filter when set. */
+  searchCenter: LatLon | null;
+  countyCenter: LatLon;
 }
 
 function LeadCard({ lead, ownerName, onAdvanceStage, onAddNote, onDelete, onViewOnMap }: {
@@ -96,10 +104,35 @@ function LeadCard({ lead, ownerName, onAdvanceStage, onAddNote, onDelete, onView
 
 export function Pipeline({
   leads, ownerName, onOwnerNameChange, onAdvanceStage, onAddNote, onDelete, onExport, onImport, onViewOnMap,
+  searchCenter, countyCenter,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [tierFilter, setTierFilter] = useState<Set<EvidenceTier>>(new Set(TIER_ORDER));
+  const [minRoofAge, setMinRoofAge] = useState(0);
+  const [minOpenYears, setMinOpenYears] = useState(0);
+  const [radiusOn, setRadiusOn] = useState(false);
+  const [radiusMiles, setRadiusMiles] = useState(10);
+
+  const filterCenter = searchCenter ?? countyCenter;
+
+  const filteredLeads = useMemo(() => leads.filter((l) => {
+    if (!tierFilter.has(l.tier)) return false;
+    if (minRoofAge > 0 && (l.roofAgeYears === null || l.roofAgeYears < minRoofAge)) return false;
+    if (minOpenYears > 0 && (l.permitOpenDays === null || l.permitOpenDays / 365 < minOpenYears)) return false;
+    if (radiusOn && haversineMiles(filterCenter, { lat: l.lat, lon: l.lon }) > radiusMiles) return false;
+    return true;
+  }), [leads, tierFilter, minRoofAge, minOpenYears, radiusOn, radiusMiles, filterCenter]);
+
   const byStage: Partial<Record<CrmStage, CrmLead[]>> = {};
-  for (const l of leads) (byStage[l.stage] ??= []).push(l);
+  for (const l of filteredLeads) (byStage[l.stage] ??= []).push(l);
+
+  const toggleTier = (t: EvidenceTier) => {
+    setTierFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t); else next.add(t);
+      return next;
+    });
+  };
 
   return (
     <div className="pipeline">
@@ -127,7 +160,52 @@ export function Pipeline({
           No leads yet. Find a property or permit on the map and use &ldquo;Add to leads&rdquo; in its
           detail panel, or wait a moment for the dataset to seed a few real examples.
         </p>
-      ) : null}
+      ) : (
+        <section className="panel pipeline__filters">
+          <h2 className="panel__title">Filter leads</h2>
+          <div className="candidate-counts">
+            {TIER_ORDER.map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={`tier-chip tier-chip--${t} ${tierFilter.has(t) ? '' : 'is-off'}`}
+                onClick={() => toggleTier(t)}
+                aria-pressed={tierFilter.has(t)}
+              >
+                {t === 'UNKNOWN' ? 'Unknown' : t}
+              </button>
+            ))}
+          </div>
+
+          <div className="pipeline__filter-row">
+            <label className="field field--inline">
+              <span>Min roof age <strong>{minRoofAge} yrs</strong></span>
+              <input
+                type="range" min={0} max={60} step={1} value={minRoofAge}
+                onChange={(e) => setMinRoofAge(Number(e.target.value))}
+              />
+            </label>
+            <label className="field field--inline">
+              <span>Min permit open <strong>{minOpenYears} yrs</strong></span>
+              <input
+                type="range" min={0} max={15} step={0.5} value={minOpenYears}
+                onChange={(e) => setMinOpenYears(Number(e.target.value))}
+              />
+            </label>
+            <label className="field field--inline">
+              <input type="checkbox" checked={radiusOn} onChange={(e) => setRadiusOn(e.target.checked)} />
+              <span>
+                Within <strong>{radiusMiles} mi</strong> of {searchCenter ? 'current search' : 'county centre'}
+              </span>
+              <input
+                type="range" min={0.5} max={25} step={0.5} value={radiusMiles} disabled={!radiusOn}
+                onChange={(e) => setRadiusMiles(Number(e.target.value))}
+              />
+            </label>
+          </div>
+          <p className="muted">Showing {filteredLeads.length} of {leads.length} leads.</p>
+        </section>
+      )}
 
       <div className="pipeline__board">
         {CRM_STAGES.map((stage) => (

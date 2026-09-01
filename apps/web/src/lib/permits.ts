@@ -44,6 +44,11 @@ export interface OpenPermitCandidate extends LeadCandidate {
   permitOpenDays: number;
 }
 
+/** Single source of truth for "is this candidate a Tier A open-permit result" -- used across the UI. */
+export function isOpenPermitCandidate(c: LeadCandidate): c is OpenPermitCandidate {
+  return 'permitOpenDays' in c;
+}
+
 function toOpenPermitCandidate(row: Record<string, unknown>): OpenPermitCandidate {
   const permitOpenDays = toNumber(row['permit_open_days']);
   const tierInput = {

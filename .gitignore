@@ -15,3 +15,5 @@ test-fixtures/
 packages/*/dist/
 .wrangler-home/
 .wrangler/
+test-results/
+playwright-report/
