@@ -33,7 +33,7 @@ const EARTH_RADIUS_MILES = 3958.7613;
  *   2. lat/lon bounding box — prunes further within surviving groups
  *   3. haversine          — exact, applied only to what survives
  */
-export function buildRadiusQuery(table: string, f: RadiusFilter): SqlQuery {
+export function buildRadiusQuery(table: string | readonly string[], f: RadiusFilter): SqlQuery {
   const box = boundingBox(f.center, f.radiusMiles);
   const precision = precisionForRadius(f.radiusMiles);
   const ranges = geohashRangesForBox(box, precision);
@@ -93,10 +93,15 @@ export function buildRadiusQuery(table: string, f: RadiusFilter): SqlQuery {
 
 /**
  * Parquet paths are structural, not user input, so they are embedded — but
- * quoted defensively so a path containing a quote cannot break out.
+ * quoted defensively so a path containing a quote cannot break out. A single
+ * path becomes `'path'`; multiple (the pipeline's geohash4 partitions can be
+ * up to 8 files per table) become a real DuckDB list literal `['a','b']`,
+ * never a single string with brackets pasted into it.
  */
-function sqlLiteralList(paths: string): string {
-  return `'${paths.replace(/'/g, "''")}'`;
+function sqlLiteralList(paths: string | readonly string[]): string {
+  const quote = (p: string): string => `'${p.replace(/'/g, "''")}'`;
+  if (typeof paths === 'string') return quote(paths);
+  return `[${paths.map(quote).join(', ')}]`;
 }
 
 /** Columns that DuckDB returns as BigInt or epoch ints and must be coerced. */

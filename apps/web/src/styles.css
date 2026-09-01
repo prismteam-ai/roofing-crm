@@ -65,6 +65,36 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 .note { font-size: 12px; color: var(--muted); line-height: 1.45; margin-top: 8px; }
 .alert { background: var(--warn-bg); color: var(--warn-text); padding: 8px 10px; border-radius: 6px; font-size: 12px; margin: 8px 0 0; }
 
+.candidate-counts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tier-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); }
+.tier-chip--A { background: #dcfce7; border-color: #86efac; color: #166534; }
+.tier-chip--B { background: #dbeafe; border-color: #93c5fd; color: #1e3a8a; }
+.tier-chip--C { background: #fef3c7; border-color: #fcd34d; color: #7c5c07; }
+.tier-chip--UNKNOWN { background: var(--bg); color: var(--muted); }
+
+.candidate-list { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; }
+.candidate-list li + li { border-top: 1px solid var(--border); }
+.candidate {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 4px;
+  border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; border-radius: 6px;
+}
+.candidate:hover, .candidate.is-selected { background: #eef2ff; }
+.tier-badge {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: #fff; background: var(--muted);
+}
+.tier-badge--A { background: #16a34a; }
+.tier-badge--B { background: #2563eb; }
+.tier-badge--C { background: #d97706; }
+.tier-badge--UNKNOWN { background: #9ca3af; }
+.candidate__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.candidate__address { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.candidate__meta { font-size: 11px; color: var(--muted); }
+.candidate__score {
+  flex: 0 0 auto; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted);
+  min-width: 20px; text-align: right;
+}
+
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
   .workspace { grid-template-columns: 1fr; }

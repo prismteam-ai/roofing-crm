@@ -43,3 +43,19 @@ worker-whoami:  ; $(DOCKER_WRANGLER) npx wrangler whoami
 worker-secret:  ; $(DOCKER_WRANGLER) npx wrangler secret put GEMINI_API_KEY
 worker-deploy:  ; $(DOCKER_WRANGLER) npx wrangler deploy
 worker-dev:     ; $(DOCKER_WRANGLER) npx wrangler dev
+
+# --- Real-browser DuckDB-WASM verification (scripts/verify_browser_duckdb.mjs) ---
+# Builds the site at the root path (this test serves it standalone, not under
+# /roofing-crm/), then drives a real Chromium against it. Runs in the official
+# Playwright image (glibc) rather than node:22-alpine (musl) because esbuild
+# and other native deps are platform-specific -- `npm install` re-resolves
+# them for this container and will re-resolve back on the next alpine command,
+# which is expected, not a bug.
+PLAYWRIGHT_IMAGE ?= mcr.microsoft.com/playwright:v1.62.1-noble
+.PHONY: verify-browser
+verify-browser:
+	docker run --rm --user "$$(id -u):$$(id -g)" -e npm_config_cache=/app/.npm-cache -e BASE_PATH=/ \
+		-v "$$(pwd)":/app -w /app $(NODE_IMAGE) npm run build
+	docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp -e npm_config_cache=/app/.npm-cache \
+		-v "$$(pwd)":/app -w /app $(PLAYWRIGHT_IMAGE) \
+		sh -c "npm install --no-audit --no-fund && node scripts/verify_browser_duckdb.mjs"
