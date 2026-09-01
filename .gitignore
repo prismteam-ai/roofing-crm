@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.venv/
+*.local
+.DS_Store
+.env
+.env.*
+!.env.example
+data/cache/
+.npm-cache/
+dist-types/
+*.tsbuildinfo
+docs/PLAN.md
+test-fixtures/
+packages/*/dist/

@@ -1,0 +1,20 @@
+{
+  "name": "roofing-crm",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @roofing-crm/web",
+    "build": "npm run build --workspace @roofing-crm/web",
+    "typecheck": "tsc --build --force",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}
