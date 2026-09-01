@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { LatLon } from '@roofing-crm/shared';
 import { BREVARD, DEFAULT_RADIUS_MILES, DEFAULT_ROOF_AGE_THRESHOLD } from './config.js';
 import { loadDataset, type DatasetState } from './lib/dataset.js';
-import { queryLeadCandidates } from './lib/leads.js';
+import { queryLeadCandidates, type LeadCandidate } from './lib/leads.js';
+import { countUnlocatableOpenRoofingPermits, queryOpenRoofingPermitLeads } from './lib/permits.js';
 import { MapView } from './components/MapView.js';
 import { Nav, type ActiveView } from './components/Nav.js';
 import { DataStatus } from './components/DataStatus.js';
@@ -17,21 +18,44 @@ export function App() {
   const [geoError, setGeoError] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<CandidatesState>({ status: 'idle' });
   const [selectedParcelId, setSelectedParcelId] = useState<string | null>(null);
+  const [unlocatableOpenPermits, setUnlocatableOpenPermits] = useState<number | null>(null);
 
   useEffect(() => { void loadDataset().then(setDataset); }, []);
 
+  // County-wide, not radius-scoped -- computed once per dataset, not per search.
+  useEffect(() => {
+    if (dataset.status !== 'ready') return;
+    let cancelled = false;
+    void countUnlocatableOpenRoofingPermits(dataset.source, dataset.manifest)
+      .then((n) => { if (!cancelled) setUnlocatableOpenPermits(n); })
+      .catch(() => { if (!cancelled) setUnlocatableOpenPermits(null); });
+    return () => { cancelled = true; };
+  }, [dataset]);
+
   // Re-queries DuckDB whenever the search area or roof-age threshold changes.
-  // Scope note: queries `properties` only, so results are classified from
-  // roof age alone (tiers B/C/UNKNOWN) -- Tier A needs the permits join,
-  // which lands with the permit detail panel.
+  // Two queries, merged: roof-age-filtered properties (tiers B/C) and open
+  // roofing permits joined to their matched property (tier A). Where a
+  // parcel appears in both, the tier-A version wins and the B/C duplicate is
+  // dropped -- mirroring classifyTier's own "open permit wins regardless of
+  // basis" rule, just split across two queries so browsing by roof age
+  // doesn't pay for a permits join every time.
   useEffect(() => {
     if (dataset.status !== 'ready' || !center) return;
     let cancelled = false;
     setCandidates({ status: 'loading' });
-    void queryLeadCandidates(dataset.source, dataset.manifest, {
-      center, radiusMiles, roofAgeThreshold: roofAge,
-    })
-      .then((result) => { if (!cancelled) setCandidates({ status: 'ready', candidates: result }); })
+    void Promise.all([
+      queryLeadCandidates(dataset.source, dataset.manifest, { center, radiusMiles, roofAgeThreshold: roofAge }),
+      queryOpenRoofingPermitLeads(dataset.source, dataset.manifest, { center, radiusMiles }),
+    ])
+      .then(([byRoofAge, byOpenPermit]) => {
+        if (cancelled) return;
+        const tierAParcelIds = new Set(byOpenPermit.map((c) => c.parcelId));
+        const merged: LeadCandidate[] = [
+          ...byOpenPermit,
+          ...byRoofAge.filter((c) => !tierAParcelIds.has(c.parcelId)),
+        ].sort((a, b) => a.distanceMiles - b.distanceMiles);
+        setCandidates({ status: 'ready', candidates: merged });
+      })
       .catch((err: unknown) => {
         if (!cancelled) {
           setCandidates({ status: 'error', error: err instanceof Error ? err.message : String(err) });
@@ -121,7 +145,7 @@ export function App() {
               onSelect={setSelectedParcelId}
             />
 
-            <DataStatus state={dataset} />
+            <DataStatus state={dataset} unlocatableOpenPermits={unlocatableOpenPermits} />
           </aside>
         </div>
       </main>

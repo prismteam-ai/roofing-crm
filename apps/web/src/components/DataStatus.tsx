@@ -1,11 +1,17 @@
 import type { DatasetState } from '../lib/dataset.js';
 
+interface Props {
+  state: DatasetState;
+  /** County-wide, not radius-scoped. Null while still loading. */
+  unlocatableOpenPermits: number | null;
+}
+
 /**
  * Coverage and provenance, read from the pipeline's run manifest rather than
  * recomputed in the browser. Shows which published copy is being read and how
  * much of the data actually supports the roof-age criterion.
  */
-export function DataStatus({ state }: { state: DatasetState }) {
+export function DataStatus({ state, unlocatableOpenPermits }: Props) {
   if (state.status === 'loading') {
     return <section className="panel"><h2 className="panel__title">Dataset</h2><p className="muted">Resolving…</p></section>;
   }
@@ -63,6 +69,15 @@ export function DataStatus({ state }: { state: DatasetState }) {
           </p>
         </>
       ) : null}
+
+      <h3 className="panel__sub">Open roofing permits</h3>
+      <p className="note">
+        {unlocatableOpenPermits === null
+          ? 'Checking how many can be located on the map…'
+          : unlocatableOpenPermits > 0
+            ? `${unlocatableOpenPermits.toLocaleString()} open roofing permit${unlocatableOpenPermits === 1 ? '' : 's'} county-wide could not be matched to a parcel confidently enough to place on the map, so they cannot appear as a lead here.`
+            : 'Every open roofing permit county-wide is matched to a parcel and locatable on the map.'}
+      </p>
     </section>
   );
 }

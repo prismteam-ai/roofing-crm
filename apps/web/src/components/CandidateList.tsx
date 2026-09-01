@@ -1,5 +1,15 @@
 import { TIER_LABELS, type EvidenceTier } from '@roofing-crm/shared';
 import type { LeadCandidate } from '../lib/leads.js';
+import type { OpenPermitCandidate } from '../lib/permits.js';
+
+function isOpenPermitCandidate(c: LeadCandidate): c is OpenPermitCandidate {
+  return c.tier === 'A' && 'permitOpenDays' in c;
+}
+
+function permitMeta(c: OpenPermitCandidate): string {
+  const years = (c.permitOpenDays / 365).toFixed(1);
+  return `open ${years} yrs${c.issuedDate ? ` (since ${c.issuedDate})` : ''}`;
+}
 
 export type CandidatesState =
   | { status: 'idle' }
@@ -51,7 +61,7 @@ export function CandidateList({ state, selectedParcelId, onSelect }: Props) {
     <section className="panel">
       <h2 className="panel__title">Candidates ({candidates.length})</h2>
       {candidates.length === 0 ? (
-        <p className="muted">No properties matched in this radius at this roof-age threshold.</p>
+        <p className="muted">No open roofing permits or properties matched in this radius at this roof-age threshold.</p>
       ) : null}
 
       <div className="candidate-counts">
@@ -79,7 +89,11 @@ export function CandidateList({ state, selectedParcelId, onSelect }: Props) {
                 <span className="candidate__address">{c.address ?? c.parcelId}</span>
                 <span className="candidate__meta">
                   {c.distanceMiles.toFixed(1)} mi
-                  {c.roofAgeYears !== null ? ` · roof ${c.roofAgeYears} yrs (${TIER_LABELS[c.tier]})` : ' · roof age unknown'}
+                  {isOpenPermitCandidate(c)
+                    ? ` · ${permitMeta(c)}`
+                    : c.roofAgeYears !== null
+                      ? ` · roof ${c.roofAgeYears} yrs (${TIER_LABELS[c.tier]})`
+                      : ' · roof age unknown'}
                 </span>
               </span>
               <span className="candidate__score" title="Lead score">{c.score}</span>
