@@ -8,6 +8,7 @@ import { MapView } from './components/MapView.js';
 import { Nav, type ActiveView } from './components/Nav.js';
 import { DataStatus } from './components/DataStatus.js';
 import { CandidateList, type CandidatesState } from './components/CandidateList.js';
+import { DetailPanel } from './components/DetailPanel.js';
 
 export function App() {
   const [view, setView] = useState<ActiveView>('leads');
@@ -80,6 +81,10 @@ export function App() {
     setSelectedParcelId(null);
   }, []);
 
+  const selectedCandidate = selectedParcelId && candidates.status === 'ready'
+    ? candidates.candidates.find((c) => c.parcelId === selectedParcelId) ?? null
+    : null;
+
   return (
     <div className="layout">
       <Nav active={view} onChange={setView} />
@@ -104,6 +109,7 @@ export function App() {
               onPinDrop={setCenter}
               onSelectCandidate={setSelectedParcelId}
             />
+            <DetailPanel candidate={selectedCandidate} onClose={() => setSelectedParcelId(null)} />
           </div>
 
           <aside className="workspace__side">

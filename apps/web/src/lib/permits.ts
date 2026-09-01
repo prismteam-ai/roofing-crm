@@ -27,6 +27,19 @@ function toRoofAgeBasis(value: unknown): RoofAgeBasis {
 export interface OpenPermitCandidate extends LeadCandidate {
   permitId: string;
   permitNumber: string;
+  /** e.g. "RES Reroof" -- always populated, unlike work_description (never populated as of this dataset). */
+  permitType: string | null;
+  permitStatusRaw: string | null;
+  permitStatusNormalized: string;
+  /** The permit's own reported address -- present even when the parcel has none. */
+  permitAddress: string | null;
+  /**
+   * Always null in the published data as of dataset_version
+   * 2026-09-01.r202609011309 -- no contractors table is published yet, so
+   * there is nothing to join this against. Kept honest rather than hidden:
+   * the detail panel shows "not available", never a fabricated name.
+   */
+  contractorEntityId: string | null;
   issuedDate: string | null;
   permitOpenDays: number;
 }
@@ -39,6 +52,7 @@ function toOpenPermitCandidate(row: Record<string, unknown>): OpenPermitCandidat
   };
   return {
     parcelId: String(row['parcel_id'] ?? ''),
+    parcelIdNorm: (row['parcel_id_norm'] as string | null) ?? null,
     address: (row['situs_address'] as string | null) ?? null,
     city: (row['situs_city'] as string | null) ?? null,
     zip: (row['situs_zip'] as string | null) ?? null,
@@ -49,10 +63,20 @@ function toOpenPermitCandidate(row: Record<string, unknown>): OpenPermitCandidat
       ? null : toNumber(row['roof_age_years']),
     roofAgeBasis: toRoofAgeBasis(row['roof_age_basis']),
     yearBuilt: row['year_built'] === null || row['year_built'] === undefined ? null : toNumber(row['year_built']),
+    justValue: row['just_value'] === null || row['just_value'] === undefined ? null : toNumber(row['just_value']),
+    livingAreaSqft: row['living_area_sqft'] === null || row['living_area_sqft'] === undefined
+      ? null : toNumber(row['living_area_sqft']),
+    landUseCode: (row['land_use_code'] as string | null) ?? null,
+    ownerName: (row['owner_name'] as string | null) ?? null,
     tier: 'A',
     score: leadScore({ ...tierInput, permitOpenDays, statusUnconfirmed: false }),
     permitId: String(row['permit_id'] ?? ''),
     permitNumber: String(row['permit_number'] ?? ''),
+    permitType: (row['permit_type'] as string | null) ?? null,
+    permitStatusRaw: (row['permit_status_raw'] as string | null) ?? null,
+    permitStatusNormalized: String(row['permit_status_normalized'] ?? 'UNKNOWN'),
+    permitAddress: (row['permit_address'] as string | null) ?? null,
+    contractorEntityId: (row['contractor_entity_id'] as string | null) ?? null,
     issuedDate: (row['issued_date'] as string | null) ?? null,
     permitOpenDays,
   };

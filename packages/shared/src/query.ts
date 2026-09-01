@@ -153,11 +153,13 @@ export function buildOpenPermitRadiusQuery(
 
   const sql = `
     SELECT
-      p.parcel_id, p.lat, p.lon, p.situs_address, p.situs_city, p.situs_zip,
+      p.parcel_id, p.parcel_id_norm, p.lat, p.lon, p.situs_address, p.situs_city, p.situs_zip,
       p.roof_age_years, p.roof_age_basis, p.year_built,
-      pm.permit_id, pm.permit_number, pm.permit_status_normalized,
+      p.just_value, p.living_area_sqft, p.land_use_code, p.owner_name,
+      pm.permit_id, pm.permit_number, pm.permit_type, pm.permit_status_raw, pm.permit_status_normalized,
+      pm.permit_address, pm.contractor_entity_id,
       CAST(pm.issued_date AS VARCHAR) AS issued_date,
-      pm.permit_open_days, pm.work_description, pm.contractor_entity_id,
+      pm.permit_open_days,
       ${spatial.distanceExpr} AS distance_miles
     FROM read_parquet(${sqlLiteralList(propertiesTable)}) p
     JOIN read_parquet(${sqlLiteralList(permitsTable)}) pm ON p.parcel_id = pm.parcel_id

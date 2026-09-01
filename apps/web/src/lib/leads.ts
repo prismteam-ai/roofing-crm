@@ -1,12 +1,11 @@
 /**
  * Runs a live radius query against the `properties` table and classifies
- * each result into an evidence tier.
+ * each result into an evidence tier from roof age alone (B/C/UNKNOWN).
  *
- * Scope note: this queries `properties` only. Tier A (open roofing permit)
- * needs a join against `permits`, which lands with the permit detail panel —
- * until then every result is classified from roof age alone (B/C/UNKNOWN),
- * never A. That is an honest reflection of what this slice can see, not a
- * bug: `hasOpenRoofingPermit` is passed as `false` throughout.
+ * Tier A (open roofing permit) never comes from here -- `hasOpenRoofingPermit`
+ * is always `false` in this module, deliberately: that classification needs
+ * the `permits` join, which lives in ./permits.ts and is merged in by the
+ * caller (App.tsx).
  */
 import type { DataSource, LatestManifest, RoofAgeBasis } from '@roofing-crm/consumer';
 import { tableUrls } from '@roofing-crm/consumer';
@@ -17,6 +16,7 @@ import { getConnection, getDuckDB, registerTableFiles, runQuery } from './duckdb
 
 export interface LeadCandidate {
   parcelId: string;
+  parcelIdNorm: string | null;
   address: string | null;
   city: string | null;
   zip: string | null;
@@ -26,6 +26,11 @@ export interface LeadCandidate {
   roofAgeYears: number | null;
   roofAgeBasis: RoofAgeBasis;
   yearBuilt: number | null;
+  /** FDOR "just value" -- the closest thing to a valuation this dataset carries. */
+  justValue: number | null;
+  livingAreaSqft: number | null;
+  landUseCode: string | null;
+  ownerName: string | null;
   tier: EvidenceTier;
   score: number;
 }
@@ -51,6 +56,7 @@ function toLeadCandidate(row: Record<string, unknown>, roofAgeThreshold: number)
   };
   return {
     parcelId: String(row['parcel_id'] ?? ''),
+    parcelIdNorm: (row['parcel_id_norm'] as string | null) ?? null,
     address: (row['situs_address'] as string | null) ?? null,
     city: (row['situs_city'] as string | null) ?? null,
     zip: (row['situs_zip'] as string | null) ?? null,
@@ -60,6 +66,11 @@ function toLeadCandidate(row: Record<string, unknown>, roofAgeThreshold: number)
     roofAgeYears,
     roofAgeBasis,
     yearBuilt: row['year_built'] === null || row['year_built'] === undefined ? null : toNumber(row['year_built']),
+    justValue: row['just_value'] === null || row['just_value'] === undefined ? null : toNumber(row['just_value']),
+    livingAreaSqft: row['living_area_sqft'] === null || row['living_area_sqft'] === undefined
+      ? null : toNumber(row['living_area_sqft']),
+    landUseCode: (row['land_use_code'] as string | null) ?? null,
+    ownerName: (row['owner_name'] as string | null) ?? null,
     tier: classifyTier(tierInput),
     score: leadScore({ ...tierInput, permitOpenDays: null, statusUnconfirmed: false }),
   };
