@@ -16,10 +16,16 @@ interface Env {
   ALLOWED_ORIGINS: string;
 }
 
-/** Only models this app actually uses. Anything else is rejected. */
+/**
+ * Only models this app actually uses. Anything else is rejected.
+ *
+ * gemini-2.5-flash / gemini-2.0-flash were retired for new callers as of
+ * 2026-09-01 -- confirmed live against the upstream API, which returned
+ * 404 "no longer available to new users... use models/gemini-3.6-flash".
+ * gemini-embedding-001 was verified still live the same day.
+ */
 const ALLOWED_MODELS = new Set([
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
+  'gemini-3.6-flash',
   'gemini-embedding-001',
 ]);
 

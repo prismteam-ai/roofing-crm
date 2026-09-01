@@ -13,3 +13,5 @@ dist-types/
 docs/PLAN.md
 test-fixtures/
 packages/*/dist/
+.wrangler-home/
+.wrangler/
