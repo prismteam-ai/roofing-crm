@@ -1,0 +1,50 @@
+name: Build and deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main, feat/assignment]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a deploy midway; a half-published site is worse than a stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --build
+      - run: npx vitest run
+      - run: npm run build
+        env:
+          VITE_PIPELINE_PAGES_URL: ${{ vars.PIPELINE_PAGES_URL }}
+          # No API key in the bundle: the browser talks to the Cloudflare Worker,
+          # which holds the key. Absent is fine - the agent falls back to its
+          # no-key deterministic mode.
+          VITE_AGENT_PROXY_URL: ${{ vars.AGENT_PROXY_URL }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

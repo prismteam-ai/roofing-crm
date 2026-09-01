@@ -1,0 +1,28 @@
+{
+  "name": "roofing-crm",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @roofing-crm/web",
+    "build": "npm run build --workspace @roofing-crm/web",
+    "typecheck": "tsc --build --force",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
+    "eslint": "^10.9.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.5",
+    "globals": "^17.12.0",
+    "playwright": "1.62.1",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^2.1.8"
+  }
+}

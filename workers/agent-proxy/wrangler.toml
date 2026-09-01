@@ -1,0 +1,10 @@
+name = "roofing-crm-agent"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# The Gemini key is set as an encrypted secret, never committed:
+#   wrangler secret put GEMINI_API_KEY
+#
+# ALLOWED_ORIGINS is public config, so it lives here.
+[vars]
+ALLOWED_ORIGINS = "https://apantovic.github.io"

@@ -1,0 +1,17 @@
+{
+  "name": "@roofing-crm/agent-proxy",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "secret": "wrangler secret put GEMINI_API_KEY"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "wrangler": "^3.99.0"
+  },
+  "dependencies": {
+    "typescript": "^7.0.2"
+  }
+}
