@@ -119,15 +119,16 @@ async function main() {
     page.on('pageerror', (e) => pageErrors.push(String(e)));
     page.on('console', (msg) => { if (msg.type() === 'error') pageErrors.push(msg.text()); });
 
-    // The basemap is real external tiles (Carto). Not what this script verifies,
-    // and real network chatter it generates can keep the page from ever going
-    // idle -- so serve a stub tile instead of hitting the network (aborting
-    // outright makes MapLibre retry noisily and pollutes pageerror capture).
+    // The basemap is real external tiles (OpenStreetMap). Not what this script
+    // verifies, and real network chatter it generates can keep the page from
+    // ever going idle -- so serve a stub tile instead of hitting the network
+    // (aborting outright makes MapLibre retry noisily and pollutes pageerror
+    // capture).
     const BLANK_PNG = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
       'base64',
     );
-    await page.route('https://*.basemaps.cartocdn.com/**', (route) =>
+    await page.route('https://*.tile.openstreetmap.org/**', (route) =>
       route.fulfill({ status: 200, contentType: 'image/png', body: BLANK_PNG }));
 
     console.error(`[verify] navigating to ${baseUrl}`);

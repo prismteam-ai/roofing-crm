@@ -17,3 +17,6 @@ packages/*/dist/
 .wrangler/
 test-results/
 playwright-report/
+# Demo video: uploaded to the PR description directly (GitHub's own asset
+# host), never committed -- keeps a multi-MB binary out of git history.
+demo/
