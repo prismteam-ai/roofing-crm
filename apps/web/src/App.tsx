@@ -14,6 +14,8 @@ import { DataStatus } from './components/DataStatus.js';
 import { CandidateList, type CandidatesState } from './components/CandidateList.js';
 import { DetailPanel } from './components/DetailPanel.js';
 import { Pipeline } from './components/Pipeline.js';
+import { AgentChat, type ChatMessage } from './components/AgentChat.js';
+import { answerQuestion, type AgentAnswer } from './lib/agent.js';
 
 const OWNER_STORAGE_KEY = 'roofing-crm:owner-name';
 
@@ -28,6 +30,8 @@ export function App() {
   const [selectedParcelId, setSelectedParcelId] = useState<string | null>(null);
   const [unlocatableOpenPermits, setUnlocatableOpenPermits] = useState<number | null>(null);
   const [leads, setLeads] = useState<CrmLead[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
   const [ownerName, setOwnerName] = useState<string>(
     () => (typeof localStorage !== 'undefined' && localStorage.getItem(OWNER_STORAGE_KEY)) || 'Alex',
   );
@@ -149,6 +153,34 @@ export function App() {
     setCenter({ lat: lead.lat, lon: lead.lon });
   }, []);
 
+  const handleSelectCitation = useCallback((parcelId: string, citationCenter: LatLon) => {
+    setView('leads');
+    setCenter(citationCenter);
+    setSelectedParcelId(parcelId);
+  }, []);
+
+  const handleAsk = useCallback((question: string) => {
+    if (dataset.status !== 'ready' || chatLoading) return;
+    const trimmed = question.trim();
+    if (!trimmed) return;
+    setChatMessages((prev) => [...prev, { id: `${Date.now()}_u`, role: 'user', text: trimmed }]);
+    setChatLoading(true);
+    void answerQuestion(trimmed, dataset.source, dataset.manifest)
+      .then((answer: AgentAnswer) => {
+        setChatMessages((prev) => [...prev, {
+          id: `${Date.now()}_a`, role: 'assistant', text: answer.text,
+          citations: answer.citations, usedLlm: answer.usedLlm, centerUsed: answer.centerUsed,
+        }]);
+      })
+      .catch((err: unknown) => {
+        setChatMessages((prev) => [...prev, {
+          id: `${Date.now()}_a`, role: 'assistant',
+          text: `Something went wrong answering that: ${err instanceof Error ? err.message : String(err)}`,
+        }]);
+      })
+      .finally(() => setChatLoading(false));
+  }, [dataset, chatLoading]);
+
   const selectedCandidate = selectedParcelId && candidates.status === 'ready'
     ? candidates.candidates.find((c) => c.parcelId === selectedParcelId) ?? null
     : null;
@@ -243,9 +275,16 @@ export function App() {
             onImport={handleImport}
             onViewOnMap={handleViewOnMap}
           />
+        ) : dataset.status === 'ready' ? (
+          <AgentChat
+            messages={chatMessages}
+            loading={chatLoading}
+            onAsk={handleAsk}
+            onSelectCitation={handleSelectCitation}
+          />
         ) : (
           <div className="pipeline">
-            <p className="muted">The natural-language agent lands in the next phase.</p>
+            <p className="muted">Waiting for the dataset before the agent can answer questions.</p>
           </div>
         )}
       </main>
