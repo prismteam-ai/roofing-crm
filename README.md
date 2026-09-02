@@ -1,46 +1,105 @@
-# Roofing CRM & Lead Identification UI
+# Roofing CRM — Seminole County, FL
 
-## Context
+A map for a roofing sales team to find work in Seminole County, Florida.
 
-Roofing companies need a practical CRM for finding and qualifying residential and commercial roofing leads in their service area. The immediate requirement is a map-based CRM that helps sales teams explore local properties, surface roofs that are aging or have stalled open permits, and turn those signals into actionable outreach opportunities.
+| | |
+| --- | --- |
+| **Live site** | https://d3jfjqgra0c58a.cloudfront.net |
+| **Data source** | [Seminole pipeline](https://github.com/prismteam-ai/oracle-property-intelligence-platform-pipeline-seminole-fl) |
+| **County** | Seminole County, FL (already selected) |
 
-Data gathering and ingestion pipelines are covered by a separate user story and are **out of scope** for this work. This story assumes property, permit, and related enrichment data are already available for the UI and agent to consume.
+## What it does
 
-## Description
+1. Pick a centre and a radius.
+2. See nearby properties that look like leads — older roofs, open permits, or both.
+3. Open a property for owner, permits, contractor, and BBB rating (when we have one).
+4. Save it as a lead and manage it in the pipeline.
+5. Ask the RAG agent a question about roofing opportunities in the area.
 
-Create a map-based roofing lead CRM that enables users to locate properties from their current GPS position or a pin drop on the map, set a search radius, and review candidate roofs that meet lead criteria—primarily roof age (for example, older than 15 years) and open roofing permits (especially permits that have remained open for many years).
+## Features
 
-The UI should present property and permit details, including contractor information and BBB rating scores where available. Users should also be able to query the platform in natural language through a RAG-backed agent to discover roofing opportunities (for example, “show me open roofing permits older than five years within five miles of [city xyz]”).
+| Feature | What you can do |
+| --- | --- |
+| Map & radius search | Set a centre and distance; browse pins and a candidate list side by side |
+| Lead filters | Narrow by roof age, permit status, and how long a permit has been open |
+| Ask the RAG agent | Type a question; see a briefing of retrieved properties, then the map and list match |
+| Property detail | See owner, value, permits, contractor, and BBB; save as a lead |
+| Lead pipeline | Filter saved leads by roof age, permit, and radius; update status, add notes, remove a lead |
+| Coming later | Placeholders for the rest of a roofing CRM (not built) |
 
-## Acceptance Criteria
-- Default the map and search experience to a particular county, with support for exploring properties in the user’s selected area.
-- Allow users to center property search on current GPS location and/or a pin dropped on the map.
-- Allow users to set a configurable search radius around the selected location.
-- Display properties within the radius that have roofs older than a configurable age threshold (default suggestion: 15 years).
-- Display properties within the radius that have open roofing permits, with emphasis on permits that have remained open for an extended period.
-- Show permit details in the UI, including permit status, age/open duration, contractor name, and BBB rating score when available.
-- Present a browsable list of matching roofing lead candidates derived from the map/radius filters.
-- Support creating and managing CRM lead records from identified properties and permits.
-- Provide a RAG-backed agent that answers natural-language queries about roofing opportunities using available property and permit data.
-- Keep data gathering, ingestion, and source-system integration out of scope; consume pre-existing/available datasets.
-- Show (disabled) sections on the CRM that would expand the product beyond the initial lead-identification workflow.
+### Map & radius search
 
-## Demo Transcript
-- Open the CRM centered on a particular county.
-- Drop a pin (or use GPS) and set a search radius.
-- Show roofs older than the age threshold (e.g., 15 years) within the radius.
-- Highlight properties with open roofing permits, prioritizing long-open permits.
-- Open a selected property/permit and review contractor details and BBB rating where available.
-- Convert one or more matches into CRM lead records.
-- Ask the RAG agent a natural-language query for roofing opportunities in the area and show relevant results.
-- Demonstrate filtering leads by roof age, permit status/open duration, and location radius.
-- Show disabled/placeholder sections for future CRM expansions beyond lead identification.
+| Control | Options |
+| --- | --- |
+| Centre | City or ZIP, coordinates, pin on the map, phone location |
+| Radius | Slider or number, 0.5–25 miles (orange circle on the map) |
+| Move the map | North / west / east / south |
+| Zoom | + / − or scroll wheel |
+| Select a property | Click a list row or a pin — they stay in sync |
 
-## Out of Scope
-- Property, permit, ownership, or enrichment data collection and ingestion pipelines (separate story).
-- Live BBB API integration beyond displaying scores already present in available data.
-- Actual outbound messaging to property owners (can be mocked or deferred).
+### Lead filters
 
-## Reference
-- [Soofi XYZ Team Kit](https://github.com/soofi-xyz/soofi-xyz-team-kit)
-- [Elephant Oracle Skills](https://github.com/elephant-xyz/skills)
+| Filter | Default / options |
+| --- | --- |
+| Roof age | 15 years and older (raise or lower) |
+| Permit status | Any history, no history, open, unresolved (still open) |
+| Open duration | How many years a permit has been open |
+| More | Extra filters and sort order |
+
+### Ask the RAG agent
+
+Type a question (or click an example). The agent:
+
+1. Turns the question into the same filters as the panel (place, roof age, open roofing, and so on).
+2. Retrieves the parcels that match — those rows are the only evidence it may use.
+3. Ranks them by meaning (permit wording, contractor, BBB) after the filters have already decided who is allowed.
+4. Writes a short briefing that names retrieved properties. It cannot invent a parcel.
+
+The map, filters, and candidate list move with the answer. Cited addresses appear under the briefing.
+
+The same question, on the same published snapshot, reuses the question embedding. A new county publish drops that cache so yesterday’s open permits are not ranked as today’s.
+
+Examples on the page:
+
+- Houses near Lake Mary with roofs over 20 years old
+- Open roofing permits stuck for more than 3 years in Oviedo
+
+### Property detail
+
+Shown on every candidate:
+
+- Address
+- Owner
+- Roof age
+- Value
+
+Shown when you open one:
+
+- Permits (type of work, dates, how long open, contractor)
+- BBB rating on the contractor, when we have one
+- Save as a lead
+
+### Lead pipeline
+
+A separate view for leads saved from the map:
+
+- Filter by roof age, permit status, how long a permit has been open, and distance from a city, ZIP, or pin
+- Update status
+- Add notes
+- Remove a lead
+
+### Coming later (not built)
+
+Listed in the app as placeholders so the rest of a roofing CRM is visible:
+
+- Estimates & proposals
+- Crew scheduling & routing
+- Contractor & BBB directory
+- Storm event overlays
+- Outreach campaigns
+- Documents & photos
+- Invoicing & payments
+- Reporting & analytics
+- Team & territories
+- Integrations
+- Settings & permissions
