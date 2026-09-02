@@ -1,0 +1,94 @@
+{
+  "runId": "a08ba375-b4fc-47f3-b05b-7a9e22717b27",
+  "startedAt": "2026-08-12T17:21:02.743Z",
+  "finishedAt": "2026-08-12T17:21:28.858Z",
+  "primaryCounty": "Chester",
+  "fallbacksAttempted": [],
+  "coverage": [
+    {
+      "dataset": "parcels",
+      "county": "Chester",
+      "isFallback": false,
+      "records": 2493,
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "limitations": "West Chester 5mi envelope, capped at 2500 PASDA rows (OBJECTID page, not a complete 5-mile census). INGEST_MODE=full for the county."
+    },
+    {
+      "dataset": "permits",
+      "county": "Chester",
+      "isFallback": false,
+      "records": 952,
+      "sourceUrl": "chesco-energov+act247-gis",
+      "limitations": "Harvested 952 real Chester County GIS permits (health well/sewage, Act 247 land-dev/subdivision, EnerGov PermitManagement). Municipal building/roofing UCC (Evolve / West Chester SmartGov) is account- or form-walled and was not synthesized. isRoofing is keyword-tagged only; most records are county health or planning cases."
+    },
+    {
+      "dataset": "ownership",
+      "county": "Chester",
+      "isFallback": false,
+      "records": 2484,
+      "sourceUrl": "PASDA parcel OWN*/ADDR*/DEED_REC_D"
+    },
+    {
+      "dataset": "contractors",
+      "county": "Chester",
+      "isFallback": false,
+      "records": 356,
+      "limitations": "BBB public bulk API not available; scores null unless harvested."
+    },
+    {
+      "dataset": "businesses",
+      "county": "Chester",
+      "isFallback": false,
+      "records": 89,
+      "limitations": "Sunbiz is Florida-only. PA uses commercial parcel owners."
+    },
+    {
+      "dataset": "coordinates",
+      "county": "Chester",
+      "isFallback": false,
+      "records": 2493
+    }
+  ],
+  "counts": {
+    "properties": 2493,
+    "permits": 952,
+    "contractors": 356,
+    "businesses": 89,
+    "rawPasdaFeatures": 2500
+  },
+  "ipfs": [
+    {
+      "artifact": "properties.json",
+      "cid": "QmR6Z5jckFCmVvDCPaopmSvzfdbr1KVmw6PVK5Game64WL"
+    },
+    {
+      "artifact": "permits.json",
+      "cid": "QmRG3gqkHjN9rhtekY4sb2mVmg4WHgwDxA4PgDMFYRREDv"
+    },
+    {
+      "artifact": "contractors.json",
+      "cid": "QmfBFipJJ53PXowV95JC8g3ddDEEf5NGLwryqMQdfpHf5o"
+    },
+    {
+      "artifact": "businesses.json",
+      "cid": "QmVmZ6CN3Gp9htMra4RKFZiaAgizZDe6BpJfNkSWVvAKjL"
+    }
+  ],
+  "duckdbPath": "data/duckdb/chester.duckdb",
+  "limitations": [
+    "Harvested 952 real Chester County GIS permits (health well/sewage, Act 247 land-dev/subdivision, EnerGov PermitManagement). Municipal building/roofing UCC (Evolve / West Chester SmartGov) is account- or form-walled and was not synthesized. isRoofing is keyword-tagged only; most records are county health or planning cases.",
+    "Year built not on PASDA parcel layer; roof age uses last roofing permit when present.",
+    "Sunbiz not applicable in Pennsylvania.",
+    "BBB scores require harvested seed; default null."
+  ],
+  "skillStages": [
+    "county-discovery",
+    "county-seed-data",
+    "county-appraisal-onboarding",
+    "validate-county-transform",
+    "county-permit-adapter",
+    "bbb-harvest",
+    "query-db-loading-matching",
+    "county-open-data-publish"
+  ]
+}

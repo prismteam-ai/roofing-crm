@@ -1,0 +1,4630 @@
+[
+  {
+    "contractorId": "becker-excavating-inc",
+    "name": "Becker Excavating Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.440Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "pevar-marc",
+    "name": "PEVAR, MARC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.440Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "bwmb-partners-gp",
+    "name": "BWMB PARTNERS GP",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.440Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "david-miller",
+    "name": "David Miller",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.440Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "william-lucas",
+    "name": "William Lucas",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kelly-voss",
+    "name": "Kelly Voss",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "michael-burkardt",
+    "name": "Michael Burkardt",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "john-miller",
+    "name": "John Miller",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mattia-james-megan",
+    "name": "MATTIA, JAMES & MEGAN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "celii-john-pat",
+    "name": "CELII, JOHN & PAT",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "zoba-robert-j-megan-j",
+    "name": "ZOBA, ROBERT J & MEGAN J",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "west-chester-university",
+    "name": "West Chester University",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lodge-james",
+    "name": "Lodge, James",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "chris-larsen",
+    "name": "Chris Larsen",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jason-kyler",
+    "name": "Jason  Kyler",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "thurman-randy-karen",
+    "name": "THURMAN, RANDY & KAREN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "varacchi-catharine",
+    "name": "Varacchi, Catharine",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jonathan-costello",
+    "name": "Jonathan Costello",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lora-gay",
+    "name": "Lora Gay",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "sullivan-jane-and-james",
+    "name": "SULLIVAN, JANE AND JAMES",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "percy-neall",
+    "name": "PERCY NEALL",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "northmark-building-llc",
+    "name": "Northmark Building LLC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "steve-zarrilli",
+    "name": "Steve Zarrilli",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "james-anderson",
+    "name": "JAMES ANDERSON",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "joines-edythe-d",
+    "name": "JOINES, EDYTHE D",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "tree-office-l-p",
+    "name": "Tree Office L.P.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "alison-quigley",
+    "name": "Alison Quigley",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "megill-construction-co",
+    "name": "MEGILL CONSTRUCTION CO",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "cmr-development-corp",
+    "name": "CMR Development Corp.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "antoinette-schorn",
+    "name": "Antoinette Schorn",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lehigh-hanson",
+    "name": "Lehigh Hanson",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mjrp-west-lincoln-trust",
+    "name": "MJRP West Lincoln Trust",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "walczak-chuck",
+    "name": "WALCZAK, CHUCK",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "gerald-pyne",
+    "name": "Gerald Pyne",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "toll-brothers-inc",
+    "name": "TOLL BROTHERS INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.441Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "tordone-fred",
+    "name": "Tordone, Fred",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "christina-lane-proctor",
+    "name": "Christina Lane Proctor",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "megill-construction-co",
+    "name": "Megill Construction Co",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "reynolds-thomas-j",
+    "name": "REYNOLDS, THOMAS J",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "frank-knight",
+    "name": "Frank Knight",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "charles-walczak",
+    "name": "CHARLES WALCZAK",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "matthew-pusey",
+    "name": "Matthew Pusey",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "quindlen-associates-inc",
+    "name": "Quindlen & Associates Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-bruce-designs",
+    "name": "ROBERT BRUCE DESIGNS",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "hanson-aggregates-east",
+    "name": "HANSON AGGREGATES EAST",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "phillipsville-assoc-inc-keystone-land-assoc",
+    "name": "Phillipsville Assoc Inc/Keystone Land Assoc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "schoenwalder-raymond-e-mr-mrs",
+    "name": "Schoenwalder, Raymond E.  Mr. & Mrs.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jeffrey-bryant",
+    "name": "Jeffrey Bryant",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "michael-fox",
+    "name": "Michael Fox",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "ellwood-tunnell",
+    "name": "Ellwood Tunnell",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "smith-tom-laver-suzanne",
+    "name": "SMITH, TOM & LAVER, SUZANNE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lenape-springs-inc",
+    "name": "Lenape Springs Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "sparo-thomas-v",
+    "name": "SPARO, THOMAS V.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "ccpss-sernyak-richard-s",
+    "name": "CCPSS/SERNYAK, RICHARD S",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.442Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "nicole-henwood",
+    "name": "Nicole Henwood",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "byle-michael",
+    "name": "BYLE, MICHAEL",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "guy-buttaro",
+    "name": "Guy Buttaro",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "david-macmaih",
+    "name": "David MacMaih",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mclaughlin-paul",
+    "name": "McLaughlin, Paul",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "deborah-mack",
+    "name": "Deborah Mack",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "simmons-robert-s",
+    "name": "SIMMONS, ROBERT S",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "c-c-builders-inc",
+    "name": "C&C BUILDERS INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "richard-gates",
+    "name": "Richard  Gates",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "myrna-monck",
+    "name": "Myrna Monck",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jakob-busch-peterson",
+    "name": "Jakob Busch-Peterson",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "johnston-larry-d-ann-l",
+    "name": "Johnston, Larry D & Ann L",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-falkenstein",
+    "name": "Robert Falkenstein",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "town-and-country-dev-assoc",
+    "name": "Town and Country Dev Assoc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "richard-and-janice-oakey",
+    "name": "Richard and Janice Oakey",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "becker-excavating-inc",
+    "name": "BECKER EXCAVATING INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "strauss-gwen-w",
+    "name": "STRAUSS, GWEN W",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "audrey-frank",
+    "name": "Audrey Frank",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "advani-bhagwan-brandywine-motel",
+    "name": "ADVANI, BHAGWAN/BRANDYWINE MOTEL",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "joseph-curtin",
+    "name": "Joseph Curtin",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "greenhill-station-inc",
+    "name": "Greenhill Station Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dambro-anthony",
+    "name": "Dambro, Anthony",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "coughlin-michael",
+    "name": "COUGHLIN, MICHAEL",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "corestate-bank-exec-estate-helen-m-coughlin-deceased",
+    "name": "CORESTATE BANK/EXEC. ESTATE HELEN M. COUGHLIN, DECEASED",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "hartman-harold-mrs",
+    "name": "Hartman, Harold (Mrs)",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "daniel-r-phillips",
+    "name": "DANIEL R. PHILLIPS",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "eric-beckman",
+    "name": "Eric Beckman",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "george-stroup",
+    "name": "George Stroup",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mark-landon",
+    "name": "Mark Landon",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "machikas-george-machikas-mike",
+    "name": "MACHIKAS, GEORGE & MACHIKAS, MIKE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "buttaro-guy-j-tricia-m",
+    "name": "BUTTARO, GUY J & TRICIA M",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "schantz-allen",
+    "name": "SCHANTZ, ALLEN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "chester-county-chamber-of-business-industry",
+    "name": "CHESTER COUNTY CHAMBER OF BUSINESS & INDUSTRY",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "patricia-phifer",
+    "name": "Patricia Phifer",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-harrison",
+    "name": "Robert Harrison",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lucas-william",
+    "name": "LUCAS, WILLIAM",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "todd-guay",
+    "name": "Todd Guay",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "david-macmain",
+    "name": "David MacMain",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "whitford-country-club",
+    "name": "Whitford Country Club",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "steven-a-papa",
+    "name": "STEVEN A PAPA",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "national-mail-graphics",
+    "name": "National Mail Graphics",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jeff-hunt",
+    "name": "Jeff Hunt",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "percy-neall",
+    "name": "Percy Neall",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "bentley-by-design",
+    "name": "Bentley By Design",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dominic-greco",
+    "name": "DOMINIC GRECO",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "larry-mcclain",
+    "name": "Larry McClain",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "daniel-winkelman",
+    "name": "Daniel Winkelman",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.443Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "james-white-jms-land-co",
+    "name": "JAMES WHITE/JMS LAND CO",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "estate-of-vena-m-kulp",
+    "name": "ESTATE OF VENA M. KULP",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "bancroft-homes",
+    "name": "BANCROFT HOMES",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "h-b-spackman-est",
+    "name": "H B Spackman EST",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "scott-mcanally",
+    "name": "Scott McAnally",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "abrar-solatch",
+    "name": "Abrar Solatch",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "quindlen-associates-inc",
+    "name": "Quindlen & Associates, Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "paul-a-kotasenski",
+    "name": "PAUL  A  KOTASENSKI",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "marberger-peter-j",
+    "name": "Marberger, Peter J.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "friedman-ben",
+    "name": "FRIEDMAN, BEN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "boisveit-marie-b",
+    "name": "BOISVEIT, MARIE B",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dance-mark",
+    "name": "Dance,  Mark",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "maples-vincent-mary-lee",
+    "name": "MAPLES, VINCENT & MARY LEE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lawrence-maulo-jr",
+    "name": "LAWRENCE MAULO JR",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "west-development-company-inc",
+    "name": "West Development Company Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "united-star-all-centers-inc",
+    "name": "UNITED STAR-ALL CENTERS INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "megill-development-co",
+    "name": "MEGILL DEVELOPMENT CO",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "tom-galbally",
+    "name": "Tom Galbally",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-well",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lucas-william-c",
+    "name": "LUCAS, WILLIAM C",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "richard-delargey",
+    "name": "Richard Delargey",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "shenandoah-farms-inc",
+    "name": "SHENANDOAH FARMS INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "williams-david-j-susan-c",
+    "name": "WILLIAMS, DAVID J & SUSAN C",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kenneth-yancey",
+    "name": "Kenneth Yancey",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "john-abernethy",
+    "name": "John Abernethy",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "shaoxiang-wang",
+    "name": "Shaoxiang Wang",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "bentley-by-design",
+    "name": "BENTLEY BY DESIGN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "tullamore-hoa-john-jaenisch",
+    "name": "Tullamore HOA, John Jaenisch",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "evans-mill-environmental-llc",
+    "name": "Evans Mill Environmental LLC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "white-denise-m",
+    "name": "WHITE, DENISE M",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "novello-a-joseph-elaine",
+    "name": "NOVELLO, A JOSEPH & ELAINE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "charles-and-nancy-wojciehowski",
+    "name": "Charles and Nancy Wojciehowski",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "edwin-watson",
+    "name": "Edwin Watson",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "cavalier-homes-llc",
+    "name": "Cavalier Homes LLC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "oliveira-james",
+    "name": "OLIVEIRA, JAMES",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "claffy-joseph-f",
+    "name": "CLAFFY, JOSEPH F",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "schroer-douglas-d",
+    "name": "SCHROER, DOUGLAS D",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dambro-anthony-b",
+    "name": "DAMBRO, ANTHONY B",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "vermeil-david-d-janet-m",
+    "name": "Vermeil, David D. & Janet M.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "pratt-ken",
+    "name": "PRATT, KEN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "esther-smiler",
+    "name": "Esther Smiler",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "donato-susan-l",
+    "name": "Donato, Susan L",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jaclyn-ciliberti",
+    "name": "Jaclyn Ciliberti",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mineo-randall-a",
+    "name": "MINEO, RANDALL A",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "helene-britt",
+    "name": "Helene Britt",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "timothy-knipe",
+    "name": "Timothy Knipe",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "turnkey-management-inc-russell-stump",
+    "name": "TURNKEY MANAGEMENT INC/RUSSELL STUMP",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kirchart-donald-l-bonita-r",
+    "name": "KIRCHART, DONALD L & BONITA R",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "edythe-joines",
+    "name": "Edythe Joines",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-zoba",
+    "name": "Robert Zoba",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "shannon-marcoon",
+    "name": "Shannon Marcoon",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "nathan-shmukler",
+    "name": "Nathan  Shmukler",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "michael-and-maria-kindergan",
+    "name": "Michael and Maria Kindergan",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "richard-waltz",
+    "name": "Richard Waltz",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jmw-land-co-inc-james-white",
+    "name": "JMW LAND CO INC/JAMES WHITE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.444Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "donald-murphy",
+    "name": "Donald Murphy",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "ashbridge-farm-associates-c-o-delchester-group-inc",
+    "name": "ASHBRIDGE FARM ASSOCIATES C/O DELCHESTER GROUP INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "michelle-hanna",
+    "name": "Michelle Hanna",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "varacchi-gregory-catharine",
+    "name": "VARACCHI, GREGORY & CATHARINE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "himes-robert",
+    "name": "HIMES, ROBERT",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "celii-john",
+    "name": "CELII, JOHN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "phillips-daniel",
+    "name": "PHILLIPS, DANIEL",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "alexander-rizzer",
+    "name": "Alexander Rizzer",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "parker-david",
+    "name": "PARKER, DAVID",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "bond-david-l-jr",
+    "name": "BOND, DAVID L JR",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "garland-mark",
+    "name": "GARLAND, MARK",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "neall-percy",
+    "name": "Neall, Percy",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "barbara-mckinnon",
+    "name": "Barbara McKinnon",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lagoy-stephen-p",
+    "name": "Lagoy, Stephen P.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kretzschmar-deanna-l",
+    "name": "KRETZSCHMAR, DEANNA L",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kulp-william-edward-ii-poa-for-vena-m-kulp",
+    "name": "KULP, WILLIAM EDWARD II/POA FOR VENA M KULP",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "john-schaeffer",
+    "name": "John Schaeffer",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "pauley-theodore-r-elizabeth-d",
+    "name": "Pauley, Theodore R. & Elizabeth D.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "denning-henry-f",
+    "name": "Denning, Henry F",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "joseph-claffy",
+    "name": "Joseph Claffy",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lombardo-william-j",
+    "name": "LOMBARDO, WILLIAM J",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kathryn-mallalieu",
+    "name": "Kathryn Mallalieu",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "edward-baron",
+    "name": "Edward Baron",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "cendant-mobility-c-0-mike-spillane",
+    "name": "CENDANT MOBILITY C/0 MIKE SPILLANE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jenkins-donna-m",
+    "name": "JENKINS, DONNA M",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "wojciehowski-charles-nancy",
+    "name": "WOJCIEHOWSKI, CHARLES & NANCY",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "william-peake",
+    "name": "William Peake",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "ben-ruf",
+    "name": "Ben Ruf",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "peter-riondet",
+    "name": "Peter Riondet",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "james-t-horn",
+    "name": "James T Horn",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "walter-kosachuk",
+    "name": "Walter Kosachuk",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "gina-and-bill-hunt",
+    "name": "Gina and Bill Hunt",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "witiak-daniel",
+    "name": "WITIAK, DANIEL",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "brian-merkel",
+    "name": "Brian Merkel",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "phiel-eleanor-c-o-jack-phiel",
+    "name": "PHIEL, ELEANOR C/O JACK PHIEL",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mark-behm",
+    "name": "Mark Behm",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "fisher-anne-l",
+    "name": "FISHER, ANNE L",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "phillipsville-assoc-keystone-land-assoc-inc",
+    "name": "Phillipsville Assoc./Keystone Land Assoc Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-bruce-development-group",
+    "name": "ROBERT BRUCE DEVELOPMENT GROUP",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "arntessoni-gary-arnell",
+    "name": "ARNTESSONI, GARY & ARNELL",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "bainbridge-homes-inc",
+    "name": "Bainbridge Homes Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "clocal-lp",
+    "name": "Clocal LP",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "stephanie-anctil",
+    "name": "Stephanie Anctil",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "wilder-gordon-h-diana-o",
+    "name": "WILDER, GORDON H & DIANA O",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "pete-d-melchiorre",
+    "name": "PETE D MELCHIORRE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "worth-gayle-m",
+    "name": "Worth, Gayle M",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "georgina-and-james-dean",
+    "name": "Georgina and James Dean",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "joseph-lynn-evans",
+    "name": "Joseph & Lynn Evans",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "tordone-alfred",
+    "name": "TORDONE, ALFRED",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "megill-construction-co-inc",
+    "name": "Megill Construction Co Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "urzillo-tom",
+    "name": "URZILLO, TOM",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "brendan-martin",
+    "name": "Brendan Martin",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "greco-dominic",
+    "name": "GRECO, DOMINIC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "novak-emese",
+    "name": "NOVAK, EMESE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "naylor-francis-h-iv",
+    "name": "NAYLOR, FRANCIS H IV",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mccarrin-john",
+    "name": "MCCARRIN, JOHN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "childrens-country-week-association",
+    "name": "CHILDRENS COUNTRY WEEK ASSOCIATION",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "allen-james-churchman",
+    "name": "Allen James Churchman",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dawn-murphy",
+    "name": "Dawn Murphy",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "shope-james-m-karen-l",
+    "name": "SHOPE, JAMES M & KAREN L",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "renehan-building-group-inc",
+    "name": "Renehan Building Group Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-warrington",
+    "name": "Robert Warrington",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.445Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "quindlen-associates-inc",
+    "name": "Quindlen & Associates, Inc.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "michael-hamer",
+    "name": "Michael Hamer",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "nittany-row-properties",
+    "name": "Nittany Row Properties",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "caufield-william-m-sharon-l",
+    "name": "CAUFIELD, WILLIAM M & SHARON L",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "steve-harkins",
+    "name": "Steve Harkins",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "neall-percy",
+    "name": "NEALL, PERCY",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "sandra-shaffer",
+    "name": "Sandra Shaffer",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "david-parker",
+    "name": "David Parker",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "hellings-land-development-llc",
+    "name": "Hellings Land Development , LLC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "langdale-joyce",
+    "name": "LANGDALE, JOYCE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jason-reiser",
+    "name": "Jason Reiser",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "serum-james-marilyn",
+    "name": "SERUM, JAMES & MARILYN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "sebastian-anderle",
+    "name": "Sebastian Anderle",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jane-wellbrock",
+    "name": "Jane Wellbrock",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "roland-annan",
+    "name": "Roland Annan",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "pevar-mark-d",
+    "name": "PEVAR, MARK D",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "cook-paul-helen",
+    "name": "COOK, PAUL & HELEN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "tobia-william-kathleen",
+    "name": "TOBIA, WILLIAM & KATHLEEN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "reynolds-thomas-s",
+    "name": "REYNOLDS, THOMAS S",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "miller-eric-r",
+    "name": "Miller, Eric R",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "berlin-construction-co-inc",
+    "name": "BERLIN CONSTRUCTION CO INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "formwalt-william-h",
+    "name": "FORMWALT, WILLIAM H",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "landpad",
+    "name": "LandPad",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "phiel-s-louise",
+    "name": "Phiel, S. Louise",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "andersson-james-margery",
+    "name": "ANDERSSON, JAMES & MARGERY",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "christopher-schaffer",
+    "name": "Christopher Schaffer",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mullray-builders-inc",
+    "name": "Mullray Builders Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-and-donna-lockhart",
+    "name": "Robert and Donna Lockhart",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "hallowell-construction",
+    "name": "HALLOWELL CONSTRUCTION",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "celii-john-jr-patricia-c",
+    "name": "Celii, John Jr. & Patricia C",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dolak-george-sharon",
+    "name": "Dolak, George & Sharon",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "zultewicz-james",
+    "name": "ZULTEWICZ, JAMES",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "wood-shannon-nancy",
+    "name": "Wood, Shannon & Nancy",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "sloan-homes",
+    "name": "Sloan Homes",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "joseph-and-nancy-walsh",
+    "name": "Joseph and Nancy Walsh",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lisa-carraway",
+    "name": "Lisa Carraway",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "williams-john-g",
+    "name": "WILLIAMS, JOHN G",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "permar-richards",
+    "name": "Permar Richards",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dominic-patrone",
+    "name": "Dominic Patrone",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "wylie-samuel-j",
+    "name": "WYLIE, SAMUEL J",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "selke-gregory-h",
+    "name": "SELKE, GREGORY H",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "patterson-preferred-properties-llc",
+    "name": "Patterson Preferred Properties LLC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "carole-ng",
+    "name": "Carole Ng",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lisa-ann-ciach",
+    "name": "Lisa Ann Ciach",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "gilbert-raymond",
+    "name": "GILBERT, RAYMOND",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jackie-ohair",
+    "name": "JACKIE OHAIR",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "charles-pollack",
+    "name": "Charles Pollack",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "alvin-dizon",
+    "name": "Alvin Dizon",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "perna-brothers-builders-inc",
+    "name": "PERNA BROTHERS BUILDERS INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "rouse-chamberlin-ltd",
+    "name": "Rouse Chamberlin LTD",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "ccpss-inc-richard-s-sernyak",
+    "name": "CCPSS, Inc/Richard S Sernyak",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "judy-reilly",
+    "name": "Judy Reilly",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.446Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "gretchen-irwin",
+    "name": "Gretchen Irwin",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "diana-judeikis",
+    "name": "Diana Judeikis",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dennis-harbison",
+    "name": "Dennis Harbison",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "radulski-walter-b-barbara-l",
+    "name": "Radulski, Walter B & Barbara L",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "john-jaenisch",
+    "name": "John Jaenisch",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jeffrey-thompson",
+    "name": "Jeffrey Thompson",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "anthony-dambro",
+    "name": "Anthony  Dambro",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jeffrey-lang",
+    "name": "Jeffrey Lang",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "hildreth-james-r-donna-gregory",
+    "name": "HILDRETH, JAMES R & DONNA GREGORY",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "megill-construcion-co",
+    "name": "MEGILL CONSTRUCION CO",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "john-kenworthy",
+    "name": "John Kenworthy",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "richard-lynch",
+    "name": "Richard  Lynch",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "gary-vidmer",
+    "name": "Gary Vidmer",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "richard-webster",
+    "name": "Richard Webster",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "steve-temple",
+    "name": "Steve Temple",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "hineman-martin-deborah",
+    "name": "HINEMAN, MARTIN & DEBORAH",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kuney-lynn-l-deborah-a",
+    "name": "Kuney, Lynn L & Deborah A",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kiesel-judith-e",
+    "name": "KIESEL, JUDITH E",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lawrence-donald-j",
+    "name": "LAWRENCE DONALD J",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "halberstadt-kathryn",
+    "name": "HALBERSTADT, KATHRYN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-joseph-properties-inc",
+    "name": "ROBERT JOSEPH PROPERTIES INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "broadbrooks-richard-c",
+    "name": "BROADBROOKS, RICHARD C.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mtta-properties-llc",
+    "name": "MTTA Properties LLC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "blanton-jeffrey-s",
+    "name": "BLANTON, JEFFREY S",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mark-malone",
+    "name": "Mark Malone",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jennifer-and-scott-boorse",
+    "name": "Jennifer and Scott Boorse",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "stubbs-paul-a-madelyn-h",
+    "name": "STUBBS, PAUL A & MADELYN H",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "david-dimauro",
+    "name": "David DiMauro",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "scott-mcnally",
+    "name": "Scott McNally",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "suzanne-hamilton",
+    "name": "Suzanne Hamilton",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "smith-thomas-r-lauer-suzanne",
+    "name": "SMITH, THOMAS R & LAUER, SUZANNE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "william-wolfgang",
+    "name": "William Wolfgang",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "robert-bruce-design-group",
+    "name": "ROBERT BRUCE DESIGN GROUP",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "john-and-susan-caldwell",
+    "name": "John and Susan Caldwell",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "keith-petrosky",
+    "name": "Keith Petrosky",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kathy-dipeso",
+    "name": "Kathy Dipeso",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "stanley-patricia-laskowski",
+    "name": "Stanley & Patricia Laskowski",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "town-and-country-development-associates",
+    "name": "Town and Country Development Associates",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "walton-charles-r",
+    "name": "WALTON, CHARLES R",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "sumser-f-lance",
+    "name": "SUMSER, F LANCE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "padgett-keith-rebecca",
+    "name": "PADGETT, KEITH & REBECCA",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "christopher-lyle-and-emily-lanigan",
+    "name": "Christopher Lyle and Emily Lanigan",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "east-bradford-township",
+    "name": "EAST BRADFORD TOWNSHIP",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "john-thompson",
+    "name": "John Thompson",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "vinnacombe-john",
+    "name": "VINNACOMBE, JOHN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "read-david-h-marilyn-m",
+    "name": "READ, DAVID H & MARILYN M",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "colburn-john",
+    "name": "Colburn, John",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "wilson-carolyn-h",
+    "name": "WILSON, CAROLYN H",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "bartholomew-robert-c-david-t-bartholomew-guardian",
+    "name": "BARTHOLOMEW, ROBERT C /DAVID T BARTHOLOMEW- GUARDIAN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lance-shortt",
+    "name": "Lance Shortt",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "john-ferry",
+    "name": "John Ferry",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "boxwood-investments-llc",
+    "name": "Boxwood Investments LLC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "richard-devirgilio",
+    "name": "Richard DeVirgilio",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "michael-elizabeth-nowoswiat",
+    "name": "Michael & Elizabeth Nowoswiat",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.447Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "poteat-john-warner-myrta",
+    "name": "POTEAT, JOHN & WARNER, MYRTA",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "accolade-properties-inc",
+    "name": "Accolade Properties Inc.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "barbara-wroten",
+    "name": "Barbara Wroten",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "bb-t-branch-banking-trust",
+    "name": "BB&T (Branch Banking & Trust)",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lefebvre-william-jennifer",
+    "name": "LEFEBVRE, WILLIAM & JENNIFER",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "norman-nabhan",
+    "name": "Norman Nabhan",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "mayer-marguerite",
+    "name": "MAYER, MARGUERITE",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "anthony-dambro",
+    "name": "Anthony Dambro",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jason-duplissis",
+    "name": "Jason Duplissis",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "joseph-mcfalls",
+    "name": "Joseph McFalls",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "chadwick-christopher-c",
+    "name": "CHADWICK, CHRISTOPHER C",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "byerly-margaret-david",
+    "name": "BYERLY, MARGARET & DAVID",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "devine-george-c",
+    "name": "DEVINE, GEORGE C",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "domenick-gerald",
+    "name": "DOMENICK, GERALD",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "peter-domeika",
+    "name": "Peter Domeika",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "cochran-norman-jr-veronica",
+    "name": "COCHRAN, NORMAN JR & VERONICA",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "drabing-marjorie-f",
+    "name": "DRABING, MARJORIE F",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "c-m-r-development-corp",
+    "name": "C.M.R. Development Corp.",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "william-deborah-mcanally",
+    "name": "William & Deborah McAnally",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "dance-kristin-foster",
+    "name": "Dance, Kristin Foster",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "scc-homes-inc",
+    "name": "SCC Homes Inc",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "west-development-co",
+    "name": "WEST DEVELOPMENT CO",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "collins-john",
+    "name": "COLLINS, JOHN",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "kenneth-kimmeldorf",
+    "name": "Kenneth Kimmeldorf",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "james-clymer",
+    "name": "James Clymer",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "harris-arthur-c-stewart-lesley",
+    "name": "HARRIS, ARTHUR C & STEWART, LESLEY",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "lal-amrit",
+    "name": "LAL, AMRIT",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "becker-buiding-enterprises-inc",
+    "name": "BECKER BUIDING ENTERPRISES INC",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "james-cox",
+    "name": "James Cox",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "james-schroeder",
+    "name": "James Schroeder",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "walker-effie-a",
+    "name": "WALKER, EFFIE A",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "myron-philpott",
+    "name": "Myron Philpott",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  },
+  {
+    "contractorId": "jarrett-william-s",
+    "name": "Jarrett, William S",
+    "bbbScore": null,
+    "bbbRating": null,
+    "provenance": {
+      "sourceId": "chesco-energov-sewage",
+      "sourceUrl": "https://gisprodops.chesco.org/server/rest/services/EnerGov_Services/EnerGov_Data_D_CL2/MapServer/12",
+      "collectedAt": "2026-08-12T17:21:22.448Z",
+      "county": "Chester",
+      "notes": "Chester County Health Department EnerGov GIS. Real well/sewage permits with UPI. Not municipal building/roofing UCC."
+    }
+  }
+]

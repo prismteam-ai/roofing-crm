@@ -1,0 +1,14 @@
+{
+  "name": "roofing-crm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve apps/web/public -l 4173",
+    "test:e2e": "playwright test",
+    "demo:record": "node scripts/record-demo.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0"
+  }
+}

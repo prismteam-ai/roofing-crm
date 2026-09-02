@@ -1,0 +1,1248 @@
+[
+  {
+    "businessId": "crest-exton-llc",
+    "name": "CREST EXTON LLC",
+    "address": "238 CREST AV",
+    "zip": "19082",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "rudra-rentals-llc",
+    "name": "RUDRA RENTALS LLC",
+    "address": "131 N SHIP RD",
+    "zip": "19341",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "ccida",
+    "name": "CCIDA",
+    "address": "122 SUMMIT DR",
+    "zip": "19465",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "exton-pa-coffee-llc",
+    "name": "EXTON PA COFFEE LLC",
+    "address": "300 E LINCOLN HW",
+    "zip": "48334",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "suhoskey-craig-suhoskey-megan-j",
+    "name": "SUHOSKEY CRAIG / SUHOSKEY MEGAN J",
+    "address": "322 E LINCOLN HW",
+    "zip": "19335",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "springdale-properties-llc",
+    "name": "SPRINGDALE PROPERTIES LLC",
+    "address": "710 SPRINGDALE DR",
+    "zip": "19341",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "valley-investment-group-viii-partnership",
+    "name": "VALLEY INVESTMENT / GROUP VIII PARTNERSHIP",
+    "address": "926 SPRINGDALE DR",
+    "zip": "19355",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "johnson-matthey-inc",
+    "name": "JOHNSON MATTHEY INC",
+    "address": "1401 KING RD",
+    "zip": "19087",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "tree-office-lp",
+    "name": "TREE OFFICE LP",
+    "address": "1442 PHOENIXVILLE PK",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "downingtown-hospitality-llc",
+    "name": "DOWNINGTOWN HOSPITALITY LLC",
+    "address": "975 E LANCASTER AV",
+    "zip": "21046",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "triangle-property-investors-llc",
+    "name": "TRIANGLE PROPERTY INVESTORS LLC",
+    "address": "1101 E LANCASTER AV",
+    "zip": "19003",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "bartlett-realty-co-inc",
+    "name": "BARTLETT REALTY CO INC",
+    "address": "1480 PHOENIXVILLE PK",
+    "zip": "06905",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "aline-real-estate-llc",
+    "name": "ALINE REAL ESTATE LLC",
+    "address": "12 MYSTIC LA",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "mandel-sean-b-mia-l",
+    "name": "MANDEL SEAN B & / MIA L",
+    "address": "6 MYSTIC LA",
+    "zip": "19355",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "home-depot-usa-inc",
+    "name": "HOME DEPOT USA INC",
+    "address": "690 LANCASTER AV",
+    "zip": "30348",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "immaculata-college",
+    "name": "IMMACULATA COLLEGE",
+    "address": "60 SPROUL RD",
+    "zip": "19345",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "hashem-christopher-j",
+    "name": "HASHEM CHRISTOPHER J",
+    "address": "630 LANCASTER AV",
+    "zip": "19355",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "anz-spe-great-valley-llc",
+    "name": "ANZ SPE GREAT VALLEY LLC",
+    "address": "707 LANCASTER AV",
+    "zip": "19355",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "malvern-institute-for-psychiatric-psychiatric-alcoholics-studies",
+    "name": "MALVERN INSTITUTE FOR PSYCHIATRIC / PSYCHIATRIC & ALCOHOLICS STUDIES",
+    "address": "940 KING RD",
+    "zip": "19355",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "remed-realty-lp",
+    "name": "REMED REALTY LP",
+    "address": "323 PAOLI PK",
+    "zip": "19301",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.117Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "chesco-real-estate-llc",
+    "name": "CHESCO REAL ESTATE LLC",
+    "address": "41-8-87",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.118Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "tf-properties-exton-llc",
+    "name": "TF PROPERTIES EXTON LLC",
+    "address": "606 JEFFERS CI",
+    "zip": "19426",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.118Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "gomez-wilfred-e-gomez-connie-l",
+    "name": "GOMEZ WILFRED E / GOMEZ CONNIE L",
+    "address": "250 KING RD",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.118Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "rpc-downingtown-321-llc",
+    "name": "RPC DOWNINGTOWN 321 LLC",
+    "address": "321 W UWCHLAN AV",
+    "zip": "75201",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.118Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "viner-family-realty-llc",
+    "name": "VINER FAMILY REALTY LLC",
+    "address": "302 NEW MILL LA",
+    "zip": "19063",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.118Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "bradford-hills-quarries-inc",
+    "name": "BRADFORD HILLS QUARRIES INC",
+    "address": "1100 BOOT RD",
+    "zip": "75062",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.119Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "305-mhp-lp",
+    "name": "305 MHP LP",
+    "address": "305 W UWCHLAN AV",
+    "zip": "19355",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.119Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "bradford-hills-quarrys-inc",
+    "name": "BRADFORD HILLS QUARRYS INC",
+    "address": "499 QUARRY RD",
+    "zip": "75062",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.119Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "jennings-george-p-martina-bradley-michael",
+    "name": "JENNINGS GEORGE P & MARTINA / BRADLEY MICHAEL",
+    "address": "300 OLD MILL LA",
+    "zip": "19341",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.119Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "solid-oak-properties-llc",
+    "name": "SOLID OAK PROPERTIES LLC",
+    "address": "100 WINSTON LA",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.119Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "420-clovermill-llc",
+    "name": "420 CLOVERMILL LLC",
+    "address": "420 CLOVER MILL RD",
+    "zip": "19085",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.119Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "g-i-x-gp4-oaklands-llc",
+    "name": "G&I X/GP4 OAKLANDS LLC",
+    "address": "436 CREAMERY WY",
+    "zip": "10017",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.120Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "mcbrearty-john-j",
+    "name": "MCBREARTY JOHN J",
+    "address": "20 HAGERTY BL STE 4",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.120Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "mcnabb-properties-llc",
+    "name": "MCNABB PROPERTIES LLC",
+    "address": "281 S WHITFORD RD",
+    "zip": "19425",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.120Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "james-hance-ct-exton-pa-llc",
+    "name": "JAMES HANCE CT EXTON PA LLC",
+    "address": "523 JAMES HANCE CT",
+    "zip": "14607",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.120Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "lowes-home-centers-inc",
+    "name": "LOWES HOME CENTERS INC",
+    "address": "1250 CORNERSTONE BL",
+    "zip": "28117",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.120Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "eske-development-llc",
+    "name": "ESKE DEVELOPMENT LLC",
+    "address": "103 ARRANDALE BL",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.120Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "paramount-at-exton-llc",
+    "name": "PARAMOUNT AT EXTON  LLC",
+    "address": "432 W LINCOLN HW",
+    "zip": "08701",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.120Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "mc-exton-llc-jc-exton-llc",
+    "name": "MC EXTON LLC / JC EXTON LLC",
+    "address": "110 W LINCOLN HW",
+    "zip": "08701",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.120Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "fox-run-estates-2-llc",
+    "name": "FOX RUN ESTATES 2 LLC",
+    "address": "1314 WEST CHESTER PK",
+    "zip": "19073",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.121Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "aharonian-edward-baniewicz-esther",
+    "name": "AHARONIAN EDWARD / BANIEWICZ ESTHER",
+    "address": "1306 WEST CHESTER PK",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.121Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "diehl-limited-partnership",
+    "name": "DIEHL LIMITED PARTNERSHIP",
+    "address": "1238 WEST CHESTER PK",
+    "zip": "19082",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "campbell-william-j-dorothy-h-campbell-susan-l",
+    "name": "CAMPBELL WILLIAM J & DOROTHY H / CAMPBELL SUSAN L",
+    "address": "1112 POTTSTOWN PK",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "dimattia-alex-nancy",
+    "name": "DIMATTIA ALEX & / NANCY",
+    "address": "502 S BRADFORD AV",
+    "zip": "19355",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "bcw-properties-llc",
+    "name": "BCW PROPERTIES LLC",
+    "address": "891 S MATLACK ST",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "bt-carter-drive-llc",
+    "name": "BT CARTER DRIVE LLC",
+    "address": "205 CARTER DR",
+    "zip": "19025",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "phila-electric-co",
+    "name": "PHILA ELECTRIC CO",
+    "address": "895 S BOLMAR ST",
+    "zip": "19103",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "twrm-properties-llc",
+    "name": "TWRM PROPERTIES LLC",
+    "address": "701 S FRANKLIN ST",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "craig-scott-partnership",
+    "name": "CRAIG SCOTT PARTNERSHIP",
+    "address": "710 AUTOPARK BL",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "apb-realty-associates-lp",
+    "name": "APB REALTY ASSOCIATES LP",
+    "address": "705 AUTOPARK BL",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "sartomer-usa-llc",
+    "name": "SARTOMER USA LLC",
+    "address": "600 S BOLMAR ST",
+    "zip": "78701",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "611-e-nield-street-llc",
+    "name": "611 E NIELD STREET LLC",
+    "address": "640 E NIELDS ST",
+    "zip": "19355",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "600-westtown-associates-llc",
+    "name": "600 WESTTOWN ASSOCIATES LLC",
+    "address": "600 WESTTOWN RD",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.122Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "jas-real-estate-holdings-llc",
+    "name": "JAS REAL ESTATE HOLDINGS LLC",
+    "address": "739 E NIELDS ST",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "delphais-alice-l",
+    "name": "DELPHAIS ALICE L",
+    "address": "427 S BOLMAR ST",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "howard-business-park-associates-llc",
+    "name": "HOWARD BUSINESS PARK ASSOCIATES LLC",
+    "address": "315 WESTTOWN RD STE 10",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "young-emmett-w-jr-susan-j",
+    "name": "YOUNG EMMETT W JR & / SUSAN J",
+    "address": "111 S BOLMAR ST",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "levin-irv-levin-phyllis",
+    "name": "LEVIN IRV / LEVIN PHYLLIS",
+    "address": "700 E GAY ST",
+    "zip": "19703",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "wahbe-properties-llc",
+    "name": "WAHBE PROPERTIES LLC",
+    "address": "812 E MARKET ST",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "acero-holdings-llc",
+    "name": "ACERO HOLDINGS LLC",
+    "address": "1351 PAOLI PK",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "synthes-usa-hq-inc",
+    "name": "SYNTHES USA HQ INC",
+    "address": "1310 GOSHEN PW",
+    "zip": "08560",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "sunoco-llc",
+    "name": "SUNOCO LLC",
+    "address": "1431 PAOLI PK",
+    "zip": "75087",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "willowbrook-partners-lp",
+    "name": "WILLOWBROOK PARTNERS LP",
+    "address": "1380 ENTERPRISE DR",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "1304-goshen-parkway-llc",
+    "name": "1304 GOSHEN PARKWAY LLC",
+    "address": "1304 GOSHEN PW STE 200",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.123Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "pickering-john-tierno-debra",
+    "name": "PICKERING JOHN / TIERNO DEBRA",
+    "address": "1000 LENAPE RD",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.124Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "s-winig-associates-limited-partnership",
+    "name": "S WINIG ASSOCIATES / LIMITED PARTNERSHIP",
+    "address": "1300 WILSON DR",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.124Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "park-valley-owners-association",
+    "name": "PARK VALLEY OWNERS ASSOCIATION",
+    "address": "1157 PHOENIXVILLE PK",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.124Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "westtown-village-lp",
+    "name": "WESTTOWN VILLAGE LP",
+    "address": "1197 WILMINGTON PK",
+    "zip": "19333",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.124Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "piazza-family-limited-partnership",
+    "name": "PIAZZA FAMILY LIMITED PARTNERSHIP",
+    "address": "1320 WILMINGTON PK",
+    "zip": "19406",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.125Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "rpc-west-chester-llc",
+    "name": "RPC WEST CHESTER LLC",
+    "address": "1008 GREENHILL RD",
+    "zip": "75201",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.125Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "cacorp-properties-llc",
+    "name": "CACORP PROPERTIES LLC",
+    "address": "1171 MCDERMOTT DR",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.125Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "birmingham-devco-llc",
+    "name": "BIRMINGHAM DEVCO LLC",
+    "address": "1349 WILMINGTON PK",
+    "zip": "19348",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.125Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "spackman-herbert-b-trust-spackman-randell-h-tru-etal",
+    "name": "SPACKMAN HERBERT B TRUST / SPACKMAN RANDELL H TRU ETAL",
+    "address": "1252 THORNBURY RD",
+    "zip": "19460",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.125Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "exton-whiteland-devco",
+    "name": "EXTON WHITELAND DEVCO",
+    "address": "305 N POTTSTOWN PK",
+    "zip": "19348",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.125Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "thornbury-noble-ltd",
+    "name": "THORNBURY NOBLE LTD",
+    "address": "62 E STREET RD",
+    "zip": "19342",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.126Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "greenlawn-fertilizing-real-estate-lp",
+    "name": "GREENLAWN FERTILIZING REAL / ESTATE LP",
+    "address": "1004 SAUNDERS LA",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.126Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "shh-llc",
+    "name": "SHH LLC",
+    "address": "1035 ANDREW DR",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.126Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "deprisco-salvatore-deprisco-laura",
+    "name": "DEPRISCO SALVATORE / DEPRISCO LAURA",
+    "address": "1135 POTTSTOWN PK",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.126Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "brennan-four-leaf-lp",
+    "name": "BRENNAN FOUR LEAF LP",
+    "address": "1045 ANDREW DR UNIT A",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.126Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "francis-bay-llc",
+    "name": "FRANCIS BAY LLC",
+    "address": "1050 ANDREW DR",
+    "zip": "19426",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.126Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "s-v-realty-investments-lp",
+    "name": "S & V REALTY INVESTMENTS LP",
+    "address": "1065 ANDREW DR UNIT B3",
+    "zip": "19063",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.126Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "associates-at-andrews-llc",
+    "name": "ASSOCIATES AT ANDREWS LLC",
+    "address": "1065 ANDREW DR UNIT B1",
+    "zip": "19395",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.126Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "francis-john-l-jr-francis-michele",
+    "name": "FRANCIS JOHN L JR / FRANCIS MICHELE",
+    "address": "1317 WEST CHESTER PK",
+    "zip": "19310",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.127Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "harootunian-real-estate-development-llc",
+    "name": "HAROOTUNIAN REAL / ESTATE DEVELOPMENT LLC",
+    "address": "1075 WEST CHESTER PK",
+    "zip": "19380",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.127Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "wiggins-real-estate-llc",
+    "name": "WIGGINS REAL ESTATE LLC",
+    "address": "1303 WEST CHESTER PK",
+    "zip": "19382",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.127Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "difrancesco-wayne-r-white-horse-farm",
+    "name": "DIFRANCESCO WAYNE R / WHITE HORSE FARM",
+    "address": "2 N FIVE POINTS RD",
+    "zip": "19390",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.127Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "paoli-partners-llc",
+    "name": "PAOLI PARTNERS LLC",
+    "address": "1509 COUGAR DR",
+    "zip": "19333",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.127Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "exton-realty-partners-llc",
+    "name": "EXTON REALTY PARTNERS LLC",
+    "address": "415 W LINCOLN HW",
+    "zip": "18902",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.127Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  },
+  {
+    "businessId": "whitford-country-club",
+    "name": "WHITFORD COUNTRY CLUB",
+    "address": "41-4-19",
+    "zip": "19341",
+    "source": "parcel-owner-commercial-class",
+    "provenance": {
+      "sourceId": "pasda-owner-as-business",
+      "sourceUrl": "https://mapservices.pasda.psu.edu/server/rest/services/pasda/ChesterCounty/MapServer/11",
+      "collectedAt": "2026-08-12T17:21:09.128Z",
+      "county": "Chester",
+      "notes": "Sunbiz is Florida-only. PA business layer uses commercial parcel owners."
+    }
+  }
+]

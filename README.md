@@ -1,5 +1,27 @@
 # Roofing CRM & Lead Identification UI
 
+## Candidate implementation
+
+Consumes Oracle Chester County artifacts (no ingestion here).
+
+| Item | Location |
+|------|----------|
+| Live runtime | https://cc-bb-aa.github.io/roofing-crm/ |
+| Demo video | https://cc-bb-aa.github.io/roofing-crm/demo/ (also `demo/out/crm-demo-transcript.webm` in the PR) |
+| Data | `apps/web/public/data` published from Oracle pipeline |
+| Oracle PR | https://github.com/prismteam-ai/oracle-property-intelligence-platform-pipeline-chester-county-pa/pull/2 |
+| CRM PR | https://github.com/prismteam-ai/roofing-crm/pull/3 |
+
+```bash
+npm start   # http://127.0.0.1:4173
+```
+
+See original story below.
+
+---
+
+# Roofing CRM & Lead Identification UI
+
 ## Context
 
 Roofing companies need a practical CRM for finding and qualifying residential and commercial roofing leads in their service area. The immediate requirement is a map-based CRM that helps sales teams explore local properties, surface roofs that are aging or have stalled open permits, and turn those signals into actionable outreach opportunities.

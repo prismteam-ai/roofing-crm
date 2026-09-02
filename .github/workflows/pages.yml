@@ -1,0 +1,16 @@
+name: pages
+on:
+  push:
+    branches: [feat/chester-roofing-crm, main]
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./apps/web/public
+          force_orphan: true
