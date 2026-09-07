@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+
+# Environment files (never commit secrets); the example is tracked.
+.env*
+!.env.example
+.env*.local
+
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+coverage
+
+# Copied from maplibre-gl on postinstall
+public/maplibre-gl-worker.mjs
+public/maplibre-gl-shared.mjs

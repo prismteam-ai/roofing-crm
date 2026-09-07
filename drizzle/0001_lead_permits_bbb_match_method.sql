@@ -1,0 +1,1 @@
+ALTER TABLE "lead_permits" ADD COLUMN "bbb_match_method" text;

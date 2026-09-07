@@ -1,0 +1,58 @@
+{
+  "name": "roofing-crm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Map-based roofing lead CRM over the Elephant MCP dataset (Osceola County, FL).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed-knowledge.ts",
+    "agent:smoke": "tsx --conditions=react-server scripts/agent-smoke.ts",
+    "postinstall": "node scripts/copy-maplibre-worker.mjs"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.101",
+    "@ai-sdk/react": "^2.0.256",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@types/geojson": "^7946.0.16",
+    "ai": "^5.0.253",
+    "drizzle-orm": "^0.45.2",
+    "maplibre-gl": "^6.7.0",
+    "next": "^15.5.25",
+    "pg": "^8.16.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.15.0",
+    "@types/pg": "^8.15.4",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9.30.0",
+    "eslint-config-next": "^15.5.25",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
