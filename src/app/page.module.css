@@ -1,0 +1,901 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  background: #f4f5f7;
+  color: #17202a;
+}
+
+.sidebar {
+  min-height: 100vh;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  background: #111820;
+  color: #f7f8fa;
+}
+
+.sidebar h1 {
+  margin-top: 4px;
+  font-size: 22px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: #6c7785;
+}
+
+.sidebar .eyebrow,
+.sidebar .subtle {
+  color: #9aa6b2;
+}
+
+.subtle {
+  margin-top: 6px;
+  color: #6c7785;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.nav {
+  display: grid;
+  gap: 8px;
+}
+
+.nav button {
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #c8d0d8;
+  text-align: left;
+  font: inherit;
+}
+
+.nav button:disabled {
+  color: #687481;
+}
+
+.nav .navActive {
+  background: #25313d;
+  color: #ffffff;
+}
+
+.futureItem {
+  display: grid;
+  gap: 6px;
+}
+
+.nav .futureItem button {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.navLater {
+  color: #7d8b98;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nav .navActive .navLater {
+  color: #c5d0da;
+}
+
+.futureNote {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #1c2630;
+  color: #d7dee6;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sourceStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9aa6b2;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #d29a42;
+}
+
+.workspace {
+  min-width: 0;
+  padding: 28px;
+}
+
+.header,
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.header h2 {
+  margin-top: 4px;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr)) auto;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.controls label {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #53606e;
+}
+
+.controls select,
+.agentComposer input {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d8dde3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17202a;
+  font: inherit;
+}
+
+.primaryButton,
+.secondaryButton,
+.agentComposer button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+}
+
+.primaryButton {
+  align-self: end;
+  background: #111820;
+  color: #ffffff;
+}
+
+.searchActions {
+  display: grid;
+  gap: 8px;
+  align-content: end;
+}
+
+.searchActions .primaryButton,
+.searchActions .secondaryButton {
+  width: 100%;
+}
+
+.secondaryButton {
+  background: #ffffff;
+  color: #17202a;
+  border: 1px solid #d8dde3;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.8fr);
+  gap: 20px;
+}
+
+.mapPanel,
+.candidatesPanel,
+.agentPanel {
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.mapPanel,
+.candidatesPanel {
+  min-height: 480px;
+  padding: 18px;
+}
+
+.panelHeader h3,
+.agentPanel h3,
+.leadsPanel h3 {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+.badge,
+.count {
+  border-radius: 999px;
+  background: #eef1f4;
+  color: #596674;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge {
+  padding: 6px 10px;
+}
+
+.count {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+}
+
+.mapPlaceholder {
+  min-height: 390px;
+  margin-top: 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 32px;
+  border: 1px dashed #c8d0d8;
+  border-radius: 10px;
+  background: #f7f8fa;
+  text-align: center;
+  color: #53606e;
+}
+
+.mapPlaceholder span {
+  max-width: 520px;
+  color: #7b8794;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pin {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #111820;
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.pin::first-letter {
+  transform: rotate(45deg);
+}
+
+.emptyState {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #53606e;
+}
+
+.emptyState p {
+  max-width: 280px;
+  color: #7b8794;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.agentPanel {
+  margin-top: 20px;
+  padding: 18px;
+}
+
+.agentComposer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.agentComposer button {
+  background: #111820;
+  color: #ffffff;
+}
+
+.pendingNote {
+  margin-top: 10px;
+  color: #7b8794;
+  font-size: 12px;
+}
+
+@media (max-width: 980px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    min-height: auto;
+  }
+
+  .controls,
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace {
+    padding: 18px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .agentComposer {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.candidateNotice {
+  margin: 14px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f7f8fa;
+  color: #6c7785;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.candidateList {
+  max-height: 390px;
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.candidateCard {
+  padding: 12px;
+  border: 1px solid #e1e5e9;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.candidateCardHeader {
+  display: grid;
+  gap: 4px;
+}
+
+.candidateCardHeader strong {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.candidateCardHeader span,
+.candidateCard p,
+.candidateMeta {
+  color: #6c7785;
+  font-size: 11px;
+}
+
+.candidateCard p {
+  margin-top: 7px;
+}
+
+.candidateMeta {
+  display: grid;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+
+.sectionFocus {
+  outline: 2px solid #111820;
+  outline-offset: 4px;
+}
+
+
+/* === CRM POLISH V1 START === */
+
+.page {
+  flex: 1;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  grid-template-columns: 220px minmax(0, 1fr);
+  background: #f6f7f9;
+}
+
+.sidebar {
+  align-self: stretch;
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px 18px;
+}
+
+.sidebar h1 {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.nav button,
+.primaryButton,
+.secondaryButton,
+.agentComposer button {
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.nav button:not(:disabled) {
+  cursor: pointer;
+}
+
+.nav button:not(:disabled):hover {
+  background: #202b36;
+  color: #ffffff;
+}
+
+.workspace {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  margin-bottom: 18px;
+}
+
+.header h2 {
+  font-size: 26px;
+}
+
+.controls {
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border-color: #e4e7eb;
+  box-shadow: 0 1px 3px rgba(23, 32, 42, 0.04);
+}
+
+.controls select {
+  height: 40px;
+}
+
+.primaryButton:not(:disabled),
+.secondaryButton {
+  cursor: pointer;
+}
+
+.primaryButton:not(:disabled):hover,
+.agentComposer button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(17, 24, 32, 0.15);
+}
+
+.secondaryButton:hover {
+  background: #f7f8fa;
+  border-color: #bcc5ce;
+}
+
+.dashboard {
+  gap: 16px;
+  align-items: start;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.mapPanel,
+.candidatesPanel,
+.agentPanel {
+  border-color: #e4e7eb;
+  box-shadow: 0 2px 8px rgba(23, 32, 42, 0.04);
+}
+
+.mapPanel,
+.candidatesPanel {
+  min-height: 0;
+  padding: 16px;
+}
+
+.mapPlaceholder {
+  min-height: 0;
+  margin-top: 14px;
+  padding: 8px;
+  display: block;
+  border: 0;
+  background: #f2f4f6;
+  text-align: left;
+}
+
+.mapPlaceholder > span {
+  display: block;
+  max-width: none;
+  padding: 10px 6px 4px;
+  text-align: center;
+}
+
+.mapFrame {
+  position: relative;
+  width: 100%;
+  height: 390px;
+}
+
+.panelActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mapCount {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 500;
+  max-width: min(440px, calc(100% - 24px));
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #17202a;
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.candidateNotice {
+  margin: 12px 0;
+  padding: 9px 10px;
+}
+
+.candidateList {
+  max-height: 410px;
+  gap: 8px;
+}
+
+.candidateCard {
+  padding: 10px 11px;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.candidateCard:hover {
+  border-color: #bcc5ce;
+  box-shadow: 0 3px 10px rgba(23, 32, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.candidateCardHeader strong {
+  font-size: 12px;
+}
+
+.agentPanel {
+  margin-top: 0;
+  padding: 16px;
+}
+
+.emptyState {
+  min-height: 180px;
+}
+
+.sideColumn {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
+.leadsPanel {
+  padding: 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.leadsPanel .candidateList {
+  max-height: 280px;
+  margin-top: 12px;
+}
+
+.parcelDetail {
+  margin-top: 16px;
+}
+
+.parcelDetail .primaryButton,
+.parcelDetail .secondaryButton {
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+.sectionFocus {
+  outline: 2px solid #111820;
+  outline-offset: 4px;
+}
+
+@media (max-width: 980px) {
+  .page {
+    display: block;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    min-height: auto;
+    padding: 16px 18px;
+    gap: 14px;
+  }
+
+  .sidebar > div:first-child h1 {
+    margin-bottom: 0;
+  }
+
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .nav button {
+    width: auto;
+    padding: 8px 11px;
+  }
+
+  .futureItem {
+    flex: 1 0 100%;
+  }
+
+  .nav .futureItem button {
+    width: 100%;
+  }
+
+  .sourceStatus {
+    margin-top: 2px;
+  }
+
+  .workspace {
+    padding: 18px;
+  }
+
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .primaryButton {
+    min-height: 40px;
+  }
+
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    gap: 12px;
+  }
+
+  .header h2 {
+    font-size: 23px;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+  }
+
+  .mapPanel,
+  .candidatesPanel,
+  .agentPanel {
+    border-radius: 10px;
+  }
+
+  .candidateList {
+    max-height: max(70vh, 520px);
+  }
+}
+
+.permitLine {
+  display: grid;
+  gap: 6px;
+}
+
+.longOpen {
+  justify-self: start;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f4e4c8;
+  color: #7a4e08;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.candidateCard.candidateCardLongOpen {
+  border-color: #e0c48a;
+  box-shadow: inset 3px 0 0 #c4842a;
+}
+
+button.candidateCard {
+  display: block;
+  width: 100%;
+  margin: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button.candidateCard:focus-visible {
+  outline: 2px solid #17202a;
+  outline-offset: 2px;
+}
+
+.parcelDetail {
+  display: grid;
+  gap: 12px;
+}
+
+.parcelDetail .secondaryButton {
+  justify-self: start;
+}
+
+.detailContext,
+.detailValue {
+  margin: 0;
+  color: #53606e;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.permitDetails {
+  display: grid;
+  gap: 10px;
+}
+
+.permitDetail {
+  padding: 10px 11px;
+  border: 1px solid #e1e5e9;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.permitDetail h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.permitDetail dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.permitDetail dt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6c7785;
+}
+
+.permitDetail dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 0;
+  font-size: 14px;
+}
+
+.agentAnswer {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.agentAnswer p,
+.agentAnswer span {
+  margin: 0;
+  color: #53606e;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.agentAnswer ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agentAnswer li {
+  display: grid;
+  gap: 4px;
+  padding: 10px 11px;
+  border: 1px solid #e1e5e9;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.agentAnswer strong {
+  font-size: 13px;
+}
+
+.agentMatch,
+.leadOpen {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.leadOpen {
+  gap: 0;
+}
+
+.agentMatch:focus-visible,
+.leadOpen:focus-visible {
+  outline: 2px solid #17202a;
+  outline-offset: 2px;
+}
+
+.candidateCard .secondaryButton {
+  margin-top: 10px;
+}
+
+/* === CRM POLISH V1 END === */
