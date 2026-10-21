@@ -1,0 +1,9 @@
+{
+  "$comment": "The pipeline this CRM is built against. apiBase is the deployment it calls (the pipeline's API_BASE, not a secret): CI's served-contract check, `pnpm deploy:aws` and `pnpm dev` read it here, and PIPELINE_API_BASE in the environment overrides it. The contract is pinned by commit: the pipeline's committed openapi.json is normative and the generated types come only from it; re-pin with `pnpm --filter @roofing-crm/pipeline-client pin <commit> <path>`.",
+  "repository": "https://github.com/xucian/oracle-property-intelligence-platform-pipeline-travis-tx",
+  "apiBase": "https://733jzm4xv4.execute-api.us-east-2.amazonaws.com",
+  "contractFrozenAt": "de08901",
+  "commit": "031b720246b1e9fc45a55b35d03228de9044adcf",
+  "path": "packages/contract/openapi.json",
+  "sha256": "6ff17f6c4487fc66c7d3ec69936eeceb2342ac34db9f14aa8c938b631471b480"
+}
