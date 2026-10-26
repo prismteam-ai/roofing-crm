@@ -1,0 +1,5 @@
+# Cloudflare Pages (static site). Deploy: npm run build && npx wrangler pages deploy dist
+# Or connect the git repo in the dashboard: build command `npm run build`, output dir `dist`.
+name = "roofing-crm"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-01-01"

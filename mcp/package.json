@@ -1,0 +1,13 @@
+{
+  "name": "roofing-crm-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server (stdio) exposing the roofing CRM's five query tools over Parquet on IPFS",
+  "bin": { "roofing-crm-mcp": "server.mjs" },
+  "scripts": { "start": "node server.mjs", "test": "node test/smoke.mjs" },
+  "dependencies": {
+    "@duckdb/node-api": "^2.0.0-r.1",
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

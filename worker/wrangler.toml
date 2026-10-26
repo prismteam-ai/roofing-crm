@@ -1,0 +1,10 @@
+# Thin relay to the Anthropic Messages API. Secret: ANTHROPIC_API_KEY
+#   local:      worker/.dev.vars (git-ignored)
+#   production: npx wrangler secret put ANTHROPIC_API_KEY
+name = "roofing-crm-agent"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+# Comma-separated browser origins allowed to call the Worker.
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,https://roofing-crm-4wv.pages.dev"

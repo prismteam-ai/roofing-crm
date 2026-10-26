@@ -1,0 +1,91 @@
+[
+  {
+    "name": "agingRoofs",
+    "description": "Find properties inside a radius whose estimated roof age is at least minAgeYears, oldest first. Returns the total match count plus rows (address, roof_age_years, roof_age_confidence, roof_age_basis, owner, miles from pin, property_key). Set withoutOpenPermit=true to keep only properties that have no open permit.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "pin": { "$ref": "#/$defs/pin" },
+        "radiusMiles": { "type": "number", "description": "Search radius in miles (0.1 to 25)." },
+        "minAgeYears": { "type": "number", "description": "Minimum estimated roof age in years (default suggestion: 15)." },
+        "withoutOpenPermit": { "type": "boolean", "description": "Only return properties with no open permit of any kind. Default false." }
+      },
+      "required": ["pin", "radiusMiles", "minAgeYears"],
+      "additionalProperties": false,
+      "$defs": {
+        "pin": {
+          "type": "object",
+          "description": "Center point of the search.",
+          "properties": { "lat": { "type": "number" }, "lon": { "type": "number" } },
+          "required": ["lat", "lon"],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "name": "openPermits",
+    "description": "Find open permits inside a radius, longest-open first (years_open). filter 'roofing' = open permits classified as roofing; 'roofing_low' = also include low/medium-confidence roofing matches; 'all_open' = every open permit. Rows include permit_no, status, years_open, open_since, contractor_name, bbb_score, address, miles, property_key.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "pin": { "$ref": "#/$defs/pin" },
+        "radiusMiles": { "type": "number", "description": "Search radius in miles (0.1 to 25)." },
+        "filter": { "type": "string", "enum": ["roofing", "roofing_low", "all_open"] }
+      },
+      "required": ["pin", "radiusMiles", "filter"],
+      "additionalProperties": false,
+      "$defs": {
+        "pin": {
+          "type": "object",
+          "description": "Center point of the search.",
+          "properties": { "lat": { "type": "number" }, "lon": { "type": "number" } },
+          "required": ["lat", "lon"],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "name": "permitCounts",
+    "description": "Count open permits in a radius grouped by roofing confidence (none/low/medium/high). Useful to explain why a roofing search is empty.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "pin": { "$ref": "#/$defs/pin" },
+        "radiusMiles": { "type": "number", "description": "Search radius in miles (0.1 to 25)." }
+      },
+      "required": ["pin", "radiusMiles"],
+      "additionalProperties": false,
+      "$defs": {
+        "pin": {
+          "type": "object",
+          "description": "Center point of the search.",
+          "properties": { "lat": { "type": "number" }, "lon": { "type": "number" } },
+          "required": ["lat", "lon"],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "name": "permitsForProperty",
+    "description": "All permits (any status) on one property, newest first. Takes a property_key returned by another tool.",
+    "input_schema": {
+      "type": "object",
+      "properties": { "propertyKey": { "type": "string", "description": "A property_key from a previous result." } },
+      "required": ["propertyKey"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "propertyByKey",
+    "description": "One property's full record (owner, roof age with basis/confidence/caveat, market value, BBB score). Takes a property_key returned by another tool.",
+    "input_schema": {
+      "type": "object",
+      "properties": { "propertyKey": { "type": "string", "description": "A property_key from a previous result." } },
+      "required": ["propertyKey"],
+      "additionalProperties": false
+    }
+  }
+]

@@ -1,0 +1,11 @@
+node_modules
+dist
+.wrangler
+.dev.vars
+.env*
+public/data/*.parquet
+*.duckdb
+*.duckdb.wal
+*.log
+.DS_Store
+*.tsbuildinfo
