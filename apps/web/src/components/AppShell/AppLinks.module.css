@@ -1,0 +1,52 @@
+/* App-switcher rows (CrmAppsMenu, CrmBottomNav "Apps"): Atlas menu item, 48 px tall, leading
+   24 px icon, body-large label, trailing check on the current app. Tokens only. */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+a.item:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+a.item:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.current .check {
+  display: inline-flex;
+  color: var(--md-sys-color-on-surface);
+}
+
+.unavailable {
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: default;
+}
+
+.reason {
+  white-space: nowrap;
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+  color: var(--md-sys-color-on-surface-variant);
+}

@@ -1,0 +1,1107 @@
+/* B-07 Leads screens (list, detail, create action). Atlas tokens only (constitution P0-14);
+   layout follows prototype boards CrmLeads390/768/1440 and CrmLeadDetail390/768/1440. */
+
+.page {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: 0;
+}
+
+/* The shell's main region already pads 16 px (24 px from 600 px); the boards inset the page
+   content 32 px from the rail (CrmLeads1440), so from 600 px the page adds 8 px. */
+@media (min-width: 600px) {
+  .page {
+    padding: var(--space-2);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.headTitle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* "Leads · 3" in the compact header (CrmLeads390); the sentence carries the count from 600 px. */
+.headCount {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+}
+
+@media (min-width: 600px) {
+  .headCount {
+    display: none;
+  }
+}
+
+.title {
+  margin: 0;
+  font-family: var(--md-sys-typescale-headline-small-font);
+  font-size: var(--md-sys-typescale-headline-small-size);
+  font-weight: var(--md-sys-typescale-headline-small-weight);
+  line-height: var(--md-sys-typescale-headline-small-line-height);
+}
+
+.countNote {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.count {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.loadingText {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.filters {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.clear {
+  justify-self: start;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A lead: a card below 768 px (title and status on the first line, the facts under it), a table
+   row from 768 px with the column heading above (CrmLeads390 / CrmLeads768 / CrmLeads1440). */
+.row {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  box-sizing: border-box;
+  padding: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+.cellLead {
+  display: grid;
+  flex: 1 1 calc(var(--space-10) * 2);
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.cellStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* The assignee under the status pill ("Me", or the name as stored). */
+.assigneeName {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  overflow-wrap: anywhere;
+}
+
+/* Roof, Main permit and Last activity: on the card they stack under the title with their label;
+   in the table each is a column and the label is spoken only. */
+.facts {
+  display: grid;
+  flex-basis: 100%;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.fact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  min-width: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  overflow-wrap: anywhere;
+}
+
+.factMain {
+  color: var(--md-sys-color-on-surface);
+}
+
+/* A missing value: the reason, quieter than a value (never drawn like data). */
+.reason {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* The label before a value ("Roof 23 yrs") is spoken always and drawn on the card only; the table
+   has the column heading instead. */
+.pre {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.sub {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+}
+
+.thead {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .thead,
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(
+        0,
+        1.5fr
+      );
+    align-items: start;
+    gap: var(--space-4);
+  }
+
+  .thead {
+    padding: var(--space-2) var(--space-4);
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+  }
+
+  .list {
+    gap: 0;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-surface);
+    overflow: hidden;
+  }
+
+  .row {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .row + .row {
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .cellStatus {
+    align-items: flex-start;
+  }
+
+  .facts {
+    display: contents;
+  }
+
+  .fact {
+    display: grid;
+    align-content: start;
+    gap: var(--space-1);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+  }
+
+  .assigneeName {
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .pre {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.stateCard {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  padding: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+.stateTitle {
+  margin: 0;
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+}
+
+.stateBody {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+/* Atlas filled and tonal buttons for the state cards ("Go to map", "Clear filters"). */
+.primary,
+.tonal {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  text-decoration: none;
+}
+
+.primary {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.tonal {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.primary:focus-visible,
+.tonal:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-9);
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  text-decoration: none;
+}
+
+/* The link stretches over the whole card, so the card is the target (at least 48 px high). */
+.cardLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.cardLink:focus-visible,
+.pageBtn:focus-visible,
+.clear:focus-visible,
+.action:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.pagerText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.pagerButtons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pagerOf {
+  margin-right: var(--space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.pagerGap {
+  padding: 0 var(--space-1);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* The current page: tonal, like the board's selected page. */
+.pageCurrent {
+  border-color: transparent;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.pageBtn:disabled {
+  border-color: var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  cursor: not-allowed;
+}
+
+.pageBtn,
+.action {
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--space-9);
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+}
+
+.action {
+  border: 0;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+/* Atlas disabled button: a quiet container and the outline colour for the label (no solid blue).
+   Both are Atlas tokens: a blend at 12 % or 38 % is not one. */
+.action:disabled {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-outline);
+  cursor: not-allowed;
+}
+
+/* "Open lead" in the drawer: the action look on a link. */
+.actionLink {
+  composes: action;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.section {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+}
+
+.fields {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.fields > div {
+  display: grid;
+  grid-template-columns: calc(var(--space-10) + var(--space-7)) minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.fields dt {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.fields dd {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.events {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A saved note: a rounded surface-container bubble, the text then author and time. */
+.note {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container);
+}
+
+.timeline {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.timelineIcon {
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.noteForm {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.textarea {
+  box-sizing: border-box;
+  min-height: 80px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.createState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-9);
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  text-decoration: none;
+}
+
+.section > p {
+  margin: 0;
+}
+
+/* A note keeps the rep's line breaks and wraps long unbroken text instead of overflowing. */
+.eventText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.select {
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.select:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* ---- Lead page (CrmLead390/768/1440) ---- */
+
+.split {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* 1440: the Leads list on the left, the open lead on the right (E-83). */
+.splitWide {
+  grid-template-columns: calc(var(--space-10) * 5) minmax(0, 1fr);
+  align-items: start;
+}
+
+.detailCol {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.noBack .back {
+  display: none;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: start;
+  min-height: var(--space-9);
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  text-decoration: none;
+}
+
+.back:focus-visible,
+.tonalLink:focus-visible,
+.paneRow:focus-visible,
+.statusSelect:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.detail {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.leadSub {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.actionEnd {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The status menu: a tonal control with the status icon, a native select inside (keyboard and
+   screen-reader friendly), 48 px high. */
+.statusMenu,
+.assignee,
+.tonalLink {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border-radius: var(--md-sys-shape-corner-small);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.statusMenu {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusSelect {
+  min-height: var(--space-9);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.statusSelect:disabled {
+  cursor: progress;
+}
+
+.assignee {
+  border: 1px solid var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface);
+}
+
+.tonalLink {
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  text-decoration: none;
+}
+
+.saving,
+.saved {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--md-sys-shape-corner-full);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+  line-height: var(--space-6);
+}
+
+.saving {
+  background: var(--status-info-container);
+  color: var(--status-info);
+}
+
+.saved {
+  background: var(--status-success-container);
+  color: var(--status-success);
+}
+
+.sub {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+}
+
+.futureRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.future {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-outline);
+  cursor: not-allowed;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.soon {
+  padding: 0 var(--space-2);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container-high);
+  font-family: var(--md-sys-typescale-label-small-font);
+  font-size: var(--md-sys-typescale-label-small-size);
+}
+
+/* ---- The list beside the lead at 1440 ---- */
+
+.pane {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  box-sizing: border-box;
+  padding: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+}
+
+.paneHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.paneTitle {
+  margin: 0;
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: var(--md-sys-typescale-title-large-size);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+}
+
+.headCountShown {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-title-medium-size);
+}
+
+.paneList {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paneRow {
+  display: grid;
+  gap: var(--space-1);
+  box-sizing: border-box;
+  padding: var(--space-3);
+  border-radius: var(--md-sys-shape-corner-small);
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+}
+
+.paneRowCurrent {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.paneRowTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.paneAddress {
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  overflow-wrap: anywhere;
+}
+
+/* Running text inside a card (the .meta rule is a flex row for short facts). */
+.prose {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  overflow-wrap: anywhere;
+}
+
+/* ---- Lead snackbar (CrmLeadCreate390/768/1440, CrmLeadDup390/1440) ---- */
+
+/* Atlas snackbar: inverse surface, fixed above the bottom bar (80 px) on compact and above the
+   window edge from 600 px, centred, at most 560 px wide. Above the filter sheet (30), below the
+   top bar menus (40). */
+.snackbar {
+  position: fixed;
+  bottom: calc(var(--space-10) + var(--space-4) + var(--space-4));
+  left: var(--space-4);
+  right: var(--space-4);
+  z-index: 35;
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  box-shadow: var(--md-sys-elevation-level3);
+}
+
+@media (min-width: 600px) {
+  .snackbar {
+    bottom: var(--space-6);
+    left: 50%;
+    right: auto;
+    width: min(calc(var(--space-10) * 9), calc(100vw - var(--space-8)));
+    transform: translateX(-50%);
+  }
+}
+
+.snackbarRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.snackbarText {
+  flex: 1 1 calc(var(--space-10) * 2);
+  margin: 0;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.snackbarAction {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-inverse-primary);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  text-decoration: none;
+}
+
+.snackbarAction:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.snackbarAction:focus-visible {
+  outline: 3px solid var(--md-sys-color-inverse-primary);
+  outline-offset: 2px;
+}
+
+.snackbarNote {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.snackbarLabel {
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+}
+
+.snackbarField {
+  box-sizing: border-box;
+  min-height: calc(var(--space-10) + var(--space-2));
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background: transparent;
+  color: inherit;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.snackbarButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.snackbarError,
+.snackbarSaved {
+  margin: 0;
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.snackbarClose {
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.snackbarClose:focus-visible {
+  outline: 3px solid var(--md-sys-color-inverse-primary);
+  outline-offset: 2px;
+}
+
+/* The drawer styles every button inside its primary action full width (PropertyDetail.module.css
+   `.primaryAction button`); the snackbar's own buttons keep their size. */
+.snackbar .snackbarClose {
+  width: var(--space-9);
+  min-height: var(--space-9);
+}
+
+.snackbar .snackbarAction {
+  width: auto;
+}
+
+/* ---- CID with its own copy button (LeadCid) ---- */
+
+.cid {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  vertical-align: middle;
+}
+
+.cidText {
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  color: var(--md-sys-color-on-surface);
+}
+
+.cidCopy {
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--space-9);
+  height: var(--space-9);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+}
+
+.cidCopy:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+/* ---- Indeterminate progress bar (loading cards) ---- */
+
+.progressBar {
+  position: relative;
+  height: var(--space-1);
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.progressFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  animation: lead-progress 1.4s ease-in-out infinite;
+}
+
+@keyframes lead-progress {
+  from {
+    left: -30%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressFill {
+    left: 70%;
+    animation: none;
+  }
+}
+
+.loadingCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+}
+
+/* ---- Signals: two columns at every width, with a heading row (CrmLead*) ---- */
+
+.signalsHead {
+  display: grid;
+  grid-template-columns: calc(var(--space-10) + var(--space-7)) minmax(0, 1fr);
+  gap: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.titleBlock {
+  display: grid;
+  gap: var(--space-1);
+}

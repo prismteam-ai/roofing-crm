@@ -1,0 +1,97 @@
+/* Atlas tokens only (constitution P0-14). */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+}
+
+/* Board `CrmMap*` radius card: one row (label, slider, value, unit) with the caption beneath, so
+   the card costs the map one line, not three. A rejected value's hint wraps under the row. */
+.field {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.label {
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.inputRow {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--space-9);
+  margin: 0;
+  accent-color: var(--md-sys-color-primary);
+}
+
+.input {
+  min-height: var(--space-9);
+  /* A number field wide enough for the radius, on the 8 px grid (64 + 8). */
+  width: calc(var(--space-10) + var(--space-2));
+  flex: 0 0 auto;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+}
+
+.origin {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.unit {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.hint {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--md-sys-color-error);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+}
+
+/* Phones: one compact row. Where the pin came from is the card's tooltip and stays in the page for
+   screen readers; the caption shows from 600 px, where the card has its own bottom-right corner of
+   the map. */
+@media (max-width: 599.98px) {
+  .origin {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .card {
+    position: relative;
+    padding: var(--space-1) var(--space-3);
+  }
+}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · account menu</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.ac-menu{position:absolute;right:0;top:52px;z-index:70;width:272px;box-sizing:border-box;padding:8px 0;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container);box-shadow:var(--md-sys-elevation-level2);font-family:var(--font-plain);color:var(--md-sys-color-on-surface)}
+.ac-av{width:40px;height:40px;flex:none;border-radius:var(--md-sys-shape-corner-full);display:grid;place-items:center;background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);font:500 16px/1 var(--font-plain)}
+</style>
+</helmet>
+<div style="position: relative; display: inline-flex" onKeyDown="{{escKey}}">
+<button class="atlas-icon-btn" aria-haspopup="menu" aria-expanded="{{openStr}}" aria-label="Account: Sample Rep, Admin" onClick="{{toggle}}"><span class="material-symbols-rounded" aria-hidden="true">account_circle</span></button>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><div class="ac-menu" role="menu" aria-label="Account">
+<div role="none" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px 12px"><span class="ac-av" aria-hidden="true">SR</span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="display: flex; align-items: center; gap: 8px"><b style="font-weight: 500; font-size: 14px; line-height: 20px">Sample Rep</b><span class="atlas-pill atlas-pill--info">Admin</span></span><span style="font-size: 12px; line-height: 16px; color: var(--md-sys-color-on-surface-variant); overflow-wrap: anywhere">sample.rep@example.com</span><span style="font-size: 12px; line-height: 16px; color: var(--md-sys-color-on-surface-variant)">Admin test user</span></span></div>
+<div role="separator" style="height: 1px; background: var(--md-sys-color-outline-variant); margin: 0 0 8px"></div>
+<a class="atlas-menu-item" role="menuitem" href="{{outHref}}" onClick="{{signOut}}" style="text-decoration: none; color: inherit"><span class="material-symbols-rounded" aria-hidden="true">logout</span>Sign out</a>
+</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"device":{"editor":"enum","options":["desktop","tablet","mobile"],"default":"desktop"},"startOpen":{"editor":"boolean","default":false},"$preview":{"width":320,"height":220}}'>
+class Component extends DCLogic {
+  static trapTab(e, box) { if (!e || e.key !== 'Tab' || !box) return; const f = [...box.querySelectorAll('a[href],button:not([disabled]),input:not([type=hidden]):not([disabled]),select,textarea,summary,[tabindex="0"]')].filter((x) => x.getClientRects().length && (!x.checkVisibility || x.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true })) && x.tabIndex >= 0 && !x.closest('[aria-hidden="true"]')); if (!f.length) return;
+    const a = f[0], z = f[f.length - 1], cur = document.activeElement; if (e.shiftKey && (cur === a || !box.contains(cur))) { e.preventDefault(); z.focus(); } else if (!e.shiftKey && (cur === z || !box.contains(cur))) { e.preventDefault(); a.focus(); } }
+  // Prototype session for the Roofing CRM (not Task A): one shared test user; kept in this browser so a reload stays signed in.
+  static sessKey() { return 'countylens.proto.crmSession'; }
+  static session() { try { const v = window.localStorage.getItem(Component.sessKey()); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  static signIn() { const s = { name: 'Sample Rep', email: 'sample.rep@example.com', role: 'Admin', at: Date.now() }; try { window.localStorage.setItem(Component.sessKey(), JSON.stringify(s)); } catch (e) {} return s; }
+  static signOut() { try { window.localStorage.removeItem(Component.sessKey()); } catch (e) {} }
+  // CRM: one overlay at a time (opening this closes the others; another opening closes this).
+  componentDidMount() { this.onOv = (e) => { const d = e && e.detail; if (true && d && d.open && d.id !== 'acct' && this.state.open) this.setState({ open: false }); }; try { window.addEventListener('cl-overlay', this.onOv); } catch (e) {} }
+  componentDidUpdate() { const wasO = !!this._ovO; this._ovO = !!this.state.open; if (true && wasO !== this._ovO) { try { window.dispatchEvent(new CustomEvent('cl-overlay', { detail: { id: 'acct', open: !!this.state.open } })); } catch (e) {} } }
+  componentWillUnmount() { try { window.removeEventListener('cl-overlay', this.onOv); } catch (e) {} }
+  constructor(props) { super(props); this.state = { open: !!props.startOpen }; }
+  renderVals() {
+    const dev = this.props.device ?? 'desktop', sfx = dev === 'mobile' ? '390' : dev === 'tablet' ? '768' : '1440';
+    return { 
+      escKey: (e) => { if (!e || !this.state.open) return; const box = e.currentTarget; if (e.key === 'Escape') { e.preventDefault(); this.setState({ open: false }); const t = box && box.querySelector('[aria-haspopup]'); if (t) t.focus(); } else if (false) Component.trapTab(e, box.querySelector('[role=dialog]')); },
+      open: this.state.open, openStr: String(this.state.open), toggle: () => this.setState({ open: !this.state.open }),
+      outHref: 'CrmSignIn' + sfx + '.dc.html?state=signedout', signOut: () => Component.signOut() };
+  }
+}
+</script>
+</body>
+</html>

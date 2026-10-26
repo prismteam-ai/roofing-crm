@@ -1,0 +1,29 @@
+{
+  "manifestCid": "bafkreife3vk3cgcod3v6tue2xes3hvl2vndqoshbhrhsnjtriskihpcute",
+  "runId": "travis-full-run2-20261024",
+  "summary": {
+    "passed": 1,
+    "total": 1,
+    "groundednessPct": 100,
+    "p95Ms": 10636,
+    "maxMs": 10636,
+    "n": 2
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "id": "G7",
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "countCheck": "not applicable",
+      "intent": "propose_leads",
+      "outcome": "lead_created",
+      "mode": "answered",
+      "pass": true,
+      "latencyMs": [10636, 7138],
+      "failures": [],
+      "emptyReason": "confirmLead created 48453:tcad:118096; confirmLeads created 2, already 0; undo removed 3 lead(s); none remain in leads.list"
+    }
+  ]
+}

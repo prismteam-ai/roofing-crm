@@ -1,0 +1,229 @@
+# B-01: the one CI workflow for roofing-crm. Rewritten from the Task A (A-03) copy T001 brought
+# in (found in code review, CR-B-01): that version's `workspace` job ran `turbo run typecheck
+# lint test synth` — no package here defines a `typecheck` or `lint` script (only hyphenated
+# `type-check`, and `lint` is a root-only `eslint .` turbo doesn't pick up), so it silently
+# ran nothing and reported green. Its coverage-gate, stylelint, grep-gates and bundle-size steps
+# referenced packages/contract, packages/query-core and scripts/ that don't exist in this repo,
+# and its entire second job (`oracle-runtime`) was Task A's own pipeline CI, verbatim, targeting
+# a `pipeline/oracle-runtime` directory this repo has never had.
+#
+# CI never deploys: infrastructure deploys run from the PO's laptop (profile assess) after
+# approval per deploy. Its only AWS credentials are the narrowly scoped `crm-ci` key on the
+# `e2e-hosted` Playwright step (B-09, see that step). Amplify builds every push from its own Git
+# connection; `e2e-hosted` waits for that build and tests it. The region, account id and Amplify
+# app id are repository variables, never literals.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  workspace:
+    # B-09: GitHub's native arm64 runner (free for public repos). The three Docker-bundled
+    # Lambdas (CrmApi trpc, CrmSync BuildIndex/Validate: native DuckDB) are all arm64, so they
+    # bundle natively here instead of under QEMU emulation. Every other Lambda bundles with
+    # esbuild, no Docker. Infra unit tests skip Docker bundling except stacks.test.ts's one
+    # real-bundle check.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    env:
+      # @crm/config throws without CDK_DEFAULT_REGION (infra/src/config.ts); synth needs it even
+      # though this job never deploys.
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      CDK_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+      CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+      # B-02: @crm/config also throws without DATA_MANIFEST_CID (never a hard-coded constant in
+      # app code, per the story's own rule) — a repo variable, not a secret: it's the public
+      # sample manifest CID this whole story is pinned to.
+      DATA_MANIFEST_CID: ${{ vars.DATA_MANIFEST_CID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      # B-09: Turborepo's local cache across runs, so packages whose inputs did not change replay
+      # their type-check/test results instead of re-running. infra#test is never cached
+      # (turbo.json): it bundles apps/* code that infra does not declare as a dependency.
+      - name: Turborepo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Type-check (Turborepo)
+        run: pnpm run type-check
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Unit tests (Turborepo)
+        run: pnpm run test
+
+      - name: Prettier
+        run: pnpm run format
+
+      - name: cdk synth --strict (cdk-nag runs as part of synth, infra/src/app.ts)
+        working-directory: infra
+        run: pnpm exec cdk synth --strict
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # constitution Article XII: every suppressed fingerprint is governed. A fingerprint line
+      # must sit under a comment block with a "# reason:" line naming the file, the false-positive
+      # kind and the PO decision; the PR lists them.
+      - name: .gitleaksignore governance (every fingerprint under a "# reason:" comment)
+        run: |
+          test -f .gitleaksignore || { echo "no .gitleaksignore: nothing to govern"; exit 0; }
+          awk '
+            /^[[:space:]]*$/ { reason = 0; next }
+            /^#/ { if ($0 ~ /^# reason:/) reason = 1; next }
+            { if (!reason) { printf ".gitleaksignore:%d: fingerprint without a preceding \"# reason:\" comment: %s\n", NR, $0; bad++ } }
+            END { exit bad ? 1 : 0 }
+          ' .gitleaksignore
+
+      - name: gitleaks (full history, .gitleaksignore honoured)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  e2e-hosted:
+    if: github.event_name == 'push' && (github.ref_name == 'feature/roofing-crm' || startsWith(github.ref_name, '0'))
+    # B-09: runs alongside `workspace` (it tests the Amplify build of this commit, not anything
+    # `workspace` produces); only the secret scan has to pass first.
+    needs: [gitleaks]
+    runs-on: ubuntu-latest
+    # The one job outside the 15-minute budget: waits for the Amplify build of this commit, then
+    # Playwright on the hosted URL.
+    timeout-minutes: 30
+    # A newer push makes this commit's hosted run stale; cancel it.
+    concurrency:
+      group: e2e-hosted-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      # Amplify builds the branch from the same push (branch slug: "/" becomes "-").
+      # infra/lib/crm-web-stack.ts has no /build.json route yet (B-01 has none — a future story's
+      # concern), so this polls the branch's own default page instead of a build-identity file.
+      - name: Wait for the Amplify build of this commit
+        run: |
+          if [ -z "$AMPLIFY_APP_ID" ]; then
+            echo "::error::Repository variable AMPLIFY_APP_ID is not set (CrmWeb output)"
+            exit 1
+          fi
+          slug=$(printf '%s' "$GITHUB_REF_NAME" | tr '/' '-')
+          url="https://${slug}.${AMPLIFY_APP_ID}.amplifyapp.com"
+          # B-09: wait for the Amplify build of THIS commit, not just any live page. The build
+          # writes /build.json with the commit it serves (infra/lib/crm-web-stack.ts); polling
+          # /sign-in alone passed instantly on the previous build once this job stopped waiting
+          # for `workspace`.
+          deadline=$(( $(date +%s) + 15 * 60 ))
+          while :; do
+            served=$(curl -fsS --max-time 10 "$url/build.json" 2>/dev/null | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{process.stdout.write(String(JSON.parse(d).commit??""))}catch{}})' || true)
+            if [ "$served" = "$GITHUB_SHA" ]; then
+              echo "$url serves $GITHUB_SHA"
+              break
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::$url did not serve $GITHUB_SHA within 15 minutes (it serves: ${served:-unknown})"
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "RUNTIME_URL=$url" >> "$GITHUB_ENV"
+
+      # Browser cache keyed by the installed @playwright/test version (each version pins its own
+      # Chromium build). The OS packages (`--with-deps`) live outside the cache and the runner
+      # image does not ship all of them, so `install-deps` always runs; only the browser
+      # download is skipped on a cache hit.
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-chromium
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies (browser cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+
+      # The Playwright config refuses an explicit localhost RUNTIME_URL (config-guard.spec.ts);
+      # RUNTIME_URL here is always the hosted branch URL.
+      # CRM_TEST_PASSWORD is the seeded test user's password (repository secret, set from Secrets
+      # Manager `roofing-crm/admin-user`); without it the logged-in specs skip. The `setup`
+      # project signs in once per phase and keeps the session under playwright/.auth/ (never
+      # uploaded).
+      # B-09: the B-07 spec also needs AWS credentials to delete its test leads. The org SCP
+      # blocks GitHub OIDC, so they are the long-lived key of IAM user `crm-ci` (CDK:
+      # infra/lib/crm-ci-user.ts; Query/BatchWriteItem on crm-leads lead partitions and
+      # PutMetricData in RoofingCrm only), copied from Secrets Manager `roofing-crm/ci-user` into
+      # the repository secrets CRM_CI_AWS_ACCESS_KEY_ID / CRM_CI_AWS_SECRET_ACCESS_KEY. They are
+      # set on this one step only, never in `workspace` or `gitleaks`, and this job runs only on
+      # `push` (see its `if:`), so pull requests from forks never receive them. If the secrets
+      # are unset the variables are empty, the SDK finds no credentials and B-07 skips itself
+      # with a reason, as before.
+      # Two phases (playwright.config.ts PW_PHASE, Task A's pattern): `parallel` on 4 workers
+      # (the account's 10-concurrent-Lambda limit is why not more), then `isolated` on 1 (perf
+      # timings, the rate-limited paid agent, B-07's shared leads). Both always run; the step
+      # fails if either fails.
+      - name: Playwright on the hosted URL
+        env:
+          CRM_TEST_PASSWORD: ${{ secrets.CRM_TEST_PASSWORD }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.CRM_CI_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CRM_CI_AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          status=0
+          PW_PHASE=parallel pnpm exec playwright test || status=1
+          PW_PHASE=isolated pnpm exec playwright test || status=1
+          exit "$status"
+
+      # One HTML report per phase: playwright-report/parallel and playwright-report/isolated.
+      - name: Upload the Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: playwright-report
+          if-no-files-found: ignore
+          retention-days: 14

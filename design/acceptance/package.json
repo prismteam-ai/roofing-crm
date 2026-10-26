@@ -1,0 +1,25 @@
+{
+  "name": "countylens-acceptance",
+  "private": true,
+  "scripts": {
+    "serve": "python3 -m http.server 8765 --directory ../prototype",
+    "all": "node clickflow.js && node mapflow.js && node candflow.js && node triflow.js && node shellflow.js && node leadsflow.js && node leadflow.js && node askflow.js && node statesflow.js && node a11yflow.js && node pagedflow.js && node ovflow.js && node v1flow.js",
+    "clickflow": "node clickflow.js",
+    "mapflow": "node mapflow.js",
+    "candflow": "node candflow.js",
+    "triflow": "node triflow.js",
+    "shellflow": "node shellflow.js",
+    "leadsflow": "node leadsflow.js",
+    "leadflow": "node leadflow.js",
+    "askflow": "node askflow.js",
+    "statesflow": "node statesflow.js",
+    "a11yflow": "node a11yflow.js",
+    "pagedflow": "node pagedflow.js",
+    "ovflow": "node ovflow.js",
+    "v1flow": "node v1flow.js",
+    "audit": "node crmaudit.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}

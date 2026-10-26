@@ -1,0 +1,22 @@
+{
+  "name": "@crm/index-schema",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Zod row shapes for crm_property/crm_permit/index_meta (data-model.md) — the CRM's own provenance-carrying projection of Task A's contract/v1, never a re-derivation (ADR-07).",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@crm/oracle-contract": "workspace:*",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

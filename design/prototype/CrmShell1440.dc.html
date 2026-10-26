@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · Shell</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.cr-h2{margin:0;font-family:var(--font-brand);font-weight:400}
+.cr-sub{font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.cr-lab{font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field input,.cr-field select,.cr-field textarea{height:48px;box-sizing:border-box;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font:400 14px var(--font-plain)}
+.cr-field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.cr-field input[aria-invalid="true"]{border-color:var(--md-sys-color-error)}
+.cr-card{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-surface);box-sizing:border-box;min-width:0}
+.cr-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-width:0}
+.cr-proto{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border:1px dashed var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-small);font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cr-tbl{display:grid;align-items:center;column-gap:12px;padding:6px 12px;min-height:56px;border-top:1px solid var(--md-sys-color-outline-variant);font-size:13px;line-height:18px}
+.cr-tbl.is-head{min-height:40px;border-top:0;font-size:12px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+.cr-dis{opacity:.6;cursor:not-allowed}
+.cr-lnk{display:inline-flex;align-items:center;min-height:48px}
+.crm-soon-pill{font-size:11px;line-height:16px;min-height:0;padding:0 6px;margin-top:2px}.crm-soon{color:var(--md-sys-color-on-surface-variant);cursor:pointer;min-height:0;padding-bottom:6px;font-size:11px}.crm-soon .atlas-nav-ind{height:28px}.soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+</style>
+</helmet>
+<div style="position: relative; width: {{sh.W}}px; height: {{H}}px; overflow: hidden; background: var(--md-sys-color-surface-container-low); font-family: var(--font-plain); color: var(--md-sys-color-on-surface)">
+<sc-if value="{{sh.notM}}" hint-placeholder-val="{{ true }}">
+<header class="atlas-top-app-bar" style="position: absolute; left: 0; top: 0; width: {{sh.W}}px; box-sizing: border-box; padding: 0 24px; gap: 12px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant); z-index: 20">
+<h1 class="atlas-top-app-bar__title" style="margin: 0 8px 0 0; flex: none">Roofing CRM</h1>
+<sc-if value="{{sh.isD}}" hint-placeholder-val="{{ true }}"><button class="atlas-chip" aria-haspopup="dialog" aria-label="Location: Travis County, TX. Change location" onClick="{{sh.sayCounty}}"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>Travis County, TX<span class="material-symbols-rounded" aria-hidden="true">arrow_drop_down</span></button></sc-if>
+<div style="flex: 0 1 {{sh.sbW}}px; margin-left: {{sh.sbL}}px; position: relative; z-index: 30"><dc-import name="SearchBox" value="" variant="header" device="desktop" on-place="{{sh.toMap}}" crm="on" start-open="{{ false }}" hint-size="100%,48px"></dc-import></div>
+<span style="flex: 1"></span>
+<div style="position: relative; z-index: 32"><dc-import name="CrmDataChip" state="{{sh.data}}" device="{{sh.dev}}" compact="{{sh.isT}}" start-open="{{sh.dataOpen}}" hint-size="230px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAppsMenu" device="{{sh.dev}}" start-open="{{sh.appsOpen}}" hint-size="48px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAccount" device="{{sh.dev}}" start-open="{{sh.acctOpen}}" hint-size="48px,48px"></dc-import></div>
+</header>
+<nav class="atlas-nav-rail" aria-label="Main" style="position: absolute; left: 0; top: 64px; height: {{sh.railH}}px; box-sizing: border-box; padding-top: 12px; z-index: 10; overflow: visible">
+<a class="atlas-nav-item" href="{{sh.mapHref}}" aria-current="{{sh.curMap}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">map</span></span>Map</a>
+<a class="atlas-nav-item" href="{{sh.filtersHref}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">tune</span></span>Filters</a>
+<a class="atlas-nav-item" href="{{sh.aiHref}}" aria-current="{{sh.curAsk}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">auto_awesome</span></span>AI</a>
+<a class="atlas-nav-item" href="{{sh.leadsHref}}" aria-current="{{sh.curLeads}}" style="margin-top: 8px"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span></span>Leads</a>
+<div role="group" aria-labelledby="crm-soon-h" style="display: flex; flex-direction: column; align-items: center; margin-top: 12px"><span id="crm-soon-h" style="font-size: 11px; line-height: 16px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); padding: 4px 0">Coming soon</span><sc-for list="{{sh.soon}}" as="c" hint-placeholder-count="5"><a class="atlas-nav-item crm-soon" href="{{c.href}}" title="{{c.tip}}" aria-current="{{c.cur}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">{{c.icon}}</span></span>{{c.label}}<span class="atlas-pill atlas-pill--unavailable crm-soon-pill">Soon</span><span class="atlas-sr">. Coming soon. {{c.tip}}</span></a></sc-for></div>
+</nav>
+</sc-if>
+<sc-if value="{{sh.isM}}" hint-placeholder-val="{{ false }}">
+<header class="atlas-top-app-bar" style="position: absolute; left: 0; top: 0; width: 390px; box-sizing: border-box; padding: 0 4px 0 16px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant); z-index: 20">
+<h1 class="atlas-top-app-bar__title" style="flex: 1; margin: 0">{{sh.mTitle}}</h1>
+<a class="atlas-icon-btn" aria-label="Location: Travis County, TX. Change location" href="Shell390Location.dc.html" style="text-decoration: none; display: grid; place-items: center; color: var(--md-sys-color-on-surface)"><span class="material-symbols-rounded" aria-hidden="true">location_on</span></a>
+<div style="position: relative; z-index: 32"><dc-import name="CrmDataChip" state="{{sh.data}}" device="mobile" compact="{{ true }}" start-open="{{sh.dataOpen}}" hint-size="110px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAccount" device="mobile" start-open="{{sh.acctOpen}}" hint-size="48px,48px"></dc-import></div>
+</header>
+<div style="position: absolute; left: 0; top: {{sh.navT}}px; width: 390px; height: 80px; z-index: 85"><dc-import name="CrmBottomNav" current="{{sh.cur}}" start-open="{{sh.moreOpen}}" hint-size="390px,80px"></dc-import></div>
+</sc-if>
+<sc-if value="{{toastOn}}" hint-placeholder-val="{{ false }}"><div class="atlas-snackbar" role="status" style="position: absolute; left: 50%; bottom: {{sh.snackB}}px; transform: translateX(-50%); z-index: 90; max-width: 90%">{{toast}}</div></sc-if>
+<div style="position: absolute; left: 12px; bottom: {{sh.pbB}}px; z-index: 80"><dc-import name="ProtoBar" here="{{sh.here}}" desktop="{{sh.pD}}" tablet="{{sh.pT}}" mobile="{{sh.pM}}" current="{{sh.dev}}" crm="{{ true }}" hint-size="48px,48px"></dc-import></div>
+
+<main aria-labelledby="shl-h" style="position: absolute; left: {{mL}}px; top: {{mT}}px; width: {{mW}}px; box-sizing: border-box; padding: {{mPad}}; display: flex; flex-direction: column; gap: 12px">
+<h2 id="shl-h" class="cr-h2" style="font-size: {{h2}}px; line-height: 32px">Shell · top bar, navigation, data source</h2>
+<p class="cr-sub" style="margin: 0; max-width: 640px">{{intro}}</p>
+<section class="cr-card" aria-label="Data source chip states" style="gap: 12px; max-width: 680px"><b style="font-weight: 500">Data source chip · three states</b>
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="3"><div class="cr-row" style="gap: 12px"><span style="width: {{chipW}}px; flex: none; display: flex"><dc-import name="CrmDataChip" state="{{c.st}}" device="{{sh.dev}}" compact="{{c.compact}}" align="left" hint-size="230px,48px"></dc-import></span><span class="cr-sub" style="flex: 1; min-width: 160px">{{c.note}}</span></div></sc-for>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"device":{"editor":"enum","options":["desktop","tablet","mobile"],"default":"desktop"},"accountOpen":{"editor":"boolean","default":true},"appsOpen":{"editor":"boolean","default":false},"dataOpen":{"editor":"boolean","default":false},"moreOpen":{"editor":"boolean","default":false},"dataState":{"editor":"enum","options":["up","updating","unavailable"],"default":"up"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  // Roofing CRM board (not Task A): Map view (CRM preview) is forced on for this page, like ExploreQ-crmmap.
+  static forceCrm() { try { window.__clMapView = true; } catch (e) {} }
+  static soonList() { return [["campaign", "Campaigns", "campaigns", "Plan outreach to groups of leads."], ["request_quote", "Estimates", "estimates", "Price a roof from the lead."], ["construction", "Jobs", "jobs", "Schedule and track roofing work."], ["receipt_long", "Invoices", "invoices", "Bill completed jobs."], ["mail", "Outreach", "outreach", "Email and SMS to owners."]]; }
+  shell(here, base, cur, H) {
+    const dev = this.props.device ?? 'desktop', isM = dev === 'mobile', isT = dev === 'tablet', isD = !isM && !isT;
+    const sfx = isM ? '390' : isT ? '768' : '1440';
+    const soon = Component.soonList().map((c) => ({ icon: c[0], label: c[1], key: c[2], tip: c[3], href: 'CrmComingSoon' + sfx + '.dc.html?section=' + c[2], cur: cur === 'soon:' + c[2] ? 'page' : 'false', say: () => this.say(c[1] + ' is coming soon: ' + c[3].charAt(0).toLowerCase() + c[3].slice(1)) }));
+    return { dev: dev, isM: isM, notM: !isM, isD: isD, isT: isT, W: isM ? 390 : isT ? 768 : 1440, railH: H - 64, navT: H - 80, snackB: isM ? 96 : 24, pbB: isM ? 92 : 12, mTitle: 'Roofing CRM',
+      cur: cur === 'CrmLeads' ? 'leads' : cur === 'CrmAgent' || cur === 'CrmAsk' ? 'ask' : cur === 'CrmMap' ? 'map' : 'none',
+      curMap: cur === 'CrmMap' ? 'page' : 'false', curLeads: cur === 'CrmLeads' ? 'page' : 'false', curAsk: cur === 'CrmAgent' || cur === 'CrmAsk' ? 'page' : 'false',
+      mapHref: 'CrmMap' + sfx + '.dc.html', filtersHref: 'CrmCandidates' + sfx + '.dc.html', aiHref: 'CrmAsk' + sfx + '.dc.html', leadsHref: 'CrmLeads' + sfx + '.dc.html', soon: soon,
+      sbW: isT ? 300 : 440, sbL: isT ? 0 : 16, toMap: () => { try { window.location.href = 'CrmMap' + sfx + '.dc.html'; } catch (e) {} },
+      sayCounty: () => this.say('Travis County, TX is the only live county. Others show as Coming soon.'),
+      data: this.props.dataState || 'up', dataOpen: !!this.props.dataOpen, acctOpen: !!this.props.accountOpen, appsOpen: !!this.props.appsOpen, moreOpen: !!this.props.moreOpen,
+      hubHref: isT ? 'Hub768.dc.html' : 'Hub1440.dc.html', here: here + ' · ' + sfx + ' · Roofing CRM', pD: base + '1440.dc.html', pT: base + '768.dc.html', pM: base + '390.dc.html', sfx: sfx };
+  }
+  say(t) { this.setState({ toast: t }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2800); }
+  constructor(props) { super(props); Component.forceCrm(); this.state = { toast: '' }; }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  renderVals() {
+    const H = this.props.device === 'mobile' ? 844 : 900;
+    const sh = this.shell('Shell', 'CrmShell', this.props.device === 'mobile' ? 'CrmMap' : 'CrmMap', H), isM = sh.isM;
+    return { sh: sh, H: H, mL: isM ? 0 : 80, mT: isM ? 380 : 420, mW: isM ? 390 : 760, mPad: isM ? '0 16px' : '0 32px', h2: isM ? 20 : 24, chipW: isM ? 120 : 260,
+      intro: this.props.appsOpen ? 'App switcher menu open: an Atlas menu from the Apps icon with CountyLens, Roofing CRM (current, check) and the Landing page. Escape closes it and focus returns to the Apps icon. At 390 the same three rows sit in the More sheet under Apps.' : this.props.dataOpen ? 'Data source panel open, newer run available: the manifest CID (copyable), the build date, the read-only rule and a link to CountyLens Data. The chip has three states, below.' : isM ? 'More is open: the five Coming-soon sections (disabled, with what each will do), Apps and Sign out. The data chip and account menu sit in the top bar.' : 'Account menu open (test user, Admin, Sign out). Rail: Map with Filters and AI nested, Leads, then the Coming-soon group: visible, aria-disabled, muted with a Soon pill and a one-line tooltip. Opening one of their URLs shows CrmComingSoon.',
+      chips: [['up', 'Index up to date: built from the latest published CountyLens run.'], ['updating', 'CountyLens published a newer run; results stay on Run 3 until the index finishes.'], ['unavailable', 'The index didn’t answer; leads and notes still open.']].map((c) => ({ st: c[0], note: c[1], compact: isM })),
+      toastOn: !!this.state.toast, toast: this.state.toast };
+  }
+}
+</script>
+</body>
+</html>

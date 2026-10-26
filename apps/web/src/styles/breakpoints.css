@@ -1,0 +1,25 @@
+/* Breakpoint inventory (documentation only: this file holds no rules and is not imported).
+   CSS custom properties cannot be used inside @media queries, so each query repeats the number.
+   Keep this list in step with the queries; change a value only with a design review.
+
+   Sanctioned breakpoints (Atlas window size classes, mobile first):
+     compact   under 600 px     phone: bottom bar, sheets, one column
+     medium    600 to 839 px    small tablet: rail, two columns
+     expanded  840 px and up    desktop: rail with the side panel
+     wide      1280 px and up   large desktop: the widest layouts
+   The max-width queries use 599.98px / 1279.98px so they never overlap the min-width queries
+   at 600 px / 1280 px (a fractional pixel avoids a one-pixel gap or overlap).
+
+   Known odd breakpoints, each with its reason:
+     430 px (min-width / max-width 429.98px)  GpsButton, LayersPopover, MapLegend: below this
+         width a phone cannot fit a text label beside the icon, so the buttons collapse to icon only.
+     500 px (max-height)  ResultsSheet: a short landscape phone, where the peek sheet is only the
+         handle and the header row instead of a share of the screen height.
+     767.98 / 768 px  Ask, CandidateList, ResultsPanel, Leads: the results table and the Ask
+         results sheet change layout at the tablet portrait width, which is between compact and
+         expanded and has no sanctioned class of its own.
+     1032 px  CandidateList: the width at which the extra table column (wide1032) fits beside the
+         map pane without truncating the address and reason columns.
+     1240 px  CandidateList, ResultRow: the width at which the second extra column (wide1240) and the
+         four-column field grid fit; it is also the 1240 / 1239.98px pair for the map's side pane.
+*/

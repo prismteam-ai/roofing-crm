@@ -1,0 +1,138 @@
+/* Results sheet / pane (CRM-HANDOFF §4.2; prototype `cards`, `sheet-handle`). Atlas tokens only.
+   Compact (< 600 px): a bottom sheet over the map — peek shows the header and the first card, full
+   leaves the map's top strip visible. Medium (600–1279 px, boards CrmMap768 and CrmCandidates768):
+   the panel docked below the map, always visible, scrolling on its own, no handle. Expanded
+   (≥ 1280 px): the static right pane of the three-pane layout (Map.module.css places it), no
+   handle. */
+.sheet {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 0;
+  /* The cap in viewport units too: a percentage of a page whose height the browser cannot resolve is
+     ignored, and the sheet would grow past the page and be cut off. The body below is capped by it. */
+  --sheet-cap: 40vh;
+  --sheet-cap: 40dvh;
+  max-height: 40%;
+  border-radius: var(--md-sys-shape-corner-extra-large) var(--md-sys-shape-corner-extra-large) 0 0;
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-level3);
+  transition: max-height var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
+}
+
+/* A sheet that only holds a notice peeks at about a quarter of the page, so the map keeps the rest.
+   The docked tablet panel below overrides it. */
+.sheet[data-peek="compact"][data-sheet="peek"] {
+  --sheet-cap: 25dvh;
+  max-height: 25%;
+}
+
+.sheet[data-sheet="full"] {
+  --sheet-cap: calc(100dvh - var(--space-10) * 3 - var(--space-4));
+  max-height: calc(100% - var(--space-10));
+}
+
+/* Short landscape phone: the peek is the handle and the header row, never a quarter of the screen. */
+@media (max-height: 500px) and (max-width: 599.98px) {
+  .sheet[data-sheet="peek"],
+  .sheet[data-peek="compact"][data-sheet="peek"] {
+    --sheet-cap: calc(var(--space-9) * 2 + var(--space-2));
+    max-height: calc(var(--space-9) * 2 + var(--space-2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    transition: none;
+  }
+}
+
+/* The 32 × 4 grab bar, centred in a full-width 48 px hit area (§10 fix 12). */
+.handle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: var(--space-9);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.handle::after {
+  content: "";
+  width: var(--space-8);
+  height: var(--space-1);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-outline);
+}
+
+.handle:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.body {
+  min-height: 0;
+  max-height: calc(var(--sheet-cap) - var(--space-9));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Medium: the panel docked under the map (the page grid's last row). Same one DOM; the handle and
+   the peek and full states only exist on phones. Its header and pager stay in view while the rows
+   (or the Ask AI answer) scroll in the body. */
+@media (min-width: 600px) and (max-width: 1279.98px) {
+  .sheet,
+  .sheet[data-sheet="peek"],
+  .sheet[data-sheet="full"],
+  .sheet[data-peek="compact"][data-sheet="peek"] {
+    position: static;
+    z-index: auto;
+    grid-area: results;
+    height: 100%;
+    max-height: none;
+    overflow: hidden;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 0;
+    box-shadow: none;
+    transition: none;
+  }
+
+  .handle {
+    display: none;
+  }
+
+  .body {
+    flex: 1 1 0;
+    max-height: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .sheet,
+  .sheet[data-sheet="full"] {
+    position: static;
+    z-index: auto;
+    max-height: none;
+    height: 100%;
+    border-left: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 0;
+    box-shadow: none;
+    transition: none;
+  }
+
+  .handle {
+    display: none;
+  }
+
+  .body {
+    flex: 1 1 auto;
+    max-height: none;
+  }
+}

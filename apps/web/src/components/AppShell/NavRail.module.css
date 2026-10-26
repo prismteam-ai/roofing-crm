@@ -1,0 +1,34 @@
+/* Hidden below 600px (MoreSheet takes over there); visible from 600px — Atlas's own
+   navigation-rail breakpoint, the same as AppShell.module.css's grid switch (CR-B-01). Items are
+   RoadmapItem's "rail" layout: a column (icon, label, "Soon") clipped to the rail's width, so no
+   label can spill over the page (UI audit 2026-10-25). */
+.rail {
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: var(--space-2) var(--space-1) var(--space-4);
+  overflow: hidden;
+}
+
+.group {
+  display: block;
+  padding: var(--space-2) 0 0;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-small-font);
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-weight: var(--md-sys-typescale-label-small-weight);
+  line-height: var(--md-sys-typescale-label-small-line-height);
+  letter-spacing: var(--md-sys-typescale-label-small-tracking);
+}
+
+@media (min-width: 600px) {
+  .rail {
+    display: flex;
+  }
+}

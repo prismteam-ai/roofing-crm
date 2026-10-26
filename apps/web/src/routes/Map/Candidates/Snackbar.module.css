@@ -1,0 +1,96 @@
+/* Atlas snackbar: inverse-surface, corner-extra-small, elevation 3, body-medium text, text
+   actions in inverse-primary with 48 px targets. Atlas tokens only. */
+
+.snackbar {
+  position: fixed;
+  z-index: 40;
+  right: var(--space-4);
+  bottom: calc(var(--space-10) + var(--space-6));
+  left: var(--space-4);
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  color: var(--md-sys-color-inverse-on-surface);
+  background: var(--md-sys-color-inverse-surface);
+  box-shadow: var(--md-sys-elevation-level3);
+}
+
+.line {
+  display: flex;
+  flex: 1 1 200px;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.message {
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.action {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--md-sys-color-inverse-primary);
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+}
+
+.close {
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--md-sys-color-inverse-on-surface);
+  background: transparent;
+  cursor: pointer;
+}
+
+.action:focus-visible,
+.close:focus-visible {
+  outline: 3px solid var(--md-sys-color-inverse-primary);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1280px) {
+  .snackbar {
+    right: auto;
+    bottom: var(--space-6);
+    left: 50%;
+    min-width: 344px;
+    transform: translateX(-50%);
+  }
+}

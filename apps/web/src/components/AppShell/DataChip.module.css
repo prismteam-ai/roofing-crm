@@ -1,0 +1,193 @@
+/* Data-source chip + panel (CrmDataChip): Atlas assist chip (32 px, corner-small, outline-variant
+   border, label-large) inside a 48 px hit area; the panel is an Atlas menu surface (corner-small,
+   surface-container, elevation 2). Below 840 px it shows the icon and the short run label (CRM-HANDOFF
+   § Top bar: compact data chip). Tokens only. */
+.anchor {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: calc(var(--space-10) * 5);
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  cursor: pointer;
+  position: relative;
+}
+
+/* The visible 32 px chip outline inside the 48 px target. */
+.chip::before {
+  content: "";
+  position: absolute;
+  inset: var(--space-2) 0;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small);
+}
+
+.chip:hover::before {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.chip:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+  border-radius: var(--md-sys-shape-corner-small);
+}
+
+.chip[data-state="error"] {
+  color: var(--md-sys-color-error);
+}
+
+/* The state glyph: success green when the index is ready, error when it is down (CrmDataChip). */
+.stateIcon {
+  display: inline-flex;
+  color: inherit;
+}
+
+.stateIcon[data-state="ready"] {
+  color: var(--status-success);
+}
+
+.stateIcon[data-state="error"] {
+  color: var(--md-sys-color-error);
+}
+
+.long {
+  display: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.short {
+  display: inline;
+}
+
+/* Below 840 px the bar has no room for "Data: CountyLens run …": the chip shows the short run
+   label ("Run 3") and the full text stays in its tooltip and the panel (CrmShellApps768). From
+   840 px the long text shows. */
+@media (min-width: 840px) {
+  .long {
+    display: inline;
+  }
+
+  .short {
+    display: none;
+  }
+}
+
+.panel {
+  position: fixed;
+  top: var(--space-10);
+  left: var(--space-4);
+  right: var(--space-4);
+  z-index: 3;
+  box-sizing: border-box;
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  box-shadow: var(--md-sys-elevation-level2);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+}
+
+.body,
+.status,
+.meta {
+  margin: 0;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+  overflow-wrap: anywhere;
+}
+
+.status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.status[data-state="error"] {
+  color: var(--md-sys-color-error);
+}
+
+.meta {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.retry {
+  align-self: flex-start;
+  min-height: var(--space-9);
+  padding: 0 var(--space-6);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: none;
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  cursor: pointer;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-9);
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+/* Compact (the default): the chip sits mid-bar, so a chip-anchored panel would run off the left
+   edge; it docks under the top bar between the 16 px margins. From 600 px it hangs from the chip. */
+@media (min-width: 600px) {
+  .panel {
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    left: auto;
+    right: 0;
+    width: min(calc(100vw - var(--space-8)), calc(var(--space-10) * 6));
+  }
+}

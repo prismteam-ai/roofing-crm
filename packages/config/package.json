@@ -1,0 +1,26 @@
+{
+  "name": "@crm/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Zod-parsed runtime config (region, allowed regions). Fails fast at cold start; never hard-code a region anywhere else (architecture-constitution.md §9).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./gatewayPolicy": "./gatewayPolicy.ts",
+    "./gatewayPolicy.js": "./gatewayPolicy.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@crm/oracle-contract": "workspace:*",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

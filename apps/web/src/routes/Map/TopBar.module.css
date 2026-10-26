@@ -1,0 +1,30 @@
+/* Atlas tokens only (constitution P0-14). */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.county {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  white-space: nowrap;
+}
+
+/* Phones: the county is already in the top bar and the data chip, so the chip row goes and the
+   search box takes the width (the toolbar below is one row). */
+@media (max-width: 599.98px), (max-height: 500px) and (max-width: 1279.98px) {
+  .county {
+    display: none;
+  }
+}

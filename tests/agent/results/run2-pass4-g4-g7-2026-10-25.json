@@ -1,0 +1,141 @@
+{
+  "manifestCid": "bafkreife3vk3cgcod3v6tue2xes3hvl2vndqoshbhrhsnjtriskihpcute",
+  "runId": "travis-full-run2-20261024",
+  "summary": {
+    "passed": 1,
+    "total": 2,
+    "groundednessPct": 100,
+    "p95Ms": 5197,
+    "maxMs": 5197,
+    "n": 1
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "id": "G4",
+      "outcome": "answered",
+      "mode": "answered",
+      "pass": true,
+      "latencyMs": [5197],
+      "citations": 3,
+      "rowsChecked": 25,
+      "rowsVerified": 25,
+      "matched": 10187,
+      "shown": 25,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_properties",
+      "modelCalls": 2,
+      "failures": [],
+      "ownerLocationFlagged": true,
+      "detail": {
+        "area": "place \"Lakeway\" -> Lakeway city (30.354982, -97.986269) radius 5 mi",
+        "filters": {
+          "tenureYearsMin": 10
+        },
+        "unsupported": [
+          {
+            "constraint": "owners outside the area",
+            "reason": "not_in_export"
+          }
+        ],
+        "missing": [
+          {
+            "field": "owners outside the area",
+            "reason": "not_in_export"
+          },
+          {
+            "field": "coordinates",
+            "reason": "no_coordinates"
+          },
+          {
+            "field": "unnormalized_address",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "city_name",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "postal_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "roof_date",
+            "reason": "no_roof_date",
+            "count": 25
+          },
+          {
+            "field": "roof_age_years",
+            "reason": "no_roof_date",
+            "count": 25
+          },
+          {
+            "field": "roof_age_basis",
+            "reason": "no_roof_date",
+            "count": 25
+          },
+          {
+            "field": "roof_age_confidence",
+            "reason": "no_roof_date",
+            "count": 25
+          },
+          {
+            "field": "owner_kind",
+            "reason": "no_owner_record",
+            "count": 24
+          },
+          {
+            "field": "owner_name",
+            "reason": "no_owner_record",
+            "count": 24
+          },
+          {
+            "field": "owner_mailing_postal_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_mailing_state_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_area_class",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_is_out_of_area",
+            "reason": "not_in_export",
+            "count": 25
+          }
+        ],
+        "claims": [
+          "Found 10187 matching properties within 5 mi of Lakeway city; showing the top 3. These matches are not narrowed by owner location; owner location is not published in this data."
+        ]
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G7",
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "countCheck": "not applicable",
+      "intent": "propose_leads",
+      "outcome": "failed",
+      "mode": "fail",
+      "pass": false,
+      "latencyMs": [],
+      "failures": [
+        "Invalid ConditionExpression: Attribute name is a reserved keyword; reserved keyword: sequence"
+      ],
+      "emptyReason": "confirmLead created 48453:tcad:118096; confirmLeads created 2, already 0"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "tests-agent",
+  "version": "0.0.0",
+  "private": true,
+  "description": "T041/T042 (B-09/US2): the golden-query evaluation harness (checks.md §7.1/§7.2) -- golden.json's G1-G7 prompts/pass rules, replayed against the deployed agent over RUNTIME_URL (never localhost; quickstart.md step 3). Deliberately not a @crm/* scoped package: this harness evaluates the deployed app, it is not app code the app depends on.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "type-check": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch": "3.709.0",
+    "@crm/api": "workspace:*",
+    "@crm/api-client": "workspace:*",
+    "@crm/domain": "workspace:*",
+    "@crm/observability": "workspace:*",
+    "@crm/shared": "workspace:*",
+    "amazon-cognito-identity-js": "6.3.12",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

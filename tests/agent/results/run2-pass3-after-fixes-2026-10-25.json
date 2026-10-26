@@ -1,0 +1,619 @@
+{
+  "manifestCid": "bafkreife3vk3cgcod3v6tue2xes3hvl2vndqoshbhrhsnjtriskihpcute",
+  "runId": "travis-full-run2-20261024",
+  "summary": {
+    "passed": 6,
+    "total": 8,
+    "groundednessPct": 100,
+    "p95Ms": 11515,
+    "maxMs": 11515,
+    "n": 7
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "id": "G3",
+      "outcome": "empty_in_scope",
+      "mode": "honest_empty",
+      "pass": true,
+      "latencyMs": [1544],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "matched": 0,
+      "shown": 0,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_permits",
+      "modelCalls": 1,
+      "failures": [],
+      "emptyReason": "outcome empty_in_scope; matched 0; no roof date 0; unsupported: none; missing: none",
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "place \"Manor\" -> Manor city (30.354228, -97.558259) radius 5 mi",
+        "filters": {
+          "statusClass": ["open"],
+          "openYearsMin": 5
+        },
+        "unsupported": [],
+        "missing": [],
+        "claims": []
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G4",
+      "outcome": "empty_in_scope",
+      "mode": "fail",
+      "pass": false,
+      "latencyMs": [1453],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "matched": 0,
+      "shown": 0,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_properties",
+      "modelCalls": 1,
+      "failures": ["empty answer does not say owner location is not published"],
+      "emptyReason": "outcome empty_in_scope; matched 0; no roof date 0; unsupported: none; missing: coordinates (no_coordinates)",
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "place \"Lakeway\" -> Lakeway city (30.354982, -97.986269) radius 5 mi",
+        "filters": {
+          "tenureYearsMin": 10,
+          "ownerAreaClass": ["out_of_area"]
+        },
+        "unsupported": [],
+        "missing": [
+          {
+            "field": "coordinates",
+            "reason": "no_coordinates"
+          }
+        ],
+        "claims": []
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G5",
+      "outcome": "answered",
+      "mode": "unavailable",
+      "pass": true,
+      "latencyMs": [3324],
+      "citations": 1,
+      "rowsChecked": 1,
+      "rowsVerified": 1,
+      "matched": 1,
+      "shown": 1,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "lookup_permit",
+      "modelCalls": 2,
+      "failures": [],
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "county \"Travis County\" -> unresolved (undefined, undefined) radius 5 mi",
+        "filters": {
+          "permitNumber": "1981-001776 BP"
+        },
+        "unsupported": [
+          {
+            "constraint": "BBB rating of contractor",
+            "reason": "not_in_export"
+          }
+        ],
+        "missing": [
+          {
+            "field": "BBB rating of contractor",
+            "reason": "not_in_export"
+          },
+          {
+            "field": "improvement_status",
+            "reason": "enum_lacks_value",
+            "count": 1
+          },
+          {
+            "field": "status_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "expiry_date",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "permit_close_date",
+            "reason": "source_missing",
+            "count": 1
+          },
+          {
+            "field": "final_inspection_date",
+            "reason": "source_missing",
+            "count": 1
+          },
+          {
+            "field": "contractor_company_cid",
+            "reason": "contractor_unresolved",
+            "count": 1
+          },
+          {
+            "field": "contractor_name_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "bbb_rating",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "bbb_url",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "description",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "work_class_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          }
+        ],
+        "claims": [
+          "Found 1 matching permit in Travis County; showing the top 1, longest open first."
+        ]
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G7",
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "countCheck": "not applicable",
+      "intent": "propose_leads",
+      "outcome": "failed",
+      "mode": "fail",
+      "pass": false,
+      "latencyMs": [],
+      "failures": ["LeadRepo not wired into this Lambda's tRPC context"]
+    },
+    {
+      "repeat": 0,
+      "id": "A2",
+      "outcome": "answered",
+      "mode": "answered",
+      "pass": true,
+      "latencyMs": [8496],
+      "citations": 3,
+      "rowsChecked": 25,
+      "rowsVerified": 25,
+      "matched": 854,
+      "shown": 25,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_permits",
+      "modelCalls": 2,
+      "failures": [],
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "place \"Austin\" -> Austin city (30.298622, -97.754134) radius 5 mi",
+        "filters": {
+          "statusClass": ["open", "stalled"],
+          "openYearsMin": 5
+        },
+        "unsupported": [
+          {
+            "constraint": "sorted by open duration",
+            "reason": "no_lexicon_carrier"
+          }
+        ],
+        "missing": [
+          {
+            "field": "sorted by open duration",
+            "reason": "no_lexicon_carrier"
+          },
+          {
+            "field": "improvement_status",
+            "reason": "enum_lacks_value",
+            "count": 25
+          },
+          {
+            "field": "status_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "expiry_date",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "permit_close_date",
+            "reason": "source_missing",
+            "count": 25
+          },
+          {
+            "field": "final_inspection_date",
+            "reason": "source_missing",
+            "count": 25
+          },
+          {
+            "field": "contractor_company_cid",
+            "reason": "contractor_unresolved",
+            "count": 25
+          },
+          {
+            "field": "contractor_name_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "bbb_rating",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "bbb_url",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "description",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "work_class_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "final_date",
+            "reason": "not_closed",
+            "count": 1
+          }
+        ],
+        "claims": [
+          "Found 854 matching permits within 5 mi of Austin city; showing the top 3, longest open first."
+        ]
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "A3",
+      "outcome": "answered",
+      "mode": "unavailable",
+      "pass": true,
+      "latencyMs": [11515],
+      "citations": 3,
+      "rowsChecked": 25,
+      "rowsVerified": 25,
+      "matched": 178,
+      "shown": 25,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_permits",
+      "modelCalls": 2,
+      "failures": [],
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "place \"Austin\" -> Austin city (30.298622, -97.754134) radius 2 mi",
+        "filters": {
+          "statusClass": ["stalled"]
+        },
+        "unsupported": [
+          {
+            "constraint": "listed contractor name on permit",
+            "reason": "not_in_export"
+          },
+          {
+            "constraint": "BBB rating of contractor",
+            "reason": "out_of_scope"
+          }
+        ],
+        "missing": [
+          {
+            "field": "listed contractor name on permit",
+            "reason": "not_in_export"
+          },
+          {
+            "field": "BBB rating of contractor",
+            "reason": "out_of_scope"
+          },
+          {
+            "field": "improvement_status",
+            "reason": "enum_lacks_value",
+            "count": 25
+          },
+          {
+            "field": "status_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "expiry_date",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "permit_close_date",
+            "reason": "source_missing",
+            "count": 25
+          },
+          {
+            "field": "final_inspection_date",
+            "reason": "source_missing",
+            "count": 25
+          },
+          {
+            "field": "contractor_company_cid",
+            "reason": "contractor_unresolved",
+            "count": 25
+          },
+          {
+            "field": "contractor_name_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "bbb_rating",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "bbb_url",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "description",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "work_class_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 25
+          },
+          {
+            "field": "final_date",
+            "reason": "not_closed",
+            "count": 1
+          }
+        ],
+        "claims": [
+          "Found 178 matching permits within 2 mi of Austin city; showing the top 3, longest open first."
+        ]
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "A4",
+      "outcome": "answered",
+      "mode": "answered",
+      "pass": true,
+      "latencyMs": [10883],
+      "citations": 3,
+      "rowsChecked": 25,
+      "rowsVerified": 25,
+      "matched": 665,
+      "shown": 25,
+      "excludedNoRoofDate": 14333,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_properties",
+      "modelCalls": 2,
+      "failures": [],
+      "ownerLocationFlagged": true,
+      "detail": {
+        "area": "place \"Austin\" -> Austin city (30.298622, -97.754134) radius 2 mi",
+        "filters": {
+          "roofAgeMinYears": 15,
+          "tenureYearsMin": 10
+        },
+        "unsupported": [],
+        "missing": [
+          {
+            "field": "roofAgeYears",
+            "reason": "no_roof_date",
+            "count": 14333
+          },
+          {
+            "field": "coordinates",
+            "reason": "no_coordinates"
+          },
+          {
+            "field": "unnormalized_address",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "city_name",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "postal_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_kind",
+            "reason": "no_owner_record",
+            "count": 24
+          },
+          {
+            "field": "owner_name",
+            "reason": "no_owner_record",
+            "count": 24
+          },
+          {
+            "field": "owner_mailing_postal_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_mailing_state_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_area_class",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_is_out_of_area",
+            "reason": "not_in_export",
+            "count": 25
+          }
+        ],
+        "claims": [
+          "Found 665 matching properties within 2 mi of Austin city with a roof at least 15 years old; showing the top 3."
+        ]
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "A5",
+      "outcome": "answered",
+      "mode": "answered",
+      "pass": true,
+      "latencyMs": [8830],
+      "citations": 3,
+      "rowsChecked": 25,
+      "rowsVerified": 25,
+      "matched": 1350,
+      "shown": 25,
+      "excludedNoRoofDate": 14998,
+      "excludedNoCoordinates": 0,
+      "countCheck": "matched 1350 equals the index count",
+      "intent": "find_properties",
+      "modelCalls": 2,
+      "failures": [],
+      "ownerLocationFlagged": true,
+      "detail": {
+        "area": "zip \"78701\" -> ZCTA5 78701 (30.270569, -97.742589) radius 2 mi",
+        "filters": {
+          "roofAgeMinYears": 20
+        },
+        "unsupported": [],
+        "missing": [
+          {
+            "field": "postal_code",
+            "reason": "not_in_export"
+          },
+          {
+            "field": "roofAgeYears",
+            "reason": "no_roof_date",
+            "count": 14998
+          },
+          {
+            "field": "coordinates",
+            "reason": "no_coordinates"
+          },
+          {
+            "field": "unnormalized_address",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "city_name",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "postal_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "last_ownership_transfer_date",
+            "reason": "no_dated_sale",
+            "count": 14
+          },
+          {
+            "field": "tenure_years",
+            "reason": "no_dated_sale",
+            "count": 14
+          },
+          {
+            "field": "tenure_basis",
+            "reason": "no_dated_sale",
+            "count": 14
+          },
+          {
+            "field": "is_long_tenure",
+            "reason": "no_dated_sale",
+            "count": 14
+          },
+          {
+            "field": "owner_kind",
+            "reason": "no_dated_sale",
+            "count": 14
+          },
+          {
+            "field": "owner_name",
+            "reason": "no_dated_sale",
+            "count": 14
+          },
+          {
+            "field": "owner_mailing_postal_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_mailing_state_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_area_class",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_is_out_of_area",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_kind",
+            "reason": "no_owner_record",
+            "count": 4
+          },
+          {
+            "field": "owner_name",
+            "reason": "no_owner_record",
+            "count": 4
+          },
+          {
+            "field": "property_usage_type",
+            "reason": "source_missing",
+            "count": 1
+          },
+          {
+            "field": "property_structure_built_year",
+            "reason": "source_missing",
+            "count": 1
+          }
+        ],
+        "claims": [
+          "Found 1350 matching properties within 2 mi of ZCTA5 78701 with a roof at least 20 years old; showing the top 3. Postal codes are not published in this data, so ZCTA5 78701 means every property within 2 mi of that ZIP's centre point, not the ZIP's boundary."
+        ]
+      }
+    }
+  ]
+}

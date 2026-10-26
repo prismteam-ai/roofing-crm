@@ -1,0 +1,107 @@
+/* Atlas tokens only (constitution P0-14). */
+.wrapper {
+  position: relative;
+}
+
+/* The button: layers icon and the word (the word is icon-only on the narrowest phones). */
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: var(--space-9);
+  height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-level2);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 1px;
+}
+
+.active {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.buttonText {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 430px) {
+  .buttonText {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: var(--space-9);
+  cursor: pointer;
+}
+
+.checkbox {
+  width: var(--space-5);
+  height: var(--space-5);
+  margin: var(--space-1) 0 0;
+  accent-color: var(--md-sys-color-primary);
+}
+
+.label {
+  display: block;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.hint {
+  display: block;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+/* A layer the published data cannot draw: shown, disabled, with its reason. */
+.disabled {
+  cursor: default;
+}
+
+.disabled .label {
+  color: var(--md-sys-color-on-surface-variant);
+}

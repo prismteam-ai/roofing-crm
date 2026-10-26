@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · Ask the agent states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.cr-h2{margin:0;font-family:var(--font-brand);font-weight:400}
+.cr-sub{font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.cr-lab{font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field input,.cr-field select,.cr-field textarea{height:48px;box-sizing:border-box;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font:400 14px var(--font-plain)}
+.cr-field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.cr-field input[aria-invalid="true"]{border-color:var(--md-sys-color-error)}
+.cr-card{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-surface);box-sizing:border-box;min-width:0}
+.cr-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-width:0}
+.cr-proto{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border:1px dashed var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-small);font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cr-tbl{display:grid;align-items:center;column-gap:12px;padding:6px 12px;min-height:56px;border-top:1px solid var(--md-sys-color-outline-variant);font-size:13px;line-height:18px}
+.cr-tbl.is-head{min-height:40px;border-top:0;font-size:12px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+.cr-dis{opacity:.6;cursor:not-allowed}
+.cr-lnk{display:inline-flex;align-items:center;min-height:48px}
+
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 760px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 16px; background: var(--md-sys-color-surface-container-low); font-family: var(--font-plain); color: var(--md-sys-color-on-surface)">
+<div class="cr-row"><h2 class="cr-h2" style="font-size: 24px; line-height: 32px; flex: 1">Roofing CRM · Ask the agent states</h2><span class="cr-soon">CRM · not Task A</span></div>
+<p class="cr-sub" style="margin: 0; font-size: 14px; line-height: 20px">One response, no streaming (AD-09). The agent never creates leads by itself. Live boards: <a href="CrmAskWorking390.dc.html">working</a>, <a href="CrmAskNoResults390.dc.html">no results</a>, <a href="CrmAskSlow390.dc.html">took too long</a>, <a href="CrmAskCreateFailed390.dc.html">create failed</a>, <a href="CrmAskOutside390.dc.html">outside the county</a>, <a href="CrmAskNotFound390.dc.html">place not found</a>, <a href="CrmAskLowConf390.dc.html">low confidence</a>, <a href="CrmAskThrottled390.dc.html">rate-limited</a>, <a href="CrmAskPaused390.dc.html">paused</a>. Sample answers.</p>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; flex: 1; min-height: 0">
+<section aria-label="Loading" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Loading</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><div class="cr-row" role="status"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true" style="color: var(--md-sys-color-primary)">progress_activity</span><b style="font-weight: 500">Working…</b><span class="num cr-sub">7 s</span></div><div class="atlas-progress atlas-progress--indeterminate" role="progressbar" aria-label="Working"><i></i></div><span class="cr-sub">The answer and all its steps arrive together; it stops at 25 s.</span><button class="atlas-btn atlas-btn--text" onClick="{{say}}" style="align-self: flex-start">Cancel</button></div></section>
+<section aria-label="Empty" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Empty</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><b style="font-weight: 500">I found no properties that match. Try a bigger radius or a lower roof age.</b><div class="cr-row"><button class="atlas-chip" onClick="{{say}}">Widen to 5 mi</button><button class="atlas-chip" onClick="{{say}}">Open ≥ 5 yrs</button></div></div></section>
+<section aria-label="Error" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Error</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><div class="atlas-banner atlas-banner--warning" role="alert"><span class="material-symbols-rounded" aria-hidden="true">timer_off</span><div class="atlas-banner__body"><b style="font-weight: 500">Took too long.</b> Stopped at 25 s. Nothing was counted.</div></div><button class="atlas-btn atlas-btn--filled" onClick="{{say}}" style="align-self: flex-start">Try again</button><span class="cr-sub">Also: place outside Travis County or not found (nothing runs), and “Couldn’t create the leads. Nothing was saved.” in the confirmation card.</span></div></section>
+<section aria-label="Partial" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Partial</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><div class="atlas-banner atlas-banner--warning" role="note"><span class="material-symbols-rounded" aria-hidden="true">help</span><div class="atlas-banner__body">I’m not confident in these matches: 1 of 1 roof ages come from the year built only.</div></div><span class="cr-sub">Missing-data note (BBB blocked, contractor as printed) and the coverage note where permits aren’t published.</span></div></section>
+<section aria-label="Rate-limited" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Rate-limited</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><div class="atlas-banner atlas-banner--warning" role="status"><span class="material-symbols-rounded" aria-hidden="true">hourglass_top</span><div class="atlas-banner__body"><b style="font-weight: 500">Too many questions in a short time.</b> Ask again in 40 s.</div></div><span class="cr-sub">AI paused: today’s budget is used up until 00:00 UTC; Filters and the map still work.</span></div></section>
+</div>
+<sc-if value="{{toastOn}}" hint-placeholder-val="{{ false }}"><div class="atlas-snackbar" role="status" style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 90">{{toast}}</div></sc-if>
+<div style="position: absolute; left: 12px; bottom: 12px; z-index: 80"><dc-import name="ProtoBar" here="Roofing CRM · Ask the agent states" desktop="" tablet="" mobile="" current="none" crm="{{ true }}" hint-size="48px,48px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":760}}'>
+class Component extends DCLogic {
+  static forceCrm() { try { window.__clMapView = true; } catch (e) {} }
+  constructor(props) { super(props); Component.forceCrm(); this.state = { toast: '' }; }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  renderVals() { return { say: () => { this.setState({ toast: 'Drawn state: the live version is on the linked board.' }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2400); }, toastOn: !!this.state.toast, toast: this.state.toast }; }
+}
+</script>
+</body>
+</html>

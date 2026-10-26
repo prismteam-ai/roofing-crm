@@ -1,0 +1,91 @@
+/* Results rows and the numbered pager (boards CrmMap768, CrmMapPin390). Atlas tokens only. */
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-2);
+  list-style: none;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--space-3);
+  padding: 0 var(--space-4);
+  background: var(--md-sys-color-surface);
+}
+
+@media (min-width: 600px) {
+  .foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: auto;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+}
+
+.showing {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+}
+
+.pager {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pageBtn {
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.pageBtn:disabled {
+  cursor: default;
+  opacity: 0.38;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.pageBtn:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -3px;
+}
+
+.pageOn,
+.pageOn:hover:not(:disabled) {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.gap {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--space-6);
+  color: var(--md-sys-color-on-surface-variant);
+}

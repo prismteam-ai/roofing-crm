@@ -1,0 +1,29 @@
+{
+  "name": "@crm/observability",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared Powertools Logger/Tracer/Metrics middleware every Lambda handler wraps with (constitution Article VIII: structured JSON logs, X-Ray on, named custom metrics — never inline string literals at a call site).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./metric-names": "./src/metricNames.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/logger": "2.36.0",
+    "@aws-lambda-powertools/metrics": "2.36.0",
+    "@aws-lambda-powertools/tracer": "2.36.0",
+    "@aws-sdk/client-s3": "3.709.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.147",
+    "@types/node": "22.10.5",
+    "aws-sdk-client-mock": "4.1.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

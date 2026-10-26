@@ -1,0 +1,93 @@
+/* Atlas tokens only (constitution P0-14). */
+.wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* Sized by its container (Map.module.css's .mapArea); no own minimum, so it never spills
+     over the results sheet or the notices below it. */
+  min-height: 0;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  /* What shows where tiles have not loaded (never a white hole). */
+  background: var(--md-sys-color-surface-container);
+}
+
+/* Tile failure (board CrmMapFailed390): a banner over the map, not a blank cover, so the radius,
+   filters and results stay usable. Error container tokens, a 48 px Retry. */
+.failed {
+  position: absolute;
+  top: calc(var(--space-4) + var(--space-9) + var(--space-2));
+  left: var(--space-4);
+  /* Clears the zoom and recentre column, as the overlay stack does. */
+  right: calc(var(--space-9) + var(--space-6));
+  z-index: 15;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.failedMessage {
+  margin: 0;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.retry {
+  flex: none;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: inherit;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.retry:focus-visible {
+  outline: 3px solid currentcolor;
+  outline-offset: 2px;
+}
+
+/* Pin mode: a crosshair cursor over the map; at touch widths (under 1280 px, where there is no
+   hover to aim with) a fixed crosshair at the map's centre, which "Place pin here" drops the pin
+   under (board CrmMapPinMode390). */
+.map[data-pin-mode="true"] canvas {
+  cursor: crosshair;
+}
+
+.crosshair {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--space-8);
+  height: var(--space-8);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  /* Above the map overlays (z-index 10): on a short phone map the cards would hide the aim. */
+  z-index: 12;
+  background:
+    linear-gradient(var(--md-sys-color-primary), var(--md-sys-color-primary)) center / 2px 100%
+      no-repeat,
+    linear-gradient(var(--md-sys-color-primary), var(--md-sys-color-primary)) center / 100% 2px
+      no-repeat;
+}
+
+@media (min-width: 1280px) {
+  .crosshair {
+    display: none;
+  }
+}

@@ -1,0 +1,809 @@
+/* B-09 Ask screen (contracts/agent-api.md; agent-design.md smeargle §1). Atlas tokens only
+   (constitution P0-14); the 600px rail breakpoint follows the existing convention
+   (AppShell.module.css, Map.module.css, ResultRow.module.css) — a plain @media query per
+   component, no shared tablet.css/compact.css. */
+
+.page {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-4);
+}
+
+.composerPane,
+.resultPane {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: var(--md-sys-typescale-title-large-size);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+}
+
+.form,
+.suggestions,
+.suggestionList,
+.suggestionList > li,
+.suggestionGroup,
+.composer {
+  min-width: 0;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+}
+
+/* CrmAsk1440 composer: one outlined card holding the text area and its footer. */
+.composer {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface);
+}
+
+/* The text area suppresses its own outline (below), so the card draws the 3 px focus ring, as the
+   search box does: a border colour change alone is not a visible focus indicator. */
+.composer:focus-within {
+  border-color: var(--md-sys-color-primary);
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--space-10);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  resize: vertical;
+}
+
+.input:focus-visible {
+  outline: 0;
+}
+
+.composerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.composerNote {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  flex: none;
+  min-width: var(--space-9);
+  min-height: var(--space-9);
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+}
+
+.suggestions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.suggestionList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--space-9);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  text-align: left;
+}
+
+.suggestion:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.suggestion:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Long questions wrap (they are the whole prompt), they are not cut with an ellipsis. */
+.suggestionText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.suggestionGroup {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.suggestionGroupLabel {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.input:read-only {
+  /* Working: the question stays readable (full on-surface text), only editing is locked. */
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+.action:disabled,
+.tonalButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.action:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* "How I read this" (CrmAsk390/768/1440): the plan-summary block (surface-container background,
+   body-small text, small corner radius). Shown only for outcomes with a model plan. */
+.plan {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+/* The headline sentence of an empty / unpublished answer (CrmAskNoResults390: plain bold-ish text,
+   not a card). */
+.lead {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--status-success);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.answer {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* The answer is prose with numbered references (CrmAsk390/768/1440), not one card per claim. */
+.claims {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  list-style: none;
+}
+
+.claim {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.citeRef {
+  /* A link inside a sentence, sized by its line of text (WCAG 2.5.8 inline exception) so the line
+     height does not grow. An atomic inline box (inline-flex, nowrap): the line wraps between pills,
+     never through one, so a pill cannot be cut at a narrow pane's edge. */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: baseline;
+  white-space: nowrap;
+  box-sizing: border-box;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  line-height: var(--space-5);
+  text-decoration: none;
+}
+
+/* The pill stays small; its hit area is 48 px (Atlas touch target) through a centred pseudo-
+   element, so neighbouring numbers overlap only in transparent space. */
+.citeRef::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, var(--space-9));
+  height: var(--space-9);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.citeRef:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Numbered source rows (CrmAsk1440 rows): number badge, TCAD title, provenance, actions. */
+.sources {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.sourceNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+}
+
+.sourceBody {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.sourceTitle {
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+}
+
+.sourceCid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.link {
+  color: var(--md-sys-color-primary);
+  overflow-wrap: anywhere;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actionRow:empty {
+  display: none;
+}
+
+.textButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--space-9);
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  text-decoration: none;
+}
+
+.textButton:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* "Create lead" (CrmAsk1440 / CrmAskConfirm390): a tonal button, never filled-primary, so it
+   never reads as the screen's main action. */
+.tonalButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+}
+
+.tonalButton:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.proposalAction {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.missingList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One polite live region for the whole screen: announced, not shown (the visible heading and
+   working panel carry the same words). No negative margin: the Atlas token audit checks
+   every rendered element's margins. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+/* Result: heading (focused on arrival), the question echo, then the body (CrmAsk390). */
+.result {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.resultHeading {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+}
+
+.resultHeading:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* The question echo (CrmAsk390: robot glyph + the question in title-small). */
+.asked {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  overflow-wrap: anywhere;
+}
+
+/* Working (CrmAskWorking390, CrmAgentWorking390/1440): spinner + "Working…" + elapsed timer,
+   a 4 px indeterminate linear progress (Atlas § 7 Progress), the limit hint, skeleton lines. */
+.working {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.workingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--md-sys-color-primary);
+}
+
+.workingLabel {
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+}
+
+.timer {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.workingHint {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.spin {
+  display: inline-flex;
+  animation: spin var(--md-sys-motion-duration-extra-long) linear infinite;
+}
+
+.progress {
+  position: relative;
+  height: var(--space-1);
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.progress i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--md-sys-color-primary);
+  animation: indeterminate var(--md-sys-motion-duration-extra-long)
+    var(--md-sys-motion-easing-standard) infinite;
+}
+
+.skeleton {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.skeletonLine,
+.skeletonLineShort {
+  display: block;
+  height: var(--space-3);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container-highest);
+  animation: pulse var(--md-sys-motion-duration-extra-long) var(--md-sys-motion-easing-standard)
+    infinite alternate;
+}
+
+.skeletonLineShort {
+  width: 40%;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes indeterminate {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes pulse {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.55;
+  }
+}
+
+/* Limit banners (CrmAskThrottled390 warning, CrmAskPaused390 info, CrmAskSlow390 warning). */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--md-sys-shape-corner-medium);
+}
+
+.warning {
+  background: var(--status-warning-container);
+  color: var(--status-warning);
+}
+
+.danger {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.info {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.bannerBody {
+  margin: 0;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+/* Candidate places (CrmAskLowConf390 / CrmAskOutside390 "Use {place}" chips): Atlas chip, 48 px
+   touch target. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.chip:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.notes {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+/* Answer | Matches (CrmAsk1440 tab row): Atlas tabs, 48 px targets, a 3 px primary indicator. */
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.tab {
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+}
+
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary);
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.outlineButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+}
+
+.outlineButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.outlineButton:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.pinNote {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.sourceNear {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+}
+
+/* The focused citation (a pin or a number was selected): its row, and its number in the text. */
+.source[data-focused="true"] {
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-secondary-container);
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.citeRef[data-focused="true"] {
+  outline: 3px solid var(--md-sys-color-on-surface);
+  outline-offset: 2px;
+}
+
+/* One column in both layouts: the pane (1280 px and up) is a narrow side column, the sheet fills the
+   width below it. The panel never lays itself out in two columns. */
+.page[data-layout="sheet"] {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.page[data-layout="pane"] {
+  padding: var(--space-4);
+}
+
+/* The Matches tab: the list carries its own 16 px side padding (as in the filter results), so the
+   panel bleeds out of the page's 16 px and a card sits at the same left edge and width. */
+.answer[data-tab="matches"] {
+  margin-inline: calc(-1 * var(--space-4));
+}
+
+/* The tab bar is dropped (not just hidden by the attribute) when the Matches rows live in the
+   results pane. */
+.tabs[hidden] {
+  display: none;
+}
+
+/* Once there is an answer the composer folds into one line: the glyph, the question (one line,
+   ellipsis, full text in the title) and an Edit button that brings the composer back (CrmAsk768). */
+.page[data-composer="collapsed"],
+.page[data-composer="collapsed"] .composerPane {
+  gap: var(--space-2);
+}
+
+.questionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  min-width: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.questionText {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+}
+
+.questionHeader .textButton {
+  flex: none;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Phone and small tablet widths: the results sheet is only a few lines tall, so the tabs stay first and the two
+   actions sit right under them, ahead of How I read this and the answer text. Visual order only;
+   the DOM keeps the board's order (tabs, answer, actions). */
+@media (max-width: 767.98px) {
+  .page[data-layout="sheet"] .tabs {
+    order: -2;
+  }
+
+  .page[data-layout="sheet"] .answerActions {
+    order: -1;
+  }
+}

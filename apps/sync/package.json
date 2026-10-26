@@ -1,0 +1,42 @@
+{
+  "name": "@crm/sync",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The crm-sync Step Functions pipeline Lambdas (Plan, FetchPart, BuildIndex, Validate, Promote) per architecture-constitution.md §2.3. Reads Task A's published, CID-verified contract/v1 artifacts only; never Task A's internal stores (§12.1).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/logger": "2.36.0",
+    "@aws-lambda-powertools/metrics": "2.36.0",
+    "@aws-lambda-powertools/tracer": "2.36.0",
+    "@aws-sdk/client-dynamodb": "3.709.0",
+    "@aws-sdk/client-s3": "3.709.0",
+    "@aws-sdk/client-ssm": "3.709.0",
+    "@aws-sdk/lib-dynamodb": "3.709.0",
+    "@duckdb/node-api": "1.5.6-r.2",
+    "@crm/config": "workspace:*",
+    "@crm/index-schema": "workspace:*",
+    "@crm/observability": "workspace:*",
+    "@crm/oracle-contract": "workspace:*",
+    "@crm/oracle-profile-travis-austin": "workspace:*",
+    "@crm/oracle-views": "workspace:*",
+    "@crm/shared": "workspace:*",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.147",
+    "@types/node": "22.10.5",
+    "aws-cdk-lib": "2.173.4",
+    "aws-sdk-client-mock": "4.1.0",
+    "constructs": "10.4.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,413 @@
+/* Leads list filters and list actions (prototype CrmLeads390/768/1440, CRM-HANDOFF § 4.5).
+   Atlas § 7 outlined text fields and filter chips, 48 px targets, Atlas tokens only. The chip,
+   field and select rules mirror Map/FilterSheet.module.css on purpose (same chip style as the
+   map, § 4.5) but live here so the Leads screen does not depend on another screen's styles.
+   Compact (< 600 px, the shell's rail breakpoint): a "Filters" button with the active count opens
+   the controls as a dismissible bottom sheet (backdrop, X, Escape, "Show n leads"). From 600 px
+   the controls are an always-visible panel and the button, backdrop and sheet header are hidden. */
+
+.region {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Compact: the page header (title, count, actions) and the chips stay pinned while the list
+   scrolls under them (CrmLeadsPaged390). The main region is the scroll container and pads 16 px;
+   the block sticks at the scrollport's top edge (top 0), which is inside that padding, so no
+   negative offset or margin is needed. */
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  background: var(--md-sys-color-surface-container-low);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.toggle,
+.chip,
+.tool {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: var(--space-9);
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-low);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  text-decoration: none;
+}
+
+/* Copy link: an Atlas text button (primary label); Show on map: tonal (secondary container).
+   Below 600 px both are 48 px icon buttons (CrmLeads390); the names stay on aria-label. */
+.tool {
+  justify-content: center;
+  padding: 0;
+  border-color: transparent;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+}
+
+.toolTonal {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.toolLabel {
+  display: none;
+}
+
+/* The active filters under the Filters button: each opens the sheet (CrmLeadsPaged390). */
+.summaryChip {
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.summaryChip:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* The Filters button reads as tonal when it is the way in (CrmLeads390). */
+.toggle {
+  border-color: transparent;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.clear {
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--space-5);
+  min-height: var(--space-5);
+  padding: 0 var(--space-1);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-family: var(--md-sys-typescale-label-small-font);
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-weight: var(--md-sys-typescale-label-small-weight);
+}
+
+.toggle:focus-visible,
+.chip:focus-visible,
+.tool:focus-visible,
+.clear:focus-visible,
+.input:focus-visible,
+.select:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.note,
+.hint,
+.summary {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  /* The scrim token at 40 % through opacity: a blend written into the colour is not a token. */
+  background: var(--md-sys-color-scrim);
+  opacity: 0.4;
+}
+
+.panel {
+  display: none;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+}
+
+/* The bottom sheet below 600 px: fixed to the viewport, above the bottom bar. */
+.open {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 30;
+  display: grid;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0 0;
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.sheetHeader,
+.sheetFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sheetTitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+}
+
+.done {
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.groupLabel {
+  padding: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.groupBody {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.nameInput {
+  width: auto;
+  flex: 1 1 calc(var(--space-10) * 2);
+  max-width: calc(var(--space-10) * 4);
+}
+
+.wideFooter {
+  display: none;
+}
+
+.chips,
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.row {
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.chipSelected {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+}
+
+.input,
+.select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+}
+
+.select:disabled {
+  cursor: not-allowed;
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+/* Visible to a screen reader only: the Within selects carry no drawn label (CrmLeads768 shows one
+   select line); the "Within" row label and the word "of" name them. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The Within row: radius, "of", area and Use my location on one line (wraps on a narrow card). */
+.withinRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.withinRow .select {
+  width: auto;
+}
+
+.unit {
+  align-self: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+@media (min-width: 600px) {
+  .toggle,
+  .backdrop,
+  .sheetHeader,
+  .sheetFooter,
+  .toolbar {
+    display: none;
+  }
+
+  .sticky {
+    position: static;
+    margin: 0;
+    padding: 0;
+    border-bottom: 0;
+    background: transparent;
+  }
+
+  .tool {
+    padding: 0 var(--space-4);
+  }
+
+  .toolLabel {
+    display: inline;
+  }
+
+  .panel,
+  .open {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    display: grid;
+    max-height: none;
+    overflow-y: visible;
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-surface);
+  }
+
+  /* One row per control: the label in a fixed column, the chips or fields beside it
+     (CrmLeads768/1440). */
+  /* Tighter than the sheet: rows 8 px apart, a 12 px frame (the board's card is about 315 px at
+     768 px; every control keeps its 48 px target, so the card is as short as they allow). */
+  .panel {
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .panel .group {
+    grid-template-columns: calc(var(--space-10) * 2) minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--space-4);
+  }
+
+  .panel .group > .groupLabel {
+    align-self: start;
+    padding-top: var(--space-3);
+  }
+
+  .wideFooter {
+    display: flex;
+    justify-content: flex-end;
+  }
+}

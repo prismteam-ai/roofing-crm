@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · Lead detail</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.cr-h2{margin:0;font-family:var(--font-brand);font-weight:400}
+.cr-sub{font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.cr-lab{font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field input,.cr-field select,.cr-field textarea{height:48px;box-sizing:border-box;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font:400 14px var(--font-plain)}
+.cr-field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.cr-field input[aria-invalid="true"]{border-color:var(--md-sys-color-error)}
+.cr-card{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-surface);box-sizing:border-box;min-width:0}
+.cr-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-width:0}
+.cr-proto{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border:1px dashed var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-small);font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cr-tbl{display:grid;align-items:center;column-gap:12px;padding:6px 12px;min-height:56px;border-top:1px solid var(--md-sys-color-outline-variant);font-size:13px;line-height:18px}
+.cr-tbl.is-head{min-height:40px;border-top:0;font-size:12px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+.cr-dis{opacity:.6;cursor:not-allowed}
+.cr-lnk{display:inline-flex;align-items:center;min-height:48px}
+.crm-soon-pill{font-size:11px;line-height:16px;min-height:0;padding:0 6px;margin-top:2px}.crm-soon{color:var(--md-sys-color-on-surface-variant);cursor:pointer;min-height:0;padding-bottom:6px;font-size:11px}.crm-soon .atlas-nav-ind{height:28px}.soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+</style>
+</helmet>
+<div style="position: relative; width: {{sh.W}}px; height: {{H}}px; overflow: hidden; background: var(--md-sys-color-surface-container-low); font-family: var(--font-plain); color: var(--md-sys-color-on-surface)">
+<sc-if value="{{sh.notM}}" hint-placeholder-val="{{ true }}">
+<header class="atlas-top-app-bar" style="position: absolute; left: 0; top: 0; width: {{sh.W}}px; box-sizing: border-box; padding: 0 24px; gap: 12px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant); z-index: 20">
+<h1 class="atlas-top-app-bar__title" style="margin: 0 8px 0 0; flex: none">Roofing CRM</h1>
+<sc-if value="{{sh.isD}}" hint-placeholder-val="{{ true }}"><button class="atlas-chip" aria-haspopup="dialog" aria-label="Location: Travis County, TX. Change location" onClick="{{sh.sayCounty}}"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>Travis County, TX<span class="material-symbols-rounded" aria-hidden="true">arrow_drop_down</span></button></sc-if>
+<div style="flex: 0 1 {{sh.sbW}}px; margin-left: {{sh.sbL}}px; position: relative; z-index: 30"><dc-import name="SearchBox" value="" variant="header" device="desktop" on-place="{{sh.toMap}}" crm="on" start-open="{{ false }}" hint-size="100%,48px"></dc-import></div>
+<span style="flex: 1"></span>
+<div style="position: relative; z-index: 32"><dc-import name="CrmDataChip" state="{{sh.data}}" device="{{sh.dev}}" compact="{{sh.isT}}" start-open="{{sh.dataOpen}}" hint-size="230px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAppsMenu" device="{{sh.dev}}" start-open="{{sh.appsOpen}}" hint-size="48px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAccount" device="{{sh.dev}}" start-open="{{sh.acctOpen}}" hint-size="48px,48px"></dc-import></div>
+</header>
+<nav class="atlas-nav-rail" aria-label="Main" style="position: absolute; left: 0; top: 64px; height: {{sh.railH}}px; box-sizing: border-box; padding-top: 12px; z-index: 10; overflow: visible">
+<a class="atlas-nav-item" href="{{sh.mapHref}}" aria-current="{{sh.curMap}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">map</span></span>Map</a>
+<a class="atlas-nav-item" href="{{sh.filtersHref}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">tune</span></span>Filters</a>
+<a class="atlas-nav-item" href="{{sh.aiHref}}" aria-current="{{sh.curAsk}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">auto_awesome</span></span>AI</a>
+<a class="atlas-nav-item" href="{{sh.leadsHref}}" aria-current="{{sh.curLeads}}" style="margin-top: 8px"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span></span>Leads</a>
+<div role="group" aria-labelledby="crm-soon-h" style="display: flex; flex-direction: column; align-items: center; margin-top: 12px"><span id="crm-soon-h" style="font-size: 11px; line-height: 16px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); padding: 4px 0">Coming soon</span><sc-for list="{{sh.soon}}" as="c" hint-placeholder-count="5"><a class="atlas-nav-item crm-soon" href="{{c.href}}" title="{{c.tip}}" aria-current="{{c.cur}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">{{c.icon}}</span></span>{{c.label}}<span class="atlas-pill atlas-pill--unavailable crm-soon-pill">Soon</span><span class="atlas-sr">. Coming soon. {{c.tip}}</span></a></sc-for></div>
+</nav>
+</sc-if>
+<sc-if value="{{sh.isM}}" hint-placeholder-val="{{ false }}">
+<header class="atlas-top-app-bar" style="position: absolute; left: 0; top: 0; width: 390px; box-sizing: border-box; padding: 0 4px 0 16px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant); z-index: 20">
+<h1 class="atlas-top-app-bar__title" style="flex: 1; margin: 0">{{sh.mTitle}}</h1>
+<a class="atlas-icon-btn" aria-label="Location: Travis County, TX. Change location" href="Shell390Location.dc.html" style="text-decoration: none; display: grid; place-items: center; color: var(--md-sys-color-on-surface)"><span class="material-symbols-rounded" aria-hidden="true">location_on</span></a>
+<div style="position: relative; z-index: 32"><dc-import name="CrmDataChip" state="{{sh.data}}" device="mobile" compact="{{ true }}" start-open="{{sh.dataOpen}}" hint-size="110px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAccount" device="mobile" start-open="{{sh.acctOpen}}" hint-size="48px,48px"></dc-import></div>
+</header>
+<div style="position: absolute; left: 0; top: {{sh.navT}}px; width: 390px; height: 80px; z-index: 85"><dc-import name="CrmBottomNav" current="{{sh.cur}}" start-open="{{sh.moreOpen}}" hint-size="390px,80px"></dc-import></div>
+</sc-if>
+<sc-if value="{{toastOn}}" hint-placeholder-val="{{ false }}"><div class="atlas-snackbar" role="status" style="position: absolute; left: 50%; bottom: {{sh.snackB}}px; transform: translateX(-50%); z-index: 90; max-width: 90%">{{toast}}</div></sc-if>
+<div style="position: absolute; left: 12px; bottom: {{sh.pbB}}px; z-index: 80"><dc-import name="ProtoBar" here="{{sh.here}}" desktop="{{sh.pD}}" tablet="{{sh.pT}}" mobile="{{sh.pM}}" current="{{sh.dev}}" crm="{{ true }}" hint-size="48px,48px"></dc-import></div>
+
+<main aria-labelledby="ld-h" style="position: absolute; left: {{mL}}px; top: 64px; width: {{mW}}px; height: {{mH}}px; box-sizing: border-box; padding: {{mPad}}; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+<div class="cr-row" style="flex-wrap: nowrap; align-items: flex-start"><a class="atlas-icon-btn" href="{{backHref}}" aria-label="Back to leads" style="display: grid; place-items: center; color: var(--md-sys-color-on-surface); flex: none"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span></a><div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><h2 id="ld-h" class="cr-h2" style="font-size: {{h2}}px; line-height: {{h2L}}px">{{L.title}}</h2><sc-if value="{{L.na}}" hint-placeholder-val="{{ false }}"><span class="cr-sub">Address not published in Run 3 · {{L.ll}}</span></sc-if><span class="cr-sub">{{L.id}} · {{L.type}} · created {{L.created}} {{L.srcText}} · owner {{L.owner}}</span></div><sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><span class="{{L.pill}}" style="flex: none">{{L.status}}</span></sc-if></div>
+<sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}"><div class="cr-card" aria-busy="true"><div class="atlas-progress atlas-progress--indeterminate" role="progressbar" aria-label="Loading the lead"><i></i></div><span role="status">Loading the lead…</span><div class="atlas-skeleton" style="height: 44px"></div><div class="atlas-skeleton" style="height: 120px"></div></div></sc-if>
+<sc-if value="{{isError}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner atlas-banner--error" role="alert"><span class="material-symbols-rounded" aria-hidden="true">error</span><div class="atlas-banner__body"><b style="font-weight: 500">This lead couldn’t load.</b> The lead store didn’t answer. Try again; nothing was changed.</div><button class="atlas-btn atlas-btn--text" onClick="{{retry}}">Retry</button></div></sc-if>
+<sc-if value="{{isMissing}}" hint-placeholder-val="{{ false }}"><div class="cr-card" style="align-items: flex-start"><b style="font-weight: 500">This lead doesn’t exist.</b><span class="cr-sub">It may have been removed, or the link is wrong.</span><a class="atlas-btn atlas-btn--tonal" href="{{backHref}}" style="text-decoration: none">Back to leads</a></div></sc-if>
+<sc-if value="{{saveErr}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner atlas-banner--error" role="alert"><span class="material-symbols-rounded" aria-hidden="true">sync_problem</span><div class="atlas-banner__body"><b style="font-weight: 500">Your change wasn’t saved.</b> The lead store didn’t answer. Your text is kept; try again.</div><button class="atlas-btn atlas-btn--text" onClick="{{retrySave}}">Try again</button></div></sc-if>
+<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+<div style="flex: {{gridFlex}}; min-height: 0; display: grid; grid-template-columns: {{cols}}; gap: 16px; align-items: start; overflow: {{ovf}}">
+<div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+<section class="cr-card" aria-labelledby="st-h"><b id="st-h" style="font-weight: 500">Status</b>
+<div role="radiogroup" aria-label="Lead status" class="cr-row"><sc-for list="{{stOpts}}" as="o" hint-placeholder-count="5"><button class="atlas-chip" role="radio" aria-checked="{{o.on}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 36px">{{o.label}}</button></sc-for></div>
+<span class="cr-sub">Changes save at once and show in History. Owner: {{L.owner}} (you).</span></section>
+<section class="cr-card" aria-labelledby="nt-h"><b id="nt-h" style="font-weight: 500">Notes · {{nNotes}}</b>
+<label class="cr-field">Add a note<textarea aria-label="New note" value="{{draft}}" onInput="{{onDraft}}" placeholder="What happened, what's next"></textarea></label>
+<div class="cr-row" style="justify-content: flex-end"><button class="atlas-btn atlas-btn--filled" onClick="{{addNote}}" disabled="{{noDraft}}"><span class="material-symbols-rounded" aria-hidden="true">note_add</span>Add note</button></div>
+<sc-if value="{{noNotes}}" hint-placeholder-val="{{ false }}"><span class="cr-sub">No notes yet.</span></sc-if>
+<ul aria-label="Notes, newest first" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px"><sc-for list="{{notes}}" as="n" hint-placeholder-count="1"><li style="display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--md-sys-shape-corner-small); background: var(--md-sys-color-surface-container)"><span style="font-size: 14px; line-height: 20px">{{n.text}}</span><span class="cr-sub" style="font-size: 12px">{{n.who}} · {{n.t}}</span></li></sc-for></ul>
+</section>
+<section class="cr-card" aria-labelledby="hi-h"><b id="hi-h" style="font-weight: 500">History</b>
+<ol aria-label="History, newest first" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px"><sc-for list="{{hist}}" as="h" hint-placeholder-count="2"><li style="display: flex; gap: 8px; font-size: 13px; line-height: 18px"><span class="material-symbols-rounded atlas-icon-16" aria-hidden="true" style="color: var(--md-sys-color-on-surface-variant)">history</span><span style="flex: 1">{{h.text}}</span><span class="cr-sub num" style="font-size: 12px; white-space: nowrap">{{h.t}}</span></li></sc-for></ol>
+</section>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+<section class="cr-card" aria-labelledby="sg-h"><b id="sg-h" style="font-weight: 500">Signals saved with the lead</b>
+<sc-if value="{{isPartial}}" hint-placeholder-val="{{ false }}"><div class="atlas-missing" role="note" style="font-size: 13px; line-height: 18px"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">warning</span><div>Run 3 property data didn’t load, so these are the values saved when the lead was created ({{L.created}}).</div></div></sc-if>
+<div class="atlas-kv"><span>Roof age</span><span>{{L.roof}} yrs · {{L.conf}}</span></div><div class="atlas-kv"><span>Basis</span><span>{{L.basis}}</span></div>
+<div class="atlas-kv"><span>Roofing permit</span><span>{{L.permitShort}}</span></div>
+<sc-if value="{{L.cbOn}}" hint-placeholder-val="{{ true }}"><div class="atlas-kv"><span>Contractor, as printed on permit</span><span>{{L.contractor}}</span></div><div class="atlas-kv" style="align-items: flex-start"><span>Identity</span><span class="cr-row" style="justify-content: flex-end"><span class="atlas-pill {{L.cbCls}}" title="{{L.cbTip}}"><span class="material-symbols-rounded" aria-hidden="true">{{L.cbIcon}}</span>{{L.cbLabel}}</span><span style="font-size: 13px; line-height: 18px">{{L.cbReason}}</span></span></div><div class="atlas-kv"><span>BBB</span><span>{{L.bbb}}</span></div></sc-if>
+<sc-if value="{{L.cbOff}}" hint-placeholder-val="{{ false }}"><div class="atlas-kv"><span>Contractor</span><span class="cr-sub">{{L.ctrOff}}</span></div></sc-if>
+<span class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">description</span>CountyLens Run 3 · read-only · Sample</span>
+<div class="cr-row"><a class="atlas-btn atlas-btn--tonal" href="{{mapHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a class="atlas-btn atlas-btn--text" href="{{propHref}}" style="text-decoration: none">Full property details</a></div>
+</section>
+<section class="cr-card" aria-labelledby="ou-h"><div class="cr-row"><b id="ou-h" style="font-weight: 500; flex: 1">Outreach</b><span class="cr-soon">Mocked</span></div>
+<span class="cr-sub">Messages to owners are not part of this release. The button shows where it would go; nothing is sent.</span>
+<div class="cr-row"><button class="atlas-btn atlas-btn--outlined cr-dis" aria-disabled="true" onClick="{{mocked}}"><span class="material-symbols-rounded" aria-hidden="true">mail</span>Send message · mocked</button><button class="atlas-btn atlas-btn--text cr-dis" aria-disabled="true" onClick="{{mocked}}"><span class="material-symbols-rounded" aria-hidden="true">event</span>Schedule a visit · Soon</button></div>
+</section>
+</div>
+</div>
+</sc-if>
+<div class="cr-proto" role="group" aria-label="Prototype only: screen state"><span>Prototype · state</span><sc-for list="{{stateOpts}}" as="o" hint-placeholder-count="6"><button class="atlas-chip" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 32px">{{o.label}}</button></sc-for></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"v1":{"editor":"enum","options":["","addr","ctr"],"default":""},"device":{"editor":"enum","options":["desktop","tablet","mobile"],"default":"desktop"},"state":{"editor":"enum","options":["populated","loading","error","partial","saveerror","missing"],"default":"populated"},"leadId":{"editor":"text","default":"L-1042"},"hold":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  // CRM preview only (not Task A): prototype lead store shared by the Crm boards. Seeded from existing sample rows; no new totals.
+  static leadsKey() { return 'countylens.proto.crmLeads'; }
+  static leadsSeed() { return [
+    { id: 'L-1042', pid: '101', title: '101 Sample Ln · Austin 78753', type: 'Residential', src: 'permit', permit: 'Roofing permit 2020-047812 BP', status: 'Contacted', owner: 'Sample Rep', created: '2026-10-20 09:14', roof: 23, conf: 'High', basis: 'reroof permit 2003', permitShort: 'Stalled 6.4 yrs · derived: no status in source', contractor: 'SAMPLE ROOFING CO', cres: 'candidate', bbb: 'blocked', d: 4.6, a: 140, d0: 4.6, notes: [{ t: '2026-10-20 15:02', who: 'Sample Rep', text: 'Left a door hanger. Owner mails from Houston.' }], history: [{ t: '2026-10-20 09:14', text: 'Created from the roofing permit' }, { t: '2026-10-20 15:02', text: 'Status: New → Contacted' }] },
+    { id: 'L-1041', pid: '58', title: '58 Example Rd · Pflugerville 78660', type: 'Residential', src: 'property', permit: '', status: 'New', owner: 'Sample Rep', created: '2026-10-20 08:51', roof: 31, conf: 'Low', basis: 'year built 1995', permitShort: 'Open 2.2 yrs', contractor: 'Example Roofing LLC', cres: 'resolved', bbb: 'blocked', d: 2.8, a: 230, d0: 2.8, notes: [], history: [{ t: '2026-10-20 08:51', text: 'Created from the property' }] },
+    { id: 'L-1040', pid: '3', title: '3 Placeholder Pl · Austin 78753', type: 'Residential', src: 'property', permit: '', status: 'Qualified', owner: 'Sample Rep', created: '2026-10-19 16:30', roof: 24, conf: 'High', basis: 'reroof permit 2002', permitShort: 'Stalled 5.1 yrs · derived: no status in source', contractor: 'J EXAMPLE', cres: 'unresolved', bbb: 'not_checked', d: 3.6, a: 100, d0: 3.6, notes: [{ t: '2026-10-20 11:20', who: 'Sample Rep', text: 'Owner asked for an inspection after 4 pm.' }], history: [{ t: '2026-10-19 16:30', text: 'Created from the property' }, { t: '2026-10-20 11:20', text: 'Status: Contacted → Qualified' }] }
+  ]; }
+    static v1() { try { if (window.__clV1) return window.__clV1; return new URLSearchParams(window.location.search).get('v1') || ''; } catch (e) { return ''; } }
+  static v1x(l) { const v = Component.v1(); if (!l || !v) return l; const o = Object.assign({}, l), n = parseInt(String(l.pid || l.id).replace(/\D/g, ''), 10) || 1;
+    if (v === 'addr') { const m = /·\s*([A-Za-z][A-Za-z ]*?)\s*\d{5}\s*$/.exec(l.title || ''); o.title = 'TCAD 02' + String(7000000000 + n * 104729).slice(2) + ' · near ' + (m ? m[1] : 'Travis County'); o.noAddr = true; const a = (l.a || 0) * Math.PI / 180, d = l.d0 || 0; o.ll = l.pid === '101' ? '30.40310, −97.66080' : (30.4394 - Math.sin(a) * d / 69).toFixed(5) + ', ' + (-97.62 + Math.cos(a) * d / 59.6).toFixed(5).replace('-', '−'); }
+    if (v === 'ctr') { o.contractor = ''; o.cres = 'unresolved'; o.bbb = 'not_checked'; o.ctrMissing = true; }
+    return o; }
+  static leadsGet() { return Component.leadsGet0().map((x) => Component.v1x(x)); }
+  static leadsGet0() { try { const v = window.localStorage.getItem(Component.leadsKey()); if (v) { const a = JSON.parse(v); if (Array.isArray(a)) return a; } } catch (e) {} return Component.leadsSeed(); }
+  static leadsSave(a) { try { window.localStorage.setItem(Component.leadsKey(), JSON.stringify(a)); } catch (e) {} try { window.__clLeads = a; window.dispatchEvent(new Event('cl-leads')); } catch (e) {} }
+  static leadStatuses() { return ['New', 'Contacted', 'Qualified', 'Won', 'Lost']; }
+  static leadPill(st) { return 'atlas-pill ' + ({ New: 'atlas-pill--info', Contacted: 'atlas-pill--warning', Qualified: 'atlas-pill--success', Won: 'atlas-pill--success', Lost: 'atlas-pill--unavailable' })[st]; }
+  static nowStamp() { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+  // Roofing CRM board (not Task A): Map view (CRM preview) is forced on for this page, like ExploreQ-crmmap.
+  static forceCrm() { try { window.__clMapView = true; } catch (e) {} }
+  static soonList() { return [["campaign", "Campaigns", "campaigns", "Plan outreach to groups of leads."], ["request_quote", "Estimates", "estimates", "Price a roof from the lead."], ["construction", "Jobs", "jobs", "Schedule and track roofing work."], ["receipt_long", "Invoices", "invoices", "Bill completed jobs."], ["mail", "Outreach", "outreach", "Email and SMS to owners."]]; }
+  shell(here, base, cur, H) {
+    const dev = this.props.device ?? 'desktop', isM = dev === 'mobile', isT = dev === 'tablet', isD = !isM && !isT;
+    const sfx = isM ? '390' : isT ? '768' : '1440';
+    const soon = Component.soonList().map((c) => ({ icon: c[0], label: c[1], key: c[2], tip: c[3], href: 'CrmComingSoon' + sfx + '.dc.html?section=' + c[2], cur: cur === 'soon:' + c[2] ? 'page' : 'false', say: () => this.say(c[1] + ' is coming soon: ' + c[3].charAt(0).toLowerCase() + c[3].slice(1)) }));
+    return { dev: dev, isM: isM, notM: !isM, isD: isD, isT: isT, W: isM ? 390 : isT ? 768 : 1440, railH: H - 64, navT: H - 80, snackB: isM ? 96 : 24, pbB: isM ? 92 : 12, mTitle: 'Roofing CRM',
+      cur: cur === 'CrmLeads' ? 'leads' : cur === 'CrmAgent' || cur === 'CrmAsk' ? 'ask' : cur === 'CrmMap' ? 'map' : 'none',
+      curMap: cur === 'CrmMap' ? 'page' : 'false', curLeads: cur === 'CrmLeads' ? 'page' : 'false', curAsk: cur === 'CrmAgent' || cur === 'CrmAsk' ? 'page' : 'false',
+      mapHref: 'CrmMap' + sfx + '.dc.html', filtersHref: 'CrmCandidates' + sfx + '.dc.html', aiHref: 'CrmAsk' + sfx + '.dc.html', leadsHref: 'CrmLeads' + sfx + '.dc.html', soon: soon,
+      sbW: isT ? 300 : 440, sbL: isT ? 0 : 16, toMap: () => { try { window.location.href = 'CrmMap' + sfx + '.dc.html'; } catch (e) {} },
+      sayCounty: () => this.say('Travis County, TX is the only live county. Others show as Coming soon.'),
+      data: this.props.dataState || 'up', dataOpen: !!this.props.dataOpen, acctOpen: !!this.props.accountOpen, moreOpen: !!this.props.moreOpen,
+      hubHref: isT ? 'Hub768.dc.html' : 'Hub1440.dc.html', here: here + ' · ' + sfx + ' · Roofing CRM', pD: base + '1440.dc.html', pT: base + '768.dc.html', pM: base + '390.dc.html', sfx: sfx };
+  }
+  say(t) { this.setState({ toast: t }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2800); }
+  constructor(props) { super(props); Component.forceCrm(); if (props.v1 !== undefined) { try { window.__clV1 = props.v1 || ''; } catch (e) {} } let id = props.leadId || 'L-1042'; try { const q = new URLSearchParams(window.location.search).get('lead'); if (q) id = q; } catch (e) {} this.state = { st: props.state || 'populated', id: id, draft: '', toast: '', tick: 0, pend: null }; }
+  componentDidMount() { this.onL = () => this.setState({ tick: this.state.tick + 1 }); try { window.addEventListener('cl-leads', this.onL); window.addEventListener('storage', this.onL); } catch (e) {} if (this.state.st === 'loading' && !this.props.hold) this.lt = setTimeout(() => this.setState({ st: 'populated' }), 1500); }
+  componentWillUnmount() { clearTimeout(this.lt); clearTimeout(this.tt); try { window.removeEventListener('cl-leads', this.onL); window.removeEventListener('storage', this.onL); } catch (e) {} }
+  update(fn, msg) { if (this.state.st === 'saveerror') { this.setState({ pend: { fn: fn, msg: msg } }); return; } const all = Component.leadsGet0(); const i = all.findIndex((l) => l.id === this.state.id); if (i < 0) return; const l = JSON.parse(JSON.stringify(all[i])); fn(l); all[i] = l; Component.leadsSave(all); this.say(msg); }
+  renderVals() {
+    const s = this.state, H = this.props.device === 'mobile' ? 1800 : this.props.device === 'tablet' ? 1400 : 900;
+    const sh = this.shell('Lead detail', 'CrmLeadDetail', 'CrmLeads', H);
+    const isM = sh.isM, isT = sh.dev === 'tablet';
+    const l = Component.leadsGet().find((x) => x.id === s.id);
+    const ready = !!l && ['populated', 'partial', 'saveerror'].indexOf(s.st) >= 0;
+    const CB = { resolved: ['atlas-pill--success', 'verified', 'Resolved', 'Comptroller taxpayer no. 32041178552 matched'], candidate: ['atlas-pill--info', 'help', 'Candidate', 'Likely match on name and address, not proof'], ambiguous: ['atlas-pill--warning', 'call_split', 'Ambiguous', '2 Comptroller companies fit this name'], conflicting: ['atlas-pill--danger', 'sync_problem', 'Conflicting', 'Sources disagree on which company this is'], unresolved: ['atlas-pill--unavailable', 'link_off', 'Unresolved', 'No Comptroller match. No Texas roofing licence register exists'] };
+    const c = l && l.contractor ? CB[l.cres === 'resolved' ? 'resolved' : 'unresolved'] : null;
+    const BB = { rated: 'Rated · rating not published', not_found: 'Not found', blocked: 'Blocked · bbb.org refused the check (403)', not_checked: 'Not checked · no name to look up' };
+    const L = l ? { na: !!l.noAddr, ll: l.ll || '', ctrOff: l.ctrMissing ? 'Contractor not published · no lexicon carrier in contract/v1' : 'No contractor printed on permit', id: l.id, title: l.title, type: l.type || 'Residential', created: l.created, srcText: l.src === 'permit' ? 'from the roofing permit' : 'from the property', owner: l.owner, status: l.status, pill: Component.leadPill(l.status), roof: String(l.roof), conf: l.conf, basis: l.basis, permitShort: l.permitShort || 'No open permit', cbOn: !!c, cbOff: !c, contractor: l.contractor, cbCls: c ? c[0] : '', cbIcon: c ? c[1] : '', cbLabel: c ? c[2] : '', cbReason: c ? c[3] : '', cbTip: false ? 'Name matches stay Candidate. Only an official ID resolves a contractor.' : '', bbb: BB[l.bbb || 'not_checked'] } : { id: s.id, title: s.st === 'loading' ? 'Lead ' + s.id : 'Lead not found', type: '', created: '', srcText: '', owner: '', status: '', pill: '', roof: '', conf: '', basis: '', permitShort: '', cbOn: false, cbOff: true, ctrOff: '', na: false, ll: '', contractor: '', cbCls: '', cbIcon: '', cbLabel: '', cbReason: '', cbTip: '', bbb: '' };
+    const opts = [['populated', 'Populated'], ['loading', 'Loading'], ['error', 'Error'], ['partial', 'Partial'], ['saveerror', 'Save fails'], ['missing', 'Not found']];
+    const st = s.st === 'missing' ? 'missing' : s.st;
+    return {
+      sh: sh, H: H, mL: isM ? 0 : 80, mW: isM ? 390 : sh.W - 80, mH: isM ? H - 64 - 80 : H - 64, mPad: isM ? '12px 16px' : '20px 32px', h2: isM ? 20 : 26, h2L: isM ? 28 : 32,
+      cols: isM || isT ? 'minmax(0, 1fr)' : 'minmax(0, 1.1fr) minmax(0, 1fr)', ovf: 'visible', gridFlex: isM || isT ? 'none' : '1',
+      L: L, ready: ready && st !== 'missing', isLoading: st === 'loading', isError: st === 'error', isMissing: st === 'missing' || (!l && ['populated', 'partial', 'saveerror'].indexOf(st) >= 0), isPartial: st === 'partial', saveErr: st === 'saveerror' && !!s.pend,
+      backHref: 'CrmLeads' + sh.sfx + '.dc.html', mapHref: 'CrmProperty' + sh.sfx + '.dc.html', propHref: isM ? 'Property390.dc.html' : 'Property1440.dc.html',
+      stOpts: Component.leadStatuses().map((v) => ({ label: v, on: String(!!l && l.status === v), pick: () => { if (!l || l.status === v) return; const from = l.status; this.update((x) => { x.status = v; x.history = [{ t: Component.nowStamp(), text: 'Status: ' + from + ' → ' + v }].concat(x.history || []); }, 'Status saved: ' + v + '.'); } })),
+      draft: s.draft, onDraft: (e) => this.setState({ draft: e && e.target ? e.target.value : '' }), noDraft: !(s.draft || '').trim(),
+      addNote: () => { const t = (s.draft || '').trim(); if (!t) return; this.update((x) => { const now = Component.nowStamp(); x.notes = [{ t: now, who: 'Sample Rep', text: t }].concat(x.notes || []); x.history = [{ t: now, text: 'Note added' }].concat(x.history || []); }, 'Note saved.'); if (this.state.st !== 'saveerror') this.setState({ draft: '' }); },
+      retrySave: () => { const p = s.pend; this.setState({ st: 'populated', pend: null }, () => { if (p) { this.update(p.fn, p.msg); this.setState({ draft: '' }); } }); },
+      notes: l ? (l.notes || []) : [], nNotes: String(l ? (l.notes || []).length : 0), noNotes: !l || !(l.notes || []).length, hist: l ? (l.history || []) : [],
+      mocked: () => this.say('Mocked: outbound messages are not part of this release.'),
+      retry: () => { this.setState({ st: 'loading' }); this.lt = setTimeout(() => this.setState({ st: 'populated' }), 1200); },
+      stateOpts: opts.map((o) => ({ label: o[1], on: String(s.st === o[0]), pick: () => { clearTimeout(this.lt); this.setState({ st: o[0], pend: null }); if (o[0] === 'loading') this.lt = setTimeout(() => this.setState({ st: 'populated' }), 1500); } })),
+      toastOn: !!s.toast, toast: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

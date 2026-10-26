@@ -1,0 +1,26 @@
+{
+  "name": "@crm/oracle-views",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "build": "pnpm run gen",
+    "gen": "tsx scripts/gen-sql.ts",
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "build-gazetteer": "tsx scripts/build-gazetteer.ts",
+    "cut-sample": "tsx scripts/cut-sample.ts"
+  },
+  "dependencies": {
+    "@crm/oracle-contract": "workspace:*",
+    "@crm/oracle-profile-travis-austin": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@duckdb/node-api": "1.5.6-r.2",
+    "@vitest/coverage-v8": "5.0.5",
+    "tsx": "4.19.2",
+    "vitest": "5.0.5"
+  }
+}

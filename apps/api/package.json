@@ -1,0 +1,45 @@
+{
+  "name": "@crm/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "tRPC AppRouter on one Lambda behind API Gateway (architecture-constitution.md §9); this story exposes only `health` (contracts/health.md). Also the pre-auth lockout Lambda (apps/api/src/auth).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/routers/index.ts",
+      "default": "./src/routers/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/amazon-bedrock": "5.0.123",
+    "@aws-lambda-powertools/logger": "2.36.0",
+    "@aws-lambda-powertools/metrics": "2.36.0",
+    "@aws-lambda-powertools/tracer": "2.36.0",
+    "@aws-sdk/client-dynamodb": "3.709.0",
+    "@aws-sdk/client-s3": "3.709.0",
+    "@aws-sdk/client-secrets-manager": "3.709.0",
+    "@aws-sdk/lib-dynamodb": "3.709.0",
+    "@crm/domain": "workspace:*",
+    "@crm/index-schema": "workspace:*",
+    "@crm/observability": "workspace:*",
+    "@crm/oracle-contract": "workspace:*",
+    "@crm/oracle-views": "workspace:*",
+    "@crm/shared": "workspace:*",
+    "@duckdb/node-api": "1.5.6-r.2",
+    "@trpc/server": "11.19.0",
+    "ai": "7.0.152",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.147",
+    "@types/node": "22.10.5",
+    "aws-sdk-client-mock": "4.1.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

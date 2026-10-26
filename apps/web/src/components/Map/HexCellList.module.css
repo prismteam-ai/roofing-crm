@@ -1,0 +1,19 @@
+/* Visually hidden twin of the hexagon layer: it stays in the accessibility tree and the tab order,
+   and the focused cell is outlined on the map itself (3 px primary line). Atlas tokens only. */
+.list {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.cell {
+  display: block;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: 0;
+  background: transparent;
+}

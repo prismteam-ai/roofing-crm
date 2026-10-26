@@ -1,0 +1,22 @@
+node_modules/
+dist/
+build/
+cdk.out/
+cdk.context.json
+.turbo/
+.vitest/
+coverage/
+playwright-report/
+test-results/
+# Playwright's saved signed-in session (live Cognito tokens, tests/e2e/auth.setup.ts) — never commit
+playwright/.auth/
+.env
+.env.*
+!.env.example
+.DS_Store
+.claude/settings.local.json
+# raw source downloads and local pipeline state (never commit)
+pipeline/data/
+*.car
+.DS_Store
+*.tsbuildinfo

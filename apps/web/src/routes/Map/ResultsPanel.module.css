@@ -1,0 +1,167 @@
+/* Atlas tokens only (constitution P0-14). */
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: 0 0 var(--space-4);
+}
+
+.head {
+  display: flex;
+  padding: 0 var(--space-4);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.spacer {
+  flex: 1 1 0;
+}
+
+/* "Triage n": the one filled action of the phone sheet header (board CrmMapPin390). */
+.triage {
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.triage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.triage:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.matches {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.infoWrap {
+  position: relative;
+}
+
+.info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--status-warning);
+  cursor: pointer;
+}
+
+.info:focus-visible,
+.bulk:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* From 600 px the panel fills the sheet's body (docked under the map, or the right pane): the header
+   stays at the top and the pager (ResultsList.module.css) at the bottom while the rows scroll. */
+@media (min-width: 600px) {
+  .sheet {
+    min-height: 100%;
+    gap: var(--space-2);
+    padding-bottom: 0;
+  }
+
+  .head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding-top: var(--space-1);
+    background: var(--md-sys-color-surface);
+  }
+}
+
+/* Collapse all and expand all: 48 px icon buttons (the phone header has no room for them). */
+.bulk {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+}
+
+.bulk:hover,
+.info:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* The "Triage n" word is the phone's filled button; from 768 px it is an icon button (the tablet
+   board has no Triage action, the feature stays one tap away) and the word stays for screen readers. */
+@media (min-width: 600px) {
+  .bulk {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 768px) {
+  .triage {
+    width: var(--space-9);
+    min-width: var(--space-9);
+    padding: 0;
+    justify-content: center;
+    background: transparent;
+    color: var(--md-sys-color-primary);
+  }
+
+  .triage:hover {
+    background: var(--md-sys-color-surface-container-high);
+  }
+
+  .triageText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.note {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.clipNote {
+  margin: 0;
+  padding: 0 var(--space-4);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+}

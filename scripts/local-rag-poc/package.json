@@ -1,0 +1,21 @@
+{
+  "name": "local-rag-poc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "espeon's query-only prototype (build-local-rag-pocs discipline): reads contract/v1/sample.parquet directly via vendored @crm/oracle-views, no AWS resource. Standalone script, invoked via tsx — not a monorepo workspace member.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "query": "tsx query.ts"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "1.5.6-r.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "tsx": "4.19.2",
+    "typescript": "6.0.3",
+    "vite": "^6.4.5",
+    "vitest": "5.0.5"
+  }
+}

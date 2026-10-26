@@ -1,0 +1,29 @@
+/* Atlas tokens only (constitution P0-14) — no raw colors/spacing. */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--md-sys-shape-corner-small);
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: var(--md-sys-state-disabled-opacity);
+  cursor: default;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.label {
+  font: var(--md-sys-typescale-body-medium-weight) var(--md-sys-typescale-body-medium-size) /
+    var(--md-sys-typescale-body-medium-line-height) var(--md-ref-typeface-plain);
+}
+
+.badge {
+  font: var(--md-sys-typescale-label-small-weight) var(--md-sys-typescale-label-small-size) /
+    var(--md-sys-typescale-label-small-line-height) var(--md-ref-typeface-plain);
+  color: var(--md-sys-color-on-surface-variant);
+}

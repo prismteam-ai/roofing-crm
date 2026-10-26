@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · Sign in</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.cr-h2{margin:0;font-family:var(--font-brand);font-weight:400}
+.cr-sub{font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.cr-lab{font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field input,.cr-field select,.cr-field textarea{height:48px;box-sizing:border-box;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font:400 14px var(--font-plain)}
+.cr-field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.cr-field input[aria-invalid="true"]{border-color:var(--md-sys-color-error)}
+.cr-card{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-surface);box-sizing:border-box;min-width:0}
+.cr-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-width:0}
+.cr-proto{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border:1px dashed var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-small);font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cr-tbl{display:grid;align-items:center;column-gap:12px;padding:6px 12px;min-height:56px;border-top:1px solid var(--md-sys-color-outline-variant);font-size:13px;line-height:18px}
+.cr-tbl.is-head{min-height:40px;border-top:0;font-size:12px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+.cr-dis{opacity:.6;cursor:not-allowed}
+.cr-lnk{display:inline-flex;align-items:center;min-height:48px}
+
+</style>
+</helmet>
+<div style="position: relative; width: {{W}}px; height: {{H}}px; overflow: hidden; background: var(--md-sys-color-surface-container-low); font-family: var(--font-plain); color: var(--md-sys-color-on-surface)">
+<header class="atlas-top-app-bar" style="position: absolute; left: 0; top: 0; width: {{W}}px; box-sizing: border-box; padding: 0 {{pad}}px; gap: 12px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant)"><h1 class="atlas-top-app-bar__title" style="margin: 0; flex: 1">Roofing CRM</h1><span role="note" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 1px dashed var(--md-sys-color-outline); border-radius: var(--md-sys-shape-corner-small); font-size: 12px; color: var(--md-sys-color-on-surface-variant)"><span class="material-symbols-rounded atlas-icon-16" aria-hidden="true">science</span>CRM · not Task A</span></header>
+<main style="position: absolute; left: 0; top: 64px; width: {{W}}px; height: {{mainH}}px; box-sizing: border-box; padding: 16px; display: grid; place-items: {{place}}">
+<section class="atlas-card atlas-card--outlined" aria-labelledby="si-h" style="width: 100%; max-width: 420px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; padding: {{cardPad}}; background: var(--md-sys-color-surface); border-radius: var(--md-sys-shape-corner-extra-large)">
+<div style="display: flex; flex-direction: column; gap: 6px"><h2 id="si-h" class="cr-h2" style="font-size: 24px; line-height: 32px">{{title}}</h2><p class="cr-sub" style="margin: 0; font-size: 14px; line-height: 20px">{{lede}}</p></div>
+<sc-if value="{{bannerOn}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner {{bannerCls}}" role="{{bannerRole}}" style="font-size: 14px; line-height: 20px"><span class="material-symbols-rounded" aria-hidden="true">{{bannerIcon}}</span><div class="atlas-banner__body">{{bannerText}}</div></div></sc-if>
+<sc-if value="{{formOn}}" hint-placeholder-val="{{ true }}">
+<div role="form" aria-label="Sign in" style="display: flex; flex-direction: column; gap: 14px">
+<label class="cr-field">Email<input type="email" name="email" autocomplete="username" value="{{email}}" onInput="{{onEmail}}" onKeyDown="{{enter}}" aria-invalid="{{bad}}" aria-describedby="{{errId}}" disabled="{{locked}}"></label>
+<div class="cr-field"><label for="si-pw">Password</label><span style="position: relative; display: flex"><input id="si-pw" type="{{pwType}}" name="password" autocomplete="current-password" value="{{pw}}" onInput="{{onPw}}" onKeyDown="{{enter}}" aria-invalid="{{bad}}" aria-describedby="{{errId}}" disabled="{{locked}}" style="flex: 1; min-width: 0; padding-right: 52px"><button type="button" class="atlas-icon-btn" aria-label="Show password" aria-pressed="{{showStr}}" onClick="{{toggleShow}}" disabled="{{locked}}" style="position: absolute; right: 0; top: 0"><span class="material-symbols-rounded" aria-hidden="true">{{eye}}</span></button></span></div>
+<sc-if value="{{showErr}}" hint-placeholder-val="{{ false }}"><span id="si-err" role="alert" style="display: flex; gap: 6px; font-size: 13px; line-height: 18px; color: var(--md-sys-color-error)"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">error</span>{{err}}</span></sc-if>
+<button type="button" class="atlas-btn atlas-btn--filled" aria-disabled="{{btnDis}}" onClick="{{submit}}" style="align-self: stretch; justify-content: center"><sc-if value="{{busy}}" hint-placeholder-val="{{ false }}"><span class="material-symbols-rounded" aria-hidden="true">progress_activity</span></sc-if>{{btnLabel}}</button>
+<sc-if value="{{busy}}" hint-placeholder-val="{{ false }}"><span role="status" class="cr-sub">Signing in…</span></sc-if>
+</div>
+<sc-if value="{{nextOn}}" hint-placeholder-val="{{ false }}"><span class="cr-row cr-sub"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">subdirectory_arrow_right</span>After sign-in you return to {{nextLabel}}.</span></sc-if>
+<p class="cr-sub" style="margin: 0">No account? Access is shared privately with reviewers.</p>
+</sc-if>
+<sc-if value="{{inOn}}" hint-placeholder-val="{{ false }}">
+<div role="status" class="atlas-banner atlas-banner--success" style="font-size: 14px; line-height: 20px"><span class="material-symbols-rounded" aria-hidden="true">verified_user</span><div class="atlas-banner__body">Signed in as <b style="font-weight: 500">Sample Rep</b> (sample.rep@example.com, Admin). Reloading keeps you signed in.</div></div>
+<a class="atlas-btn atlas-btn--filled" href="{{nextHref}}" style="text-decoration: none; align-self: stretch; justify-content: center">Continue to {{nextLabel}}</a>
+<a class="atlas-btn atlas-btn--text" href="{{outHref}}" onClick="{{signOut}}" style="text-decoration: none; align-self: flex-start"><span class="material-symbols-rounded" aria-hidden="true">logout</span>Sign out</a>
+</sc-if>
+<div class="cr-proto" role="group" aria-label="Prototype only: screen state"><span>Prototype · state</span><sc-for list="{{stateOpts}}" as="o" hint-placeholder-count="7"><button class="atlas-chip" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 32px">{{o.label}}</button></sc-for><span style="flex-basis: 100%">Admin test user sample.rep@example.com · any 8+ character password · 3 wrong tries lock</span></div>
+</section>
+</main>
+<div style="position: absolute; left: 12px; bottom: 12px; z-index: 80"><dc-import name="ProtoBar" here="{{here}}" desktop="CrmSignIn1440.dc.html" tablet="CrmSignIn768.dc.html" mobile="CrmSignIn390.dc.html" current="{{dev}}" crm="{{ true }}" hint-size="48px,48px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"device":{"editor":"enum","options":["desktop","tablet","mobile"],"default":"desktop"},"state":{"editor":"enum","options":["","form","busy","error","locked","expired","signedout","in"],"default":""},"next":{"editor":"text","default":""},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  // Prototype session for the Roofing CRM (not Task A): one shared test user; kept in this browser so a reload stays signed in.
+  static sessKey() { return 'countylens.proto.crmSession'; }
+  static session() { try { const v = window.localStorage.getItem(Component.sessKey()); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  static signIn() { const s = { name: 'Sample Rep', email: 'sample.rep@example.com', role: 'Admin', at: Date.now() }; try { window.localStorage.setItem(Component.sessKey(), JSON.stringify(s)); } catch (e) {} return s; }
+  static signOut() { try { window.localStorage.removeItem(Component.sessKey()); } catch (e) {} }
+  static forceCrm() { try { window.__clMapView = true; } catch (e) {} }
+  // Only CRM boards may be a return target (no open redirect).
+  static safeNext(n) { return n && /^Crm[A-Za-z0-9]+\.dc\.html(\?[A-Za-z0-9=&%._~+,-]*)?$/.test(n) ? n : ''; }
+  constructor(props) {
+    super(props); Component.forceCrm();
+    let st = props.state || '', next = props.next || '';
+    try { const q = new URLSearchParams(window.location.search); if (!props.state && q.get('state')) st = q.get('state'); if (q.get('next')) next = q.get('next'); } catch (e) {}
+    if (st === 'expired' || st === 'signedout') Component.signOut();
+    if (!st) st = Component.session() ? 'in' : 'form';
+    this.state = { st: st, next: Component.safeNext(next), email: 'sample.rep@example.com', pw: st === 'error' || st === 'locked' || st === 'busy' ? 'samplepass' : '', show: false, fails: st === 'error' ? 1 : 0 };
+  }
+  componentWillUnmount() { clearTimeout(this.t); }
+  renderVals() {
+    const s = this.state, dev = this.props.device ?? 'desktop', isM = dev === 'mobile', isT = dev === 'tablet', sfx = isM ? '390' : isT ? '768' : '1440';
+    const W = isM ? 390 : isT ? 768 : 1440, H = isM ? 844 : isT ? 1024 : 900;
+    const nextHref = s.next || 'CrmMap' + sfx + '.dc.html';
+    const nm = /^Crm([A-Za-z]+?)(1440|768|390)/.exec(nextHref), base = nm ? nm[1] : 'Map';
+    const nextLabel = ({ Map: 'the map', Leads: /\?/.test(nextHref) ? 'Leads with your filters' : 'Leads', LeadDetail: 'the lead', Agent: 'the AI search', ComingSoon: 'that section' })[base] || 'where you were';
+    const B = { expired: ['atlas-banner--warning', 'timer_off', 'alert', 'Signed out. Sign in to continue where you left off'], signedout: ['atlas-banner--info', 'logout', 'status', 'You signed out. Sign in again to use the CRM.'], locked: ['atlas-banner--error', 'lock_clock', 'alert', 'Too many attempts. Try again later.'] }[s.st];
+    const locked = s.st === 'locked', busy = s.st === 'busy';
+    const go = () => { const em = (s.email || '').trim().toLowerCase(), ok = em === 'sample.rep@example.com' && (s.pw || '').length >= 8 && s.pw !== 'wrong';
+      this.setState({ st: 'busy' }); clearTimeout(this.t);
+      this.t = setTimeout(() => { if (ok) { Component.signIn(); this.setState({ st: 'in', fails: 0 }); try { window.location.href = nextHref; } catch (e) {} } else { const f = s.fails + 1; this.setState({ st: f >= 3 ? 'locked' : 'error', fails: f }); } }, 900); };
+    const opts = [['form', 'Form'], ['busy', 'Signing in'], ['error', isM ? 'Wrong' : 'Wrong email or password'], ['locked', 'Too many attempts'], ['expired', isM ? 'Expired' : 'Session expired'], ['signedout', 'Signed out'], ['in', 'Signed in']];
+    return { W: W, H: H, pad: isM ? 16 : 24, mainH: H - 64, place: isM ? 'start center' : 'center', cardPad: isM ? '20px' : '28px', dev: dev, here: 'Sign in · ' + sfx + ' · Roofing CRM',
+      title: s.st === 'in' ? 'You’re signed in' : 'Sign in to Roofing CRM', lede: s.st === 'in' ? '' : 'Find aged roofs and long-open permits in Travis County, and track the leads you pursue.',
+      bannerOn: !!B, bannerCls: B ? B[0] : '', bannerIcon: B ? B[1] : '', bannerRole: B ? B[2] : 'status', bannerText: B ? B[3] : '',
+      formOn: s.st !== 'in', inOn: s.st === 'in', locked: locked, busy: busy, btnDis: String(locked || busy), btnLabel: busy ? 'Signing in…' : 'Sign in',
+      email: s.email, pw: s.pw, onEmail: (e) => this.setState({ email: e.target.value, st: s.st === 'error' ? 'form' : s.st }), onPw: (e) => this.setState({ pw: e.target.value, st: s.st === 'error' ? 'form' : s.st }),
+      pwType: s.show ? 'text' : 'password', showStr: String(s.show), eye: s.show ? 'visibility_off' : 'visibility', toggleShow: () => this.setState({ show: !s.show }),
+      bad: String(s.st === 'error'), showErr: s.st === 'error', errId: s.st === 'error' ? 'si-err' : '', err: 'Wrong email or password. Check the test login you were sent.',
+      submit: () => { if (!locked && !busy) go(); }, enter: (e) => { if (e && e.key === 'Enter' && !locked && !busy) go(); },
+      nextOn: !!s.next && s.st !== 'in', nextLabel: nextLabel, nextHref: nextHref, outHref: 'CrmSignIn' + sfx + '.dc.html?state=signedout', signOut: () => { Component.signOut(); this.setState({ st: 'signedout', pw: '' }); },
+      stateOpts: opts.map((o) => ({ label: o[1], on: String(s.st === o[0]), pick: () => { clearTimeout(this.t); if (o[0] === 'in') Component.signIn(); if (o[0] === 'expired' || o[0] === 'signedout') Component.signOut(); this.setState({ st: o[0], fails: o[0] === 'error' ? 1 : o[0] === 'locked' ? 3 : 0, pw: o[0] === 'form' || o[0] === 'expired' || o[0] === 'signedout' ? '' : 'samplepass' }); } })) };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · bottom navigation and More (390)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 80px; font-family: var(--font-plain); color: var(--md-sys-color-on-surface)" onKeyDown="{{escKey}}">
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><div aria-hidden="true" onClick="{{close}}" style="position: absolute; left: 0; bottom: 0; width: 390px; height: 844px; z-index: 40; background: var(--md-sys-color-scrim); opacity: .32"></div>
+<section role="dialog" aria-modal="true" aria-labelledby="bn-more-h" style="position: absolute; left: 0; bottom: 0; width: 390px; z-index: 41; box-sizing: border-box; padding: 8px 0 92px; border-radius: var(--md-sys-shape-corner-extra-large) var(--md-sys-shape-corner-extra-large) 0 0; background: var(--md-sys-color-surface-container-low); display: flex; flex-direction: column">
+<span aria-hidden="true" style="align-self: center; width: 32px; height: 4px; margin: 8px 0; border-radius: var(--md-sys-shape-corner-full); background: var(--md-sys-color-on-surface-variant); opacity: .4"></span>
+<div style="display: flex; align-items: center; padding: 0 8px 0 16px"><h2 id="bn-more-h" style="flex: 1; margin: 0; font: 500 16px/24px var(--font-plain)">More</h2><button class="atlas-icon-btn" aria-label="Close More" onClick="{{close}}"><span class="material-symbols-rounded" aria-hidden="true">close</span></button></div>
+<span style="padding: 8px 16px 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--md-sys-color-on-surface-variant)">Coming soon</span>
+<ul aria-label="Coming soon" style="margin: 0; padding: 0; list-style: none">
+<sc-for list="{{soon}}" as="m" hint-placeholder-count="5"><li><a class="atlas-list-item atlas-list-item--action" href="{{m.href}}" title="{{m.tip}}" style="text-decoration: none; width: 100%; border: 0; background: none; text-align: left; font: inherit; color: var(--md-sys-color-on-surface-variant); cursor: pointer"><span class="atlas-list-item__lead"><span class="material-symbols-rounded" aria-hidden="true">{{m.icon}}</span></span><span class="atlas-list-item__body"><span class="atlas-list-item__title">{{m.label}}</span><br><span style="font-size: 12px; line-height: 16px">{{m.tip}}</span></span><span class="atlas-pill atlas-pill--unavailable">Coming soon</span></a></li></sc-for>
+</ul>
+<div role="separator" style="height: 1px; margin: 8px 16px; background: var(--md-sys-color-outline-variant)"></div>
+<span id="bn-apps-h" style="padding: 8px 16px 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--md-sys-color-on-surface-variant)">Apps</span>
+<div role="group" aria-labelledby="bn-apps-h">
+<a class="atlas-list-item atlas-list-item--action" href="Explore390.dc.html?mapView=off" style="min-height: 56px; padding: 4px 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 16px"><span class="material-symbols-rounded" aria-hidden="true">travel_explore</span><span style="flex: 1; font-size: 16px">CountyLens</span></a>
+<a class="atlas-list-item atlas-list-item--action" href="CrmMap390.dc.html" aria-current="true" style="min-height: 56px; padding: 4px 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 16px"><span class="material-symbols-rounded" aria-hidden="true">roofing</span><span style="flex: 1; font-size: 16px">Roofing CRM</span><span class="material-symbols-rounded" aria-hidden="true" title="Current app">check</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Current app</span></a>
+<a class="atlas-list-item atlas-list-item--action" href="Hub390.dc.html" style="min-height: 56px; padding: 4px 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 16px"><span class="material-symbols-rounded" aria-hidden="true">home</span><span style="flex: 1; font-size: 16px">Landing page</span></a>
+</div>
+<a class="atlas-list-item atlas-list-item--action" href="CrmSignIn390.dc.html?state=signedout" onClick="{{signOut}}" style="min-height: 56px; padding: 4px 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 16px"><span class="material-symbols-rounded" aria-hidden="true">logout</span><span style="flex: 1; font-size: 16px">Sign out</span><span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant)">Sample Rep · Admin</span></a>
+<sc-if value="{{toastOn}}" hint-placeholder-val="{{ false }}"><span role="status" style="padding: 8px 16px 0; font-size: 13px; color: var(--md-sys-color-primary)">{{toast}}</span></sc-if>
+</section></sc-if>
+<nav class="atlas-bottom-nav" aria-label="Main" style="position: absolute; left: 0; top: 0; width: 390px; z-index: 42">
+<a class="atlas-nav-item" href="CrmMap390.dc.html" aria-current="{{curMap}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">map</span></span>Map</a>
+<a class="atlas-nav-item" href="CrmLeads390.dc.html" aria-current="{{curLeads}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span></span>Leads</a>
+<sc-if value="{{askBtn}}" hint-placeholder-val="{{ false }}"><button class="atlas-nav-item" aria-pressed="{{curAsk}}" onClick="{{ask}}" style="border: 0; background: none; font: inherit; color: inherit"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">smart_toy</span></span>Ask</button></sc-if>
+<sc-if value="{{askLink}}" hint-placeholder-val="{{ true }}"><a class="atlas-nav-item" href="CrmAsk390.dc.html" aria-current="{{curAsk}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">smart_toy</span></span>Ask</a></sc-if>
+<button class="atlas-nav-item" aria-haspopup="dialog" aria-expanded="{{openStr}}" onClick="{{toggle}}" style="border: 0; background: none; font: inherit; color: inherit"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">more_horiz</span></span>More</button>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"current":{"editor":"enum","options":["map","leads","ask","none"],"default":"map"},"startOpen":{"editor":"boolean","default":false},"onAsk":{"editor":null},"$preview":{"width":390,"height":80}}'>
+class Component extends DCLogic {
+  static trapTab(e, box) { if (!e || e.key !== 'Tab' || !box) return; const f = [...box.querySelectorAll('a[href],button:not([disabled]),input:not([type=hidden]):not([disabled]),select,textarea,summary,[tabindex="0"]')].filter((x) => x.getClientRects().length && (!x.checkVisibility || x.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true })) && x.tabIndex >= 0 && !x.closest('[aria-hidden="true"]')); if (!f.length) return;
+    const a = f[0], z = f[f.length - 1], cur = document.activeElement; if (e.shiftKey && (cur === a || !box.contains(cur))) { e.preventDefault(); z.focus(); } else if (!e.shiftKey && (cur === z || !box.contains(cur))) { e.preventDefault(); a.focus(); } }
+  // Prototype session for the Roofing CRM (not Task A): one shared test user; kept in this browser so a reload stays signed in.
+  static sessKey() { return 'countylens.proto.crmSession'; }
+  static session() { try { const v = window.localStorage.getItem(Component.sessKey()); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  static signIn() { const s = { name: 'Sample Rep', email: 'sample.rep@example.com', role: 'Admin', at: Date.now() }; try { window.localStorage.setItem(Component.sessKey(), JSON.stringify(s)); } catch (e) {} return s; }
+  static signOut() { try { window.localStorage.removeItem(Component.sessKey()); } catch (e) {} }
+  // CRM: one overlay at a time (opening this closes the others; another opening closes this).
+  componentDidMount() { this.onOv = (e) => { const d = e && e.detail; if (true && d && d.open && d.id !== 'more' && this.state.open) this.setState({ open: false }); }; try { window.addEventListener('cl-overlay', this.onOv); } catch (e) {} }
+  componentDidUpdate() { const wasO = !!this._ovO; this._ovO = !!this.state.open; if (true && wasO !== this._ovO) { try { window.dispatchEvent(new CustomEvent('cl-overlay', { detail: { id: 'more', open: !!this.state.open } })); } catch (e) {} } }
+  constructor(props) { super(props); this.state = { open: !!props.startOpen, toast: '' }; }
+  componentWillUnmount() { clearTimeout(this.tt); try { window.removeEventListener('cl-overlay', this.onOv); } catch (e) {} }
+  renderVals() {
+    const cur = this.props.current ?? 'map', S = [["campaign", "Campaigns", "campaigns", "Plan outreach to groups of leads."], ["request_quote", "Estimates", "estimates", "Price a roof from the lead."], ["construction", "Jobs", "jobs", "Schedule and track roofing work."], ["receipt_long", "Invoices", "invoices", "Bill completed jobs."], ["mail", "Outreach", "outreach", "Email and SMS to owners."]];
+    return { 
+      escKey: (e) => { if (!e || !this.state.open) return; const box = e.currentTarget; if (e.key === 'Escape') { e.preventDefault(); this.setState({ open: false }); const t = box && box.querySelector('[aria-haspopup]'); if (t) t.focus(); } else if (true) Component.trapTab(e, box.querySelector('[role=dialog]')); },
+      open: this.state.open, openStr: String(this.state.open), toggle: () => { const o = !this.state.open; this.setState({ open: o }); if (o) setTimeout(() => { const b = document.querySelector('[aria-label="Close More"]'); if (b) b.focus(); }, 40); }, close: () => this.setState({ open: false }),
+      curMap: cur === 'map' ? 'page' : 'false', curLeads: cur === 'leads' ? 'page' : 'false', curAsk: cur === 'ask' ? 'page' : 'false',
+      askBtn: !!this.props.onAsk, askLink: !this.props.onAsk, ask: () => this.props.onAsk && this.props.onAsk(),
+      soon: S.map((m) => ({ icon: m[0], label: m[1], tip: m[3], href: 'CrmComingSoon390.dc.html?section=' + m[2], say: () => { this.setState({ toast: m[1] + ' is coming soon. ' + m[3] }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); } })),
+      signOut: () => Component.signOut(), toastOn: !!this.state.toast, toast: this.state.toast };
+  }
+}
+</script>
+</body>
+</html>

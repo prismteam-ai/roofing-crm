@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · data source chip</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.dc-panel{position:absolute;top:52px;z-index:70;width:340px;box-sizing:border-box;padding:16px;border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-surface-container);box-shadow:var(--md-sys-elevation-level2);display:flex;flex-direction:column;gap:10px;font:14px/20px var(--font-plain);color:var(--md-sys-color-on-surface)}
+</style>
+</helmet>
+<div style="position: relative; display: inline-flex" onKeyDown="{{escKey}}">
+<button class="atlas-chip" aria-haspopup="dialog" aria-expanded="{{openStr}}" aria-label="{{aria}}" onClick="{{toggle}}" style="background: var(--md-sys-color-surface); white-space: nowrap"><span class="material-symbols-rounded" aria-hidden="true" style="color: {{c}}">{{icon}}</span>{{label}}</button>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><section class="dc-panel" role="dialog" aria-label="Data source" style="{{side}}: 0">
+<div style="display: flex; align-items: center; gap: 8px"><span class="material-symbols-rounded atlas-icon-20" aria-hidden="true" style="color: {{c}}">{{icon}}</span><b style="flex: 1; font-weight: 500">Data source</b><button class="atlas-icon-btn" aria-label="Close" onClick="{{toggle}}" style="width: 48px; height: 48px"><span class="material-symbols-rounded" aria-hidden="true">close</span></button></div>
+<p style="margin: 0">The lead index is built from the CountyLens manifest <span class="atlas-cid">bafybeih…q7n3<button aria-label="Copy the manifest CID" onClick="{{copy}}"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span></button></span> on 2026-10-17. The CRM reads only published CountyLens data.</p>
+<sc-if value="{{isUp}}" hint-placeholder-val="{{ true }}"><span class="atlas-pill atlas-pill--success" style="align-self: flex-start"><span class="material-symbols-rounded" aria-hidden="true">cloud_done</span>Index up to date · Run 3</span></sc-if>
+<sc-if value="{{isUpd}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner atlas-banner--info" role="status" style="font-size: 13px; line-height: 18px"><span class="material-symbols-rounded" aria-hidden="true">sync</span><div class="atlas-banner__body">CountyLens published Run 4. The index is updating to Run 4; results use Run 3 until it finishes.</div></div></sc-if>
+<sc-if value="{{isDown}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner atlas-banner--warning" role="alert" style="font-size: 13px; line-height: 18px"><span class="material-symbols-rounded" aria-hidden="true">cloud_off</span><div class="atlas-banner__body">The lead index is unavailable, so map and list results may be missing. Your leads and notes still open.</div><button class="atlas-btn atlas-btn--text" onClick="{{retry}}">Retry</button></div></sc-if>
+<a href="{{dataHref}}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 48px"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">dataset</span>CountyLens Data (manifest and Verify)</a>
+<sc-if value="{{toastOn}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 12px; color: var(--md-sys-color-primary)">{{toast}}</span></sc-if>
+</section></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["up","updating","unavailable"],"default":"up"},"compact":{"editor":"boolean","default":false},"align":{"editor":"enum","options":["right","left"],"default":"right"},"device":{"editor":"enum","options":["desktop","tablet","mobile"],"default":"desktop"},"startOpen":{"editor":"boolean","default":false},"$preview":{"width":380,"height":300}}'>
+class Component extends DCLogic {
+  static trapTab(e, box) { if (!e || e.key !== 'Tab' || !box) return; const f = [...box.querySelectorAll('a[href],button:not([disabled]),input:not([type=hidden]):not([disabled]),select,textarea,summary,[tabindex="0"]')].filter((x) => x.getClientRects().length && (!x.checkVisibility || x.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true })) && x.tabIndex >= 0 && !x.closest('[aria-hidden="true"]')); if (!f.length) return;
+    const a = f[0], z = f[f.length - 1], cur = document.activeElement; if (e.shiftKey && (cur === a || !box.contains(cur))) { e.preventDefault(); z.focus(); } else if (!e.shiftKey && (cur === z || !box.contains(cur))) { e.preventDefault(); a.focus(); } }
+  // CRM: one overlay at a time (opening this closes the others; another opening closes this).
+  componentDidMount() { this.onOv = (e) => { const d = e && e.detail; if (true && d && d.open && d.id !== 'data' && this.state.open) this.setState({ open: false }); }; try { window.addEventListener('cl-overlay', this.onOv); } catch (e) {} }
+  componentDidUpdate() { const wasO = !!this._ovO; this._ovO = !!this.state.open; if (true && wasO !== this._ovO) { try { window.dispatchEvent(new CustomEvent('cl-overlay', { detail: { id: 'data', open: !!this.state.open } })); } catch (e) {} } }
+  constructor(props) { super(props); this.state = { open: !!props.startOpen, toast: '' }; }
+  componentWillUnmount() { clearTimeout(this.tt); try { window.removeEventListener('cl-overlay', this.onOv); } catch (e) {} }
+  renderVals() {
+    const st = this.props.state ?? 'up', mob = (this.props.device ?? 'desktop') === 'mobile', compact = !!this.props.compact;
+    const S = { up: ['cloud_done', 'var(--status-success)', 'Data: CountyLens Run 3', 'Run 3', 'Data: CountyLens Run 3, index up to date. Show the data source'], updating: ['sync', 'var(--status-info)', 'Index updating to Run 4', 'Updating', 'Index updating to CountyLens Run 4. Show the data source'], unavailable: ['cloud_off', 'var(--status-warning)', 'Index unavailable', 'No index', 'Lead index unavailable. Show the data source'] }[st] || ['cloud_done', 'var(--status-success)', 'Data: CountyLens Run 3', 'Run 3', ''];
+    return { 
+      escKey: (e) => { if (!e || !this.state.open) return; const box = e.currentTarget; if (e.key === 'Escape') { e.preventDefault(); this.setState({ open: false }); const t = box && box.querySelector('[aria-haspopup]'); if (t) t.focus(); } else if (false) Component.trapTab(e, box.querySelector('[role=dialog]')); },
+      icon: S[0], c: S[1], label: compact ? S[3] : S[2], aria: S[4], open: this.state.open, openStr: String(this.state.open), toggle: () => this.setState({ open: !this.state.open }),
+      isUp: st === 'up', isUpd: st === 'updating', isDown: st === 'unavailable', side: this.props.align === 'left' ? 'left' : 'right',
+      dataHref: mob ? 'Data390.dc.html' : 'DataManifest1440.dc.html',
+      copy: () => { try { navigator.clipboard.writeText('bafybeihq7n3'); } catch (e) {} this.setState({ toast: 'Manifest CID copied (Sample).' }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2200); },
+      retry: () => { this.setState({ toast: 'Retrying the lead index (prototype).' }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2200); },
+      toastOn: !!this.state.toast, toast: this.state.toast };
+  }
+}
+</script>
+</body>
+</html>

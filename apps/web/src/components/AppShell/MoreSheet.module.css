@@ -1,0 +1,187 @@
+/* The 390 More tab and sheet (CrmBottomNav, CrmShell390). Visible below 600px; the NavRail and the
+   top bar take over from 600px — the same breakpoint as AppShell.module.css's grid (CR-B-01).
+   The tab copies the shell's destination item (pill over a label-medium label, 48 px target).
+   The sheet is an Atlas bottom sheet (extra-large top corners, surface-container-low) docked on
+   top of the 80 px bottom navigation, so the navigation stays visible; a scrim dims the page
+   above it. Rows are readable list items, not drawn disabled. Tokens only. */
+.wrapper {
+  display: flex;
+}
+
+@media (min-width: 600px) {
+  .wrapper {
+    display: none;
+  }
+}
+
+.trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  box-sizing: border-box;
+  min-width: var(--space-9);
+  min-height: var(--space-9);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+  line-height: var(--md-sys-typescale-label-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+  cursor: pointer;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: calc(var(--space-9) + var(--space-2));
+  height: var(--space-7);
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+.trigger:hover .pill {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.trigger:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+  border-radius: var(--md-sys-shape-corner-small);
+}
+
+.scrim {
+  position: fixed;
+  inset: 0 0 calc(var(--space-10) + var(--space-4)) 0;
+  /* Above the page's own layers (up to 30: filter/results sheets). */
+  z-index: 40;
+  /* Material 3 scrim: the scrim token at 32% (opacity, so the colour itself stays a token). */
+  background: var(--md-sys-color-scrim);
+  opacity: 0.32;
+}
+
+.panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--space-10) + var(--space-4));
+  z-index: 41;
+  box-sizing: border-box;
+  max-height: calc(100dvh - var(--space-10) - var(--space-10) - var(--space-4));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) 0 var(--space-2);
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  border-top-left-radius: var(--md-sys-shape-corner-extra-large);
+  border-top-right-radius: var(--md-sys-shape-corner-extra-large);
+  box-shadow: var(--md-sys-elevation-level3);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-2) 0 var(--space-4);
+}
+
+.heading {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+.section {
+  margin: var(--space-2) var(--space-4) 0;
+  padding: var(--space-3) 0 var(--space-2);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.signOut {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: none;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: none;
+  color: var(--md-sys-color-on-surface);
+  text-align: left;
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  cursor: pointer;
+}
+
+.signOut:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.signOutLabel {
+  flex: 1 1 auto;
+}
+
+.who {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+}
+
+/* "What can I ask?" (the Help entry of the top bar, which is hidden at this width). */
+.helpItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: none;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: none;
+  color: var(--md-sys-color-on-surface);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+}
+
+.helpItem:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+/* The signed-in role beside Sign out ("Admin"). */
+.role {
+  flex: none;
+  padding: 0 var(--space-2);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  line-height: var(--md-sys-typescale-label-medium-line-height);
+}

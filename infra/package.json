@@ -1,0 +1,30 @@
+{
+  "name": "infra",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CDK app: CrmData, CrmSync (stubs), CrmApi, CrmWeb, CrmDomain, CrmOps (architecture-constitution.md §9). CDK commands target this workspace (CLAUDE.md: never apps/api).",
+  "type": "module",
+  "scripts": {
+    "synth": "cdk synth --strict",
+    "deploy": "cdk deploy --require-approval never",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@crm/config": "workspace:*",
+    "@crm/observability": "workspace:*",
+    "aws-cdk-lib": "2.173.4",
+    "cdk-nag": "2.35.52",
+    "constructs": "10.4.2",
+    "source-map-support": "0.5.21"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "aws-cdk": "2.173.4",
+    "esbuild": "0.24.2",
+    "tsx": "4.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

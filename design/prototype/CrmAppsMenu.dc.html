@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · App switcher menu</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.ac-menu{position:absolute;right:0;top:52px;z-index:70;width:272px;box-sizing:border-box;padding:8px 0;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container);box-shadow:var(--md-sys-elevation-level2);font-family:var(--font-plain);color:var(--md-sys-color-on-surface)}
+.ac-av{width:40px;height:40px;flex:none;border-radius:var(--md-sys-shape-corner-full);display:grid;place-items:center;background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container);font:500 16px/1 var(--font-plain)}
+</style>
+</helmet>
+<div style="position: relative; display: inline-flex" onKeyDown="{{escKey}}">
+<button class="atlas-icon-btn" aria-haspopup="menu" aria-expanded="{{openStr}}" aria-label="Apps" onClick="{{toggle}}"><span class="material-symbols-rounded" aria-hidden="true">apps</span></button>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><div class="ac-menu" role="menu" aria-label="Apps" style="width: 248px">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="3"><a class="atlas-menu-item" role="menuitem" href="{{it.href}}" aria-current="{{it.cur}}" onClick="{{close}}" style="text-decoration: none; color: inherit; min-height: 48px"><span class="material-symbols-rounded" aria-hidden="true">{{it.icon}}</span><span style="flex: 1">{{it.label}}</span><sc-if value="{{it.here}}" hint-placeholder-val="{{ false }}"><span class="material-symbols-rounded" aria-hidden="true" title="Current app">check</span><span class="atlas-visually-hidden" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Current app</span></sc-if></a></sc-for>
+</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"device":{"editor":"enum","options":["desktop","tablet","mobile"],"default":"desktop"},"startOpen":{"editor":"boolean","default":false},"$preview":{"width":320,"height":220}}'>
+class Component extends DCLogic {
+  static trapTab(e, box) { if (!e || e.key !== 'Tab' || !box) return; const f = [...box.querySelectorAll('a[href],button:not([disabled]),input:not([type=hidden]):not([disabled]),select,textarea,summary,[tabindex="0"]')].filter((x) => x.getClientRects().length && (!x.checkVisibility || x.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true })) && x.tabIndex >= 0 && !x.closest('[aria-hidden="true"]')); if (!f.length) return;
+    const a = f[0], z = f[f.length - 1], cur = document.activeElement; if (e.shiftKey && (cur === a || !box.contains(cur))) { e.preventDefault(); z.focus(); } else if (!e.shiftKey && (cur === z || !box.contains(cur))) { e.preventDefault(); a.focus(); } }
+  // Prototype session for the Roofing CRM (not Task A): one shared test user; kept in this browser so a reload stays signed in.
+  static sessKey() { return 'countylens.proto.crmSession'; }
+  static session() { try { const v = window.localStorage.getItem(Component.sessKey()); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  static signIn() { const s = { name: 'Sample Rep', email: 'sample.rep@example.com', role: 'Admin', at: Date.now() }; try { window.localStorage.setItem(Component.sessKey(), JSON.stringify(s)); } catch (e) {} return s; }
+  static signOut() { try { window.localStorage.removeItem(Component.sessKey()); } catch (e) {} }
+  // CRM: one overlay at a time (opening this closes the others; another opening closes this).
+  componentDidMount() { this.onOv = (e) => { const d = e && e.detail; if (true && d && d.open && d.id !== 'apps' && this.state.open) this.setState({ open: false }); }; try { window.addEventListener('cl-overlay', this.onOv); } catch (e) {} }
+  componentDidUpdate() { const wasO = !!this._ovO; this._ovO = !!this.state.open; if (true && wasO !== this._ovO) { try { window.dispatchEvent(new CustomEvent('cl-overlay', { detail: { id: 'apps', open: !!this.state.open } })); } catch (e) {} } }
+  componentWillUnmount() { try { window.removeEventListener('cl-overlay', this.onOv); } catch (e) {} }
+  constructor(props) { super(props); this.state = { open: !!props.startOpen }; }
+  renderVals() {
+    const dev = this.props.device ?? 'desktop', sfx = dev === 'mobile' ? '390' : dev === 'tablet' ? '768' : '1440';
+    const items = [{ label: 'CountyLens', icon: 'travel_explore', href: 'Explore' + (dev === 'tablet' ? '768' : '1440') + '.dc.html?mapView=off', here: false, cur: 'false' }, { label: 'Roofing CRM', icon: 'roofing', href: 'CrmMap' + sfx + '.dc.html', here: true, cur: 'true' }, { label: 'Landing page', icon: 'home', href: 'Hub' + sfx + '.dc.html', here: false, cur: 'false' }];
+    return {
+      escKey: (e) => { if (!e || !this.state.open) return; const box = e.currentTarget; if (e.key === 'Escape') { e.preventDefault(); this.setState({ open: false }); const t = box && box.querySelector('[aria-haspopup]'); if (t) t.focus(); } },
+      open: this.state.open, openStr: String(this.state.open), toggle: () => this.setState({ open: !this.state.open }), close: () => this.setState({ open: false }), items: items };
+  }
+}
+</script>
+</body>
+</html>

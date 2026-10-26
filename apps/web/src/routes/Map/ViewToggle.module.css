@@ -1,0 +1,59 @@
+/* "Map + cards | List" (boards CrmMap1440, CrmMap390). Atlas segmented control, 48 px targets. */
+.group {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.segment + .segment {
+  border-left: 1px solid var(--md-sys-color-outline);
+}
+
+.on {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.segment:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+/* On phones (board CrmMap390) the toggle is two icons in the toolbar row; the words stay in the
+   accessible name, clipped, never display:none. */
+@media (max-width: 599.98px) {
+  .segment {
+    justify-content: center;
+    width: var(--space-9);
+    padding: 0;
+  }
+
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .segment {
+    position: relative;
+  }
+}

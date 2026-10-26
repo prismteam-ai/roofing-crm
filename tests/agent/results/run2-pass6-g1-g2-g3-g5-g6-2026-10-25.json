@@ -1,0 +1,251 @@
+{
+  "manifestCid": "bafkreife3vk3cgcod3v6tue2xes3hvl2vndqoshbhrhsnjtriskihpcute",
+  "runId": "travis-full-run2-20261024",
+  "summary": {
+    "passed": 5,
+    "total": 5,
+    "groundednessPct": 100,
+    "p95Ms": 3905,
+    "maxMs": 3905,
+    "n": 5
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "id": "G1",
+      "outcome": "empty_in_scope",
+      "mode": "honest_empty",
+      "pass": true,
+      "latencyMs": [3905],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "matched": 0,
+      "shown": 0,
+      "excludedNoRoofDate": 47269,
+      "excludedNoCoordinates": 0,
+      "countCheck": "matched 0 equals the index count",
+      "intent": "find_properties",
+      "modelCalls": 1,
+      "failures": [],
+      "emptyReason": "outcome empty_in_scope; matched 0; no roof date 47269; unsupported: none; missing: roofAgeYears (no_roof_date x47269), coordinates (no_coordinates)",
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "place \"Pflugerville\" -> Pflugerville city (30.447765, -97.602116) radius 5 mi",
+        "filters": {
+          "roofAgeMinYears": 15
+        },
+        "unsupported": [],
+        "missing": [
+          {
+            "field": "roofAgeYears",
+            "reason": "no_roof_date",
+            "count": 47269
+          },
+          {
+            "field": "coordinates",
+            "reason": "no_coordinates"
+          }
+        ],
+        "claims": []
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G2",
+      "outcome": "empty_in_scope",
+      "mode": "honest_empty",
+      "pass": true,
+      "latencyMs": [1891],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "matched": 0,
+      "shown": 0,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_permits",
+      "modelCalls": 1,
+      "failures": [],
+      "emptyReason": "outcome empty_in_scope; matched 0; no roof date 0; unsupported: who is the listed contractor (not_in_export); missing: who is the listed contractor (not_in_export)",
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "place \"Pflugerville\" -> Pflugerville city (30.447765, -97.602116) radius 5 mi",
+        "filters": {
+          "statusClass": ["open"],
+          "openYearsMin": 3
+        },
+        "unsupported": [
+          {
+            "constraint": "who is the listed contractor",
+            "reason": "not_in_export"
+          }
+        ],
+        "missing": [
+          {
+            "field": "who is the listed contractor",
+            "reason": "not_in_export"
+          }
+        ],
+        "claims": []
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G3",
+      "outcome": "empty_in_scope",
+      "mode": "honest_empty",
+      "pass": true,
+      "latencyMs": [1583],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "matched": 0,
+      "shown": 0,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_permits",
+      "modelCalls": 1,
+      "failures": [],
+      "emptyReason": "outcome empty_in_scope; matched 0; no roof date 0; unsupported: none; missing: none",
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "place \"Manor\" -> Manor city (30.354228, -97.558259) radius 5 mi",
+        "filters": {
+          "statusClass": ["open"],
+          "openYearsMin": 5
+        },
+        "unsupported": [],
+        "missing": [],
+        "claims": []
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G5",
+      "outcome": "answered",
+      "mode": "unavailable",
+      "pass": true,
+      "latencyMs": [3357],
+      "citations": 1,
+      "rowsChecked": 1,
+      "rowsVerified": 1,
+      "matched": 1,
+      "shown": 1,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "lookup_permit",
+      "modelCalls": 2,
+      "failures": [],
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "county \"Travis County\" -> unresolved (undefined, undefined) radius 5 mi",
+        "filters": {
+          "permitNumber": "1981-001776 BP"
+        },
+        "unsupported": [
+          {
+            "constraint": "BBB rating of the contractor",
+            "reason": "not_in_export"
+          }
+        ],
+        "missing": [
+          {
+            "field": "BBB rating of the contractor",
+            "reason": "not_in_export"
+          },
+          {
+            "field": "improvement_status",
+            "reason": "enum_lacks_value",
+            "count": 1
+          },
+          {
+            "field": "status_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "expiry_date",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "permit_close_date",
+            "reason": "source_missing",
+            "count": 1
+          },
+          {
+            "field": "final_inspection_date",
+            "reason": "source_missing",
+            "count": 1
+          },
+          {
+            "field": "contractor_company_cid",
+            "reason": "contractor_unresolved",
+            "count": 1
+          },
+          {
+            "field": "contractor_name_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "bbb_rating",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "bbb_url",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "description",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          },
+          {
+            "field": "work_class_raw",
+            "reason": "no_lexicon_carrier",
+            "count": 1
+          }
+        ],
+        "claims": [
+          "Found 1 matching permit in Travis County; showing the top 1, longest open first."
+        ]
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G6",
+      "outcome": "out_of_scope",
+      "mode": "refused",
+      "pass": true,
+      "latencyMs": [1357],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "matched": 0,
+      "shown": 0,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_properties",
+      "modelCalls": 1,
+      "failures": [],
+      "ownerLocationFlagged": false,
+      "detail": {
+        "area": "zip \"99999\" -> unresolved (undefined, undefined) radius 2 mi",
+        "filters": {
+          "roofAgeMinYears": 40
+        },
+        "unsupported": [],
+        "missing": [],
+        "claims": []
+      }
+    }
+  ]
+}

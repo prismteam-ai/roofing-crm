@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Property detail</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}a:hover{color:var(--md-sys-color-on-primary-container)}
+.ctype{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:16px;color:var(--md-sys-color-on-surface-variant)}.cbx-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}.spin{animation:pdspin 1s linear infinite}@keyframes pdspin{to{transform:rotate(360deg)}}.lin summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;min-height:48px;font:500 16px/24px var(--font-plain)}.lin summary::-webkit-details-marker{display:none}.lin[open] .lin-ch{transform:rotate(180deg)}
+.kvc{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-medium);font-size:14px;line-height:20px}
+</style>
+</helmet>
+<article aria-labelledby="pd-title" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 0; background: var(--md-sys-color-surface); font-family: var(--font-plain); color: var(--md-sys-color-on-surface)">
+<sc-if value="{{crmOff}}" hint-placeholder-val="{{ true }}">
+
+<div style="position: relative; padding: 12px 12px 12px 24px; display: flex; align-items: flex-start; gap: 8px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-top: 6px">
+<h2 id="pd-title" style="margin: 0; font-family: var(--font-brand); font-size: 24px; line-height: 32px; font-weight: 400">101 Sample Ln</h2>
+<div style="font-size: 14px; line-height: 20px; color: var(--md-sys-color-on-surface-variant)">Austin, TX 78753 · TCAD 0273450112 · Sample</div>
+</div>
+<button class="atlas-icon-btn" aria-label="Copy link to this property" onClick="{{__say.k1}}"><span class="material-symbols-rounded" aria-hidden="true">link</span></button>
+<a class="atlas-icon-btn" aria-label="Close" style="text-decoration: none; display: grid; place-items: center; color: var(--md-sys-color-on-surface)" href="Explore1440.dc.html"><span class="material-symbols-rounded" aria-hidden="true">close</span></a>
+</div>
+
+<div style="padding: 16px 24px 0; display: flex; flex-wrap: wrap; gap: 8px">
+<span class="atlas-pill atlas-pill--success"><span class="material-symbols-rounded" aria-hidden="true">roofing</span>Roof 23 yrs · High</span>
+<span class="atlas-pill atlas-pill--warning"><span class="material-symbols-rounded" aria-hidden="true">schedule</span>Stalled 6.4 yrs · source says Expired</span>
+<span class="atlas-pill atlas-pill--info"><span class="material-symbols-rounded" aria-hidden="true">flight</span>Out-of-area owner</span>
+</div>
+
+<div style="padding: 16px 24px 0; display: flex; flex-direction: column; gap: 8px">
+<div role="img" aria-label="Street View: coming soon" style="height: 120px; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; border: 1px dashed var(--md-sys-color-outline); border-radius: var(--md-sys-shape-corner-medium); background: var(--md-sys-color-surface-container-low)">
+<span class="material-symbols-rounded" aria-hidden="true" style="color: var(--md-sys-color-on-surface-variant)">no_photography</span>
+<b style="font-size: 14px; line-height: 20px; font-weight: 500">Street View: coming soon</b>
+<span style="font-size: 13px; line-height: 18px; color: var(--md-sys-color-on-surface-variant)">No street photo yet. The property data below is unaffected.</span>
+</div>
+<a href="https://www.google.com/maps/search/?api=1&amp;query=30.40310,-97.66080" target="_blank" rel="noopener" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; font-size: 14px; line-height: 20px">Open the area in Google Maps<span class="material-symbols-rounded atlas-icon-16" aria-hidden="true">open_in_new</span></a>
+</div>
+
+<div style="margin-top: 16px; padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--md-sys-color-outline-variant); border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<a class="atlas-btn atlas-btn--tonal" style="text-decoration: none" href="{{listHref}}"><span class="material-symbols-rounded" aria-hidden="true">{{showIcon}}</span>{{showLabel}}</a>
+<a class="atlas-btn atlas-btn--tonal" style="text-decoration: none" href="{{askHref}}"><span class="material-symbols-rounded" aria-hidden="true">smart_toy</span>Ask about this property</a>
+<sc-if value="{{crmOff}}" hint-placeholder-val="{{ true }}"><button class="atlas-btn atlas-btn--outlined" onClick="{{__say.k4}}"><span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>Open in CRM</button></sc-if><sc-if value="{{crmLeadOn}}" hint-placeholder-val="{{ false }}"><a class="atlas-btn atlas-btn--filled" href="{{crmLeadHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span>Open lead · {{crmLeadStatus}}</a></sc-if><sc-if value="{{crmCanLead}}" hint-placeholder-val="{{ false }}"><a class="atlas-btn atlas-btn--filled" href="{{crmCreateHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">person_add</span>Create lead</a></sc-if>
+</div>
+
+<section aria-labelledby="s-roof" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<h3 id="s-roof" style="margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Roof</h3>
+<div class="atlas-kv" style="align-items: center"><span>Roof age</span><span style="display: flex; align-items: center; gap: 8px"><span class="num" style="font-size: 16px; font-weight: 500">23 yrs</span><span class="atlas-pill atlas-pill--success"><span class="material-symbols-rounded" aria-hidden="true">verified</span>Confidence: high</span></span></div>
+<div class="atlas-kv"><span>Basis</span><span>Reroof permit, finaled 2003-05-02</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; line-height: 16px; font-weight: 500; color: var(--md-sys-color-on-surface-variant)">Evidence chain</span>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px">
+<button class="atlas-chip atlas-chip--signal" onClick="{{__say.k5}}">Reroof permit 2003</button><span class="material-symbols-rounded atlas-icon-16" aria-hidden="true" style="color: var(--md-sys-color-on-surface-variant)">arrow_forward</span>
+<button class="atlas-chip atlas-chip--signal" onClick="{{__say.k6}}">Austin permits (3syk-w9eu)</button><span class="material-symbols-rounded atlas-icon-16" aria-hidden="true" style="color: var(--md-sys-color-on-surface-variant)">arrow_forward</span>
+<button class="atlas-chip atlas-chip--signal" onClick="{{__say.k7}}">Captured 2026-10-15</button><span class="material-symbols-rounded atlas-icon-16" aria-hidden="true" style="color: var(--md-sys-color-on-surface-variant)">arrow_forward</span>
+<span class="atlas-chip atlas-chip--signal"><span class="atlas-cid">CID bafybei…q4xa<button aria-label="Copy CID" onClick="{{__say.k8}}"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span></button></span></span>
+</div>
+</div>
+<div class="atlas-missing" role="note" style="font-size: 13px; line-height: 18px"><span class="material-symbols-rounded" aria-hidden="true">info</span><div>The 2020 reroof permit is not counted: it was never finaled.</div></div>
+</section>
+
+<section aria-labelledby="s-permits" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<div style="display: flex; align-items: center; gap: 8px"><h3 id="s-permits" style="flex: 1; margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Permits · 2 roofing</h3><button class="atlas-btn atlas-btn--text" onClick="{{__say.k9}}">Show 1 other</button></div>
+<ul aria-label="Roofing permits" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{permits}}" as="pm" hint-placeholder-count="2"><li class="kvc"><div style="display: flex; align-items: center; gap: 8px"><b style="flex: 1; font-weight: 500">{{pm.id}}</b><span class="{{pm.stCls}}">{{pm.st}}</span></div><sc-for list="{{pm.kv}}" as="f" hint-placeholder-count="5"><div class="atlas-kv"><span>{{f.k}}</span><span class="{{f.c}}">{{f.v}}</span></div></sc-for><div class="atlas-kv" role="group" aria-label="Contractor identity: {{pm.cbLabel}}" style="align-items: flex-start"><span>Identity</span><span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0"><span class="atlas-pill {{pm.cbCls}}" title="{{pm.cbTip}}"><span class="material-symbols-rounded" aria-hidden="true">{{pm.cbIcon}}</span>{{pm.cbLabel}}</span><span style="font-size: 13px; line-height: 18px">{{pm.cbReason}}</span></span></div><div class="atlas-kv"><span>BBB</span><span>{{pm.bbb}}</span></div><sc-if value="{{crmOn}}" hint-placeholder-val="{{ false }}"><div style="display: flex; justify-content: flex-end"><sc-if value="{{pm.leadOn}}" hint-placeholder-val="{{ false }}"><a class="atlas-btn atlas-btn--text" href="{{crmLeadHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span>{{pm.leadText}}</a></sc-if><sc-if value="{{pm.canLead}}" hint-placeholder-val="{{ false }}"><a class="atlas-btn atlas-btn--text" href="{{crmCreateHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">person_add</span>Create lead from this permit</a></sc-if></div></sc-if></li></sc-for>
+</ul>
+<div class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">description</span>Austin permits (3syk-w9eu) · captured 2026-10-15 · Run 3 · class from the Travis profile, next to the source’s own status word (status_raw). Stalled = source says Expired, or open past its expiry date. Contractor identity from the TX Comptroller registry only</div>
+</section>
+
+<section aria-labelledby="s-merge" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<h3 id="s-merge" style="margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Owner merged from 2 records</h3>
+<span style="font-size: 13px; line-height: 18px; color: var(--md-sys-color-on-surface-variant)">Two TCAD owner accounts describe the same owner. Run 3 merged them into one owner. Matched on normalised name + mailing address.</span>
+<sc-if value="{{mergeOn}}" hint-placeholder-val="{{ true }}"><ul aria-label="Source records" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{merged}}" as="r" hint-placeholder-count="3"><li class="kvc"><div style="display: flex; align-items: center; gap: 8px"><span class="material-symbols-rounded atlas-icon-20" aria-hidden="true" style="color: var(--md-sys-color-primary)">{{r.icon}}</span><b style="flex: 1; font-weight: 500">{{r.src}}</b><span class="atlas-pill {{r.roleCls}}">{{r.role}}</span></div><div class="atlas-kv"><span>Record ID</span><span style="font-family: var(--font-mono); font-size: 13px">{{r.id}}</span></div><div class="atlas-kv"><span>Contributed</span><span>{{r.gave}}</span></div><div class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">description</span>From the published owner record (person table) · TCAD account {{r.acct}}</div></li></sc-for>
+</ul>
+<div class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">merge</span>person table · Run 3 · CID …o2wn · Sample IDs · <a href="Coverage1440.dc.html">All merge counts on Coverage</a></div></sc-if>
+<sc-if value="{{mergeOff}}" hint-placeholder-val="{{ false }}"><div class="atlas-missing" role="note" style="font-size: 13px; line-height: 18px"><span class="material-symbols-rounded" aria-hidden="true">info</span><div><b style="font-weight: 500">Merge details: coming soon.</b> Run 3 merged 6,866 owner records in the county (Run manifest · coverage section).</div></div></sc-if>
+</section>
+
+<section aria-labelledby="s-owner" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<h3 id="s-owner" style="margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Owner</h3>
+<div class="atlas-kv"><span>Name</span><span>Sample Owner</span></div>
+<div class="atlas-kv" style="align-items: center"><span>Mailing location</span><span style="display: flex; align-items: center; gap: 8px">Houston, TX 77002 <span class="atlas-pill atlas-pill--info">Out of area</span></span></div>
+<div class="atlas-kv"><span>Last sale</span><span class="num">2011-07-18</span></div>
+<div class="atlas-kv"><span>Tenure</span><span class="num">15.2 yrs</span></div>
+<div class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">description</span>TCAD · captured 2026-10-14 · Run 3 · CID <span class="atlas-cid">bafybei…7m2c<button aria-label="Copy CID" onClick="{{__say.k10}}"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span></button></span></div>
+</section>
+
+<section aria-labelledby="s-loc" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<h3 id="s-loc" style="margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Location</h3>
+<div class="atlas-kv"><span>Coordinates</span><span class="num" style="font-family: var(--font-mono); font-size: 13px">30.40310, −97.66080</span></div>
+<div class="atlas-kv"><span>Coordinate source</span><span>TCAD parcel centroid</span></div>
+<div class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>TCAD parcels · captured 2026-10-14 · Run 3 · Sample coordinates</div>
+</section>
+
+<section aria-labelledby="s-meta" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<h3 id="s-meta" style="margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Metadata</h3>
+<span style="font-size: 12px; line-height: 16px; color: var(--md-sys-color-on-surface-variant)">Each field: source, then captured date and run, CID and licence</span>
+<ul aria-label="Field provenance" style="margin: 0; padding: 0; list-style: none; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-corner-medium); overflow: hidden">
+<sc-for list="{{meta}}" as="m" hint-placeholder-count="7"><li style="display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-top: {{m.bt}}; font-size: 13px; line-height: 18px"><span style="display: flex; gap: 8px; align-items: baseline"><b style="font-weight: 500; font-family: var(--font-mono); font-size: 13px">{{m.field}}</b><span style="flex: 1; min-width: 0; text-align: right">{{m.src}}</span></span><span style="display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; color: var(--md-sys-color-on-surface-variant); font-size: 12px"><span class="num">{{m.when}}</span><span class="{{m.cidCls}}">{{m.cid}}</span><span>{{m.lic}}</span></span></li></sc-for>
+</ul>
+<a class="atlas-btn atlas-btn--text" style="text-decoration: none; align-self: flex-start" href="DataCatalog1440.dc.html"><span class="material-symbols-rounded" aria-hidden="true">table_view</span>Open field meanings in the catalog</a>
+</section>
+
+<section aria-labelledby="s-sim" style="padding: 20px 0 20px 24px; display: flex; flex-direction: column; gap: 10px">
+<h3 id="s-sim" style="margin: 0; padding-right: 24px; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Similar properties</h3>
+<ul class="atlas-list" aria-labelledby="s-sim" style="margin: 0; width: calc(100% - 24px); box-sizing: border-box; padding: 0; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-corner-medium); overflow: hidden; background: var(--md-sys-color-surface)">
+<sc-for list="{{similar}}" as="it" hint-placeholder-count="3">
+<li class="atlas-list-item" style="align-items: flex-start; padding-top: 8px; padding-bottom: 8px; border-top: {{it.bt}}">
+<span class="atlas-list-item__lead"><span class="material-symbols-rounded" aria-hidden="true">roofing</span></span>
+<div class="atlas-list-item__body" style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 4px"><span class="atlas-list-item__title" style="flex: 1">{{it.title}}</span><span class="num" style="font-size: 12px; color: var(--md-sys-color-on-surface-variant)">{{it.dist}}</span><a class="atlas-icon-btn" aria-label="Open {{it.title}}" href="{{propHref}}" style="width: 40px; height: 40px; display: grid; place-items: center; color: var(--md-sys-color-on-surface); text-decoration: none"><span class="material-symbols-rounded atlas-icon-20" aria-hidden="true">info</span></a></div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; line-height: 18px; color: var(--md-sys-color-on-surface-variant)"><span>Roof {{it.roof}} yrs</span><span class="{{it.confCls}}">{{it.conf}}</span><span>{{it.permit}}</span></div>
+<span class="atlas-prov" style="font-size: 12px; line-height: 16px">{{it.why}}</span>
+</div>
+</li>
+</sc-for>
+</ul>
+<div class="atlas-prov" style="font-size: 12px; line-height: 16px; padding-right: 24px"><span class="material-symbols-rounded" aria-hidden="true">info</span>Sample · picked by street, year built and roof-age band<sc-if value="{{__toastOn}}" hint-placeholder-val="{{ false }}"><div class="atlas-snackbar" role="status" style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 90; max-width: 90%">{{__toastText}}</div></sc-if>
+</div>
+</section>
+</sc-if>
+<sc-if value="{{crmOn}}" hint-placeholder-val="{{ false }}">
+<div style="position: sticky; top: 0; z-index: 3; padding: 12px 8px 12px 24px; display: flex; align-items: flex-start; gap: 4px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-top: 6px">
+<h2 id="pd-title" style="margin: 0; font-family: var(--font-brand); font-size: {{c.h2}}px; line-height: 30px; font-weight: 400">{{c.title}}</h2>
+<div style="font-size: 13px; line-height: 18px; color: var(--md-sys-color-on-surface-variant)">{{c.sub}}</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 2px"><sc-if value="{{c.isLead}}" hint-placeholder-val="{{ false }}"><span class="{{c.leadCls}}"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span>Lead · {{c.leadStatus}}</span><span class="ctype">{{c.leadId}} · {{c.assignee}}</span></sc-if><sc-if value="{{c.notLead}}" hint-placeholder-val="{{ true }}"><span class="atlas-pill atlas-pill--unavailable">Not a lead yet</span></sc-if><span class="ctype"><span class="material-symbols-rounded atlas-icon-16" aria-hidden="true">{{c.typeIcon}}</span>{{c.type}}</span></div>
+</div>
+<button class="atlas-icon-btn" aria-label="Copy link to this property" onClick="{{c.copy}}"><span class="material-symbols-rounded" aria-hidden="true">link</span></button>
+<sc-if value="{{c.embed}}" hint-placeholder-val="{{ true }}"><button class="atlas-icon-btn" aria-label="Close details" onClick="{{c.close}}"><span class="material-symbols-rounded" aria-hidden="true">close</span></button></sc-if>
+<sc-if value="{{c.page}}" hint-placeholder-val="{{ false }}"><a class="atlas-icon-btn" aria-label="Close" href="{{c.closeHref}}" style="text-decoration: none; display: grid; place-items: center; color: var(--md-sys-color-on-surface)"><span class="material-symbols-rounded" aria-hidden="true">close</span></a></sc-if>
+</div>
+
+<section aria-label="Lead" style="padding: 16px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<sc-if value="{{c.isLead}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner atlas-banner--info" role="status" style="font-size: 14px; line-height: 20px"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span><div class="atlas-banner__body"><b style="font-weight: 500">{{c.leadHead}} · {{c.leadStatus}} · {{c.assignee}}</b><br>{{c.leadId}} · main signal: {{c.leadSignal}}</div></div><a class="atlas-btn atlas-btn--filled" href="{{c.leadHref}}" style="text-decoration: none; align-self: stretch; justify-content: center"><span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>Open lead</a></sc-if>
+<sc-if value="{{c.notLead}}" hint-placeholder-val="{{ true }}"><button class="atlas-btn atlas-btn--filled" aria-disabled="{{c.busyStr}}" onClick="{{c.create}}" style="align-self: stretch; justify-content: center"><span class="material-symbols-rounded {{c.spin}}" aria-hidden="true">{{c.createIcon}}</span>{{c.createLabel}}</button><span style="font-size: 12px; line-height: 16px; color: var(--md-sys-color-on-surface-variant)">One tap: status New, assigned to you, created from the {{c.originLow}}. Add a note afterwards if you like.</span></sc-if>
+<sc-if value="{{c.failOn}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner atlas-banner--error" role="alert" style="font-size: 13px; line-height: 18px"><span class="material-symbols-rounded" aria-hidden="true">{{c.failIcon}}</span><div class="atlas-banner__body">{{c.failText}}</div><button class="atlas-btn atlas-btn--text" onClick="{{c.retry}}">Try again</button></div></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 4px 8px"><a class="atlas-btn atlas-btn--text" href="{{c.lineageHref}}" target="_blank" rel="noopener" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>View lineage in Explorer</a><a class="atlas-btn atlas-btn--text" href="{{c.askHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">smart_toy</span>Ask about it</a><sc-if value="{{c.mapLink}}" hint-placeholder-val="{{ false }}"><a class="atlas-btn atlas-btn--text" href="{{c.mapHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a></sc-if></div>
+</section>
+
+<section aria-labelledby="c-roof" style="padding: 18px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<h3 id="c-roof" style="margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Roof</h3>
+<div class="atlas-kv" style="align-items: center"><span>Roof age</span><span style="display: flex; align-items: center; gap: 8px"><span class="num" style="font-size: 16px; font-weight: 500">{{c.roofAge}}</span><span class="atlas-pill {{c.confCls}}">{{c.confText}}</span></span></div>
+<div class="atlas-kv"><span>Basis</span><span>{{c.basis}}</span></div>
+<sc-if value="{{c.roofMissing}}" hint-placeholder-val="{{ false }}"><div class="atlas-missing" role="note" style="font-size: 13px; line-height: 18px"><span class="material-symbols-rounded" aria-hidden="true">help</span><div>{{c.roofWhy}}</div></div></sc-if>
+<div class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">description</span>{{c.roofProv}}</div>
+</section>
+
+<section aria-labelledby="c-permits" style="padding: 18px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<h3 id="c-permits" style="margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">{{c.permitHead}}</h3>
+<sc-if value="{{c.hasPermits}}" hint-placeholder-val="{{ true }}"><ul aria-label="Roofing permits" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{c.permits}}" as="pm" hint-placeholder-count="2"><li class="kvc">
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><b style="flex: 1; font-weight: 500; font-family: var(--font-mono); font-size: 13px">{{pm.id}}</b><span class="{{pm.stCls}}">{{pm.st}}</span></div>
+<sc-for list="{{pm.kv}}" as="f" hint-placeholder-count="3"><div class="atlas-kv"><span>{{f.k}}</span><span class="{{f.c}}">{{f.v}}</span></div></sc-for>
+<div class="atlas-kv" style="align-items: flex-start"><span>Contractor, as printed on permit</span><span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right"><b style="font-weight: 500">{{pm.contractor}}</b><sc-if value="{{pm.cbOn}}" hint-placeholder-val="{{ true }}"><span class="cbx-row" style="justify-content: flex-end"><span class="atlas-pill {{pm.cbCls}}" title="{{pm.cbTip}}"><span class="material-symbols-rounded" aria-hidden="true">{{pm.cbIcon}}</span>{{pm.cbLabel}}</span></span><span style="font-size: 12px; line-height: 16px; color: var(--md-sys-color-on-surface-variant)">{{pm.cbReason}}</span></sc-if><sc-if value="{{pm.ctrNp}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; line-height: 16px; color: var(--md-sys-color-on-surface-variant)">{{pm.ctrWhy}}</span></sc-if></span></div>
+<div class="atlas-kv"><span>BBB</span><span>{{pm.bbb}}</span></div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px"><a href="{{pm.src}}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; line-height: 18px; min-height: 48px">Source: Austin permits {{pm.id}}<span class="material-symbols-rounded atlas-icon-16" aria-hidden="true">open_in_new</span></a><span style="flex: 1"></span><sc-if value="{{pm.canLead}}" hint-placeholder-val="{{ false }}"><button class="atlas-btn atlas-btn--tonal" aria-disabled="{{c.busyStr}}" onClick="{{pm.create}}" style="height: 40px"><span class="material-symbols-rounded {{pm.spin}}" aria-hidden="true">{{pm.icon}}</span>{{pm.createLabel}}</button></sc-if><sc-if value="{{pm.leadOn}}" hint-placeholder-val="{{ false }}"><span class="atlas-pill atlas-pill--info"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span>{{pm.leadText}}</span></sc-if></div>
+</li></sc-for></ul></sc-if>
+<sc-if value="{{c.noPermit}}" hint-placeholder-val="{{ false }}"><div class="atlas-missing" role="note" style="font-size: 13px; line-height: 18px"><span class="material-symbols-rounded" aria-hidden="true">help</span><div>{{c.noPermitWhy}} <a href="{{c.covHref}}">CountyLens Coverage</a></div></div></sc-if>
+<div class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">description</span>Austin permits (3syk-w9eu) · captured 2026-10-15 · Run 3 · class next to the source’s own status word</div>
+</section>
+
+<section aria-labelledby="c-owner" style="padding: 18px 24px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<h3 id="c-owner" style="margin: 0; font-family: var(--font-plain); font-size: 16px; line-height: 24px; font-weight: 500">Owner</h3>
+<div class="atlas-kv"><span>Name</span><span>{{c.owner}}</span></div>
+<div class="atlas-kv" style="align-items: center"><span>Mailing location</span><span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end">{{c.mailing}} <span class="atlas-pill {{c.ooaCls}}">{{c.ooaText}}</span></span></div>
+<div class="atlas-kv"><span>Last sale</span><span class="num">{{c.lastSale}}</span></div>
+<div class="atlas-kv"><span>Tenure</span><span class="num">{{c.tenure}}</span></div>
+<div class="atlas-prov" style="font-size: 12px; line-height: 16px"><span class="material-symbols-rounded" aria-hidden="true">description</span>TCAD · captured 2026-10-14 · Run 3 · CID bafybei…7m2c</div>
+</section>
+
+<details class="lin" style="padding: 4px 24px 16px">
+<summary><span class="material-symbols-rounded" aria-hidden="true" style="color: var(--md-sys-color-on-surface-variant)">account_tree</span><span style="flex: 1">Lineage · Metadata and Merged from</span><span class="material-symbols-rounded lin-ch" aria-hidden="true">expand_more</span></summary>
+<div style="display: flex; flex-direction: column; gap: 12px; padding-top: 4px">
+<a class="atlas-btn atlas-btn--tonal" href="{{c.lineageHref}}" target="_blank" rel="noopener" style="text-decoration: none; align-self: flex-start"><span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>View lineage in Explorer</a>
+<b style="font-weight: 500; font-size: 14px">{{c.mergeHead}}</b>
+<sc-for list="{{c.merged}}" as="r" hint-placeholder-count="2"><div class="kvc" style="font-size: 13px; line-height: 18px"><div style="display: flex; align-items: center; gap: 8px"><b style="flex: 1; font-weight: 500">{{r.src}}</b><span class="atlas-pill {{r.roleCls}}">{{r.role}}</span></div><span>{{r.id}}</span><span style="color: var(--md-sys-color-on-surface-variant)">{{r.gave}}</span></div></sc-for>
+<b style="font-weight: 500; font-size: 14px">Metadata</b>
+<ul aria-label="Field provenance" style="margin: 0; padding: 0; list-style: none; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-corner-medium); overflow: hidden">
+<sc-for list="{{meta}}" as="m" hint-placeholder-count="7"><li style="display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-top: {{m.bt}}; font-size: 12px; line-height: 16px"><b style="font-weight: 500; font-family: var(--font-mono)">{{m.field}}</b><span style="color: var(--md-sys-color-on-surface-variant)">{{m.src}} · {{m.when}} · {{m.cid}}</span></li></sc-for>
+</ul>
+<span style="font-size: 12px; line-height: 16px; color: var(--md-sys-color-on-surface-variant)">Location {{c.coords}} · TCAD parcel centroid</span>
+</div>
+</details>
+<sc-if value="{{ls.on}}" hint-placeholder-val="{{ false }}"><div class="atlas-snackbar" role="status" aria-live="polite" style="position: {{ls.pos}}; left: {{ls.left}}; bottom: {{ls.bottom}}px; transform: {{ls.tf}}; margin-top: {{ls.mt}}; z-index: 95; width: {{ls.w}}; max-width: calc(100% - 24px); box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 6px 4px 6px 16px">
+<div style="display: flex; align-items: center; gap: 4px 8px; flex-wrap: wrap"><span class="material-symbols-rounded atlas-icon-18 {{ls.spin}}" aria-hidden="true">{{ls.icon}}</span><span style="flex: 1 1 180px; min-width: 0; font-size: 14px; line-height: 20px">{{ls.text}}</span><sc-for list="{{ls.acts}}" as="la" hint-placeholder-count="2"><sc-if value="{{la.btn}}" hint-placeholder-val="{{ true }}"><button class="atlas-btn atlas-btn--text" onClick="{{la.go}}" style="height: 36px; padding: 0 10px; color: var(--md-sys-color-inverse-primary)">{{la.label}}</button></sc-if><sc-if value="{{la.link}}" hint-placeholder-val="{{ false }}"><a class="atlas-btn atlas-btn--text" href="{{la.href}}" style="height: 36px; padding: 0 10px; text-decoration: none; color: var(--md-sys-color-inverse-primary)">{{la.label}}</a></sc-if></sc-for><button class="atlas-icon-btn" aria-label="Dismiss" onClick="{{ls.close}}" style="width: 36px; height: 36px; color: var(--md-sys-color-inverse-on-surface)"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">close</span></button></div>
+<sc-if value="{{ls.noteOn}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px; padding: 2px 12px 8px 0"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 16px; font-weight: 500">Add a note (optional)<textarea aria-label="Note for the new lead" placeholder="For example: owner mails from Houston" value="{{ls.note}}" onInput="{{ls.onNote}}" style="min-height: 64px; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--md-sys-color-inverse-on-surface); border-radius: var(--md-sys-shape-corner-extra-small); background: transparent; color: var(--md-sys-color-inverse-on-surface); font: 400 14px/20px var(--font-plain); resize: vertical"></textarea></label><div style="display: flex; justify-content: flex-end; gap: 4px"><button class="atlas-btn atlas-btn--text" onClick="{{ls.skipNote}}" style="height: 36px; color: var(--md-sys-color-inverse-primary)">Skip</button><button class="atlas-btn atlas-btn--text" onClick="{{ls.saveNote}}" style="height: 36px; color: var(--md-sys-color-inverse-primary); font-weight: 500">Save note</button></div></div></sc-if>
+</div></sc-if>
+</sc-if>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"imagery":{"editor":"boolean","default":false},"mergeDetails":{"editor":"enum","options":["published","none"],"default":"published"},"device":{"editor":"enum","options":["desktop","mobile"],"default":"desktop"},"$preview":{"width":560,"height":3200}}'>
+class Component extends DCLogic {
+  // CRM preview only (not Task A): prototype lead store shared by the Crm boards. Seeded from existing sample rows; no new totals.
+  static leadsKey() { return 'countylens.proto.crmLeads'; }
+  static leadsSeed() { return [
+    { id: 'L-1042', pid: '101', title: '101 Sample Ln · Austin 78753', type: 'Residential', src: 'permit', permit: 'Roofing permit 2020-047812 BP', status: 'Contacted', owner: 'Sample Rep', created: '2026-10-20 09:14', roof: 23, conf: 'High', basis: 'reroof permit 2003', permitShort: 'Stalled 6.4 yrs · derived: no status in source', contractor: 'SAMPLE ROOFING CO', cres: 'candidate', bbb: 'blocked', d: 4.6, a: 140, d0: 4.6, notes: [{ t: '2026-10-20 15:02', who: 'Sample Rep', text: 'Left a door hanger. Owner mails from Houston.' }], history: [{ t: '2026-10-20 09:14', text: 'Created from the roofing permit' }, { t: '2026-10-20 15:02', text: 'Status: New → Contacted' }] },
+    { id: 'L-1041', pid: '58', title: '58 Example Rd · Pflugerville 78660', type: 'Residential', src: 'property', permit: '', status: 'New', owner: 'Sample Rep', created: '2026-10-20 08:51', roof: 31, conf: 'Low', basis: 'year built 1995', permitShort: 'Open 2.2 yrs', contractor: 'Example Roofing LLC', cres: 'resolved', bbb: 'blocked', d: 2.8, a: 230, d0: 2.8, notes: [], history: [{ t: '2026-10-20 08:51', text: 'Created from the property' }] },
+    { id: 'L-1040', pid: '3', title: '3 Placeholder Pl · Austin 78753', type: 'Residential', src: 'property', permit: '', status: 'Qualified', owner: 'Sample Rep', created: '2026-10-19 16:30', roof: 24, conf: 'High', basis: 'reroof permit 2002', permitShort: 'Stalled 5.1 yrs · derived: no status in source', contractor: 'J EXAMPLE', cres: 'unresolved', bbb: 'not_checked', d: 3.6, a: 100, d0: 3.6, notes: [{ t: '2026-10-20 11:20', who: 'Sample Rep', text: 'Owner asked for an inspection after 4 pm.' }], history: [{ t: '2026-10-19 16:30', text: 'Created from the property' }, { t: '2026-10-20 11:20', text: 'Status: Contacted → Qualified' }] }
+  ]; }
+  static leadsGet() { try { const v = window.localStorage.getItem(Component.leadsKey()); if (v) { const a = JSON.parse(v); if (Array.isArray(a)) return a; } } catch (e) {} return Component.leadsSeed(); }
+  static leadsSave(a) { try { window.localStorage.setItem(Component.leadsKey(), JSON.stringify(a)); } catch (e) {} try { window.__clLeads = a; window.dispatchEvent(new Event('cl-leads')); } catch (e) {} }
+  static leadStatuses() { return ['New', 'Contacted', 'Qualified', 'Won', 'Lost']; }
+  static leadPill(st) { return 'atlas-pill ' + ({ New: 'atlas-pill--info', Contacted: 'atlas-pill--warning', Qualified: 'atlas-pill--success', Won: 'atlas-pill--success', Lost: 'atlas-pill--unavailable' })[st]; }
+  static nowStamp() { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+  // ---- Roofing CRM lead kit (prototype, not Task A): one tap, no form; status New, assignee = me ----
+  static permitWord(st) { return ({ stalled: 'Expired', open: 'Active', closed: 'Final' })[st] || ''; }
+  static permitShortOf(x) { return ({ stalled: 'Stalled ' + x.yrs + ' yrs · derived: no status in source', open: 'Open ' + x.yrs + ' yrs', closed: 'Closed', none: 'No open permit', nosource: 'No permit source here' })[x.status] || 'No open permit'; }
+  static leadSignal(x, src) { return src === 'permit' && (x.status === 'open' || x.status === 'stalled') ? 'Permit ' + Component.permitShortOf(x) : (x.roof == null ? 'Roof age unknown' : 'Roof ' + x.roof + ' yrs · ' + x.conf + ' · ' + x.basis); }
+  static leadNextId(a) { return 'L-' + (Math.max.apply(null, [1042].concat(a.map((l) => parseInt(String(l.id).replace(/\D/g, ''), 10) || 0))) + 1); }
+  static leadCreate(x, src, origin, permitId) {
+    const a = Component.leadsGet(), dup = a.find((l) => l.pid === x.id);
+    if (dup) return { dup: dup };
+    const now = Component.nowStamp(), ps = Component.permitShortOf(x);
+    const l = { id: Component.leadNextId(a), pid: x.id, title: x.title, type: x.type || 'Residential', src: src, origin: origin, signal: Component.leadSignal(x, src),
+      permit: src === 'permit' ? 'Roofing permit ' + (permitId || '') + ' · ' + ps : '', status: 'New', owner: 'Sample Rep', created: now,
+      roof: x.roof == null ? null : x.roof, conf: x.conf, basis: x.basis, permitShort: ps, contractor: x.contractor || '', cres: x.contractor ? (x.cres || 'unresolved') : '', bbb: x.contractor ? (x.bbb || 'not_checked') : '',
+      d: x.d, a: x.a, d0: x.d0, notes: [], history: [{ t: now, text: 'Created from the ' + String(origin).toLowerCase() + ' · main signal: ' + (src === 'permit' ? 'roofing permit ' + (permitId || '') : 'the property') }] };
+    Component.leadsSave([l].concat(a));
+    return { lead: l };
+  }
+  static leadRemove(ids) { Component.leadsSave(Component.leadsGet().filter((l) => ids.indexOf(l.id) < 0)); }
+  static leadAddNote(id, text) { const now = Component.nowStamp(); Component.leadsSave(Component.leadsGet().map((l) => (l.id === id ? Object.assign({}, l, { notes: [{ t: now, who: 'Sample Rep', text: text }].concat(l.notes || []), history: (l.history || []).concat([{ t: now, text: 'Note added' }]) }) : l))); }
+  // One tap: refuses a duplicate, shows Creating…, then the snackbar with Undo, Open lead and Add a note. crmFail = 'error' | 'offline' fails the first try (prototype).
+  crmCreate(x, src, origin, permitId, retry) {
+    const ex = Component.leadsGet().find((l) => l.pid === x.id);
+    if (ex) { this.setState({ ls: { kind: 'dup', id: ex.id, status: ex.status, owner: ex.owner || 'Sample Rep' }, busy: null }); return; }
+    clearTimeout(this.lsT); this.setState({ ls: { kind: 'creating' }, busy: { pid: x.id, src: src } });
+    this.lsT = setTimeout(() => {
+      if (this.props.crmFail && !retry) { this.setState({ busy: null, ls: { kind: 'fail', offline: this.props.crmFail === 'offline', retry: { x: x, src: src, origin: origin, permitId: permitId } } }); return; }
+      const r = Component.leadCreate(x, src, origin, permitId);
+      if (r.dup) this.setState({ busy: null, ls: { kind: 'dup', id: r.dup.id, status: r.dup.status, owner: r.dup.owner || 'Sample Rep' } });
+      else this.setState({ busy: null, ls: { kind: 'created', id: r.lead.id, status: 'New' } });
+    }, 700);
+  }
+  lsBuild(o) {
+    const ls = (this.state || {}).ls, self = this;
+    if (!ls) return { on: false, icon: '', spin: '', text: '', acts: [], close: () => {}, noteOn: false, note: '', onNote: () => {}, skipNote: () => {}, saveNote: () => {}, pos: o.pos, left: o.left, bottom: o.bottom, tf: o.tf, w: o.w, mt: o.mt || '0' };
+    const close = () => { clearTimeout(self.lsT); self.setState({ ls: null }); };
+    const href = (id) => 'CrmLead' + o.sfx + '.dc.html?lead=' + id;
+    const A = (label, go) => ({ label: label, go: go, btn: true, link: false, href: '#' }), Lk = (label, h) => ({ label: label, href: h, btn: false, link: true, go: () => {} });
+    let icon = 'check_circle', spin = '', text = '', acts = [];
+    if (ls.kind === 'creating') { icon = 'progress_activity'; spin = 'spin'; text = 'Creating lead…'; }
+    else if (ls.kind === 'created') { text = 'Lead created · ' + ls.id + ' · New · assigned to you'; acts = [A('Undo', () => { if (!ls.demo) Component.leadRemove([ls.id]); self.setState({ ls: { kind: 'undone', id: ls.id } }); }), Lk('Open lead', href(ls.id))].concat(ls.noteOpen ? [] : [A('Add a note', () => self.setState({ ls: Object.assign({}, ls, { noteOpen: true }) }))]); }
+    else if (ls.kind === 'bulk') { text = ls.n + (ls.n === 1 ? ' lead' : ' leads') + ' created · ' + ls.m + (ls.m === 1 ? ' already a lead' : ' already leads'); acts = [A('Undo', () => { Component.leadRemove(ls.ids || []); self.setState({ ls: { kind: 'undone', n: (ls.ids || []).length } }); }), Lk('Open Leads', 'CrmLeads' + o.sfx + '.dc.html')]; }
+    else if (ls.kind === 'dup') { icon = 'contact_page'; text = 'Already a lead · ' + ls.status + ' · ' + ls.owner + ' (' + ls.id + '). Nothing was added.'; acts = [Lk('Open lead', href(ls.id))]; }
+    else if (ls.kind === 'fail') { icon = ls.offline ? 'cloud_off' : 'error'; text = ls.offline ? 'You’re offline. The lead was not saved.' : 'Couldn’t create the lead. Nothing was saved.'; acts = [A('Try again', () => { const r = ls.retry; if (r) self.crmCreate(r.x, r.src, r.origin, r.permitId, true); else close(); })]; }
+    else if (ls.kind === 'undone') { icon = 'undo'; text = ls.n != null ? 'Removed ' + ls.n + (ls.n === 1 ? ' lead.' : ' leads.') : 'Lead ' + ls.id + ' removed.'; }
+    else if (ls.kind === 'noted') { text = 'Note saved on ' + ls.id + '.'; acts = [Lk('Open lead', href(ls.id))]; }
+    else if (ls.kind === 'msg') { icon = 'info'; text = ls.text; }
+    if (ls.kind !== 'creating' && ls.kind !== 'fail' && !ls.noteOpen && !self.props.crmHold) { clearTimeout(self.lsAuto); self.lsAuto = setTimeout(() => { if (self.state && self.state.ls === ls) self.setState({ ls: null }); }, 9000); }
+    return { on: true, icon: icon, spin: spin, text: text, acts: acts, close: close, noteOn: !!ls.noteOpen, note: ls.note || '',
+      onNote: (e) => self.setState({ ls: Object.assign({}, ls, { note: e && e.target ? e.target.value : '' }) }), skipNote: () => self.setState({ ls: Object.assign({}, ls, { noteOpen: false }) }),
+      saveNote: () => { const t = (ls.note || '').trim(); if (t && !ls.demo) Component.leadAddNote(ls.id, t); self.setState({ ls: t ? { kind: 'noted', id: ls.id } : null }); },
+      pos: o.pos, left: o.left, bottom: o.bottom, tf: o.tf, w: o.w, mt: o.mt || '0' };
+  }
+  constructor(props) { super(props); const d = props.crmDemo || ''; this.state = { busy: d === 'creating' ? { pid: '*', src: 'property' } : null, ls: d === 'creating' ? { kind: 'creating' } : d === 'created' ? { kind: 'created', id: 'L-1043', status: 'New', noteOpen: true, demo: true } : d === 'failed' ? { kind: 'fail', offline: (props.device ?? 'desktop') === 'mobile', retry: null } : null }; }
+  // 101 Sample Ln as a row, for the property page (Property1440 / 390) with the switch on
+  static P101() { return { id: '101', title: '101 Sample Ln · Austin 78753', tcad: '0273450112', roof: 23, conf: 'High', basis: 'reroof permit 2003', basisLong: 'Reroof permit, finaled 2003-05-02', status: 'stalled', yrs: 6.4, contractor: 'SAMPLE ROOFING CO', cres: 'candidate', bbb: 'blocked', mailing: 'Houston, TX 77002', ooa: true, tenure: 15.2, lastSale: '2011-07-18', type: 'Residential', coords: '30.40310, −97.66080',
+    permitsX: [{ id: '2020-047812 BP', status: 'stalled', yrs: 6.4, issued: '2020-05-28', end: 'expired 2021-05-28 · not finaled', contractor: 'SAMPLE ROOFING CO', cres: 'candidate', bbb: 'blocked' }, { id: '2003-018266 BP', status: 'closed', issued: '2003-03-14', end: 'final 2003-05-02', contractor: 'EXAMPLE EXTERIORS LLC', cres: 'resolved', bbb: 'blocked' }] }; }
+  static v1() { try { if (window.__clV1) return window.__clV1; return new URLSearchParams(window.location.search).get('v1') || ''; } catch (e) { return ''; } }
+  crmVals(crm, mob, meta, merged) {
+    const E = { title: '', sub: '', h2: 24, isLead: false, notLead: true, leadHead: '', leadCls: '', leadStatus: '', leadId: '', assignee: '', leadSignal: '', leadHref: '#', type: '', typeIcon: 'home', copy: () => {}, embed: false, page: false, close: () => {}, closeHref: '#', busyStr: 'false', create: () => {}, spin: '', createIcon: 'person_add', createLabel: 'Create lead', originLow: '', failOn: false, failIcon: '', failText: '', retry: () => {}, lineageHref: '#', askHref: '#', mapLink: false, mapHref: '#', roofAge: '', confCls: '', confText: '', basis: '', roofMissing: false, roofWhy: '', roofProv: '', permitHead: '', hasPermits: false, permits: [], noPermit: false, noPermitWhy: '', covHref: '#', owner: '', mailing: '', ooaCls: '', ooaText: '', lastSale: '', tenure: '', mergeHead: '', merged: [], coords: '' };
+    if (!crm) return { c: E, ls: { on: false, acts: [] } };
+    const embed = !!this.props.embed, sfx = mob ? '390' : '1440', st = this.state || {};
+    const row = this.props.row || null, P = Component.P101();
+    let R = row ? (row.id === '101' ? Object.assign({}, P, row, { permitsX: P.permitsX }) : row) : P;
+    const V1 = Component.v1(), noAddr = V1 === 'addr', noCtr = V1 === 'ctr';
+    if (noCtr) { R = Object.assign({}, R, { contractor: '', cres: 'unresolved', bbb: 'not_checked', permitsX: R.permitsX ? R.permitsX.map((p) => Object.assign({}, p, { contractor: '', cres: 'unresolved', bbb: 'not_checked', ctrMissing: true })) : undefined, ctrAll: true }); }
+    const cooR = R.coords || ((30.4394 - Math.sin((R.a || 0) * Math.PI / 180) * (R.d0 || 0) / 69).toFixed(5) + ', ' + (-97.62 + Math.cos((R.a || 0) * Math.PI / 180) * (R.d0 || 0) / 59.6).toFixed(5).replace('-', '−'));
+    if (noAddr && !R.noAddr) { const m0 = / · ([A-Za-z][A-Za-z ]*?)\s*\d{5}\s*$/.exec(R.title || ''); R = Object.assign({}, R, { title: 'TCAD ' + (R.tcad || ('02' + String(7000000000 + parseInt(R.id, 10) * 104729).slice(2))) + ' · near ' + (m0 ? m0[1] : 'Travis County'), noAddr: true, coords: cooR }); }
+    const origin = this.props.origin || (embed ? 'Map' : 'Property page');
+    const demo = this.props.crmDemo || '';
+    let lead = Component.leadsGet().find((l) => l.pid === R.id) || null;
+    if (demo === 'created') lead = { id: 'L-1043', status: 'New', owner: 'Sample Rep', src: 'property', signal: Component.leadSignal(R, 'property') };
+    const CBM = { resolved: ['atlas-pill--success', 'verified', 'Resolved', 'Comptroller taxpayer no. 32041178552 matched'], candidate: ['atlas-pill--info', 'help', 'Candidate', 'Likely match on name and address, not proof'], ambiguous: ['atlas-pill--warning', 'call_split', 'Ambiguous', '2 Comptroller companies fit this name'], conflicting: ['atlas-pill--danger', 'sync_problem', 'Conflicting', 'Sources disagree on which company this is'], unresolved: ['atlas-pill--unavailable', 'link_off', 'Unresolved', 'No Comptroller match. No Texas roofing licence register exists'] };
+    const BBB = { rated: 'Rated · rating not published', not_found: 'Not found', blocked: 'Blocked · bbb.org refused the check (403), 2026-10-17', not_checked: 'Not checked · no name to look up' };
+    const ymd = (yrs) => { const d = new Date(2026, 9, 21); d.setDate(d.getDate() - Math.round(yrs * 365.25)); const p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+    const pmx = R.permitsX || ((R.status === 'open' || R.status === 'stalled') ? [{ id: ymd(R.yrs).slice(0, 4) + '-0' + (10000 + (parseInt(R.id, 10) * 7919) % 89999) + ' BP', status: R.status, yrs: R.yrs, issued: ymd(R.yrs), end: R.status === 'stalled' ? 'expired ' + ymd(R.yrs - 1) + ' · not finaled' : 'not finaled yet', contractor: R.contractor, cres: R.cres, bbb: R.bbb }]
+      : R.status === 'closed' ? [{ id: '2006-0' + (10000 + (parseInt(R.id, 10) * 7919) % 89999) + ' BP', status: 'closed', issued: '2006-04-11', end: 'final 2006-06-02', contractor: R.contractor, cres: R.cres, bbb: R.bbb }] : []);
+    const busy = st.busy, isBusy = !!busy && (busy.pid === R.id || busy.pid === '*');
+    const create = (src, pid) => () => { if (isBusy || lead) return; this.crmCreate(R, src, origin, pid); };
+    const pmx2 = noCtr ? pmx.map((p) => Object.assign({}, p, { contractor: '', ctrMissing: true })) : pmx;
+    const permits = pmx2.map((p) => { const open = p.status === 'open' || p.status === 'stalled', cb = p.contractor ? CBM[p.cres === 'resolved' ? 'resolved' : 'unresolved'] : null, mine = !!lead && lead.src === 'permit' && (!lead.permit || lead.permit.indexOf(p.id) >= 0) && open;
+      const busyHere = isBusy && busy.src === 'permit';
+      return { id: p.id, st: p.status === 'stalled' ? 'Stalled · derived: no status in source' : p.status === 'open' ? 'Open' : 'Closed', stCls: 'atlas-pill ' + (p.status === 'stalled' ? 'atlas-pill--warning' : p.status === 'open' ? 'atlas-pill--info' : 'atlas-pill--success'),
+        kv: [{ k: 'Work', v: 'Reroof', c: '' }, { k: 'Issued', v: p.issued + ' · ' + p.end, c: 'num' }].concat(open ? [{ k: 'Open for', v: p.yrs + ' yrs (' + Math.round(p.yrs * 365.25).toLocaleString('en-US') + ' days)', c: 'num' }] : []),
+        contractor: p.ctrMissing ? 'Contractor not published' : (p.contractor || 'None printed on permit'), cbOn: !!cb, cbCls: cb ? cb[0] : '', cbIcon: cb ? cb[1] : '', cbLabel: cb ? cb[2] : '', cbReason: cb ? cb[3] : '', cbTip: '', ctrNp: !!p.ctrMissing, ctrWhy: 'No lexicon carrier in contract/v1 (contractor_name_raw)',
+        bbb: p.contractor ? BBB[p.bbb || 'not_checked'] : BBB.not_checked, src: 'https://data.austintexas.gov/resource/3syk-w9eu.json?permit_number=' + encodeURIComponent(p.id.replace(/ BP$/, '')),
+        canLead: open && !lead, leadOn: mine, leadText: lead ? 'Lead ' + lead.id + ' · main signal' : '', create: create('permit', p.id), spin: busyHere ? 'spin' : '', icon: busyHere ? 'progress_activity' : 'person_add', createLabel: busyHere ? 'Creating…' : 'Create lead from this permit' }; });
+    const ls = st.ls, fail = ls && ls.kind === 'fail';
+    const t = R.title.split(' · '), city = (t[1] || '').replace(/ (\d{5})$/, ', TX $1');
+    const tc = R.tcad || ('02' + String(7000000000 + parseInt(R.id, 10) * 104729).slice(2));
+    const unknown = R.roof == null;
+    const c = { title: t[0], sub: noAddr ? t[1] + ' · Address not published in Run 3 · ' + cooR + ' · Sample' : city + ' · TCAD ' + tc + ' · Sample', h2: mob ? 22 : 24,
+      isLead: !!lead, notLead: !lead, leadHead: lead && ls && (ls.kind === 'created' || ls.kind === 'noted') && ls.id === lead.id ? 'Lead created' : 'Already a lead', leadCls: lead ? Component.leadPill(lead.status) : '', leadStatus: lead ? lead.status : '', leadId: lead ? lead.id : '', assignee: lead ? (lead.owner === 'Sample Rep' ? 'Sample Rep (you)' : lead.owner) : '', leadSignal: lead ? (lead.signal || lead.permit || ('Roof ' + lead.roof + ' yrs')) : '', leadHref: lead ? 'CrmLead' + sfx + '.dc.html?lead=' + lead.id : '#',
+      type: R.type || 'Residential', typeIcon: (R.type || '') === 'Commercial' ? 'storefront' : R.type === 'Type not published' ? 'help' : 'home', copy: () => this.setState({ ls: { kind: 'msg', text: 'Link copied (Sample).' } }),
+      embed: embed, page: !embed, close: () => { if (this.props.onClose) this.props.onClose(); }, closeHref: mob ? 'CrmMap390.dc.html' : 'CrmMap1440.dc.html',
+      busyStr: String(isBusy), create: create('property', ''), spin: isBusy && busy.src !== 'permit' ? 'spin' : '', createIcon: isBusy && busy.src !== 'permit' ? 'progress_activity' : 'person_add', createLabel: isBusy && busy.src !== 'permit' ? 'Creating…' : 'Create lead', originLow: String(origin).toLowerCase(),
+      failOn: !!fail, failIcon: fail && ls.offline ? 'cloud_off' : 'error', failText: fail && ls.offline ? 'You’re offline. The lead was not saved.' : 'Couldn’t create the lead. Nothing was saved.', retry: () => { const r = ls && ls.retry; this.crmCreate(r ? r.x : R, r ? r.src : 'property', r ? r.origin : origin, r ? r.permitId : '', true); },
+      lineageHref: (mob ? 'Property390' : 'Property1440') + '.dc.html?mapView=off&pid=' + R.id, askHref: mob ? 'CrmAsk390.dc.html' : 'CrmAsk1440.dc.html', mapLink: !embed, mapHref: mob ? 'CrmProperty390.dc.html' : 'CrmProperty1440.dc.html',
+      roofAge: unknown ? 'Unknown' : R.roof + ' yrs', confCls: unknown ? 'atlas-pill--unavailable' : ({ High: 'atlas-pill--success', Medium: 'atlas-pill--warning', Low: 'atlas-pill--danger' })[R.conf], confText: unknown ? 'No basis' : 'Confidence ' + R.conf,
+      basis: unknown ? 'None on record' : (R.basisLong || (R.basis.charAt(0).toUpperCase() + R.basis.slice(1))), roofMissing: unknown, roofWhy: 'Roof age unknown: there is no finaled reroof permit and no year built for this parcel. A lead can still be created; it records the permit or the property instead.',
+      roofProv: unknown ? 'roof_age_years · Run 3 · null (no basis)' : (/permit/.test(R.basis) ? 'Austin permits · finaled reroof · Run 3 · CID …q4xa' : 'TCAD year built · Run 3 · CID …7m2c'),
+      permitHead: pmx.length ? 'Permits · ' + pmx.length + ' roofing' : 'Permits', hasPermits: pmx.length > 0, permits: permits, noPermit: pmx.length === 0,
+      noPermitWhy: R.status === 'nosource' ? 'No permit data here: CountyLens publishes permits for the City of Austin only, and this parcel is outside it. A lead can still be created from the property.' : 'No roofing permit on record for this parcel in Austin permits (Run 3). A lead can still be created from the property.',
+      covHref: mob ? 'Coverage390.dc.html' : 'Coverage1440.dc.html',
+      owner: 'Sample Owner', mailing: R.mailing, ooaCls: R.ooa ? 'atlas-pill--info' : 'atlas-pill--unavailable', ooaText: R.ooa ? 'Out of area' : 'Local', lastSale: R.lastSale || (Math.floor(2026.8 - R.tenure) + ' (year)'), tenure: R.tenure + ' yrs',
+      mergeHead: R.id === '101' ? 'Owner merged from 2 records' : 'Owner from 1 TCAD account (no merge)', merged: R.id === '101' ? merged : [], coords: R.coords || ((30.4394 - Math.sin((R.a || 0) * Math.PI / 180) * (R.d0 || 0) / 69).toFixed(5) + ', ' + (-97.62 + Math.cos((R.a || 0) * Math.PI / 180) * (R.d0 || 0) / 59.6).toFixed(5).replace('-', '−')) };
+    const lsv = this.lsBuild({ sfx: sfx, pos: 'sticky', left: 'auto', bottom: mob ? 76 : 16, tf: 'none', w: 'auto', mt: '12px' }); if (fail) lsv.on = false; // the drawer shows a failed create in place, with Try again
+    return { c: c, ls: lsv };
+  }
+  // Prototype-only Map view switch: "Show on map" only in the CRM preview; CountyLens shows the property in the list. Do not ship.
+  static mapOn() { try { if (typeof window.__clMapView === 'boolean') return window.__clMapView; } catch (e) {} try { const u = new URLSearchParams(window.location.search).get('mapView'); if (u === '1' || u === 'on') return true; if (u === '0' || u === 'off') return false; } catch (e) {} try { return window.localStorage.getItem('countylens.proto.mapView') === '1'; } catch (e) { return false; } }
+  componentDidMount() { this.onMap = (e) => { try { if (e && e.type === 'storage') window.__clMapView = undefined; } catch (er) {} this.forceUpdate(); }; try { window.addEventListener('storage', this.onMap); window.addEventListener('cl-mapview', this.onMap); window.addEventListener('cl-leads', this.onMap); } catch (e) {} }
+  componentWillUnmount() { try { window.removeEventListener('storage', this.onMap); window.removeEventListener('cl-mapview', this.onMap); window.removeEventListener('cl-leads', this.onMap); } catch (e) {} clearTimeout(this.lsT); clearTimeout(this.lsAuto); }
+  renderVals() {
+    const __o = this.__rv() || {};
+    const __k = this.__k || (this.__k = { t: {}, msg: '' });
+    const __P = {};
+    const __S = {"k1": "Copied to the clipboard (Sample).", "k4": "Sends this property to the roofing CRM (outside CountyLens).", "k5": "“Reroof permit 2003” is drawn but not wired in this prototype.", "k6": "“Austin permits (3syk-w9eu)” is drawn but not wired in this prototype.", "k7": "“Captured 2026-10-15” is drawn but not wired in this prototype.", "k8": "Copied to the clipboard (Sample).", "k9": "More rows load here (Sample).", "k10": "Copied to the clipboard (Sample)."};
+    const __p = {}, __tg = {}, __say = {};
+    Object.keys(__P).forEach((k) => { const v = k in __k.t ? __k.t[k] : __P[k]; __p[k] = String(v); __tg[k] = () => { __k.t[k] = !v; this.forceUpdate(); }; });
+    Object.keys(__S).forEach((k) => { __say[k] = () => { __k.msg = __S[k]; this.forceUpdate(); clearTimeout(__k.h); __k.h = setTimeout(() => { __k.msg = ''; this.forceUpdate(); }, 2800); }; });
+    return Object.assign({}, __o, { __p: __p, __tg: __tg, __say: __say, __toastOn: !!__k.msg, __toastText: __k.msg });
+  }
+
+  __rv() {
+    const imagery = this.props.imagery ?? true;
+    const mob = (this.props.device ?? 'desktop') === 'mobile';
+    const S = (title, dist, roof, conf, permit, why) => ({ title, dist, roof, conf, permit, why, confCls: 'atlas-pill ' + ({ High: 'atlas-pill--success', Medium: 'atlas-pill--warning', Low: 'atlas-pill--danger' })[conf] });
+    const similar = [S('118 Sample Ln · Austin 78753', '0.1 mi', 22, 'High', 'No open permit', 'Same street, built 1998'), S('7 Example Ct · Austin 78753', '0.4 mi', 24, 'Medium', 'Permit open 1.2 yrs', 'Same roof-age band'), S('64 Placeholder Dr · Austin 78754', '0.9 mi', 21, 'High', 'Permit stalled 5.1 yrs', 'Also a stalled reroof')].map((x, i) => ({ ...x, bt: i ? '1px solid var(--md-sys-color-outline-variant)' : '0' }));
+    const KV = (k, v, c) => ({ k, v, c: c || '' });
+    // AD-05 / AD-06 / AD-08: class + source status word; contractor as printed with its identity badge (same variants as ContractorBadge); no licence line.
+    const permits = [{ id: '2020-047812 BP', st: 'Stalled · source says Expired', stCls: 'atlas-pill atlas-pill--warning', kv: [KV('Work', 'Reroof, re-cover'), KV('Issued · expired · final', '2020-05-28 · 2021-05-28 · not finaled', 'num'), KV('Open', '2,333 days', 'num'), KV('Contractor, as printed on permit', 'SAMPLE ROOFING CO')], cbCls: 'atlas-pill--info', cbIcon: 'help', cbLabel: 'Candidate', cbReason: 'Likely match on name and address, not proof', cbTip: 'Name matches stay Candidate. Only an official ID resolves a contractor.', bbb: 'Blocked · bbb.org refused the check (403), 2026-10-17' },
+      { id: '2003-018266 BP', st: 'Closed · source says Final', stCls: 'atlas-pill atlas-pill--success', kv: [KV('Work', 'Reroof'), KV('Issued · final', '2003-03-14 · 2003-05-02', 'num'), KV('Open', '49 days', 'num'), KV('Contractor, as printed on permit', 'EXAMPLE EXTERIORS LLC')], cbCls: 'atlas-pill--success', cbIcon: 'verified', cbLabel: 'Resolved', cbReason: 'Comptroller taxpayer no. 32041178552 matched · Example Exteriors, LLC', cbTip: '', bbb: 'Blocked · bbb.org refused the check (403), 2026-10-17' }];
+    const M = (field, src, when, cid, lic, blocked) => ({ field, src, when, cid, lic, cidCls: blocked ? 'atlas-pill atlas-pill--unavailable' : 'atlas-cid' });
+    const meta0 = [M('roof_age_years', 'Derived: permits + TCAD', '2026-10-15 · Run 3', 'bafybei…r8sd', '[Derived licence]'), M('permits', 'Austin permits (3syk-w9eu)', '2026-10-15 · Run 3', 'bafybei…q4xa', '[Licence as published]'), M('contractor', 'Austin permits (3syk-w9eu)', '2026-10-15 · Run 3', 'bafybei…q4xa', '[Licence as published]'), M('bbb_status', 'BBB', 'Not fetched · Run 3', 'Blocked (403) on 2026-10-17', '[Terms]', true), M('owner, sale', 'TCAD', '2026-10-14 · Run 3', 'bafybei…7m2c', '[Terms as published]'), M('lat, lon', 'TCAD parcels', '2026-10-14 · Run 3', 'bafybei…7m2c', '[Terms as published]'), M('businesses', 'TX Comptroller franchise-tax (9cir-efmm)', '2026-10-13 · Run 3', 'bafybei…w3nd', 'Public open data')];
+    const meta = meta0.map((x, i) => ({ ...x, bt: i ? '1px solid var(--md-sys-color-outline-variant)' : '0' }));
+    const merged = [{ src: 'TCAD owner account', id: 'owner 1184207 · “SAMPLE, JORDAN A”', acct: '1184207', gave: 'Mailing address, last sale 2011-07-18', role: 'Kept', roleCls: 'atlas-pill--info', icon: 'person' }, { src: 'TCAD owner account', id: 'owner 1530918 · “JORDAN A SAMPLE”', acct: '1530918', gave: 'Same normalised name and mailing address; newer account', role: 'Merged', roleCls: 'atlas-pill--unavailable', icon: 'person' }];
+    const crm = !!this.props.embed || Component.mapOn(); // embedded = the CRM drawer
+    // Roofing CRM (map view on only, not Task A): this sample property (101) is lead L-1042 unless the lead store says otherwise
+    let crmLead = null; if (crm) { try { const v = window.localStorage.getItem('countylens.proto.crmLeads'); const a = v ? JSON.parse(v) : null; crmLead = a ? a.find((l) => l.pid === '101') || null : { id: 'L-1042', status: 'Contacted', src: 'permit' }; } catch (e) { crmLead = { id: 'L-1042', status: 'Contacted', src: 'permit' }; } }
+    const csfx = mob ? '390' : '1440';
+    permits.forEach((p, i) => { p.leadOn = !!crmLead && i === 0 && crmLead.src === 'permit'; p.leadText = crmLead ? 'Lead ' + crmLead.id + ' · ' + crmLead.status : ''; p.canLead = !crmLead && i === 0; });
+    // #92 / AD-01: merge details only if the published owner record names its source accounts (A-02); otherwise the fallback.
+    const mergeOn = (this.props.mergeDetails ?? 'published') !== 'none';
+    return { ...this.crmVals(crm, mob, meta, merged), crmOn: crm, crmOff: !crm, crmLeadOn: crm && !!crmLead, crmCanLead: crm && !crmLead, crmLeadStatus: crmLead ? crmLead.status : '', crmLeadHref: crmLead ? 'CrmLead' + csfx + '.dc.html?lead=' + crmLead.id : '#', crmCreateHref: 'CrmLeadCreate' + csfx + '.dc.html', mergeOn: mergeOn, mergeOff: !mergeOn, showLabel: crm ? 'Show on map' : 'Show in the list', showIcon: crm ? 'map' : 'view_list', listHref: mob ? 'Explore390.dc.html' : 'Explore1440.dc.html', permits: permits, meta: meta, merged: merged, similar: similar, askHref: mob ? 'ExploreQ390-ai.dc.html' : 'ExploreQ-ai.dc.html', propHref: mob ? 'Property390.dc.html' : 'Property1440.dc.html' };
+  }
+}
+</script>
+</body>
+</html>

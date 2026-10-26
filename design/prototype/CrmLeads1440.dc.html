@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · Leads</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.cr-h2{margin:0;font-family:var(--font-brand);font-weight:400}
+.cr-sub{font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.cr-lab{font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field input,.cr-field select,.cr-field textarea{height:48px;box-sizing:border-box;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font:400 14px var(--font-plain)}
+.cr-field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.cr-field input[aria-invalid="true"]{border-color:var(--md-sys-color-error)}
+.cr-card{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-surface);box-sizing:border-box;min-width:0}
+.cr-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-width:0}
+.cr-proto{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border:1px dashed var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-small);font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cr-tbl{display:grid;align-items:center;column-gap:12px;padding:6px 12px;min-height:56px;border-top:1px solid var(--md-sys-color-outline-variant);font-size:13px;line-height:18px}
+.cr-tbl.is-head{min-height:40px;border-top:0;font-size:12px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+.cr-dis{opacity:.6;cursor:not-allowed}
+.cr-lnk{display:inline-flex;align-items:center;min-height:48px}
+.ld-row{position:relative;display:grid;align-items:center;column-gap:12px;padding:8px 12px;min-height:60px;border-top:1px solid var(--md-sys-color-outline-variant);font-size:13px;line-height:18px;cursor:pointer;color:inherit;text-decoration:none}.ld-row:hover{background:var(--md-sys-color-surface-container)}.ld-row:focus-within{outline:2px solid var(--md-sys-color-primary);outline-offset:-2px}.ld-head{display:grid;align-items:center;column-gap:12px;padding:6px 12px;min-height:40px;font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}.ld-sub{font-size:12px;line-height:16px;color:var(--md-sys-color-on-surface-variant)}.ld-cut{min-width:0;overflow:hidden;text-overflow:ellipsis}.ld-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.ld-chips::-webkit-scrollbar{display:none}.ld-chips>*{flex:none}.atlas-slider__value{min-height:48px;box-sizing:border-box}.ld-main::after{content:"";position:absolute;inset:0}li.cr-card{position:relative}.ld-url{font-family:var(--font-mono);font-size:12px;line-height:16px;word-break:break-all}.crm-soon-pill{font-size:11px;line-height:16px;min-height:0;padding:0 6px;margin-top:2px}.crm-soon{color:var(--md-sys-color-on-surface-variant);cursor:pointer;min-height:0;padding-bottom:6px;font-size:11px}.crm-soon .atlas-nav-ind{height:28px}.soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+</style>
+</helmet>
+<div style="position: relative; width: {{sh.W}}px; height: {{H}}px; overflow: hidden; background: var(--md-sys-color-surface-container-low); font-family: var(--font-plain); color: var(--md-sys-color-on-surface)">
+<sc-if value="{{sh.notM}}" hint-placeholder-val="{{ true }}">
+<header class="atlas-top-app-bar" style="position: absolute; left: 0; top: 0; width: {{sh.W}}px; box-sizing: border-box; padding: 0 24px; gap: 12px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant); z-index: 20">
+<h1 class="atlas-top-app-bar__title" style="margin: 0 8px 0 0; flex: none">Roofing CRM</h1>
+<sc-if value="{{sh.isD}}" hint-placeholder-val="{{ true }}"><button class="atlas-chip" aria-haspopup="dialog" aria-label="Location: Travis County, TX. Change location" onClick="{{sh.sayCounty}}"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>Travis County, TX<span class="material-symbols-rounded" aria-hidden="true">arrow_drop_down</span></button></sc-if>
+<div style="flex: 0 1 {{sh.sbW}}px; margin-left: {{sh.sbL}}px; position: relative; z-index: 30"><dc-import name="SearchBox" value="" variant="header" device="desktop" on-place="{{sh.toMap}}" crm="on" start-open="{{ false }}" hint-size="100%,48px"></dc-import></div>
+<span style="flex: 1"></span>
+<div style="position: relative; z-index: 32"><dc-import name="CrmDataChip" state="{{sh.data}}" device="{{sh.dev}}" compact="{{sh.isT}}" start-open="{{sh.dataOpen}}" hint-size="230px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAppsMenu" device="{{sh.dev}}" start-open="{{sh.appsOpen}}" hint-size="48px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAccount" device="{{sh.dev}}" start-open="{{sh.acctOpen}}" hint-size="48px,48px"></dc-import></div>
+</header>
+<nav class="atlas-nav-rail" aria-label="Main" style="position: absolute; left: 0; top: 64px; height: {{sh.railH}}px; box-sizing: border-box; padding-top: 12px; z-index: 10; overflow: visible">
+<a class="atlas-nav-item" href="{{sh.mapHref}}" aria-current="{{sh.curMap}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">map</span></span>Map</a>
+<a class="atlas-nav-item" href="{{sh.filtersHref}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">tune</span></span>Filters</a>
+<a class="atlas-nav-item" href="{{sh.aiHref}}" aria-current="{{sh.curAsk}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded atlas-icon-18" aria-hidden="true">auto_awesome</span></span>AI</a>
+<a class="atlas-nav-item" href="{{sh.leadsHref}}" aria-current="{{sh.curLeads}}" style="margin-top: 8px"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">contact_page</span></span>Leads</a>
+<div role="group" aria-labelledby="crm-soon-h" style="display: flex; flex-direction: column; align-items: center; margin-top: 12px"><span id="crm-soon-h" style="font-size: 11px; line-height: 16px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); padding: 4px 0">Coming soon</span><sc-for list="{{sh.soon}}" as="c" hint-placeholder-count="5"><a class="atlas-nav-item crm-soon" href="{{c.href}}" title="{{c.tip}}" aria-current="{{c.cur}}"><span class="atlas-nav-ind"><span class="material-symbols-rounded" aria-hidden="true">{{c.icon}}</span></span>{{c.label}}<span class="atlas-pill atlas-pill--unavailable crm-soon-pill">Soon</span><span class="atlas-sr">. Coming soon. {{c.tip}}</span></a></sc-for></div>
+</nav>
+</sc-if>
+<sc-if value="{{sh.isM}}" hint-placeholder-val="{{ false }}">
+<header class="atlas-top-app-bar" style="position: absolute; left: 0; top: 0; width: 390px; box-sizing: border-box; padding: 0 4px 0 16px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant); z-index: 20">
+<h1 class="atlas-top-app-bar__title" style="flex: 1; margin: 0">{{sh.mTitle}}</h1>
+<a class="atlas-icon-btn" aria-label="Location: Travis County, TX. Change location" href="Shell390Location.dc.html" style="text-decoration: none; display: grid; place-items: center; color: var(--md-sys-color-on-surface)"><span class="material-symbols-rounded" aria-hidden="true">location_on</span></a>
+<div style="position: relative; z-index: 32"><dc-import name="CrmDataChip" state="{{sh.data}}" device="mobile" compact="{{ true }}" start-open="{{sh.dataOpen}}" hint-size="110px,48px"></dc-import></div>
+<div style="position: relative; z-index: 32"><dc-import name="CrmAccount" device="mobile" start-open="{{sh.acctOpen}}" hint-size="48px,48px"></dc-import></div>
+</header>
+<div style="position: absolute; left: 0; top: {{sh.navT}}px; width: 390px; height: 80px; z-index: 85"><dc-import name="CrmBottomNav" current="{{sh.cur}}" start-open="{{sh.moreOpen}}" hint-size="390px,80px"></dc-import></div>
+</sc-if>
+<sc-if value="{{toastOn}}" hint-placeholder-val="{{ false }}"><div class="atlas-snackbar" role="status" style="position: absolute; left: 50%; bottom: {{sh.snackB}}px; transform: translateX(-50%); z-index: 90; max-width: 90%">{{toast}}</div></sc-if>
+<div style="position: absolute; left: 12px; bottom: {{sh.pbB}}px; z-index: 80"><dc-import name="ProtoBar" here="{{sh.here}}" desktop="{{sh.pD}}" tablet="{{sh.pT}}" mobile="{{sh.pM}}" current="{{sh.dev}}" crm="{{ true }}" hint-size="48px,48px"></dc-import></div>
+
+<main aria-labelledby="ll-h" style="position: absolute; left: {{mL}}px; top: 64px; width: {{mW}}px; height: {{mH}}px; box-sizing: border-box; padding: {{mPad}}; display: flex; flex-direction: column; gap: 10px; overflow-x: hidden; overflow-y: {{mOv}}">
+<sc-if value="{{wideHead}}" hint-placeholder-val="{{ true }}"><div class="cr-row" style="justify-content: space-between"><h2 id="ll-h" class="cr-h2" style="font-size: 28px; line-height: 36px">Leads</h2><div class="cr-row"><button class="atlas-btn atlas-btn--text" onClick="{{copyLink}}"><span class="material-symbols-rounded" aria-hidden="true">link</span>Copy link</button><a class="atlas-btn atlas-btn--tonal" href="{{showMapHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a></div></div></sc-if>
+
+<sc-if value="{{mHead}}" hint-placeholder-val="{{ false }}"><header aria-label="Leads" style="position: sticky; top: 0; z-index: 2; margin: 0 -16px; padding: 10px 16px 8px; flex: none; display: flex; flex-direction: column; gap: 6px; background: var(--md-sys-color-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant)">
+<div class="cr-row" style="flex-wrap: nowrap"><h2 id="ll-h" class="cr-h2" style="flex: 1; font-size: 22px; line-height: 28px">Leads <span class="num" style="font: 500 16px/24px var(--font-plain); color: var(--md-sys-color-on-surface-variant)">{{nText}}</span></h2><button class="atlas-icon-btn" aria-label="Copy link" onClick="{{copyLink}}"><span class="material-symbols-rounded" aria-hidden="true">link</span></button><a class="atlas-icon-btn" aria-label="Show on map" href="{{showMapHref}}" style="display: grid; place-items: center; text-decoration: none; color: var(--md-sys-color-on-surface)"><span class="material-symbols-rounded" aria-hidden="true">map</span></a></div>
+<div class="ld-chips" role="group" aria-label="Active filters. Each one opens the filters"><button class="atlas-chip" aria-expanded="{{fxStr}}" onClick="{{toggleFx}}" style="height: 32px; background: var(--md-sys-color-secondary-container); border-color: transparent"><span class="material-symbols-rounded" aria-hidden="true">tune</span>Filters</button><sc-for list="{{activeChips}}" as="ac" hint-placeholder-count="2"><button class="atlas-chip" onClick="{{toggleFx}}" style="height: 32px">{{ac}}</button></sc-for></div>
+</header></sc-if>
+
+<sc-if value="{{showFilters}}" hint-placeholder-val="{{ true }}">
+<section aria-label="Filter leads" class="cr-card" style="padding: {{fPad}}; gap: 8px; flex: none">
+<div class="cr-row"><span class="cr-lab" style="width: {{labW}}">Status</span><div role="group" aria-label="Status, choose any" class="cr-row"><sc-for list="{{stOpts}}" as="o" hint-placeholder-count="5"><button class="atlas-chip" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 32px"><sc-if value="{{o.chk}}" hint-placeholder-val="{{ false }}"><span class="material-symbols-rounded" aria-hidden="true">check</span></sc-if>{{o.label}}</button></sc-for></div></div>
+<div class="cr-row"><span class="cr-lab" style="width: {{labW}}">Assignee</span><div role="group" aria-label="Assignee" class="cr-row"><sc-for list="{{asOpts}}" as="o" hint-placeholder-count="3"><button class="atlas-chip" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 32px">{{o.label}}</button></sc-for><select aria-label="Assignee by name" value="{{asName}}" onChange="{{setAsName}}" style="height: 48px; padding: 0 8px; border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-sys-shape-corner-small); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font: 400 13px var(--font-plain)"><option value="">A name…</option><option value="Sample Rep">Sample Rep</option><option value="Alex Example">Alex Example</option><option value="Jordan Placeholder">Jordan Placeholder</option></select></div></div>
+<div class="cr-row"><span class="cr-lab" style="width: {{labW}}">Roof age ≥</span><div role="group" aria-label="Roof age at least" class="cr-row"><sc-for list="{{roofOpts}}" as="o" hint-placeholder-count="5"><button class="atlas-chip" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 32px; min-width: 44px; justify-content: center">{{o.label}}</button></sc-for></div></div>
+<div class="cr-row"><span class="cr-lab" style="width: {{labW}}">Permit status</span><div role="group" aria-label="Permit status, Open and Stalled combine" class="cr-row"><sc-for list="{{permOpts}}" as="o" hint-placeholder-count="3"><button class="atlas-chip" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 32px">{{o.label}}</button></sc-for></div></div>
+<div class="cr-row"><span class="cr-lab" style="width: {{labW}}">Permit open ≥</span><div role="group" aria-label="Permit open at least" class="cr-row"><sc-for list="{{openOpts}}" as="o" hint-placeholder-count="5"><button class="atlas-chip" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 32px">{{o.label}}</button></sc-for></div></div>
+<div class="cr-row"><span class="cr-lab" style="width: {{labW}}">Within</span><div class="cr-row" style="flex: 1; min-width: 0"><select aria-label="Area" value="{{fPlace}}" onChange="{{setPlace}}" style="height: 48px; padding: 0 8px; border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-sys-shape-corner-small); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font: 400 13px var(--font-plain); max-width: 220px"><option value="">Anywhere in Travis County</option><sc-for list="{{placeOpts}}" as="p" hint-placeholder-count="8"><option value="{{p.k}}">{{p.label}}</option></sc-for></select><sc-if value="{{radOn}}" hint-placeholder-val="{{ false }}"><span class="atlas-slider" style="gap: 8px; flex: 1; min-width: 160px; max-width: 360px"><input type="range" min="0.5" max="25" step="0.5" value="{{fR}}" onInput="{{setR}}" aria-label="Radius in miles" style="flex: 1; min-width: 80px"><label class="atlas-slider__value"><input class="num" value="{{fR}}" onChange="{{setR}}" inputmode="decimal" aria-label="Radius, miles"><span>mi</span></label></span></sc-if></div></div>
+<div class="cr-row"><span class="cr-sub" style="flex: 1; min-width: 0">{{filterHint}}</span><sc-if value="{{anyFilter}}" hint-placeholder-val="{{ false }}"><button class="atlas-btn atlas-btn--text" onClick="{{clearF}}" style="height: 36px">Clear filters</button></sc-if></div>
+</section>
+</sc-if>
+
+<div class="cr-row" style="flex: none; justify-content: space-between"><p aria-live="polite" style="margin: 0; flex: 1 1 320px; min-width: 0; font-size: {{sentFs}}px; line-height: 22px"><b class="num" style="font-weight: 500">{{sentCount}}</b>{{sentRest}}</p><label class="cr-row cr-sub" style="flex: none">Sort<select aria-label="Sort leads" value="{{sort}}" onChange="{{setSort}}" style="height: 48px; padding: 0 8px; border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-sys-shape-corner-small); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font: 400 13px var(--font-plain)"><option value="activity">Last activity</option><option value="roof">Roof age</option><option value="open">Permit open</option><option value="near">{{nearLabel}}</option></select></label></div>
+
+<sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}"><div class="cr-card" aria-busy="true"><div class="atlas-progress atlas-progress--indeterminate" role="progressbar" aria-label="Loading leads"><i></i></div><span role="status">Loading your leads…</span><div class="atlas-skeleton" style="height: 40px"></div><div class="atlas-skeleton" style="height: 40px"></div><div class="atlas-skeleton" style="height: 40px"></div></div></sc-if>
+<sc-if value="{{isError}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner atlas-banner--error" role="alert"><span class="material-symbols-rounded" aria-hidden="true">error</span><div class="atlas-banner__body"><b style="font-weight: 500">Leads couldn’t load.</b> The lead store didn’t answer. Nothing was lost; your last changes are saved.</div><button class="atlas-btn atlas-btn--text" onClick="{{retry}}">Retry</button></div></sc-if>
+<sc-if value="{{isPartial}}" hint-placeholder-val="{{ false }}"><div class="atlas-banner atlas-banner--warning" role="status"><span class="material-symbols-rounded" aria-hidden="true">history</span><div class="atlas-banner__body">{{partialText}}</div></div></sc-if>
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}"><div class="cr-card" style="align-items: flex-start"><span class="material-symbols-rounded" aria-hidden="true" style="color: var(--md-sys-color-on-surface-variant)">contact_page</span><b style="font-weight: 500">No leads yet</b><span class="cr-sub">Create your first lead from the map: find aged roofs and long-open permits, then tap Create lead or swipe right in Triage.</span><a class="atlas-btn atlas-btn--filled" href="{{mapHref}}" style="text-decoration: none"><span class="material-symbols-rounded" aria-hidden="true">map</span>Go to map</a></div></sc-if>
+<sc-if value="{{noMatch}}" hint-placeholder-val="{{ false }}"><div class="cr-card" style="align-items: flex-start"><b style="font-weight: 500">No leads match these filters.</b><span class="cr-sub">{{noMatchHint}}</span><button class="atlas-btn atlas-btn--tonal" onClick="{{clearF}}">Clear filters</button></div></sc-if>
+
+<sc-if value="{{tableOn}}" hint-placeholder-val="{{ true }}">
+<div role="table" aria-label="Leads" aria-rowcount="{{rowCount}}" style="flex: 1; min-height: 0; border-radius: var(--md-sys-shape-corner-medium); background: var(--md-sys-color-surface); overflow: hidden; display: flex; flex-direction: column">
+<div class="ld-head" role="row" style="grid-template-columns: {{tCols}}"><sc-for list="{{tHead}}" as="hc" hint-placeholder-count="9"><span role="columnheader">{{hc}}</span></sc-for></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="3"><div class="ld-row" role="row" onClick="{{r.go}}" style="grid-template-columns: {{tCols}}">
+<span role="cell" style="display: flex; flex-direction: column; min-width: 0"><a href="{{r.href}}" style="font-weight: 500" class="ld-cut ld-main">{{r.short}}</a><span class="ld-sub ld-cut">{{r.city}} · {{r.id}}<sc-if value="{{narrow}}" hint-placeholder-val="{{ false }}"> · from {{r.origin}}</sc-if></span><sc-if value="{{r.na}}" hint-placeholder-val="{{ false }}"><span class="ld-sub ld-cut">Address not published in Run 3 · {{r.ll}}</span></sc-if><sc-if value="{{r.stale}}" hint-placeholder-val="{{ false }}"><span class="atlas-pill atlas-pill--warning" style="align-self: flex-start; margin-top: 2px" title="{{r.staleTip}}">Property not in Run 4 · snapshot</span></sc-if></span>
+<span role="cell" style="display: flex; flex-direction: column; gap: 2px; align-items: flex-start"><span class="{{r.pill}}">{{r.status}}</span><sc-if value="{{narrow}}" hint-placeholder-val="{{ false }}"><span class="ld-sub">{{r.assignee}}</span></sc-if></span>
+<sc-if value="{{wide}}" hint-placeholder-val="{{ true }}"><span role="cell" class="ld-cut">{{r.assignee}}</span></sc-if>
+<span role="cell" style="display: flex; flex-direction: column; min-width: 0"><span class="num">{{r.roofText}}</span><span class="ld-sub ld-cut">{{r.basis}}</span></span>
+<span role="cell" class="ld-cut">{{r.permit}}</span>
+<sc-if value="{{wide}}" hint-placeholder-val="{{ true }}"><span role="cell" style="display: flex; flex-direction: column; gap: 2px; min-width: 0; align-items: flex-start"><span class="ld-cut" style="max-width: 100%">{{r.contractor}}</span><sc-if value="{{r.ctrNp}}" hint-placeholder-val="{{ false }}"><span class="ld-sub">{{r.ctrWhy}}</span></sc-if><sc-if value="{{r.cbOn}}" hint-placeholder-val="{{ true }}"><span class="atlas-pill {{r.cbCls}}" title="{{r.cbTip}}"><span class="material-symbols-rounded" aria-hidden="true">{{r.cbIcon}}</span>{{r.cbLabel}}</span></sc-if></span></sc-if>
+<sc-if value="{{distOn}}" hint-placeholder-val="{{ false }}"><span role="cell" class="num">{{r.dist}}</span></sc-if>
+<sc-if value="{{wide}}" hint-placeholder-val="{{ true }}"><span role="cell">{{r.origin}}</span></sc-if>
+<span role="cell" style="display: flex; flex-direction: column; min-width: 0"><span class="num">{{r.actWhen}}</span><span class="ld-sub ld-cut">{{r.actWhat}}</span></span>
+<sc-if value="{{wide}}" hint-placeholder-val="{{ true }}"><span role="cell" class="num ld-sub">{{r.created}}</span></sc-if>
+</div></sc-for>
+<span style="flex: 1"></span>
+<div style="display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 8px 0 16px; border-top: 1px solid var(--md-sys-color-outline-variant)"><span class="cr-sub" style="flex: 1">{{footText}}</span><dc-import name="Pager" pages="{{pages}}" page="{{page}}" text="{{pageText}}" label="Lead pages" compact="{{ true }}" on-page="{{setPage}}" hint-size="200px,40px"></dc-import></div>
+</div>
+</sc-if>
+
+<sc-if value="{{cardsOn}}" hint-placeholder-val="{{ false }}">
+<ul aria-label="Leads" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="2"><li class="cr-card" onClick="{{r.go}}" style="padding: 12px 14px; gap: 5px; cursor: pointer">
+<div class="cr-row" style="flex-wrap: nowrap"><a href="{{r.href}}" class="ld-main" style="flex: 1; min-width: 0; font-weight: 500">{{r.short}}</a><span class="{{r.pill}}">{{r.status}}</span></div>
+<span class="ld-sub">{{r.city}} · {{r.id}} · {{r.assignee}}<sc-if value="{{distOn}}" hint-placeholder-val="{{ false }}"> · {{r.dist}} mi</sc-if></span><sc-if value="{{r.na}}" hint-placeholder-val="{{ false }}"><span class="ld-sub">Address not published in Run 3 · {{r.ll}}</span></sc-if>
+<span style="font-size: 13px; line-height: 18px">Roof {{r.roofText}} · {{r.basis}}</span>
+<span style="font-size: 13px; line-height: 18px">{{r.permit}}</span>
+<span class="cr-row" style="font-size: 13px; line-height: 18px"><span>{{r.contractor}}</span><sc-if value="{{r.ctrNp}}" hint-placeholder-val="{{ false }}"><span class="ld-sub">{{r.ctrWhy}}</span></sc-if><sc-if value="{{r.cbOn}}" hint-placeholder-val="{{ true }}"><span class="atlas-pill {{r.cbCls}}"><span class="material-symbols-rounded" aria-hidden="true">{{r.cbIcon}}</span>{{r.cbLabel}}</span></sc-if></span>
+<sc-if value="{{r.stale}}" hint-placeholder-val="{{ false }}"><span class="atlas-pill atlas-pill--warning" style="align-self: flex-start">Property not in Run 4 · snapshot</span></sc-if>
+<span class="ld-sub">From {{r.origin}} · last activity {{r.actWhen}} · created {{r.created}}</span>
+</li></sc-for>
+</ul>
+<div style="display: flex; justify-content: center"><dc-import name="Pager" pages="{{pages}}" page="{{page}}" text="{{pageText}}" label="Lead pages" compact="{{ true }}" on-page="{{setPage}}" hint-size="200px,40px"></dc-import></div>
+</sc-if>
+
+<div class="cr-proto" role="group" aria-label="Prototype only: screen state and URL" style="flex: none"><span>Prototype · state</span><sc-for list="{{stateOpts}}" as="o" hint-placeholder-count="5"><button class="atlas-chip" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="height: 32px">{{o.label}}</button></sc-for><sc-if value="{{teamOff}}" hint-placeholder-val="{{ true }}"><button class="atlas-chip" onClick="{{teamLeads}}" style="height: 32px">Add a team’s leads (23, pages)</button></sc-if><button class="atlas-chip" onClick="{{resetLeads}}" style="height: 32px">Reset sample leads</button><a class="atlas-chip" href="{{signedOutHref}}" style="height: 32px; text-decoration: none">Open this link signed out</a><span class="ld-url" style="flex-basis: 100%">URL: {{urlText}}</span></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"v1":{"editor":"enum","options":["","addr","ctr"],"default":""},"device":{"editor":"enum","options":["desktop","tablet","mobile"],"default":"desktop"},"state":{"editor":"enum","options":["populated","loading","empty","error","partial"],"default":"populated"},"query":{"editor":"text","default":""},"hold":{"editor":"boolean","default":false},"team":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  // CRM preview only (not Task A): prototype lead store shared by the Crm boards. Seeded from existing sample rows; no new totals.
+  static leadsKey() { return 'countylens.proto.crmLeads'; }
+  static leadsSeed() { return [
+    { id: 'L-1042', pid: '101', title: '101 Sample Ln · Austin 78753', type: 'Residential', src: 'permit', permit: 'Roofing permit 2020-047812 BP', status: 'Contacted', owner: 'Sample Rep', created: '2026-10-20 09:14', roof: 23, conf: 'High', basis: 'reroof permit 2003', permitShort: 'Stalled 6.4 yrs · derived: no status in source', contractor: 'SAMPLE ROOFING CO', cres: 'candidate', bbb: 'blocked', d: 4.6, a: 140, d0: 4.6, notes: [{ t: '2026-10-20 15:02', who: 'Sample Rep', text: 'Left a door hanger. Owner mails from Houston.' }], history: [{ t: '2026-10-20 09:14', text: 'Created from the roofing permit' }, { t: '2026-10-20 15:02', text: 'Status: New → Contacted' }] },
+    { id: 'L-1041', pid: '58', title: '58 Example Rd · Pflugerville 78660', type: 'Residential', src: 'property', permit: '', status: 'New', owner: 'Sample Rep', created: '2026-10-20 08:51', roof: 31, conf: 'Low', basis: 'year built 1995', permitShort: 'Open 2.2 yrs', contractor: 'Example Roofing LLC', cres: 'resolved', bbb: 'blocked', d: 2.8, a: 230, d0: 2.8, notes: [], history: [{ t: '2026-10-20 08:51', text: 'Created from the property' }] },
+    { id: 'L-1040', pid: '3', title: '3 Placeholder Pl · Austin 78753', type: 'Residential', src: 'property', permit: '', status: 'Qualified', owner: 'Sample Rep', created: '2026-10-19 16:30', roof: 24, conf: 'High', basis: 'reroof permit 2002', permitShort: 'Stalled 5.1 yrs · derived: no status in source', contractor: 'J EXAMPLE', cres: 'unresolved', bbb: 'not_checked', d: 3.6, a: 100, d0: 3.6, notes: [{ t: '2026-10-20 11:20', who: 'Sample Rep', text: 'Owner asked for an inspection after 4 pm.' }], history: [{ t: '2026-10-19 16:30', text: 'Created from the property' }, { t: '2026-10-20 11:20', text: 'Status: Contacted → Qualified' }] }
+  ]; }
+  static leadsMain() { try { const v = window.localStorage.getItem(Component.leadsKey()); if (v) { const a = JSON.parse(v); if (Array.isArray(a)) return a; } } catch (e) {} return Component.leadsSeed(); }
+  // Prototype only (B-08): a team's worth of placeholder leads so the list pages. On with ?team=1 or a T- lead; never mixed into the shared store.
+  static teamKey() { return 'countylens.proto.crmTeamLeads'; }
+  static teamOn() { try { if (window.__clTeam) return true; const q = new URLSearchParams(window.location.search); return q.get('team') === '1' || /^T-/.test(q.get('lead') || ''); } catch (e) { return false; } }
+  static teamSeed() { const reps = ['Sample Rep', 'Alex Example', 'Jordan Placeholder'], st = ['New', 'Contacted', 'Qualified', 'New', 'Contacted', 'Won', 'Lost'], streets = ['Sample St', 'Example Ave', 'Placeholder Dr', 'Sample Ct', 'Example Ln', 'Placeholder Way'], zips = ['Austin 78753', 'Pflugerville 78660', 'Austin 78754', 'Manor 78653'], ps = ['Open 1.4 yrs', 'Stalled 3.2 yrs · derived: no status in source', 'Stalled 5.6 yrs · derived: no status in source', '', 'Open 0.8 yrs', 'Stalled 7.1 yrs · derived: no status in source'], cr = ['resolved', 'candidate', 'unresolved', 'ambiguous'];
+    const out = []; for (let i = 0; i < 23; i++) { const day = 19 - (i % 18), hh = String(8 + (i * 5) % 10).padStart(2, '0'), mm = String((i * 17) % 60).padStart(2, '0'), t = '2026-10-' + String(day).padStart(2, '0') + ' ' + hh + ':' + mm, roof = 15 + (i * 7) % 20, p = ps[i % ps.length];
+      out.push({ id: 'T-' + (2001 + i), pid: 'T' + (i + 1), title: (110 + i * 13) + ' ' + streets[i % streets.length] + ' · ' + zips[i % zips.length], type: i % 9 === 4 ? 'Commercial' : 'Residential', src: 'property', permit: '', status: st[i % st.length], owner: reps[i % reps.length], created: t, roof: roof, conf: roof > 25 ? 'Low' : 'High', basis: roof > 25 ? 'year built ' + (2026 - roof) : 'reroof permit ' + (2026 - roof), permitShort: p, contractor: p ? 'SAMPLE CONTRACTOR ' + (1 + i % 5) : '', cres: cr[i % cr.length], bbb: 'not_checked', d: +(1 + (i * 0.37) % 6).toFixed(1), a: (i * 47) % 360, d0: +(1 + (i * 0.37) % 6).toFixed(1), team: true, notes: [], history: [{ t: t, text: 'Created from the property' }] }); }
+    return out; }
+    static v1() { try { if (window.__clV1) return window.__clV1; return new URLSearchParams(window.location.search).get('v1') || ''; } catch (e) { return ''; } }
+  static v1x(l) { const v = Component.v1(); if (!l || !v) return l; const o = Object.assign({}, l), n = parseInt(String(l.pid || l.id).replace(/\D/g, ''), 10) || 1;
+    if (v === 'addr') { const m = /·\s*([A-Za-z][A-Za-z ]*?)\s*\d{5}\s*$/.exec(l.title || ''); o.title = 'TCAD 02' + String(7000000000 + n * 104729).slice(2) + ' · near ' + (m ? m[1] : 'Travis County'); o.noAddr = true; const a = (l.a || 0) * Math.PI / 180, d = l.d0 || 0; o.ll = l.pid === '101' ? '30.40310, −97.66080' : (30.4394 - Math.sin(a) * d / 69).toFixed(5) + ', ' + (-97.62 + Math.cos(a) * d / 59.6).toFixed(5).replace('-', '−'); }
+    if (v === 'ctr') { o.contractor = ''; o.cres = 'unresolved'; o.bbb = 'not_checked'; o.ctrMissing = true; }
+    return o; }
+  static leadsGet() { return Component.leadsGet0().map((x) => Component.v1x(x)); }
+  static leadsGet0() { const a = Component.leadsMain(); if (!Component.teamOn()) return a; let t = null; try { const v = window.localStorage.getItem(Component.teamKey()); if (v) t = JSON.parse(v); } catch (e) {} return a.concat(Array.isArray(t) ? t : Component.teamSeed()); }
+  static leadsSave(a) { const T = a.filter((l) => /^T-/.test(l.id)), M = a.filter((l) => !/^T-/.test(l.id)); try { window.localStorage.setItem(Component.leadsKey(), JSON.stringify(M)); if (T.length) window.localStorage.setItem(Component.teamKey(), JSON.stringify(T)); } catch (e) {} try { window.__clLeads = a; window.dispatchEvent(new Event('cl-leads')); } catch (e) {} }
+  static leadStatuses() { return ['New', 'Contacted', 'Qualified', 'Won', 'Lost']; }
+  static leadPill(st) { return 'atlas-pill ' + ({ New: 'atlas-pill--info', Contacted: 'atlas-pill--warning', Qualified: 'atlas-pill--success', Won: 'atlas-pill--success', Lost: 'atlas-pill--unavailable' })[st]; }
+  static nowStamp() { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+  // Roofing CRM board (not Task A): Map view (CRM preview) is forced on for this page, like ExploreQ-crmmap.
+  static forceCrm() { try { window.__clMapView = true; } catch (e) {} }
+  static soonList() { return [["campaign", "Campaigns", "campaigns", "Plan outreach to groups of leads."], ["request_quote", "Estimates", "estimates", "Price a roof from the lead."], ["construction", "Jobs", "jobs", "Schedule and track roofing work."], ["receipt_long", "Invoices", "invoices", "Bill completed jobs."], ["mail", "Outreach", "outreach", "Email and SMS to owners."]]; }
+  shell(here, base, cur, H) {
+    const dev = this.props.device ?? 'desktop', isM = dev === 'mobile', isT = dev === 'tablet', isD = !isM && !isT;
+    const sfx = isM ? '390' : isT ? '768' : '1440';
+    const soon = Component.soonList().map((c) => ({ icon: c[0], label: c[1], key: c[2], tip: c[3], href: 'CrmComingSoon' + sfx + '.dc.html?section=' + c[2], cur: cur === 'soon:' + c[2] ? 'page' : 'false', say: () => this.say(c[1] + ' is coming soon: ' + c[3].charAt(0).toLowerCase() + c[3].slice(1)) }));
+    return { dev: dev, isM: isM, notM: !isM, isD: isD, isT: isT, W: isM ? 390 : isT ? 768 : 1440, railH: H - 64, navT: H - 80, snackB: isM ? 96 : 24, pbB: isM ? 92 : 12, mTitle: 'Roofing CRM',
+      cur: cur === 'CrmLeads' ? 'leads' : cur === 'CrmAgent' || cur === 'CrmAsk' ? 'ask' : cur === 'CrmMap' ? 'map' : 'none',
+      curMap: cur === 'CrmMap' ? 'page' : 'false', curLeads: cur === 'CrmLeads' ? 'page' : 'false', curAsk: cur === 'CrmAgent' || cur === 'CrmAsk' ? 'page' : 'false',
+      mapHref: 'CrmMap' + sfx + '.dc.html', filtersHref: 'CrmCandidates' + sfx + '.dc.html', aiHref: 'CrmAsk' + sfx + '.dc.html', leadsHref: 'CrmLeads' + sfx + '.dc.html', soon: soon,
+      sbW: isT ? 300 : 440, sbL: isT ? 0 : 16, toMap: () => { try { window.location.href = 'CrmMap' + sfx + '.dc.html'; } catch (e) {} },
+      sayCounty: () => this.say('Travis County, TX is the only live county. Others show as Coming soon.'),
+      data: this.props.dataState || 'up', dataOpen: !!this.props.dataOpen, acctOpen: !!this.props.accountOpen, moreOpen: !!this.props.moreOpen,
+      hubHref: isT ? 'Hub768.dc.html' : 'Hub1440.dc.html', here: here + ' · ' + sfx + ' · Roofing CRM', pD: base + '1440.dc.html', pT: base + '768.dc.html', pM: base + '390.dc.html', sfx: sfx };
+  }
+  say(t) { this.setState({ toast: t }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2800); }
+  // Every filter, the sort and the page live in the URL, so a shared link opens the same list:
+  // /leads?status=new,contacted&assignee=me&roof=15&permit=open,stalled&openYrs=5&place=pf&r=5&sort=activity&page=2
+  static PL() { return { pf: ['Pflugerville city hall', 0, 0], z78660: ['ZIP 78660 centre', 1.2, -0.8], z78753: ['ZIP 78753 centre', -3.2, 2.4], manor: ['Manor city hall', 4.2, 3.0], austin: ['Austin city hall', -9.6, 12.8], wells: ['Wells Branch', -5.0, 0.8], z78754: ['ZIP 78754 centre', -1.4, 4.6], z78653: ['ZIP 78653 centre', 4.8, 3.4], gps: ['Your location (GPS)', -0.6, 0.9] }; }
+  static DEF() { return { fStatus: [], fAs: 'me', fRoof: '0', fPerm: [], fOpen: '0', fPlace: '', fR: '5', sort: 'activity', page: 1 }; }
+  static fromQuery(qs) { const f = Component.DEF(); let q = null; try { q = new URLSearchParams(qs); } catch (e) {} if (!q) return f;
+    const st = q.get('status'); if (st) f.fStatus = st.split(',').map((x) => x.charAt(0).toUpperCase() + x.slice(1).toLowerCase()).filter((x) => Component.leadStatuses().indexOf(x) >= 0);
+    const as = q.get('assignee'); if (as) f.fAs = as === 'me' || as === 'all' ? as : decodeURIComponent(as);
+    if (/^\d+$/.test(q.get('roof') || '')) f.fRoof = q.get('roof');
+    const pm = q.get('permit'); if (pm) f.fPerm = ['open', 'stalled'].filter((x) => pm.split(',').indexOf(x) >= 0);
+    if (/^\d+$/.test(q.get('openYrs') || '')) f.fOpen = q.get('openYrs');
+    if (q.get('place') && Component.PL()[q.get('place')]) f.fPlace = q.get('place');
+    if (/^\d+(\.\d+)?$/.test(q.get('r') || '')) f.fR = q.get('r');
+    if (['activity', 'roof', 'open', 'near'].indexOf(q.get('sort')) >= 0) f.sort = q.get('sort');
+    if (/^\d+$/.test(q.get('page') || '')) f.page = Math.max(1, parseInt(q.get('page'), 10));
+    return f; }
+  queryString() { const s = this.state, d = Component.DEF(), q = [];
+    if (s.fStatus.length) q.push('status=' + s.fStatus.map((x) => x.toLowerCase()).join(','));
+    if (s.fAs !== d.fAs) q.push('assignee=' + encodeURIComponent(s.fAs));
+    if (s.fRoof !== '0') q.push('roof=' + s.fRoof);
+    if (s.fPerm.length) q.push('permit=' + s.fPerm.join(','));
+    if (s.fOpen !== '0') q.push('openYrs=' + s.fOpen);
+    if (s.fPlace) { q.push('place=' + s.fPlace); q.push('r=' + s.fR); }
+    if (s.sort !== d.sort) q.push('sort=' + s.sort);
+    if (s.page > 1) q.push('page=' + s.page);
+    if (Component.teamOn()) q.push('team=1');
+    return q.join('&'); }
+  componentDidUpdate() { try { const qs = this.queryString(), want = qs ? '?' + qs : ''; if (window.location.search !== want && /CrmLeads/.test(window.location.pathname)) window.history.replaceState(null, '', window.location.pathname + want); } catch (e) {} }
+  constructor(props) { super(props); Component.forceCrm(); if (props.v1 !== undefined) { try { window.__clV1 = props.v1 || ''; } catch (e) {} } if (props.team) { try { window.__clTeam = true; } catch (e) {} } let qs = props.query || ''; try { if (window.location.search && /CrmLeads/.test(window.location.pathname)) qs = window.location.search; } catch (e) {} this.state = Object.assign({ st: props.state || 'populated', fx: false, toast: '', tick: 0 }, Component.fromQuery(qs)); }
+  componentDidMount() { this.onL = () => this.setState({ tick: this.state.tick + 1 }); try { window.addEventListener('cl-leads', this.onL); window.addEventListener('storage', this.onL); } catch (e) {} if (this.state.st === 'loading' && !this.props.hold) this.lt = setTimeout(() => this.setState({ st: 'populated' }), 1500); }
+  componentWillUnmount() { clearTimeout(this.lt); clearTimeout(this.tt); try { window.removeEventListener('cl-leads', this.onL); window.removeEventListener('storage', this.onL); } catch (e) {} }
+  renderVals() {
+    const s = this.state, H = this.props.device === 'mobile' ? 844 : this.props.device === 'tablet' ? 1024 : 900;
+    const sh = this.shell('Leads', 'CrmLeads', 'CrmLeads', H);
+    const isM = sh.isM, isT = sh.dev === 'tablet', PL = Component.PL();
+    const CB = { resolved: ['atlas-pill--success', 'verified', 'Resolved'], candidate: ['atlas-pill--info', 'help', 'Candidate'], ambiguous: ['atlas-pill--warning', 'call_split', 'Ambiguous'], conflicting: ['atlas-pill--danger', 'sync_problem', 'Conflicting'], unresolved: ['atlas-pill--unavailable', 'link_off', 'Unresolved'] };
+    const all = s.st === 'empty' ? [] : Component.leadsGet();
+    const ctr = s.fPlace ? PL[s.fPlace] : null, R = +s.fR || 5;
+    const dist = (l) => { if (!ctr) return null; const a = (l.a || 0) * Math.PI / 180, X = Math.cos(a) * (l.d0 || l.d || 0), Y = Math.sin(a) * (l.d0 || l.d || 0); return +Math.hypot(X - ctr[1], Y - ctr[2]).toFixed(1); };
+    const yrs = (t) => { const m = /(\d+(?:\.\d+)?) yrs/.exec(t || ''); return m ? +m[1] : 0; };
+    const isOpen = (l) => /^(Open|Stalled)/.test(l.permitShort || '');
+    const acts = (l) => (l.history || []).map((h) => ({ t: h.t, what: h.text })).concat((l.notes || []).map((n) => ({ t: n.t, what: 'Note: ' + n.text }))).sort((a, b) => (a.t < b.t ? 1 : -1));
+    const lastAct = (l) => acts(l)[0] || { t: l.created, what: 'Created' };
+    const mine = (l) => (l.owner || 'Sample Rep') === 'Sample Rep';
+    const asOk = (l) => s.fAs === 'all' || (s.fAs === 'me' ? mine(l) : (l.owner || 'Sample Rep') === s.fAs);
+    const pst = (l) => (/^Stalled/.test(l.permitShort || '') ? 'stalled' : /^Open/.test(l.permitShort || '') ? 'open' : 'none');
+    const permOk = (l) => !s.fPerm.length || s.fPerm.indexOf(pst(l)) >= 0;
+    const list = all.filter((l) => (!s.fStatus.length || s.fStatus.indexOf(l.status) >= 0) && asOk(l) && (l.roof == null ? +s.fRoof === 0 : l.roof >= +s.fRoof) && permOk(l) && (+s.fOpen === 0 || (isOpen(l) && yrs(l.permitShort) >= +s.fOpen)) && (!ctr || dist(l) <= R));
+    const sorts = { activity: (a, b) => (lastAct(a).t < lastAct(b).t ? 1 : -1), roof: (a, b) => (b.roof || 0) - (a.roof || 0), open: (a, b) => (isOpen(b) ? yrs(b.permitShort) : -1) - (isOpen(a) ? yrs(a.permitShort) : -1), near: (a, b) => (dist(a) || 0) - (dist(b) || 0) };
+    const sortK = s.sort === 'near' && !ctr ? 'activity' : s.sort;
+    list.sort(sorts[sortK]);
+    const per = isM ? 3 : 8, pages = Math.max(1, Math.ceil(list.length / per)), page = Math.min(s.page, pages);
+    const staleId = s.st === 'partial' && list.length ? list[list.length - 1].id : null;
+    const sfx = sh.sfx, ago = (t) => { const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(t || ''); if (!m) return t || ''; return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1] + ' ' + (+m[3]) + ', ' + m[4]; };
+    const rows = list.slice((page - 1) * per, page * per).map((l) => { const c = l.contractor ? CB[l.cres === 'resolved' ? 'resolved' : 'unresolved'] : null, la = lastAct(l), href = 'CrmLead' + sfx + '.dc.html?lead=' + l.id, t = (l.title || '').split(' · ');
+      return { id: l.id, short: t[0], city: t[1] || '', status: l.status, pill: Component.leadPill(l.status), assignee: mine(l) ? 'Sample Rep (me)' : l.owner, roofText: l.roof == null ? 'Unknown' : l.roof + ' yrs', basis: l.roof == null ? 'no basis on record' : (l.basis || '') + (l.conf ? ' · ' + l.conf : ''),
+        permit: l.permitShort || 'No open permit', contractor: l.ctrMissing ? 'Contractor not published' : l.contractor ? '“' + l.contractor + '” as printed' : 'None printed on permit', ctrNp: !!l.ctrMissing, ctrWhy: 'No lexicon carrier in contract/v1', na: !!l.noAddr, ll: l.ll || '', cbOn: !!c, cbCls: c ? c[0] : '', cbIcon: c ? c[1] : '', cbLabel: c ? c[2] : '', cbTip: false ? 'Name matches stay Candidate. Only an official ID resolves a contractor.' : '',
+        dist: ctr ? String(dist(l)) : '', origin: l.origin || 'Map', actWhen: ago(la.t), actWhat: la.what, created: ago(l.created), href: href, go: (e) => { if (e && e.target && e.target.closest && e.target.closest('a,button')) return; try { window.location.href = href; } catch (er) {} },
+        stale: l.id === staleId, staleTip: 'Property not in Run 4; the lead keeps its snapshot from Run 3.' }; });
+    const stLow = s.fStatus.map((x) => x);
+    const permPhrase = !s.fPerm.length ? (+s.fOpen ? 'permit open ≥ ' + s.fOpen + ' yrs' : '') : s.fPerm.join(' or ') + ' permit' + (+s.fOpen ? ' open ≥ ' + s.fOpen + ' yrs' : '');
+    const asPhrase = s.fAs === 'me' ? '' : s.fAs === 'all' ? 'all reps' : 'assigned to ' + s.fAs;
+    const parts = [stLow.length ? stLow.join(' or ') : '', +s.fRoof ? 'roof ≥ ' + s.fRoof + ' yrs' : '', permPhrase, ctr ? 'within ' + R + ' mi of ' + ctr[0] : '', asPhrase].filter(Boolean);
+    const ready = ['populated', 'partial'].indexOf(s.st) >= 0;
+    const set = (o) => this.setState(Object.assign({ page: 1 }, o));
+    const opts = [['populated', 'Populated'], ['loading', 'Loading'], ['empty', 'No leads yet'], ['error', 'Error'], ['partial', 'Partial']];
+    const qs = this.queryString(), url = '/leads' + (qs ? '?' + qs : '');
+    const boardUrl = 'CrmLeads' + sfx + '.dc.html' + (qs ? '?' + qs : '');
+    const showIds = list.map((l) => l.id).join(',');
+    const W = sh.W;
+    const tCols = isT ? (ctr ? 'minmax(0, 2fr) 104px 96px minmax(0, 1.4fr) 44px 112px' : 'minmax(0, 2fr) 104px 96px minmax(0, 1.4fr) 112px') : 'minmax(0, 1.7fr) 96px 112px 116px minmax(0, 1.5fr) minmax(0, 1.4fr)' + (ctr ? ' 44px' : '') + ' 56px 128px 92px';
+    const tHead = isT ? ['Lead', 'Status', 'Roof', 'Main permit'].concat(ctr ? ['Mi'] : [], ['Last activity']) : ['Lead', 'Status', 'Assignee', 'Roof', 'Main permit', 'Contractor'].concat(ctr ? ['Mi'] : [], ['From', 'Last activity', 'Created']);
+    return {
+      sh: sh, H: H, mL: isM ? 0 : 80, mW: isM ? 390 : W - 80, mH: isM ? H - 64 - 80 : H - 64, mPad: isM ? '0 16px 16px' : '16px 32px', mOv: isM ? 'auto' : 'hidden',
+      wideHead: !isM, mHead: isM, nText: ready ? '· ' + list.length : '', labW: isM ? '100%' : isT ? '104px' : '112px',
+      mapHref: 'CrmMap' + sfx + '.dc.html', showMapHref: 'CrmMap' + sfx + '.dc.html?leads=' + showIds,
+      showFilters: s.st !== 'loading' && !(isM && s.st === 'empty') && (!isM || s.fx), fxStr: String(!!s.fx), toggleFx: () => this.setState({ fx: !s.fx }), fPad: isM ? '10px 12px' : '12px 16px',
+      activeChips: parts.length ? parts.map((x) => x.charAt(0).toUpperCase() + x.slice(1)) : ['All my leads'],
+      stOpts: Component.leadStatuses().map((v) => ({ label: v, chk: s.fStatus.indexOf(v) >= 0, on: String(s.fStatus.indexOf(v) >= 0), pick: () => set({ fStatus: s.fStatus.indexOf(v) >= 0 ? s.fStatus.filter((x) => x !== v) : s.fStatus.concat([v]).sort((a, b) => Component.leadStatuses().indexOf(a) - Component.leadStatuses().indexOf(b)) }) })),
+      asOpts: [['me', 'Me'], ['all', 'All reps']].map((o) => ({ label: o[1], on: String(s.fAs === o[0]), pick: () => set({ fAs: o[0] }) })), asName: s.fAs !== 'me' && s.fAs !== 'all' ? s.fAs : '', setAsName: (e) => { const v = e && e.target ? e.target.value : ''; if (v) set({ fAs: v === 'Sample Rep' ? 'me' : v }); },
+      roofOpts: [['0', 'Any'], ['15', '15'], ['20', '20'], ['25', '25']].map((o) => ({ label: o[1], on: String(s.fRoof === o[0]), pick: () => set({ fRoof: o[0] }) })),
+      permOpts: [['open', 'Open'], ['stalled', 'Stalled'], ['any', 'Any']].map((o) => ({ label: o[1], on: String(o[0] === 'any' ? !s.fPerm.length : s.fPerm.indexOf(o[0]) >= 0), pick: () => set({ fPerm: o[0] === 'any' ? [] : s.fPerm.indexOf(o[0]) >= 0 ? s.fPerm.filter((x) => x !== o[0]) : ['open', 'stalled'].filter((x) => x === o[0] || s.fPerm.indexOf(x) >= 0) }) })),
+      openOpts: [['0', 'Any'], ['1', '1 yr'], ['3', '3 yrs'], ['5', '5 yrs'], ['10', '10 yrs']].map((o) => ({ label: o[1], on: String(s.fOpen === o[0]), pick: () => set({ fOpen: o[0], fPerm: o[0] !== '0' && !s.fPerm.length ? ['open', 'stalled'] : s.fPerm }) })),
+      placeOpts: Object.keys(PL).map((k) => ({ k: k, label: PL[k][0] })), fPlace: s.fPlace, setPlace: (e) => set({ fPlace: e && e.target ? e.target.value : '' }), radOn: !!ctr, fR: s.fR, setR: (e) => { const v = parseFloat(e && e.target ? e.target.value : ''); if (!isNaN(v)) set({ fR: String(Math.min(25, Math.max(0.5, Math.round(v * 2) / 2))) }); },
+      filterHint: 'Filters combine. Status takes any mix; All reps is the sales-manager view.', anyFilter: parts.length > 0 || s.sort !== 'activity', clearF: () => this.setState(Object.assign(Component.DEF(), { page: 1 })),
+      sentCount: ready ? String(list.length) : '…', sentRest: ready ? (list.length === 1 ? ' lead' : ' leads') + (parts.length ? ' · ' + parts.join(' · ') : ' · all mine') : ' leads', sentFs: isM ? 14 : 16,
+      sort: sortK, setSort: (e) => set({ sort: e && e.target ? e.target.value : 'activity' }), nearLabel: ctr ? 'Nearest' : 'Nearest (pick an area)',
+      isLoading: s.st === 'loading', isError: s.st === 'error', isPartial: s.st === 'partial' && !!staleId, partialText: 'Property not in Run 4 for 1 lead (' + (staleId || '') + '); the lead keeps its snapshot from Run 3. Status, notes and history are complete.',
+      isEmpty: s.st === 'empty', noMatch: ready && all.length > 0 && list.length === 0, noMatchHint: all.length + (all.length === 1 ? ' lead' : ' leads') + ' in total. Clear filters, or widen the radius or lower the roof age.',
+      retry: () => { this.setState({ st: 'loading' }); this.lt = setTimeout(() => this.setState({ st: 'populated' }), 1200); },
+      tableOn: ready && !isM && list.length > 0, cardsOn: ready && isM && list.length > 0, wide: !isT, narrow: isT, distOn: !!ctr, tCols: tCols, tHead: tHead, rows: rows, rowCount: String(list.length + 1),
+      footText: 'Showing ' + (list.length ? ((page - 1) * per + 1) + '–' + Math.min(list.length, page * per) : '0') + ' of ' + list.length + ' · ' + ({ activity: 'last activity first', roof: 'oldest roof first', open: 'permit open longest first', near: 'nearest first' })[sortK],
+      pages: pages, page: page, pageText: page + ' of ' + pages, setPage: (n) => this.setState({ page: n }),
+      copyLink: () => { try { navigator.clipboard.writeText(new URL(boardUrl, window.location.href).href); } catch (e) {} this.say('Link copied: ' + url); },
+      signedOutHref: 'CrmSignIn' + sfx + '.dc.html?state=expired&next=' + encodeURIComponent(boardUrl), urlText: url,
+      stateOpts: opts.map((o) => ({ label: o[1], on: String(s.st === o[0]), pick: () => { clearTimeout(this.lt); this.setState({ st: o[0] }); if (o[0] === 'loading') this.lt = setTimeout(() => this.setState({ st: 'populated' }), 1500); } })),
+      teamLeads: () => { try { window.__clTeam = true; } catch (e) {} this.setState({ fAs: 'all', page: 1, tick: this.state.tick + 1 }); }, teamOff: !Component.teamOn(),
+      resetLeads: () => { try { window.localStorage.removeItem(Component.leadsKey()); window.localStorage.removeItem(Component.teamKey()); window.__clTeam = false; } catch (e) {} Component.leadsSave(Component.leadsSeed()); this.say('Sample leads restored.'); },
+      toastOn: !!s.toast, toast: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

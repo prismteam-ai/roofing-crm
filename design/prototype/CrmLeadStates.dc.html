@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roofing CRM · Lead states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/atlas/tokens.css">
+<link rel="stylesheet" href="ds/atlas/components/bundle.css">
+<link rel="stylesheet" href="ds/countylens/a11y.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--md-sys-color-primary)}
+.cr-h2{margin:0;font-family:var(--font-brand);font-weight:400}
+.cr-sub{font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.cr-lab{font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:16px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-field input,.cr-field select,.cr-field textarea{height:48px;box-sizing:border-box;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font:400 14px var(--font-plain)}
+.cr-field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.cr-field input[aria-invalid="true"]{border-color:var(--md-sys-color-error)}
+.cr-card{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-surface);box-sizing:border-box;min-width:0}
+.cr-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-width:0}
+.cr-proto{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border:1px dashed var(--md-sys-color-outline);border-radius:var(--md-sys-shape-corner-small);font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cr-tbl{display:grid;align-items:center;column-gap:12px;padding:6px 12px;min-height:56px;border-top:1px solid var(--md-sys-color-outline-variant);font-size:13px;line-height:18px}
+.cr-tbl.is-head{min-height:40px;border-top:0;font-size:12px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.cr-soon{font-size:11px;line-height:16px;font-weight:500;padding:0 6px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface-variant)}
+.cr-dis{opacity:.6;cursor:not-allowed}
+.cr-lnk{display:inline-flex;align-items:center;min-height:48px}
+
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 760px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 16px; background: var(--md-sys-color-surface-container-low); font-family: var(--font-plain); color: var(--md-sys-color-on-surface)">
+<div class="cr-row"><h2 class="cr-h2" style="font-size: 24px; line-height: 32px; flex: 1">Roofing CRM · Lead states</h2><span class="cr-soon">CRM · not Task A</span></div>
+<p class="cr-sub" style="margin: 0; font-size: 14px; line-height: 20px">Every change saves at once, optimistically: Saving…, then Saved; a failed save undoes the change and offers Try again. Live boards: <a href="CrmLeadLoading390.dc.html">loading</a>, <a href="CrmLeadSaving390.dc.html">saving</a>, <a href="CrmLeadSaveFailed390.dc.html">save failed</a>, <a href="CrmLeadDeleted390.dc.html">deleted</a>, <a href="CrmLeadStale390.dc.html">property not in Run 4</a>, <a href="CrmLeadElsewhere390.dc.html">changed elsewhere</a>, <a href="CrmLeadChanged390.dc.html">signal changed since creation</a>. Sample data.</p>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; flex: 1; min-height: 0">
+<section aria-label="Loading" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Loading</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><div class="atlas-progress atlas-progress--indeterminate" role="progressbar" aria-label="Loading the lead"><i></i></div><span role="status">Loading lead L-1042…</span><div class="atlas-skeleton" style="height: 48px; width: 100%"></div><div class="atlas-skeleton" style="height: 120px; width: 100%"></div><div class="atlas-skeleton" style="height: 80px; width: 100%"></div></div></section>
+<section aria-label="Saving · then Saved" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Saving · then Saved</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><span class="cr-row"><span class="atlas-pill atlas-pill--info" role="status"><span class="material-symbols-rounded" aria-hidden="true">progress_activity</span>Saving the status…</span></span><span class="cr-sub">Status, assignee or note. Menus and Save are disabled while it saves (about 1 s).</span><span class="cr-row"><span class="atlas-pill atlas-pill--success"><span class="material-symbols-rounded" aria-hidden="true">cloud_done</span>Saved</span></span><span class="cr-sub">The change is in History at once.</span></div></section>
+<section aria-label="Save failed" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Save failed</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><div class="atlas-banner atlas-banner--error" role="alert"><span class="material-symbols-rounded" aria-hidden="true">sync_problem</span><div class="atlas-banner__body"><b style="font-weight: 500">Couldn’t save the status.</b> The change is undone. Nothing else changed.</div></div><button class="atlas-btn atlas-btn--text" onClick="{{say}}" style="align-self: flex-start">Try again</button><span class="cr-sub">A failed note keeps its text in the box.</span></div></section>
+<section aria-label="Not found or deleted" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Not found or deleted</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><b style="font-weight: 500">This lead was deleted.</b><span class="cr-sub">Alex Example deleted it on Oct 21, 14:05. Its notes and history went with it.</span><a class="atlas-btn atlas-btn--tonal" href="CrmLeads390.dc.html" style="align-self: flex-start; text-decoration: none">Back to Leads</a><span class="cr-sub">A wrong link: “Lead L-9999 doesn’t exist.”</span></div></section>
+<section aria-label="Property not in the newer run" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Property not in the newer run</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><div class="atlas-banner atlas-banner--warning" role="status"><span class="material-symbols-rounded" aria-hidden="true">history</span><div class="atlas-banner__body">Property not in Run 4; the lead keeps its snapshot.</div></div><span class="cr-sub">Signals show as saved at creation; View property is off. Status, notes and history still work.</span></div></section>
+<section aria-label="Changed elsewhere" style="display: flex; flex-direction: column; gap: 8px; min-width: 0"><h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">Changed elsewhere</h3><div class="cr-card" style="flex: 1; gap: 10px; font-size: 13px; line-height: 18px"><div class="atlas-banner atlas-banner--info" role="status"><span class="material-symbols-rounded" aria-hidden="true">group</span><div class="atlas-banner__body">This lead was updated by Alex Example. Reload to see the latest.</div></div><button class="atlas-btn atlas-btn--text" onClick="{{say}}" style="align-self: flex-start">Reload</button></div></section>
+</div>
+<sc-if value="{{toastOn}}" hint-placeholder-val="{{ false }}"><div class="atlas-snackbar" role="status" style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 90">{{toast}}</div></sc-if>
+<div style="position: absolute; left: 12px; bottom: 12px; z-index: 80"><dc-import name="ProtoBar" here="Roofing CRM · Lead states" desktop="" tablet="" mobile="" current="none" crm="{{ true }}" hint-size="48px,48px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":760}}'>
+class Component extends DCLogic {
+  static forceCrm() { try { window.__clMapView = true; } catch (e) {} }
+  constructor(props) { super(props); Component.forceCrm(); this.state = { toast: '' }; }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  renderVals() { return { say: () => { this.setState({ toast: 'Drawn state: the live version is on the linked board.' }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2400); }, toastOn: !!this.state.toast, toast: this.state.toast }; }
+}
+</script>
+</body>
+</html>

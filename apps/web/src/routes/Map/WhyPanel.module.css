@@ -1,0 +1,128 @@
+/* Atlas tokens only (constitution P0-14). */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.back,
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.back {
+  align-self: flex-start;
+}
+
+.back:hover,
+.action:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+}
+
+.sub {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rule {
+  display: flex;
+  gap: var(--space-2);
+  color: var(--md-sys-color-on-surface);
+}
+
+.rule > :first-child {
+  flex: none;
+  color: var(--status-success);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.prov {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  overflow-wrap: anywhere;
+}
+
+.none {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.unavailable {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* The BBB search link inside a rule is a tap target like the one in the permit list: 48 px tall
+   (it was a 20 px line of text) wherever the rules are drawn, in the panel or in the drawer. */
+.body a[data-field="bbb_url"] {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-9);
+}

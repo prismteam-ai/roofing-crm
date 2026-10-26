@@ -1,0 +1,244 @@
+/* Map legend (Atlas legend pattern, prototype `atlas-legend`). Atlas tokens only. */
+/* The legend is a 48 px button (or, when the Layers button owns the switch, just the card); open,
+   it is a card (Atlas legend pattern). Below 600 px the card floats under the button over the map:
+   at most 60% of the map's width, never over the zoom and locate controls (the overlay stack
+   already clears them), scrolling inside when long. From 600 px it sits in its own bottom-left
+   corner of the map, open by default, as tall as the map leaves it. */
+.root {
+  position: relative;
+  min-width: 0;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: var(--space-9);
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-level2);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.button:focus-visible,
+.close:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Icon-only on phones (the name stays in aria-label), icon and word from 430 px. */
+.buttonText {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 430px) {
+  .buttonText {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+}
+
+.legend {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 12;
+  box-sizing: border-box;
+  /* 60% of the map's width: the overlay stack is the map minus its gutters and controls column,
+     and the card is capped to 18rem inside it. */
+  width: min(18rem, 60vw);
+  padding: var(--space-1) var(--space-3) var(--space-2);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-level2);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  /* A county note with its exclusions can run long: scroll inside the card. */
+  max-height: min(40vh, 22rem);
+  overflow-y: auto;
+}
+
+/* No button of its own: the card hangs under the Layers button's row. */
+.cardOnly .legend {
+  top: var(--space-9);
+}
+
+@media (min-width: 600px) {
+  .root {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    min-height: 0;
+  }
+
+  .legend {
+    position: static;
+    width: min(300px, 100%);
+    min-height: 0;
+    max-height: min(46dvh, 360px);
+  }
+
+  .cardOnly .legend {
+    top: auto;
+  }
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--space-9);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.summary:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.block {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.scale {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-small-font);
+  font-size: var(--md-sys-typescale-label-small-size);
+}
+
+.step .swatch {
+  width: 100%;
+  height: var(--space-2);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+}
+
+.swatch {
+  display: inline-block;
+  width: var(--space-3);
+  height: var(--space-3);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.note {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.noteLine {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Swatch fills: the Atlas data-viz tokens (one class per legend step). */
+.roof0 {
+  background: var(--viz-roof-age-0-9);
+}
+
+.roof10 {
+  background: var(--viz-roof-age-10-14);
+}
+
+.roof15 {
+  background: var(--viz-roof-age-15-19);
+}
+
+.roof20 {
+  background: var(--viz-roof-age-20-24);
+}
+
+.roof25 {
+  background: var(--viz-roof-age-25-plus);
+}
+
+.open0 {
+  background: var(--viz-permit-open-lt-1y);
+}
+
+.open1 {
+  background: var(--viz-permit-open-1-3y);
+}
+
+.open3 {
+  background: var(--viz-permit-open-3-5y);
+}
+
+.open5 {
+  background: var(--viz-permit-open-gt-5y);
+}
+
+.none {
+  background: var(--md-sys-color-surface-container-highest);
+}

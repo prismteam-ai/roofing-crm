@@ -1,0 +1,401 @@
+/* Explore filter sheet (A-13 T025, FR-018), rebuilt for B-03's structural rebuild fix: Atlas § 7
+   outlined text fields and filter chips, 48 px targets. Compact (< 1280 px): a "Filters" button
+   opens the controls as a real dismissible overlay — a backdrop behind a bottom sheet, closed by
+   its X, a backdrop click, or Escape — so the map underneath is always reachable again. Expanded
+   (≥ 1280 px): the controls sit beside the results as an always-visible anchored panel (no
+   backdrop, no toggle, no X — there's nothing blocking the map to dismiss). Atlas tokens. */
+
+.sheet {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.toggle,
+.chip {
+  box-sizing: border-box;
+  min-width: var(--space-9);
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-low);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+}
+
+.toggle:focus-visible,
+.chip:focus-visible,
+.input:focus-visible,
+.option:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Below 1280px, a full-viewport scrim behind the open sheet (constitution § 10: dialogs close on
+   Escape or outside click) — clicking it calls the same close handler as the X. Hidden from
+   1280px, where the panel is an anchored rail beside the results, not an overlay. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  /* The scrim token at 40 % through opacity: a blend written into the colour is not a token. */
+  background: var(--md-sys-color-scrim);
+  opacity: 0.4;
+}
+
+@media (min-width: 1280px) {
+  .backdrop {
+    display: none;
+  }
+}
+
+.panel {
+  display: none;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+/* The dismissible bottom sheet, below 1280px: fixed to the viewport so it is always on top of
+   (and closeable away from) the map, never pushing it off-screen by sitting in normal flow. */
+.open {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 30;
+  display: grid;
+  box-sizing: border-box;
+  /* Full width on phones; a centred card on a 600 to 1279 px screen (it never spans the rail). */
+  width: min(100%, 40rem);
+  margin-inline: auto;
+  max-height: min(80vh, 100% - var(--space-10));
+  overflow-y: auto;
+  /* Clear of the home indicator and the gesture bar. */
+  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0 0;
+  box-shadow: var(--md-sys-elevation-level3);
+}
+
+.panel:focus {
+  outline: none;
+}
+
+/* Show n results: the sheet's one filled action, sticky at the bottom so it is always reachable. */
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  padding-top: var(--space-2);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.showResults {
+  flex: 1 1 auto;
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.showResults:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.headerTitle {
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+}
+
+/* Only the overlay (< 1280px) needs its own close affordance — from 1280px the panel is an
+   always-visible rail with nothing to dismiss. */
+@media (min-width: 1280px) {
+  .header {
+    display: none;
+  }
+
+  .footer {
+    display: none;
+  }
+}
+
+.field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+}
+
+.hint,
+.definition {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+}
+
+.options {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-highest);
+  cursor: pointer;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  overflow-wrap: anywhere;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.groupLabel {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chipWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chipSelected {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.select {
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+}
+
+@media (min-width: 1280px) {
+  .toggle {
+    display: none;
+  }
+
+  /* The pane's own height bounds the panel, which scrolls inside it. */
+  .sheet {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .panel,
+  .open {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    display: grid;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    border-radius: var(--md-sys-shape-corner-large);
+  }
+}
+
+/* The match count on the phone toolbar's Filters button (boards CrmMap390, CrmMapPin390). */
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-6);
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+}
+
+/* Phones (board CrmMap390): the toolbar chip is a sliders icon and the match count; the word
+   "Filters" stays in the accessible name, clipped. From 600 px the word shows and the icon hides. */
+.toggleIcon {
+  display: none;
+}
+
+@media (max-width: 1279.98px) {
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+@media (max-width: 599.98px) {
+  .toggle {
+    position: relative;
+    padding: 0 var(--space-3);
+  }
+
+  .toggleIcon {
+    display: inline-flex;
+  }
+
+  .toggleLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .count {
+    margin-left: var(--space-1);
+  }
+}
+
+/* The pane's match count (board Explore1440: "128 properties match · Clear"), from 1280 px where
+   the sheet's own "Show n results" footer is hidden. Sticky at the bottom of the scrolling pane. */
+.matchBar {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .matchBar {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: var(--space-2) 0 0;
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface);
+  }
+}
+
+.matchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.matchText {
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+}
+
+.matchText strong {
+  font-size: var(--md-sys-typescale-title-medium-size);
+}
+
+.clearBtn {
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  cursor: pointer;
+}
+
+.clearBtn:disabled {
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: default;
+}
+
+.matchSummary {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+}
+
+/* A Suggestions preset names several criteria, so its label wraps inside the pane instead of
+   widening it (no horizontal scroll at 390, 768 or 1440). */
+.presetChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding-block: var(--space-2);
+  text-align: start;
+  white-space: normal;
+}

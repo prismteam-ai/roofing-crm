@@ -1,0 +1,194 @@
+{
+  "manifestCid": "bafkreife3vk3cgcod3v6tue2xes3hvl2vndqoshbhrhsnjtriskihpcute",
+  "runId": "travis-full-run2-20261024",
+  "summary": {
+    "passed": 1,
+    "total": 4,
+    "groundednessPct": 100,
+    "p95Ms": 28403,
+    "maxMs": 28403,
+    "n": 4
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "id": "G3",
+      "outcome": "needs_clarification",
+      "mode": "fail",
+      "pass": false,
+      "latencyMs": [2784],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "matched": 0,
+      "shown": 0,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_properties",
+      "modelCalls": 2,
+      "failures": ["outcome needs_clarification is not an honest empty"],
+      "detail": {
+        "area": "place \"Show me open roofing permits older than five years within five miles of Manor\" -> unresolved (undefined, undefined) radius 5 mi",
+        "filters": {},
+        "unsupported": [],
+        "missing": [],
+        "claims": []
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G4",
+      "outcome": "needs_clarification",
+      "mode": "fail",
+      "pass": false,
+      "latencyMs": [3151],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "matched": 0,
+      "shown": 0,
+      "excludedNoRoofDate": 0,
+      "excludedNoCoordinates": 0,
+      "countCheck": "not applicable",
+      "intent": "find_properties",
+      "modelCalls": 2,
+      "failures": ["outcome needs_clarification, expected field_not_published or a flagged answer"],
+      "detail": {
+        "area": "place \"Which homes near Lakeway haven't changed owners in 10+ years and have owners out\" -> unresolved (undefined, undefined) radius 5 mi",
+        "filters": {},
+        "unsupported": [],
+        "missing": [],
+        "claims": []
+      }
+    },
+    {
+      "repeat": 0,
+      "id": "G5",
+      "outcome": "error",
+      "mode": "fail",
+      "pass": false,
+      "latencyMs": [28403],
+      "citations": 0,
+      "rowsChecked": 0,
+      "rowsVerified": 0,
+      "countCheck": "not applicable",
+      "failures": ["ask failed: Unable to transform response from server"]
+    },
+    {
+      "repeat": 0,
+      "id": "A1",
+      "outcome": "answered",
+      "mode": "answered",
+      "pass": true,
+      "latencyMs": [12584],
+      "citations": 3,
+      "rowsChecked": 25,
+      "rowsVerified": 25,
+      "matched": 2462,
+      "shown": 25,
+      "excludedNoRoofDate": 28030,
+      "excludedNoCoordinates": 0,
+      "countCheck": "matched 2462 equals the index count",
+      "intent": "find_properties",
+      "modelCalls": 2,
+      "failures": [],
+      "detail": {
+        "area": "place \"Austin\" -> Austin city (30.298622, -97.754134) radius 3 mi",
+        "filters": {
+          "roofAgeMinYears": 20
+        },
+        "unsupported": [],
+        "missing": [
+          {
+            "field": "roofAgeYears",
+            "reason": "no_roof_date",
+            "count": 28030
+          },
+          {
+            "field": "coordinates",
+            "reason": "no_coordinates"
+          },
+          {
+            "field": "unnormalized_address",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "city_name",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "postal_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_kind",
+            "reason": "no_owner_record",
+            "count": 14
+          },
+          {
+            "field": "owner_name",
+            "reason": "no_owner_record",
+            "count": 14
+          },
+          {
+            "field": "owner_mailing_postal_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_mailing_state_code",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_area_class",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "owner_is_out_of_area",
+            "reason": "not_in_export",
+            "count": 25
+          },
+          {
+            "field": "last_ownership_transfer_date",
+            "reason": "no_dated_sale",
+            "count": 10
+          },
+          {
+            "field": "tenure_years",
+            "reason": "no_dated_sale",
+            "count": 10
+          },
+          {
+            "field": "tenure_basis",
+            "reason": "no_dated_sale",
+            "count": 10
+          },
+          {
+            "field": "is_long_tenure",
+            "reason": "no_dated_sale",
+            "count": 10
+          },
+          {
+            "field": "owner_kind",
+            "reason": "no_dated_sale",
+            "count": 10
+          },
+          {
+            "field": "owner_name",
+            "reason": "no_dated_sale",
+            "count": 10
+          }
+        ],
+        "claims": [
+          "Found 2462 matching properties within 3 mi of Austin city with a roof at least 20 years old; showing the top 3."
+        ]
+      }
+    }
+  ]
+}

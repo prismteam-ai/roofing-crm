@@ -1,0 +1,165 @@
+/* "What can I ask?" card (boards Welcome1440/768/390). Atlas tokens only (constitution P0-14).
+   Absolute inside the map area (its nearest positioned ancestor): 16 px in from the map's left
+   edge at 1440 (the results-pane left plus 16) and at 768 (x 96 = the 80 px rail plus 16);
+   stretched between 16 px gutters at 390. Above the map's own overlays (z-index 10). */
+.card {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  right: var(--space-4);
+  z-index: 20;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* `--welcome-reserve` is the height the results sheet may take at the bottom of the map (set by
+     Map.module.css below 600 px; 0 elsewhere): the card scrolls inside what is left, never under it. */
+  max-height: calc(100% - var(--space-8) - var(--welcome-reserve, 0px));
+  overflow-y: auto;
+  padding: var(--space-4);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-level3);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+/* Focus lands on the card itself so its name is announced; it is not a control, so it draws no
+   ring (Close, each question and Got it keep theirs). */
+.card:focus {
+  outline: none;
+}
+
+/* Phone: a compact card, never more than 40 percent of the viewport height; what does not fit
+   scrolls inside it, and the header (with Close) stays pinned so it can always be dismissed. */
+@media (max-width: 599.98px) {
+  .card {
+    max-height: min(40dvh, calc(100% - var(--space-8) - var(--welcome-reserve, 0px)));
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-1);
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--md-sys-color-surface);
+  }
+
+  .intro {
+    font-size: var(--md-sys-typescale-body-small-size);
+  }
+}
+
+@media (min-width: 600px) {
+  .card {
+    right: auto;
+    width: 360px;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--md-sys-color-primary);
+}
+
+.title {
+  flex: 1 1 auto;
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.close:focus-visible,
+.question:focus-visible,
+.gotIt:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.intro {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A 48 px minimum target per question, the whole row a link. */
+.question {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  min-height: var(--space-9);
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--md-sys-shape-corner-small);
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+}
+
+.question:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.question > :first-child {
+  color: var(--md-sys-color-primary);
+}
+
+.questionText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.gotIt {
+  min-width: var(--space-9);
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.gotIt:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}

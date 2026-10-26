@@ -1,0 +1,56 @@
+/* Pane handle (PO review). Atlas tokens only; 48 px target, 3 px focus ring. */
+.handleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+/* On the inner edge: a left pane's handle sits to the right, a right pane's to the left. */
+.handleRow[data-side="left"] {
+  justify-content: flex-end;
+}
+
+.handleRow[data-side="right"] {
+  justify-content: flex-start;
+}
+
+/* Collapsed: the rail is a column, handle on top, label running down. */
+.handleRow[data-collapsed="true"] {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  height: 100%;
+}
+
+.handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+}
+
+.handle:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.handle:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.label {
+  writing-mode: vertical-rl;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  letter-spacing: 0.05em;
+}

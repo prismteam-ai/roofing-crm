@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "infra"
+  # T041/T042 (B-09/US2): tests/agent is a real workspace package ("tests-agent") so the golden
+  # harness can depend on @crm/api-client etc. and be run with `pnpm --filter tests-agent test`
+  # (quickstart.md step 3). tests/e2e stays outside this glob on purpose -- it has no
+  # package.json and runs from the root `e2e` script/root devDependencies instead, unchanged.
+  - "tests/agent"
+
+onlyBuiltDependencies:
+  - esbuild
+

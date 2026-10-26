@@ -1,0 +1,613 @@
+/* Map screen layout (CRM-HANDOFF §4.2; prototype Explore1440 `Lo`: CrmMap390/768/1440).
+   Atlas tokens only (constitution P0-14); Material window classes: compact < 600, medium
+   600–1279, expanded ≥ 1280 (the app's rail switches at 600).
+
+   < 600 px: top bar, a one-row toolbar (Use my location, Filters sheet), then the map filling the
+   rest. Results are a bottom sheet over the map (ResultsSheet; absolute to .page). The drawer is
+   a full-height sheet over everything.
+   600–1279 px (boards CrmMap768, CrmCandidates768): a docked split. The map takes about 45 percent
+   of the height under the toolbar and the results panel is docked below it, always visible and
+   scrolling on its own; Field triage and the Ask AI panel take the same docked area. The Radius
+   card sits bottom-right of the map and the legend card bottom-left, open by default.
+   ≥ 1280 px: three panes — Filters 320 px | map | results 360 px — with the top bar over map and
+   results; the drawer is a 440 px side sheet on the right edge (prototype drawer 1000→1440). */
+
+.page {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "top"
+    "controls"
+    "map";
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.top {
+  grid-area: top;
+  min-width: 0;
+  position: relative;
+}
+
+/* While the search box has focus its suggestion list opens above the map overlays (10, 20) and the
+   property drawer (30), so the list is never drawn under the Layers button, the zoom controls or
+   the drawer. At rest the bar stays under the drawer, whose own header must not be covered. */
+.top:focus-within {
+  z-index: 40;
+}
+
+.controls {
+  grid-area: controls;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--space-4) var(--space-2);
+}
+
+.mapArea {
+  grid-area: map;
+  position: relative;
+  min-width: 0;
+  min-height: 320px;
+  overflow: hidden;
+}
+
+/* Floating controls over the map: a top-left stack (Layers + legend, the zoomed-out chip, the
+   radius card). It clears the zoom/recentre column on the right; only its children take clicks,
+   so the map stays droppable around them. */
+.overlay {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  right: calc(var(--space-9) + var(--space-6));
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.overlay > * {
+  pointer-events: auto;
+}
+
+/* The row and the legend's slot are layout boxes: only the Layers button and the legend card
+   inside them take clicks, so the map stays droppable around them. */
+.layersRow,
+.legendSlot {
+  pointer-events: none;
+}
+
+.layersRow > *,
+.legendSlot > * {
+  pointer-events: auto;
+}
+
+/* The legend slot is itself a child of the layers row, so the rule above made the whole slot take
+   clicks. It is taller than the legend card inside it, and the transparent strip above the card sat
+   over real hexagons and swallowed their clicks. Only the card takes clicks. */
+.layersRow > .legendSlot {
+  pointer-events: none;
+}
+
+/* The map's status stack: GPS, pin-mode and pin-outside cards portal in here (boards CrmGpsStates,
+   CrmMapPinMode*, CrmMapPinOutside390). No card, no box: it collapses when empty. */
+.statusStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(360px, 100%);
+}
+
+.statusStack:empty {
+  display: none;
+}
+
+.layersRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: 100%;
+}
+
+.legendSlot {
+  min-width: 0;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  /* The note wraps instead of stretching across the map: a wide strip would sit over the points
+     a rep taps to drop a pin on. */
+  max-width: calc(var(--space-9) * 5);
+  padding: 0 var(--space-1) 0 var(--space-3);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-level2);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+}
+
+.chipAction {
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chipAction:focus-visible,
+.widen:focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.radiusOverlay {
+  width: min(320px, 100%);
+}
+
+/* With no centre yet (E-67): a card at the bottom of the map saying how to start. */
+.countyCard {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-4);
+  z-index: 10;
+  display: grid;
+  gap: var(--space-1);
+  box-sizing: border-box;
+  width: min(360px, calc(100% - var(--space-8)));
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  transform: translateX(-50%);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-level2);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.countyCard strong {
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+}
+
+/* Below 1280 px the slot is not a grid cell: ResultsSheet positions itself over the map. With
+   nothing to show (no centre, no state), the sheet is hidden and the map is fully visible. */
+.resultsSlot {
+  display: contents;
+}
+
+/* The toolbar's view toggle, from 1280 px (below it the toggle sits in .controls). */
+.viewBar {
+  grid-area: bar;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+}
+
+/* The Candidate list (board CrmCandidates390): under the toolbar, in the map's place. From 1280 px
+   it takes the centre and results panes (rule below). */
+.listPane {
+  grid-area: map;
+  /* A flex column, not a percentage height: the list's own scroll body fills what the grid area
+     gives it in every browser, and scrolls inside it. */
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 var(--space-4) var(--space-4);
+  overflow: hidden;
+}
+
+.triageDock > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* Field triage (board CrmTriage390): replaces the results sheet below 1280 px, docked at the
+   bottom over the map's lower part so a strip of the map stays visible above it. */
+.triageDock {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  /* A fixed share of the page: a strip of the map stays above it and the card scrolls inside,
+     so Skip, Create lead and Open details are always on screen (board CrmTriage390). */
+  height: 60%;
+  overflow: hidden;
+  box-shadow: var(--md-sys-elevation-level3);
+  border-radius: var(--md-sys-shape-corner-extra-large) var(--md-sys-shape-corner-extra-large) 0 0;
+}
+
+/* The pane bodies (left and right) add no box below 1280 px: their children stay in the toolbar
+   row and over the map exactly as before. From 1280 px they are the panes' content columns. */
+.paneBody {
+  display: contents;
+}
+
+.paneBody[hidden],
+.aiLeft[hidden] {
+  display: none;
+}
+
+/* The slot the one AskPanel host is moved into (no box of its own). */
+.aiSlot {
+  display: contents;
+}
+
+.resultsSlot[data-empty="true"] > .paneBody {
+  display: none;
+}
+
+/* The property drawer: a full-height sheet over the whole screen below 1280 px. */
+.drawerSlot {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  box-shadow: var(--md-sys-elevation-level3);
+}
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.widen {
+  min-height: var(--space-9);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  cursor: pointer;
+}
+
+/* Compact: the zoomed-out chip and the radius card stack under the Layers button. */
+@media (max-width: 599.98px) {
+  .chip {
+    font-family: var(--md-sys-typescale-label-medium-font);
+    font-size: var(--md-sys-typescale-label-medium-size);
+  }
+}
+
+/* From 600 px the overlay spans the map: Layers and the chip top-left, the legend bottom-left and
+   the radius card bottom-right (prototype radL = map right − 284). The legend and the radius share
+   the last row, which takes whatever height the map leaves, so a short map shortens the legend
+   (it scrolls inside) instead of running over the controls above it. */
+@media (min-width: 600px) {
+  .overlay {
+    inset: var(--space-4);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "layers ."
+      "status ."
+      "chip ."
+      "legend radius";
+    align-items: start;
+  }
+
+  .statusStack {
+    grid-area: status;
+    justify-self: start;
+  }
+
+  .layersRow {
+    display: contents;
+  }
+
+  .layersRow > :first-child {
+    grid-area: layers;
+    justify-self: start;
+  }
+
+  .legendSlot {
+    grid-area: legend;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-self: stretch;
+    justify-self: start;
+    min-height: 0;
+    max-width: 100%;
+  }
+
+  .chip {
+    grid-area: chip;
+    justify-self: start;
+    max-width: calc(var(--space-9) * 8);
+  }
+
+  .radiusOverlay {
+    grid-area: radius;
+    align-self: end;
+    justify-self: end;
+    width: 268px;
+  }
+
+  /* With no centre yet there is no radius card: its corner holds the "Whole county" card instead,
+     so the legend gives that column up (it never sits under the card). */
+  .overlay[data-centre="none"] {
+    grid-template-columns: minmax(0, 1fr) 268px;
+  }
+
+  .countyCard {
+    right: var(--space-4);
+    left: auto;
+    width: 268px;
+    transform: none;
+  }
+}
+
+/* Medium (tablets): the docked split. One grid, four rows: top bar, toolbar, map, results. */
+@media (min-width: 600px) and (max-width: 1279.98px) {
+  .page[data-view="map"] {
+    grid-template-rows: auto auto minmax(0, 11fr) minmax(0, 10fr);
+    grid-template-areas:
+      "top"
+      "controls"
+      "map"
+      "results";
+  }
+
+  .page[data-view="map"] .mapArea {
+    min-height: 0;
+  }
+
+  /* The panel is always there: with no centre it holds the explanation, not a blank gap. */
+  .resultsSlot[data-empty="true"] > .paneBody {
+    display: contents;
+  }
+
+  /* Field triage takes the docked area too (the phone's floating dock is the < 600 px one). */
+  .triageDock {
+    position: static;
+    grid-area: results;
+    height: 100%;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+/* Expanded: three panes. */
+@media (min-width: 1280px) {
+  .page {
+    /* Pane widths: a collapsed pane is a slim 48 px rail (PO review), and the map takes the
+       freed width. */
+    --pane-left: 320px;
+    --pane-right: 360px;
+    grid-template-columns: var(--pane-left) minmax(0, 1fr) var(--pane-right);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "controls top top"
+      "controls bar results"
+      "controls map results";
+  }
+
+  .page:has(> [data-pane="left"][data-collapsed="true"]) {
+    --pane-left: var(--space-9);
+  }
+
+  .page:has(> [data-pane="right"][data-collapsed="true"]) {
+    --pane-right: var(--space-9);
+  }
+
+  /* The list takes the centre and results panes (board CrmCandidates1440). */
+  .page[data-view="list"] {
+    grid-template-areas:
+      "controls top top"
+      "controls bar bar"
+      "controls list list";
+  }
+
+  .listPane {
+    grid-area: list;
+  }
+
+  .triageDock {
+    position: static;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .controls {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4) var(--space-4);
+    /* The pane itself never scrolls: the filter panel (or the Ask panel) inside it does, so its box
+       stays inside the pane and the match total stays pinned under it. */
+    overflow: hidden;
+    border-right: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface);
+  }
+
+  .controls[data-collapsed="true"] {
+    padding: var(--space-2) 0;
+    overflow: hidden;
+  }
+
+  /* Left pane content: the Filters | Ask AI switch, then one of the two. */
+  .paneBody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .paneBody[hidden],
+  .aiLeft[hidden] {
+    display: none;
+  }
+
+  .aiLeft {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .leftSwitch {
+    flex: none;
+    display: flex;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-full);
+  }
+
+  .leftTab {
+    flex: 1 1 0;
+    min-height: var(--space-9);
+    padding: 0 var(--space-3);
+    border: 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    cursor: pointer;
+  }
+
+  .leftTab + .leftTab {
+    border-left: 1px solid var(--md-sys-color-outline);
+  }
+
+  .leftTabOn {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  .leftTab:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary);
+    outline-offset: -3px;
+  }
+
+  .mapArea {
+    min-height: 0;
+  }
+
+  .resultsSlot {
+    display: flex;
+    flex-direction: column;
+    grid-area: results;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--md-sys-color-surface);
+  }
+
+  /* Even with nothing to list the right pane keeps its place (the empty-state text). */
+  .resultsSlot[data-empty="true"] > .paneBody,
+  .resultsSlot > .paneBody {
+    display: flex;
+    flex: 1 1 0;
+    gap: 0;
+  }
+
+  .resultsSlot > .paneBody[hidden] {
+    display: none;
+  }
+
+  .resultsSlot[data-collapsed="true"] {
+    border-left: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  /* The AI answer's matched properties, numbered like the citations and the pins. */
+  .matchesPane {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-height: 0;
+    /* No side padding here: the Matches list carries its own 16 px (as in the filter results),
+       so a card sits at the same left edge and width whichever way it was found. */
+    padding: 0 0 var(--space-4);
+    overflow-y: auto;
+  }
+
+  .matchesTitle {
+    margin: 0;
+    padding: 0 var(--space-4);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-title-medium-font);
+    font-size: var(--md-sys-typescale-title-medium-size);
+    font-weight: var(--md-sys-typescale-title-medium-weight);
+  }
+
+  .matchesHost {
+    min-width: 0;
+  }
+
+  .drawerSlot {
+    inset: 0 0 0 auto;
+    width: 440px;
+  }
+}
+
+/* One overlay at a time (CRM-HANDOFF rule 11). While the first-visit "What can I ask?" card is up,
+   the map's own floating pieces step aside so nothing stacks under it or behind the results sheet.
+   Hidden with `visibility`, not removed, so the layout does not jump when the card closes.
+   Below 600 px the card is full width over the map: the Layers button, legend, chip, radius card
+   and the "Whole county" hint all step aside, and the card leaves room for the results sheet that
+   floats over the bottom of the map (the most it can take: 25% of the page with only a notice,
+   40% with results). */
+@media (max-width: 599.98px) {
+  .page[data-welcome="open"] .overlay,
+  .page[data-welcome="open"] .countyCard {
+    visibility: hidden;
+  }
+
+  .page[data-welcome="open"] .mapArea {
+    --welcome-reserve: 40dvh;
+  }
+
+  .page[data-welcome="open"][data-sheet-peek="compact"] .mapArea {
+    --welcome-reserve: 25dvh;
+  }
+}
+
+/* 600 to 1279 px: the Layers button stays (the card sits beside it), but the legend, the chip and
+   the status cards that share the card's corner step aside; the docked results panel is below the
+   map, so the card needs no reserve there. */
+@media (min-width: 600px) and (max-width: 1279.98px) {
+  .page[data-welcome="open"] .legendSlot,
+  .page[data-welcome="open"] .chip,
+  .page[data-welcome="open"] .statusStack {
+    visibility: hidden;
+  }
+}

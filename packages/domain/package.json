@@ -1,0 +1,19 @@
+{
+  "name": "@crm/domain",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pure business rules shared by apps/web, apps/api and the agent (architecture-constitution.md §5/§9): bboxFor/distanceMeters (radius), isLongOpen/openDurationLabel (permit), isAgedRoof/DEFAULT_ROOF_AGE_YEARS (roof age). No I/O, no AWS SDK, no React.",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}
