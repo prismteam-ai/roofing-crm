@@ -1,15 +1,6 @@
 import { defineConfig } from "@playwright/test";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { execFileSync } from "node:child_process";
-const repoRoot = path.dirname(fileURLToPath(import.meta.url));
-const oracleRoot = path.resolve(
-  repoRoot,
-  "../oracle-property-intelligence-platform-pipeline-oakland-mi",
-);
 const dataMode = process.env.PRISM_TEST_MODE ?? "synthetic";
-const buildId = (cwd: string) =>
-  execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf8" }).trim();
 const publicCaptureEnv = {
   PRISM_DATA_MODE: dataMode,
   PRISM_ACCESS_MODE: "local",
@@ -58,7 +49,7 @@ export default defineConfig({
     {
       command:
         "pnpm --dir ../oracle-property-intelligence-platform-pipeline-oakland-mi api",
-      env: { ...publicCaptureEnv, PRISM_BUILD_ID: buildId(oracleRoot) },
+      env: publicCaptureEnv,
       url: "http://127.0.0.1:4310/api/health",
       reuseExistingServer: true,
       timeout: 60000,
@@ -72,7 +63,7 @@ export default defineConfig({
     },
     {
       command: "pnpm api",
-      env: { ...publicCaptureEnv, PRISM_BUILD_ID: buildId(repoRoot) },
+      env: publicCaptureEnv,
       url: "http://127.0.0.1:4311/api/health",
       reuseExistingServer: true,
       timeout: 60000,
