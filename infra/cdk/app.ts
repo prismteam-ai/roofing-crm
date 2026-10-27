@@ -1,3 +1,5 @@
+import path from "node:path";
+import { deploymentConcurrency } from "../../packages/hosted-runtime/src/deployment-concurrency";
 import {
   App,
   Stack,
@@ -17,7 +19,7 @@ import {
   Runtime,
   Code,
 } from "aws-cdk-lib/aws-lambda";
-import { HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpApi, HttpMethod, CfnStage } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import {
   Distribution,
@@ -46,7 +48,11 @@ import {
 } from "../../packages/runtime-config/src/index";
 /** P3 bootstrapless template. Synthesis never performs an account lookup or service call. */
 class CrmCandidateStack extends Stack {
-  constructor(scope: Construct, id: string) {
+  constructor(
+    scope: Construct,
+    id: string,
+    concurrency: Awaited<ReturnType<typeof deploymentConcurrency>>,
+  ) {
     super(scope, id, {
       env: {
         region: validatedRegion(process.env.PRISM_REGION ?? "us-east-1", [
@@ -57,6 +63,7 @@ class CrmCandidateStack extends Stack {
       synthesizer: new BootstraplessSynthesizer(),
     });
     const stage = "p3-review";
+    this.templateOptions.metadata = { PrismConcurrency: concurrency.metadata };
     const removal = RemovalPolicy.RETAIN;
     Tags.of(this).add("Project", "PrismAssessment");
     Tags.of(this).add("Phase", "P3");
@@ -164,7 +171,12 @@ class CrmCandidateStack extends Stack {
         ]),
       ),
       timeout: Duration.seconds(25),
-      reservedConcurrentExecutions: 2,
+      ...(concurrency.policy.reservedConcurrentExecutions === null
+        ? {}
+        : {
+            reservedConcurrentExecutions:
+              concurrency.policy.reservedConcurrentExecutions,
+          }),
       memorySize: 512,
       logGroup: logs,
       environment: {
@@ -202,6 +214,11 @@ class CrmCandidateStack extends Stack {
       }),
     );
     const api = new HttpApi(this, "CrmApi");
+    const apiStage = api.defaultStage!.node.defaultChild as CfnStage;
+    apiStage.defaultRouteSettings = {
+      throttlingRateLimit: concurrency.policy.apiRatePerSecond,
+      throttlingBurstLimit: concurrency.policy.apiBurst,
+    };
     api.addRoutes({
       path: "/api/{proxy+}",
       methods: [HttpMethod.ANY],
@@ -263,6 +280,18 @@ class CrmCandidateStack extends Stack {
       comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
       treatMissingData: TreatMissingData.NOT_BREACHING,
     });
+    for (const [name, value] of Object.entries({
+      ConcurrencyMode: concurrency.policy.mode,
+      FunctionReservedConcurrency:
+        concurrency.policy.reservedConcurrentExecutions === null ? "none" : "2",
+      ExistingAccountConcurrency:
+        concurrency.policy.existingAccountConcurrency === null
+          ? "not-used"
+          : "10",
+      ConcurrencyProofSha256: concurrency.metadata.proofSha256,
+      FunctionMemoryMiB: "512",
+    }))
+      new CfnOutput(this, name, { value });
     new CfnOutput(this, "ProviderDomain", {
       value: distribution.distributionDomainName,
     });
@@ -283,5 +312,13 @@ class CrmCandidateStack extends Stack {
   }
 }
 const app = new App({ outdir: "cdk.out" });
-new CrmCandidateStack(app, "PrismCrmP3Review");
+const concurrency = await deploymentConcurrency(
+  process.env,
+  [process.cwd(), path.resolve(process.cwd(), "../..", "return")],
+  {
+    mode: app.node.tryGetContext("concurrencyMode"),
+    quota: app.node.tryGetContext("existingAccountConcurrency"),
+  },
+);
+new CrmCandidateStack(app, "PrismCrmP3Review", concurrency);
 app.synth();

@@ -1,3 +1,8 @@
+import { buildConcurrencyPolicy } from "../packages/hosted-runtime/src/concurrency";
+import {
+  deploymentConcurrency,
+  deployedConcurrency,
+} from "../packages/hosted-runtime/src/deployment-concurrency";
 import {
   exactReviewOrigin,
   validateResourceBindings,
@@ -58,6 +63,7 @@ if (!execute) {
         action,
         region: "us-east-1",
         stage: "p3-review",
+        concurrency: buildConcurrencyPolicy(process.env),
         source: sourceIdentity(),
         missing: required.filter((x) => !process.env[x]),
         steps:
@@ -183,6 +189,13 @@ for (let p = operations; ; p = path.dirname(p)) {
 }
 if ((await realpath(operations)) !== operations)
   throw new Error("Private path identity mismatch");
+const concurrency =
+  action === "deploy"
+    ? await deploymentConcurrency(process.env, [
+        process.cwd(),
+        path.resolve(process.cwd(), "../..", "return"),
+      ])
+    : undefined;
 const receiptFile = path.join(
     operations,
     `crm-${action}-${pins.archiveSha256.slice(0, 16)}.json`,
@@ -200,6 +213,7 @@ const receiptFile = path.join(
     status: "started",
     origin: "",
     retainedResources: [] as string[],
+    concurrency: concurrency?.metadata as unknown,
   };
 const save = () =>
   writeFile(receiptFile, JSON.stringify(receipt, null, 2) + "\n", {
@@ -308,6 +322,16 @@ const assertDeployed = (o: Record<string, string>) => {
     o.Stage !== pins.stage
   )
     throw new Error("Deployed release does not match exact pinned package");
+  const actual = deployedConcurrency(o);
+  if (
+    concurrency &&
+    (actual.mode !== concurrency.policy.mode ||
+      actual.proofSha256 !== concurrency.metadata.proofSha256)
+  )
+    throw new Error(
+      "Deployed concurrency policy/proof differs from approved release",
+    );
+  receipt.concurrency = actual;
 };
 const step = async (name: string, f: () => unknown | Promise<unknown>) => {
   await f();
@@ -626,6 +650,7 @@ try {
         tree: pins.tree,
         archiveSha256: pins.archiveSha256,
         origin: receipt.origin,
+        concurrency: receipt.concurrency,
         steps: receipt.steps,
         retainedResources: receipt.retainedResources,
         privateReceiptSha256: hash(await readFile(receiptFile)),

@@ -1,7 +1,17 @@
+import { buildConcurrencyPolicy } from "../packages/hosted-runtime/src/concurrency";
 import { readFileSync, writeFileSync } from "node:fs";
 const template = JSON.parse(
   readFileSync("cdk.out/PrismCrmP3Review.template.json", "utf8"),
 ) as {
+  Metadata?: {
+    PrismConcurrency?: {
+      mode: string;
+      existingAccountConcurrency: number | null;
+      reservedConcurrentExecutions: number | null;
+      proofSha256: string;
+      deviation: string;
+    };
+  };
   Resources: Record<
     string,
     { Type: string; Properties: Record<string, unknown> }
@@ -19,9 +29,45 @@ const runtime = lambdas.find(
     x.Properties.Handler === "index.handler",
 );
 assert(Boolean(runtime), "Missing genuine Node24 API handler");
+const metadata = template.Metadata?.PrismConcurrency;
+const policy = buildConcurrencyPolicy({
+  ...process.env,
+  PRISM_CONCURRENCY_MODE: process.env.PRISM_CONCURRENCY_MODE ?? metadata?.mode,
+  PRISM_EXISTING_ACCOUNT_CONCURRENCY:
+    process.env.PRISM_EXISTING_ACCOUNT_CONCURRENCY ??
+    (metadata?.existingAccountConcurrency === 10 ? "10" : undefined),
+});
 assert(
-  runtime?.Properties.ReservedConcurrentExecutions === 2,
-  "Missing reserved concurrency bound",
+  Boolean(metadata) && metadata!.mode === policy.mode,
+  "Concurrency metadata missing or mode mismatch",
+);
+assert(
+  policy.mode === "reserved"
+    ? runtime?.Properties.ReservedConcurrentExecutions === 2
+    : !Object.hasOwn(runtime!.Properties, "ReservedConcurrentExecutions"),
+  "Concurrency reservation does not match explicit policy",
+);
+if (policy.mode === "existing-account-shared")
+  assert(
+    metadata!.existingAccountConcurrency === 10 &&
+      metadata!.reservedConcurrentExecutions === null &&
+      /^[a-f0-9]{64}$/.test(metadata!.proofSha256) &&
+      metadata!.deviation.includes("not equivalent"),
+    "Shared-account deviation/proof metadata missing",
+  );
+const stages = of("AWS::ApiGatewayV2::Stage");
+assert(
+  stages.some((s) => {
+    const settings = s.Properties.DefaultRouteSettings as {
+      ThrottlingRateLimit?: number;
+      ThrottlingBurstLimit?: number;
+    };
+    return (
+      settings?.ThrottlingRateLimit === policy.apiRatePerSecond &&
+      settings?.ThrottlingBurstLimit === policy.apiBurst
+    );
+  }),
+  "Bounded API throttle missing",
 );
 assert(
   !JSON.stringify(runtime).includes("ZipFile"),
@@ -90,6 +136,7 @@ const proof = {
     "no-ecr-or-asset-custom-resource",
     "single-region-map-csp",
   ],
+  concurrency: metadata,
   resources: resources.length,
   serviceCalls: 0,
 };
