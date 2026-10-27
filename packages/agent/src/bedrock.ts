@@ -253,6 +253,11 @@ export async function answerWithBedrock(
     messages: context,
     inferenceConfig: { maxTokens: 1000, temperature: 0 },
     toolConfig: {
+      toolChoice: context.some((message) =>
+        message.content?.some((block) => block.toolResult),
+      )
+        ? { auto: {} }
+        : { any: {} },
       tools: [
         {
           toolSpec: {
