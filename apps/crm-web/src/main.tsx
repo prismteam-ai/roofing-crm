@@ -2,6 +2,7 @@ import { ReportContext } from "./ReportContext";
 import { BUILD_IDENTITY } from "../../../packages/runtime-config/src/index";
 import {
   amazonLocationProvider,
+  openStreetMapProvider,
   OFFLINE_BASEMAP,
   type BasemapProvider,
 } from "../../../packages/map-domain/src/basemap";
@@ -500,7 +501,9 @@ function App() {
         setMapProvider(
           value.kind === "amazon-location"
             ? amazonLocationProvider(value, location.origin)
-            : OFFLINE_BASEMAP,
+            : value.kind === "raster"
+              ? openStreetMapProvider(value, location.origin)
+              : OFFLINE_BASEMAP,
         );
       })
       .catch(() => {

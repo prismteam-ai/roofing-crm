@@ -1,3 +1,4 @@
+import { openStreetMapProvider } from "../../map-domain/src/basemap";
 import {
   SecretsManagerClient,
   GetSecretValueCommand,
@@ -25,6 +26,21 @@ export function mapConfiguration(
       new GetSecretValueCommand({ SecretId: secretId }),
     );
     const root = JSON.parse(out.SecretString ?? "{}");
+    if (root.publicRasterMap && root.locationMap)
+      throw new Error("Conflicting map configurations rejected");
+    if (root.publicRasterMap) {
+      openStreetMapProvider(
+        root.publicRasterMap,
+        root.publicRasterMap.allowedOrigin,
+        clock(),
+      );
+      const value = root.publicRasterMap;
+      cached = {
+        until: Math.min(clock() + 60000, Date.parse(value.expiresAt)),
+        value,
+      };
+      return value;
+    }
     if (!root.locationMap) return { kind: "offline" };
     const config = LocationConfigSchema.parse(root.locationMap),
       origin = new URL(config.allowedOrigin);

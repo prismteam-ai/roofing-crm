@@ -113,3 +113,54 @@ export function locationRequest(
     credentials: "same-origin",
   };
 }
+
+export const OSM_ORIGIN = "https://tile.openstreetmap.org";
+export const OSM_TEMPLATE = OSM_ORIGIN + "/{z}/{x}/{y}.png";
+export const OSM_ATTRIBUTION =
+  '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>';
+/** Fixed free review provider. No credentials, geocoding, bulk/offline fetch or arbitrary endpoint. */
+export function openStreetMapProvider(
+  input: unknown,
+  pageOrigin: string,
+  now = Date.now(),
+): Extract<BasemapProvider, { kind: "raster" }> {
+  if (!input || typeof input !== "object" || Array.isArray(input))
+    throw new Error("Public raster configuration rejected");
+  const x = input as Record<string, unknown>;
+  const keys = [
+    "kind",
+    "id",
+    "template",
+    "approvedOrigin",
+    "attribution",
+    "maxZoom",
+    "allowedOrigin",
+    "expiresAt",
+  ];
+  const expires =
+    typeof x.expiresAt === "string" ? Date.parse(x.expiresAt) : NaN;
+  if (
+    Object.keys(x).length !== keys.length ||
+    keys.some((k) => !Object.hasOwn(x, k)) ||
+    x.kind !== "raster" ||
+    x.id !== "openstreetmap-standard" ||
+    x.template !== OSM_TEMPLATE ||
+    x.approvedOrigin !== OSM_ORIGIN ||
+    x.attribution !== OSM_ATTRIBUTION ||
+    x.maxZoom !== 18 ||
+    x.allowedOrigin !== pageOrigin ||
+    !/^https:\/\/d[a-z0-9]+\.cloudfront\.net$/.test(pageOrigin) ||
+    !Number.isFinite(expires) ||
+    expires <= now ||
+    expires > now + 14 * 86400000
+  )
+    throw new Error("Public raster configuration rejected");
+  return {
+    kind: "raster",
+    id: "openstreetmap-standard",
+    template: OSM_TEMPLATE,
+    approvedOrigin: OSM_ORIGIN,
+    attribution: OSM_ATTRIBUTION,
+    maxZoom: 18,
+  };
+}

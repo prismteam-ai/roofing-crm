@@ -251,7 +251,7 @@ class CrmCandidateStack extends Stack {
         },
         contentSecurityPolicy: {
           contentSecurityPolicy:
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.geo.us-east-1.amazonaws.com; connect-src 'self' https://maps.geo.us-east-1.amazonaws.com; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.geo.us-east-1.amazonaws.com https://tile.openstreetmap.org; connect-src 'self' https://maps.geo.us-east-1.amazonaws.com https://tile.openstreetmap.org; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
           override: true,
         },
       },
