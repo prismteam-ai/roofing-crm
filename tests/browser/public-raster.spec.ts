@@ -141,6 +141,9 @@ for (const fail of [false, true])
       "data-map-renderer",
       fail ? "fallback" : "maplibre",
     );
+    await expect(
+      page.getByText("OpenStreetMap · Standard", { exact: true }),
+    ).toBeVisible();
     const mapIds = JSON.parse(
       (await page
         .getByTestId("property-map")

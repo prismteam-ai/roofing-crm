@@ -305,7 +305,9 @@ export function FieldMap({
             ? approvedProvider.kind !== "offline"
               ? approvedProvider.kind === "amazon-location"
                 ? "Amazon Location · Standard"
-                : approvedProvider.attribution
+                : approvedProvider.id === "openstreetmap-standard"
+                  ? "OpenStreetMap · Standard"
+                  : "Approved street basemap"
               : "Offline coordinate plot"
             : "Basemap unavailable · points retained"}
         </span>
@@ -370,6 +372,14 @@ export function FieldMap({
               rel="noreferrer"
             >
               Amazon Location data attribution
+            </a>
+          ) : approvedProvider.id === "openstreetmap-standard" ? (
+            <a
+              href="https://www.openstreetmap.org/copyright"
+              target="_blank"
+              rel="noreferrer"
+            >
+              © OpenStreetMap contributors
             </a>
           ) : (
             approvedProvider.attribution
