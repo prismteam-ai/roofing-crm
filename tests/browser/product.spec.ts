@@ -222,6 +222,60 @@ test("CRM independent and combined filters preserve list/map identity", async ({
     "data-map-renderer",
     "maplibre",
   );
+  const initialRows = audit(page)!.search!.result.rows;
+  if (health.mode === "real") {
+    const unknownIndex = initialRows.findIndex(
+      (property) =>
+        property.permits.length === 0 &&
+        property.provenance.some((source) => source.kind !== "synthetic"),
+    );
+    expect(
+      unknownIndex,
+      "Public real records retain unknown permit evidence",
+    ).toBeGreaterThanOrEqual(0);
+    const card = page.getByTestId("property-row").nth(unknownIndex);
+    await expect(card.getByTestId("known-open-permits")).toHaveText("Unknown");
+    await expect(card).toContainText("Known open permits");
+    await card.click();
+    await expect(page.getByTestId("permit-evidence-summary")).toContainText(
+      "Unknown / not sourced",
+    );
+    await expect(page.getByTestId("permit-evidence-summary")).toContainText(
+      "does not prove permit absence",
+    );
+    await page
+      .getByRole("button", { name: "Close property detail", exact: true })
+      .click();
+  } else {
+    for (let index = 0; index < initialRows.length; index++) {
+      const expected = initialRows[index].permits.filter(
+        (permit) => permit.status === "open" && permit.kind !== "other",
+      ).length;
+      await expect(
+        page
+          .getByTestId("property-row")
+          .nth(index)
+          .getByTestId("known-open-permits"),
+      ).toHaveText(String(expected));
+    }
+    const emptyIndex = initialRows.findIndex(
+      (property) => property.permits.length === 0,
+    );
+    expect(
+      emptyIndex,
+      "Declared fixture includes an explicit empty permit array",
+    ).toBeGreaterThanOrEqual(0);
+    await page.getByTestId("property-row").nth(emptyIndex).click();
+    await expect(page.getByTestId("permit-evidence-summary")).toContainText(
+      "Known open permits: 0",
+    );
+    await expect(page.getByTestId("permit-evidence-summary")).toContainText(
+      "Declared synthetic fixture",
+    );
+    await page
+      .getByRole("button", { name: "Close property detail", exact: true })
+      .click();
+  }
   await screenshot(page, "crm-unfiltered-map");
   const initial = await page.getByTestId("property-row").count();
   await setFilters(page, true, "any");
@@ -362,6 +416,9 @@ test("offline assistant grounds a query and refuses unsafe tool requests", async
   await answer.getByText(/source citations/).click();
   await expect(answer).toContainText("searchRoofingEvidence");
   await expect(answer).toContainText("no model inference");
+  await expect(answer.getByTestId("agent-permit-evidence")).toContainText(
+    "Zero matches do not prove permit absence",
+  );
   await screenshot(page, "crm-grounded-agent");
   await page
     .getByLabel("Agent prompt", { exact: true })

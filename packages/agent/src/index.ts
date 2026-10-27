@@ -19,6 +19,8 @@ export interface AgentAnswer {
     queryHash: string;
     snapshotId: string;
     resultCount: number;
+    contextRows?: number;
+    contextTruncated?: boolean;
   }[];
 }
 export function interpretPrompt(prompt: string, base: QueryInput): QueryInput {

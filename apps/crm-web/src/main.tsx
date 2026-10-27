@@ -62,6 +62,15 @@ const basis = (p: Property) =>
     built_year: "Built-year proxy",
     unknown: "Age unavailable",
   })[p.roof.basis];
+const declaredSynthetic = (property: Property) =>
+  property.provenance.length > 0 &&
+  property.provenance.every((source) => source.kind === "synthetic");
+const knownOpenPermits = (property: Property): number | null =>
+  !property.permits.length && !declaredSynthetic(property)
+    ? null
+    : property.permits.filter(
+        (permit) => permit.status === "open" && permit.kind !== "other",
+      ).length;
 function App() {
   const [query, setQuery] = useState<QueryInput>(() =>
     queryFromUrl(location.search),
@@ -853,7 +862,7 @@ function App() {
                   </label>
                   <span>
                     <i className="legend-dot" /> Property{" "}
-                    <i className="legend-dot permit" /> Open permit
+                    <i className="legend-dot permit" /> Known open permit
                   </span>
                 </div>
               </section>
@@ -940,14 +949,11 @@ function App() {
                             <strong>{age(p)}</strong>
                           </div>
                           <div>
-                            <span>Open permits</span>
-                            <strong>
-                              {
-                                p.permits.filter(
-                                  (x) =>
-                                    x.status === "open" && x.kind !== "other",
-                                ).length
-                              }
+                            <span title="Acquired roofing permit records only">
+                              Known open permits
+                            </span>
+                            <strong data-testid="known-open-permits">
+                              {knownOpenPermits(p) ?? "Unknown"}
                             </strong>
                           </div>
                         </div>
@@ -960,7 +966,7 @@ function App() {
                           <span>
                             {openDays(p) !== null
                               ? `${openDays(p)?.toLocaleString()} days open`
-                              : "No known open duration"}
+                              : "Open duration unknown"}
                           </span>
                         </div>
                       </button>
@@ -1008,10 +1014,15 @@ function App() {
                     aria-live="polite"
                   >
                     <p>{answer.answer}</p>
+                    <p className="caveat" data-testid="agent-permit-evidence">
+                      Permit counts describe acquired records. Zero matches do
+                      not prove permit absence; unacquired evidence is unknown.
+                    </p>
                     <div className="agent-result-links">
                       {answer.results.slice(0, 6).map((p) => (
                         <button key={p.id} onClick={() => choose(p)}>
-                          {p.address} ↗
+                          {p.address} · known open permits{" "}
+                          {knownOpenPermits(p) ?? "Unknown"} ↗
                         </button>
                       ))}
                     </div>
@@ -1155,45 +1166,55 @@ function App() {
               "Evidence anchor is not a physical roof inspection."}
           </p>
           <h3 className="section-label">PERMITS & CONTRACTORS</h3>
-          {selected.permits.length ? (
-            selected.permits.map((p) => (
-              <div className="permit-detail" key={p.id}>
-                <div className="permit-line">
-                  <b>{p.id}</b>
-                  <span className={`permit-state ${p.status}`}>{p.status}</span>
+          <p className="caveat" data-testid="permit-evidence-summary">
+            Known open permits:{" "}
+            <strong>
+              {knownOpenPermits(selected) ?? "Unknown / not sourced"}
+            </strong>
+            .{" "}
+            {knownOpenPermits(selected) === null
+              ? "No permit records were acquired for this property. This does not prove permit absence."
+              : declaredSynthetic(selected)
+                ? "Declared synthetic fixture records."
+                : "Counts cover acquired roofing records only; missing coverage remains unknown."}
+          </p>
+          {selected.permits.length
+            ? selected.permits.map((p) => (
+                <div className="permit-detail" key={p.id}>
+                  <div className="permit-line">
+                    <b>{p.id}</b>
+                    <span className={`permit-state ${p.status}`}>
+                      {p.status}
+                    </span>
+                  </div>
+                  <p>
+                    {p.kind.replaceAll("_", " ")} · opened{" "}
+                    {p.openedAt ?? "date unavailable"}
+                  </p>
+                  <p>
+                    Closed {p.closedAt ?? "not recorded"} · open duration{" "}
+                    {permitOpenDays(p, selected.roof.asOf) !== null
+                      ? `${permitOpenDays(p, selected.roof.asOf)} days`
+                      : "unknown / not open roofing work"}
+                  </p>
+                  <b>
+                    {p.contractor.reportedName ?? "Contractor name unavailable"}
+                  </b>
+                  <small>
+                    {p.contractor.verifiedCompanyId
+                      ? "Official company edge: " +
+                        p.contractor.verifiedCompanyId
+                      : "Source-reported name · official identity unresolved"}
+                  </small>
+                  <small>
+                    License: {p.contractor.license ?? "unavailable"} · Rating:{" "}
+                    {p.contractor.rating === null
+                      ? "unavailable"
+                      : `${p.contractor.rating}/100 (synthetic score)`}
+                  </small>
                 </div>
-                <p>
-                  {p.kind.replaceAll("_", " ")} · opened{" "}
-                  {p.openedAt ?? "date unavailable"}
-                </p>
-                <p>
-                  Closed {p.closedAt ?? "not recorded"} · open duration{" "}
-                  {permitOpenDays(p, selected.roof.asOf) !== null
-                    ? `${permitOpenDays(p, selected.roof.asOf)} days`
-                    : "unknown / not open roofing work"}
-                </p>
-                <b>
-                  {p.contractor.reportedName ?? "Contractor name unavailable"}
-                </b>
-                <small>
-                  {p.contractor.verifiedCompanyId
-                    ? "Official company edge: " + p.contractor.verifiedCompanyId
-                    : "Source-reported name · official identity unresolved"}
-                </small>
-                <small>
-                  License: {p.contractor.license ?? "unavailable"} · Rating:{" "}
-                  {p.contractor.rating === null
-                    ? "unavailable"
-                    : `${p.contractor.rating}/100 (synthetic score)`}
-                </small>
-              </div>
-            ))
-          ) : (
-            <p className="caveat">
-              No permit evidence in this snapshot. This does not prove the
-              absence of permits.
-            </p>
-          )}
+              ))
+            : null}
           <h3 className="section-label">OWNERSHIP & IDENTITY</h3>
           <p className="caveat">
             Transfer: {selected.ownership.lastTransferDate ?? "unavailable"} ·

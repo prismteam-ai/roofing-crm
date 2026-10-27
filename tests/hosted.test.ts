@@ -546,6 +546,134 @@ describe("Converse orchestration using only fake transport", () => {
       "read-1",
     );
   });
+  it("completes a default50-row retrieval within the unchanged budget using an explicit compact context", async () => {
+    const completeRows = Array.from({ length: 50 }, (_, index) => ({
+      ...property,
+      id: `SYN-REALISTIC-${index.toString().padStart(4, "0")}`,
+      address: `Synthetic realistic-format record ${index}`,
+      distanceMeters: index * 10.125,
+      roof: {
+        ...property.roof,
+        caveats: Array.from(
+          { length: 12 },
+          () => "FULL_SERVER_CAVEAT_" + "x".repeat(180),
+        ),
+      },
+      provenance: Array.from({ length: 4 }, (_, source) => ({
+        ...property.provenance[0],
+        sourceId: `official-format-group-${source}`,
+        recordId: `FULL_SERVER_RECORD_${index}_${source}_` + "r".repeat(96),
+        digest: "d".repeat(64),
+        kind: "real-public" as const,
+      })),
+    }));
+    const records = {
+      ...reader,
+      search: async () => ({
+        ...result,
+        rows: completeRows,
+        total: 500,
+        truncated: true,
+      }),
+    };
+    let calls = 0,
+      exposed:
+        | {
+            rows: {
+              id: string;
+              knownOpenRoofPermits: number | null;
+              sourceRefs: string[];
+            }[];
+            sources: { ref: string; sourceId: string }[];
+            context: {
+              retrievedRows: number;
+              providedRows: number;
+              omittedRows: number;
+              truncated: boolean;
+              verboseEvidenceOmitted: boolean;
+            };
+          }
+        | undefined,
+      selected = "";
+    const sizes: number[] = [];
+    const fake: ConverseTransport = {
+      converse: async (request) => {
+        sizes.push(Buffer.byteLength(JSON.stringify(request)));
+        if (++calls === 1) return toolResponse({ ...query, limit: 50 });
+        exposed = request.messages!.at(-1)!.content![0].toolResult!.content![0]
+          .json as unknown as NonNullable<typeof exposed>;
+        selected = exposed.rows.at(-1)!.id;
+        return finalResponse([selected]);
+      },
+    };
+    const answer = await answerWithBedrock(
+      records,
+      fake,
+      "Find roofing evidence",
+      { ...query, limit: 50 },
+      { modelId: "test-only-model" },
+    );
+    expect(calls).toBe(2);
+    expect(sizes[0] + 1000).toBeLessThanOrEqual(12000);
+    expect(sizes[1] + 1000).toBeLessThanOrEqual(12000 - 40);
+    expect(exposed!.context).toMatchObject({
+      retrievedRows: 50,
+      providedRows: exposed!.rows.length,
+      omittedRows: 50 - exposed!.rows.length,
+      truncated: true,
+      verboseEvidenceOmitted: true,
+    });
+    expect(exposed!.rows.length).toBeGreaterThan(0);
+    expect(exposed!.rows.length).toBeLessThanOrEqual(24);
+    expect(
+      exposed!.rows.every((row) => row.knownOpenRoofPermits === null),
+    ).toBe(true);
+    expect(
+      exposed!.rows.every((row) =>
+        row.sourceRefs.every((ref) =>
+          exposed!.sources.some((source) => source.ref === ref),
+        ),
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(exposed)).not.toContain("FULL_SERVER_CAVEAT");
+    expect(JSON.stringify(exposed)).not.toContain("FULL_SERVER_RECORD");
+    const original = completeRows.find((row) => row.id === selected)!;
+    expect(answer.results).toEqual([original]);
+    expect(answer.citations).toEqual(
+      original.provenance.map(
+        (source) => `${source.sourceId}:${source.recordId}`,
+      ),
+    );
+    expect(answer.toolTrace[0]).toMatchObject({
+      resultCount: 50,
+      contextRows: exposed!.rows.length,
+      contextTruncated: true,
+    });
+    expect(answer.caveats.join(" ")).toContain(`${exposed!.rows.length} of 50`);
+  });
+  it("rejects a model selection omitted from its context even if the complete retrieval contains it", async () => {
+    const completeRows = Array.from({ length: 50 }, (_, index) => ({
+      ...property,
+      id: `SYN-CONTEXT-${index}`,
+      distanceMeters: index,
+    }));
+    const records = {
+      ...reader,
+      search: async () => ({ ...result, rows: completeRows, total: 50 }),
+    };
+    await expect(
+      answerWithBedrock(
+        records,
+        provider([
+          toolResponse({ ...query, limit: 50 }),
+          finalResponse([completeRows[49].id]),
+        ]),
+        "Find roofing evidence",
+        { ...query, limit: 50 },
+        { modelId: "test" },
+      ),
+    ).rejects.toThrow("provided model context");
+  });
   it("rejects malformed tools, other tools, excessive radius/results, snapshot switching, unknown citations and answers without evidence", async () => {
     const invalid = [
       toolResponse({ ...query, sql: "select" }),
