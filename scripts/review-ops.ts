@@ -525,13 +525,31 @@ try {
       };
       await step("measured_quality_gate_recorded", () =>
         aws(
-          ["dynamodb", "put-item", "--cli-input-json", "file:///dev/stdin"],
+          ["dynamodb", "update-item", "--cli-input-json", "file:///dev/stdin"],
           JSON.stringify({
             TableName: tableArn.split("/")[1],
-            Item: item,
-            ConditionExpression:
-              "attribute_not_exists(pk) OR baseFailureSha256 = :base",
-            ExpressionAttributeValues: { ":base": { S: baseFailureSha256 } },
+            Key: { pk: item.pk, sk: item.sk },
+            UpdateExpression:
+              "SET #base = :base, #attempts = :one, #measured = :at" +
+              (repairFailureSha256 ? ", #repair = :repair" : ""),
+            ConditionExpression: "attribute_not_exists(#base) OR #base = :base",
+            ExpressionAttributeNames: {
+              "#base": "baseFailureSha256",
+              "#attempts": "repairAttempts",
+              "#measured": "measuredAt",
+              ...(repairFailureSha256
+                ? { "#repair": "repairFailureSha256" }
+                : {}),
+            },
+            ExpressionAttributeValues: {
+              ":base": item.baseFailureSha256,
+              ":one": item.repairAttempts,
+              ":at": item.measuredAt,
+              ...(repairFailureSha256
+                ? { ":repair": item.repairFailureSha256 }
+                : {}),
+            },
+            ReturnValues: "NONE",
           }),
         ),
       );

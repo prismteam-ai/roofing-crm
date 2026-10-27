@@ -246,7 +246,7 @@ export async function answerWithBedrock(
         text:
           SYSTEM +
           (limits.promptRevision === "repair-1"
-            ? " Repair 1: copy the complete fixed base query into the read tool, preserve every predicate, and select only literal IDs from that response. Never answer without the read tool."
+            ? " Repair 1: copy the complete fixed base query into the read tool and preserve every predicate. After the read result, return a JSON object with exactly one key, propertyIds, containing only literal IDs from the provided rows. Do not add other keys, markdown, commentary, or invented IDs. Eligible rows with unknown attributes remain candidates when includeUnknown is true; the application labels their evidence unknown. Select useful eligible provided IDs when rows exist, and return an empty propertyIds array when no rows exist. Never answer without the read tool."
             : ""),
       },
     ],
