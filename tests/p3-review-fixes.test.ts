@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { randomBytes, randomUUID } from "node:crypto";
 import { createHostedHandler } from "../apps/api/src/lambda";
 import {
@@ -25,6 +25,7 @@ const PRIVATE_MARKER = "synthetic-private-provider-detail-never-return";
 describe("independent P3 provider failure regression", () => {
   for (const kind of ["native-sdk-error", "sdk-request-handler"] as const)
     it(`${kind}: deterministic fallback retains one attempt and never exposes provider errors`, async () => {
+      const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
       const now = Date.parse("2026-10-27T20:00:00Z"),
         q = {
           snapshotId: "synthetic-provider-failure",
@@ -174,6 +175,17 @@ describe("independent P3 provider failure regression", () => {
           PRIVATE_MARKER,
         );
         expect(result.body).not.toContain("ThrottlingException");
+        expect(JSON.stringify(warning.mock.calls)).not.toContain(
+          PRIVATE_MARKER,
+        );
+        if (kind === "sdk-request-handler")
+          expect(warning).toHaveBeenCalledWith(
+            JSON.stringify({
+              event: "prism-bedrock-availability",
+              failureClass: "ThrottlingException",
+            }),
+          );
+        else expect(warning).not.toHaveBeenCalled();
         // A failed provider call was charged permanently; a twentieth additional call cannot fit the20/session ceiling.
         for (let i = 0; i < 19; i++)
           await campaign.reserve({
@@ -193,6 +205,7 @@ describe("independent P3 provider failure regression", () => {
           }),
         ).rejects.toThrow("cap");
       } finally {
+        warning.mockRestore();
         leads.close();
       }
     });

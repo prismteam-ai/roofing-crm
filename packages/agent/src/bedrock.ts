@@ -41,8 +41,32 @@ export function bedrockTransport(
     maxAttempts: 1,
   });
   return {
-    converse: (input, signal) =>
-      client.send(new ConverseCommand(input), { abortSignal: signal }),
+    converse: async (input, signal) => {
+      try {
+        return await client.send(new ConverseCommand(input), {
+          abortSignal: signal,
+        });
+      } catch (error) {
+        const allowed = [
+          "AccessDeniedException",
+          "ValidationException",
+          "ThrottlingException",
+          "ServiceUnavailableException",
+          "ModelTimeoutException",
+          "ModelNotReadyException",
+          "InternalServerException",
+        ];
+        const candidate = error instanceof Error ? error.name : undefined;
+        const failureClass =
+          candidate && allowed.includes(candidate)
+            ? candidate
+            : "UNKNOWN_PROVIDER_ERROR";
+        console.warn(
+          JSON.stringify({ event: "prism-bedrock-availability", failureClass }),
+        );
+        throw error;
+      }
+    },
   };
 }
 export interface BedrockLimits {
