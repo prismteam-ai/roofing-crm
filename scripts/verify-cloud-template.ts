@@ -6,8 +6,8 @@ const template = JSON.parse(
   Metadata?: {
     PrismConcurrency?: {
       mode: string;
-      existingAccountConcurrency: number | null;
-      reservedConcurrentExecutions: number | null;
+      existingAccountConcurrency: number | "none";
+      reservedConcurrentExecutions: number | "none";
       proofSha256: string;
       deviation: string;
     };
@@ -17,6 +17,8 @@ const template = JSON.parse(
     { Type: string; Properties: Record<string, unknown> }
   >;
 };
+if (JSON.stringify(template.Metadata).includes(":null"))
+  throw new Error("CloudFormation metadata must omit null values");
 const resources = Object.values(template.Resources);
 const of = (type: string) => resources.filter((x) => x.Type === type);
 const assert = (ok: boolean, message: string) => {
@@ -50,7 +52,7 @@ assert(
 if (policy.mode === "existing-account-shared")
   assert(
     metadata!.existingAccountConcurrency === 10 &&
-      metadata!.reservedConcurrentExecutions === null &&
+      metadata!.reservedConcurrentExecutions === "none" &&
       /^[a-f0-9]{64}$/.test(metadata!.proofSha256) &&
       metadata!.deviation.includes("not equivalent"),
     "Shared-account deviation/proof metadata missing",

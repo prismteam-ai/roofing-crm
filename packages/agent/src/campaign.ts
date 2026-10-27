@@ -177,9 +177,10 @@ export class DynamoCampaignStore implements CampaignStore {
             Update: {
               TableName: this.table,
               Key: { pk: `campaign#${PHASE}`, sk: x.key },
-              UpdateExpression: "ADD consumed :units",
+              UpdateExpression: "ADD #consumed :units",
               ConditionExpression:
-                "attribute_not_exists(consumed) OR consumed <= :ceiling",
+                "attribute_not_exists(#consumed) OR #consumed <= :ceiling",
+              ExpressionAttributeNames: { "#consumed": "consumed" },
               ExpressionAttributeValues: {
                 ":units": x.units,
                 ":ceiling": x.limit - x.units,

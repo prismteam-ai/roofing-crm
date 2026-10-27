@@ -214,6 +214,15 @@ it("synthesizes reserved2 by default and omits reservation only for approved pri
       env,
       stdio: "pipe",
     });
+    execFileSync(
+      process.execPath,
+      ["--import", "tsx", "scripts/verify-cloud-template.ts"],
+      {
+        cwd: process.cwd(),
+        env,
+        stdio: "pipe",
+      },
+    );
   };
   const template = async () =>
     JSON.parse(
@@ -233,6 +242,7 @@ it("synthesizes reserved2 by default and omits reservation only for approved pri
     )!;
     expect(fn.Properties.ReservedConcurrentExecutions).toBe(2);
     expect(fn.Properties.MemorySize).toBe(512);
+    expect(JSON.stringify(strict.Metadata)).not.toContain(":null");
     await writeFile(
       file,
       JSON.stringify({ ...proof, observedAt: new Date().toISOString() }),
@@ -258,7 +268,7 @@ it("synthesizes reserved2 by default and omits reservation only for approved pri
     expect(selected.Metadata.PrismConcurrency).toMatchObject({
       mode: "existing-account-shared",
       existingAccountConcurrency: 10,
-      reservedConcurrentExecutions: null,
+      reservedConcurrentExecutions: "none",
       proofSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
     expect(JSON.stringify(selected.Metadata)).not.toContain(account);

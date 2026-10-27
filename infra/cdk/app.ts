@@ -63,7 +63,14 @@ class CrmCandidateStack extends Stack {
       synthesizer: new BootstraplessSynthesizer(),
     });
     const stage = "p3-review";
-    this.templateOptions.metadata = { PrismConcurrency: concurrency.metadata };
+    this.templateOptions.metadata = {
+      PrismConcurrency: Object.fromEntries(
+        Object.entries(concurrency.metadata).map(([key, value]) => [
+          key,
+          value ?? "none",
+        ]),
+      ),
+    };
     const removal = RemovalPolicy.RETAIN;
     Tags.of(this).add("Project", "PrismAssessment");
     Tags.of(this).add("Phase", "P3");
