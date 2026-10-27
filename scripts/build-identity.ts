@@ -20,7 +20,7 @@ export function buildIdentity(): BuildIdentity {
     tree: git("rev-parse", "HEAD^{tree}"),
     dirty: Boolean(git("status", "--porcelain")),
   };
-  return runtimeIdentity(
+  const identity = runtimeIdentity(
     "crm",
     source,
     {
@@ -32,4 +32,12 @@ export function buildIdentity(): BuildIdentity {
     stage as "local" | typeof REVIEW_STAGE,
     region,
   );
+  for (const [key, actual] of [
+    ["PRISM_BUILD_HEAD", identity.head],
+    ["PRISM_BUILD_TREE", identity.tree],
+    ["PRISM_BUILD_ID", identity.buildId],
+  ])
+    if (process.env[key] && process.env[key] !== actual)
+      throw new Error("Build identity changed after Turbo input pinning");
+  return identity;
 }

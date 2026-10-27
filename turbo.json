@@ -14,6 +14,20 @@
   "globalDependencies": [
     "packages/**/src/**",
     "vite.config.ts",
-    "tsconfig.json"
+    "tsconfig.json",
+    "scripts/build-identity.ts",
+    "scripts/build.ts",
+    "package.json",
+    "turbo.json"
+  ],
+  "globalEnv": [
+    "PRISM_STAGE",
+    "PRISM_REGION",
+    "AWS_REGION",
+    "AWS_DEFAULT_REGION",
+    "VITE_ORACLE_STUDIO_URL",
+    "PRISM_BUILD_HEAD",
+    "PRISM_BUILD_TREE",
+    "PRISM_BUILD_ID"
   ]
 }

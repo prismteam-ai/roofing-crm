@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "turbo run build",
+    "build": "tsx scripts/build.ts",
     "test:browser": "playwright test",
     "cdk:synth": "tsx infra/cdk/app.ts && tsx scripts/verify-cloud-template.ts",
     "benchmark": "tsx scripts/benchmark.ts",

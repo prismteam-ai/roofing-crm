@@ -223,6 +223,56 @@ const aws = (args: string[], input?: string) => {
     );
   }
 };
+if (action === "deploy") {
+  try {
+    execFileSync(process.execPath, ["node_modules/vite/bin/vite.js", "build"], {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        PRISM_STAGE: pins.stage,
+        PRISM_REGION: pins.region,
+        VITE_ORACLE_STUDIO_URL: get("PRISM_ORACLE_ORIGIN"),
+      },
+    });
+  } catch {
+    throw new Error(
+      "Pinned frontend build failed; private build context redacted",
+    );
+  }
+  const frontend = JSON.parse(
+    await readFile("dist/release-identity.json", "utf8"),
+  );
+  if (JSON.stringify(frontend) !== JSON.stringify(report.identity))
+    throw new Error(
+      "Rebuilt frontend is not the exact measured staging identity",
+    );
+  if (
+    !["base", "repair-1"].includes(
+      process.env.PRISM_MODEL_PROMPT_REVISION ?? "base",
+    )
+  )
+    throw new Error("Invalid model prompt revision");
+  if (
+    process.env.PRISM_ENABLE_MODEL === "true" &&
+    (process.env.BEDROCK_MODEL_ID === "amazon.nova-lite-v1:0" ||
+      process.env.PRISM_MODEL_PROMPT_REVISION === "repair-1")
+  ) {
+    qualityFailure(
+      JSON.parse(
+        await readFile(get("PRISM_MICRO_BASE_FAILURE_REPORT"), "utf8"),
+      ),
+      "base",
+    );
+    if (process.env.BEDROCK_MODEL_ID === "amazon.nova-lite-v1:0")
+      qualityFailure(
+        JSON.parse(
+          await readFile(get("PRISM_MICRO_REPAIR_FAILURE_REPORT"), "utf8"),
+        ),
+        "repair-1",
+      );
+  }
+}
+
 assertCallerAccount(
   pins,
   (
