@@ -1,3 +1,4 @@
+import { propertyEvidence } from "../../map-domain/src/signals";
 import { tool } from "ai";
 import {
   DomainError,
@@ -7,7 +8,7 @@ import {
 } from "../../contracts/src/index";
 import type { OracleReader } from "../../oracle-client/src/index";
 export interface AgentAnswer {
-  mode: "deterministic-offline";
+  mode: "deterministic-offline" | "bedrock-converse";
   answer: string;
   query: QueryInput;
   results: SearchResponse["rows"];
@@ -93,7 +94,7 @@ export async function answerQuestion(
   const citations = [
     ...new Set(
       data.rows.flatMap((p) =>
-        p.provenance.map((s) => `${s.sourceId}:${s.recordId}`),
+        propertyEvidence(p).map((s) => `${s.sourceId}:${s.recordId}`),
       ),
     ),
   ];
@@ -105,7 +106,7 @@ export async function answerQuestion(
     citations,
     caveats: [
       ...data.limitations,
-      "Synthetic P1 records demonstrate retrieval behavior; this is not live model inference or county completeness.",
+      "This response uses deterministic retrieval, with no model inference. Snapshot coverage and unavailable evidence remain explicit.",
       ...(unknown
         ? [`${unknown} returned properties have unknown roof age.`]
         : []),

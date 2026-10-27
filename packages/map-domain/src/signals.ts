@@ -19,3 +19,20 @@ export function oldestOpenRoofDays(
     .filter((d): d is number => d !== null);
   return days.length ? Math.max(...days) : null;
 }
+/** Evidence stays attached to its specific observation, including partial reported-sale history. */
+export function propertyEvidence(property: Property) {
+  const sources = [
+    ...property.provenance,
+    ...(property.roof.provenance ?? []),
+    ...property.permits.flatMap((permit) => permit.provenance),
+    ...(property.ownership.events ?? []).flatMap((event) => event.provenance),
+  ];
+  return [
+    ...new Map(
+      sources.map((source) => [
+        `${source.sourceId}:${source.recordId}:${source.digest}`,
+        source,
+      ]),
+    ).values(),
+  ];
+}

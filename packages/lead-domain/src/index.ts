@@ -1,3 +1,4 @@
+import { boundedLead } from "./limits";
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
@@ -40,7 +41,7 @@ export class LeadStore {
     if (file !== ":memory:") mkdirSync(dirname(file), { recursive: true });
     this.db = new DatabaseSync(file);
     this.db.exec(
-      "PRAGMA busy_timeout=2000; PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS leads(id TEXT PRIMARY KEY, session_id TEXT NOT NULL, property_id TEXT NOT NULL, snapshot_id TEXT NOT NULL, idempotency_key TEXT NOT NULL, status TEXT NOT NULL, version INTEGER NOT NULL, events TEXT NOT NULL, UNIQUE(session_id,idempotency_key), UNIQUE(session_id,property_id,snapshot_id));",
+      "PRAGMA busy_timeout=2000; PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS leads(id TEXT PRIMARY KEY, session_id TEXT NOT NULL, property_id TEXT NOT NULL, snapshot_id TEXT NOT NULL, idempotency_key TEXT NOT NULL, status TEXT NOT NULL, version INTEGER NOT NULL, events TEXT NOT NULL, UNIQUE(session_id,idempotency_key), UNIQUE(session_id,property_id,snapshot_id)); CREATE TABLE IF NOT EXISTS lead_requests(session_id TEXT NOT NULL,idempotency_key TEXT NOT NULL,lead_id TEXT NOT NULL,PRIMARY KEY(session_id,idempotency_key)); INSERT OR IGNORE INTO lead_requests SELECT session_id,idempotency_key,id FROM leads;",
     );
   }
   list(sessionId: string): Lead[] {
@@ -70,7 +71,9 @@ export class LeadStore {
     const x = LeadCreateSchema.parse(input);
     return this.atomic(() => {
       const byKey = this.db
-        .prepare("SELECT * FROM leads WHERE session_id=? AND idempotency_key=?")
+        .prepare(
+          "SELECT l.* FROM lead_requests r JOIN leads l ON l.id=r.lead_id AND l.session_id=r.session_id WHERE r.session_id=? AND r.idempotency_key=?",
+        )
         .get(x.sessionId, x.idempotencyKey) as Row | undefined;
       if (byKey) {
         if (
@@ -88,7 +91,12 @@ export class LeadStore {
           "SELECT * FROM leads WHERE session_id=? AND property_id=? AND snapshot_id=?",
         )
         .get(x.sessionId, x.propertyId, x.snapshotId) as Row | undefined;
-      if (old) return decode(old);
+      if (old) {
+        this.db
+          .prepare("INSERT INTO lead_requests VALUES (?,?,?)")
+          .run(x.sessionId, x.idempotencyKey, old.id);
+        return decode(old);
+      }
       const id =
         "lead-" +
         createHash("sha256")
@@ -116,6 +124,9 @@ export class LeadStore {
           1,
           JSON.stringify(lead.events),
         );
+      this.db
+        .prepare("INSERT INTO lead_requests VALUES (?,?,?)")
+        .run(x.sessionId, x.idempotencyKey, id);
       return lead;
     });
   }
@@ -150,6 +161,7 @@ export class LeadStore {
         },
       ],
     };
+    boundedLead(lead);
     const changed = this.db
       .prepare(
         "UPDATE leads SET status=?,version=?,events=? WHERE id=? AND session_id=? AND version=?",

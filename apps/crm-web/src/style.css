@@ -295,13 +295,17 @@ h1 {
   border: 1px solid #dce4d6;
   border-radius: 5px;
   padding: 10px 12px 24px;
+  min-width: 190px;
+  max-width: 300px;
+  overflow-wrap: anywhere;
+  white-space: normal;
   font-size: 9px;
-  white-space: nowrap;
 }
 .snapshot-pill small {
   position: absolute;
   bottom: 8px;
   left: 22px;
+  right: 8px;
   font-size: 7px;
   color: #84917e;
 }
@@ -452,6 +456,9 @@ input[type="number"] {
   min-width: 40px;
   width: 45px;
   font-size: 10px;
+}
+.filter-row > label.check-label > input {
+  width: auto;
 }
 .filter-row > label > input {
   width: 110px;
@@ -1289,6 +1296,9 @@ input[type="number"] {
     flex: 1;
     min-width: 100px;
   }
+  .filter-row > label.check-label > input {
+    width: auto;
+  }
   .filter-row > label > input {
     width: 100%;
   }
@@ -1373,4 +1383,15 @@ input[type="number"] {
   .snapshot-pill {
     display: none;
   }
+}
+
+.coverage-note {
+  font-size: 10px;
+  color: #667665;
+  margin: 0 0 12px;
+  border-left: 2px solid #9bb8a5;
+  padding: 6px 12px;
+}
+.coverage-note summary {
+  cursor: pointer;
 }

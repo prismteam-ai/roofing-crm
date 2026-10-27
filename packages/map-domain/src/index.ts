@@ -6,10 +6,13 @@ export function milesToMeters(miles: number): number {
     throw new Error("Radius must be greater than zero and at most 20 miles");
   return miles * METERS_PER_MILE;
 }
-export function queryFromUrl(search: string): QueryInput {
+export function queryFromUrl(
+  search: string,
+  defaultSnapshot = "demo-oakland-v1",
+): QueryInput {
   const p = new URLSearchParams(search);
   const base: QueryInput = {
-    snapshotId: p.get("snapshot") ?? "demo-oakland-v1",
+    snapshotId: p.get("snapshot") ?? defaultSnapshot,
     lat: Number(p.get("lat") ?? 42.66),
     lng: Number(p.get("lng") ?? -83.29),
     radiusMeters: Number(p.get("radius") ?? 8046.72),
@@ -19,11 +22,14 @@ export function queryFromUrl(search: string): QueryInput {
     limit: 50,
   };
   if (p.has("age")) base.roofMinAgeYears = Number(p.get("age"));
+  if (p.has("owner"))
+    base.ownerRegion = p.get("owner") as QueryInput["ownerRegion"];
+  if (p.has("tenure")) base.minOwnershipYears = Number(p.get("tenure"));
   const parsed = QuerySchema.safeParse(base);
   return parsed.success
     ? parsed.data
     : QuerySchema.parse({
-        snapshotId: "demo-oakland-v1",
+        snapshotId: defaultSnapshot,
         ...OAKLAND_CENTER,
         radiusMeters: 8046.72,
       });
@@ -40,5 +46,9 @@ export function queryToUrl(query: QueryInput): string {
   });
   if (query.roofMinAgeYears !== undefined)
     p.set("age", String(query.roofMinAgeYears));
+  if (query.ownerRegion && query.ownerRegion !== "any")
+    p.set("owner", query.ownerRegion);
+  if (query.minOwnershipYears !== undefined)
+    p.set("tenure", String(query.minOwnershipYears));
   return `?${p}`;
 }

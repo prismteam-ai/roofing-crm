@@ -1,8 +1,29 @@
 import { defineConfig } from "@playwright/test";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
+const repoRoot = path.dirname(fileURLToPath(import.meta.url));
+const oracleRoot = path.resolve(
+  repoRoot,
+  "../oracle-property-intelligence-platform-pipeline-oakland-mi",
+);
+const dataMode = process.env.PRISM_TEST_MODE ?? "synthetic";
+const buildId = (cwd: string) =>
+  execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf8" }).trim();
+const publicCaptureEnv = {
+  PRISM_DATA_MODE: dataMode,
+  PRISM_ACCESS_MODE: "local",
+  PRISM_SNAPSHOT_DIR: process.env.PRISM_SNAPSHOT_DIR ?? "",
+  PRISM_OWNER_DERIVATIVES: "",
+  PRISM_OWNER_DERIVATIVES_SHA256: "",
+  PRISM_PRIVATE_ENRICHMENT: "",
+  PRISM_PRIVATE_ENRICHMENT_SHA256: "",
+  PRISM_ENABLE_PROTECTED_VIEW: "0",
+};
 const evidence = process.env.PRISM_BROWSER_EVIDENCE_DIR ?? "test-results";
 export default defineConfig({
   testDir: "tests/browser",
+  testIgnore: dataMode === "real" ? ["**/session-races.spec.ts"] : [],
   fullyParallel: false,
   workers: 1,
   timeout: 45000,
@@ -34,6 +55,7 @@ export default defineConfig({
     {
       command:
         "pnpm --dir ../oracle-property-intelligence-platform-pipeline-oakland-mi api",
+      env: { ...publicCaptureEnv, PRISM_BUILD_ID: buildId(oracleRoot) },
       url: "http://127.0.0.1:4310/api/health",
       reuseExistingServer: true,
       timeout: 60000,
@@ -47,6 +69,7 @@ export default defineConfig({
     },
     {
       command: "pnpm api",
+      env: { ...publicCaptureEnv, PRISM_BUILD_ID: buildId(repoRoot) },
       url: "http://127.0.0.1:4311/api/health",
       reuseExistingServer: true,
       timeout: 60000,

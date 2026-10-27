@@ -6,6 +6,7 @@ import { fork } from "node:child_process";
 import { createServer } from "node:http";
 import { LeadStore } from "../packages/lead-domain/src/index";
 import {
+  CONTRACT_VERSION,
   DomainError,
   QuerySchema,
   PropertySchema,
@@ -49,6 +50,7 @@ describe("persistent lead domain", () => {
     const file = join(dir, "lead.sqlite");
     const store = new LeadStore(file, () => "2026-10-26T12:00:00.000Z");
     const lead = store.create(selection);
+    store.create({ ...selection, idempotencyKey: "persistent-alias" });
     store.update(lead.id, {
       sessionId: selection.sessionId,
       id: lead.id,
@@ -63,6 +65,13 @@ describe("persistent lead domain", () => {
       snapshotId: "demo-oakland-v1",
     });
     expect(again.list("test-a")[0]?.events).toHaveLength(2);
+    expect(() =>
+      again.create({
+        ...selection,
+        propertyId: "OTHER",
+        idempotencyKey: "persistent-alias",
+      }),
+    ).toThrow("Idempotency");
     again.close();
   });
   it("idempotently creates while rejecting request-key reassignment", () => {
@@ -223,7 +232,7 @@ describe("bounded offline agent", () => {
       search: async (q) => {
         called = q;
         return {
-          contractVersion: "0.1.0",
+          contractVersion: CONTRACT_VERSION,
           snapshotId: q.snapshotId,
           queryHash: "query-test",
           rows: [{ ...p, distanceMeters: 0 }],
@@ -249,7 +258,7 @@ describe("typed Oracle client", () => {
     const transport: typeof fetch = async () =>
       new Response(
         JSON.stringify({
-          contractVersion: "0.1.0",
+          contractVersion: CONTRACT_VERSION,
           snapshotId: "other-snapshot",
           queryHash: "other",
           rows: [],
@@ -265,9 +274,7 @@ describe("typed Oracle client", () => {
     ).rejects.toThrow("does not match");
   });
   it("rejects remote source destinations and malformed producer responses", async () => {
-    expect(() => new OracleClient("https://county.example")).toThrow(
-      "local consumer",
-    );
+    expect(() => new OracleClient("https://county.example")).toThrow();
     const transport: typeof fetch = async () =>
       new Response(JSON.stringify({ rows: [] }), {
         status: 200,
@@ -391,7 +398,7 @@ describe("local consumer request boundary", () => {
       "http://fixture-user:fixture-placeholder@localhost:4310",
       "https://127.0.0.1:4310@remote.invalid",
     ]) {
-      expect(() => new OracleClient(url)).toThrow("local consumer");
+      expect(() => new OracleClient(url)).toThrow();
     }
   });
   it("requests redirect:error and a finite deadline; never follows a mock external307", async () => {

@@ -8,6 +8,11 @@ import type {
   QueryInput,
   SearchResponse,
 } from "../../contracts/src/index";
+import {
+  OFFLINE_BASEMAP,
+  validateBasemap,
+  type BasemapProvider,
+} from "../../map-domain/src/basemap";
 maplibregl.setWorkerUrl(mapWorkerUrl);
 function radiusFeature(lat: number, lng: number, meters: number) {
   return {
@@ -37,6 +42,8 @@ export function FieldMap({
   onPin,
   onSelect,
   basemap,
+  synthetic = false,
+  provider = OFFLINE_BASEMAP,
 }: {
   query: QueryInput;
   rows: SearchResponse["rows"];
@@ -45,7 +52,10 @@ export function FieldMap({
   onPin: (lat: number, lng: number) => void;
   onSelect: (p: Property) => void;
   basemap: boolean;
+  synthetic?: boolean;
+  provider?: BasemapProvider;
 }) {
+  const approvedProvider = validateBasemap(provider);
   const halfLat = (query.radiusMeters / 111320) * 1.25;
   const halfLng =
     (query.radiusMeters / (111320 * Math.cos((query.lat * Math.PI) / 180))) *
@@ -62,76 +72,53 @@ export function FieldMap({
   useEffect(() => {
     if (!container.current) return;
     let mounted = true;
+    setReady(false);
+    setFallback(false);
     try {
       const instance = new maplibregl.Map({
         container: container.current,
         center: [query.lng, query.lat],
         zoom: 11,
         attributionControl: false,
-        style: {
-          version: 8,
-          sources: {
-            context: {
-              type: "geojson",
-              data: {
-                type: "FeatureCollection",
-                features: [
-                  {
-                    type: "Feature",
-                    properties: {},
-                    geometry: {
-                      type: "LineString",
-                      coordinates: [
-                        [-83.6, 42.63],
-                        [-83.46, 42.64],
-                        [-83.32, 42.66],
-                        [-83.17, 42.67],
-                        [-83.03, 42.68],
-                      ],
-                    },
+        style:
+          approvedProvider.kind === "raster"
+            ? {
+                version: 8,
+                sources: {
+                  provider: {
+                    type: "raster",
+                    tiles: [approvedProvider.template],
+                    tileSize: 256,
+                    maxzoom: approvedProvider.maxZoom,
+                    attribution: approvedProvider.attribution,
                   },
+                },
+                layers: [
                   {
-                    type: "Feature",
-                    properties: {},
-                    geometry: {
-                      type: "LineString",
-                      coordinates: [
-                        [-83.29, 42.45],
-                        [-83.29, 42.85],
-                      ],
-                    },
+                    id: "paper",
+                    type: "background",
+                    paint: { "background-color": "#e6ebe4" },
                   },
+                  { id: "provider", type: "raster", source: "provider" },
+                ],
+              }
+            : {
+                version: 8,
+                sources: {},
+                layers: [
                   {
-                    type: "Feature",
-                    properties: {},
-                    geometry: {
-                      type: "LineString",
-                      coordinates: [
-                        [-83.5, 42.76],
-                        [-83.14, 42.56],
-                      ],
-                    },
+                    id: "paper",
+                    type: "background",
+                    paint: { "background-color": "#e6ebe4" },
                   },
                 ],
               },
-            },
-          },
-          layers: [
-            {
-              id: "paper",
-              type: "background",
-              paint: { "background-color": "#e6ebe4" },
-            },
-            {
-              id: "context-roads",
-              type: "line",
-              source: "context",
-              paint: { "line-color": "#ffffff", "line-width": 4 },
-            },
-          ],
-        },
       });
       map.current = instance;
+      if (approvedProvider.kind === "raster")
+        instance.addControl(
+          new maplibregl.AttributionControl({ compact: false }),
+        );
       instance.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
         "bottom-right",
@@ -154,10 +141,10 @@ export function FieldMap({
       map.current?.remove();
       map.current = null;
     };
-  }, []);
+  }, [provider]);
   useEffect(() => {
     const m = map.current;
-    if (!m || !ready) return;
+    if (!m || !ready || !m.isStyleLoaded() || Math.abs(query.lat) > 85) return;
     const feature = radiusFeature(query.lat, query.lng, query.radiusMeters);
     const source = m.getSource("radius") as
       maplibregl.GeoJSONSource | undefined;
@@ -221,10 +208,15 @@ export function FieldMap({
       );
     }
   }, [query, rows, ready, selected, onSelect]);
+
   useEffect(() => {
-    if (ready && map.current?.getLayer("context-roads"))
+    if (
+      ready &&
+      map.current?.isStyleLoaded() &&
+      map.current.getLayer("provider")
+    )
       map.current.setLayoutProperty(
-        "context-roads",
+        "provider",
         "visibility",
         basemap ? "visible" : "none",
       );
@@ -234,7 +226,13 @@ export function FieldMap({
       className={`field-map ${placing ? "placing" : ""}`}
       role="region"
       data-testid="property-map"
-      data-map-renderer={fallback ? "fallback" : ready ? "maplibre" : "loading"}
+      data-map-renderer={
+        fallback || Math.abs(query.lat) > 85
+          ? "fallback"
+          : ready
+            ? "maplibre"
+            : "loading"
+      }
       aria-label="Map and search area"
     >
       <div ref={container} className="map-canvas" />
@@ -242,14 +240,14 @@ export function FieldMap({
         <span className="map-label">OAKLAND COUNTY, MI</span>
         <span className="map-label muted">
           {basemap
-            ? "Offline schematic context"
+            ? approvedProvider.kind === "raster"
+              ? approvedProvider.attribution
+              : "Offline coordinate plot"
             : "Basemap unavailable · points retained"}
         </span>
       </div>
-      <span className="town town-a">WATERFORD</span>
-      <span className="town town-b">PONTIAC</span>
-      <span className="town town-c">BLOOMFIELD</span>
-      {(fallback || !ready) && (
+
+      {(fallback || !ready || Math.abs(query.lat) > 85) && (
         <div
           className="fallback-map"
           aria-label="Accessible map fallback"
@@ -297,7 +295,12 @@ export function FieldMap({
           <i className="dot" /> Search radius{" "}
           {(query.radiusMeters / 1609.344).toFixed(1)} mi
         </span>
-        <span>Fixture positions · no external tiles</span>
+        <span>
+          {synthetic ? "Synthetic positions" : "Official source coordinates"} ·{" "}
+          {approvedProvider.kind === "offline"
+            ? "no external tiles"
+            : approvedProvider.attribution}
+        </span>
       </div>
       {placing && (
         <div className="pin-instruction" role="status">
