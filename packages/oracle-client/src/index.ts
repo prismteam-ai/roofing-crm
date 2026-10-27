@@ -1,3 +1,7 @@
+import {
+  sourceContext,
+  type SourceContext,
+} from "../../hosted-runtime/src/source-context";
 import { z } from "zod";
 import {
   PropertySchema,
@@ -14,14 +18,27 @@ export const OracleHealthSchema = z.object({
   digest: z.string().optional(),
   snapshotDigest: z.string().optional(),
   buildId: z.string().optional(),
+  head: z.string().optional(),
+  tree: z.string().optional(),
+  region: z.string().optional(),
+  stage: z.string().optional(),
   count: z.number().int().nonnegative().optional(),
   contractVersion: z.string(),
+  dataMode: z
+    .enum(["synthetic", "real-public", "protected-real", "provider-licensed"])
+    .optional(),
+  publicSnapshotId: z.string().optional(),
 });
 export type OracleHealth = z.infer<typeof OracleHealthSchema>;
 export interface OracleReader {
   search(input: QueryInput): Promise<SearchResponse>;
   detail(id: string, snapshotId: string): Promise<Property>;
   health?(): Promise<OracleHealth>;
+  sourceContext?(
+    sourceId: string,
+    snapshotId: string,
+    page?: number,
+  ): Promise<SourceContext>;
 }
 export interface OracleUrlPolicy {
   /** Exact HTTPS origins approved at deployment; wildcards and URL credentials are forbidden. */
@@ -204,6 +221,45 @@ export class OracleClient implements OracleReader {
       );
     }
     return body;
+  }
+  async sourceContext(
+    sourceId: string,
+    snapshotId: string,
+    page?: number,
+  ): Promise<SourceContext> {
+    const expected = sourceContext(sourceId, page);
+    if (!expected)
+      throw new DomainError("INVALID_INPUT", "Unknown report source or page");
+    const query = new URLSearchParams({ sourceId });
+    if (page !== undefined) query.set("page", String(page));
+    const response = z
+      .object({
+        version: z.literal("1"),
+        contractVersion: z.literal("0.2.1"),
+        snapshotId: z.string(),
+        digest: z.string(),
+        source: z.record(z.string(), z.unknown()),
+      })
+      .strict()
+      .parse(await this.request(`/api/source-context?${query}`));
+    const canonical = (x: unknown): string =>
+      Array.isArray(x)
+        ? `[${x.map(canonical).join(",")}]`
+        : x && typeof x === "object"
+          ? `{${Object.entries(x)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`)
+              .join(",")}}`
+          : JSON.stringify(x);
+    if (
+      response.snapshotId !== snapshotId ||
+      canonical(response.source) !== canonical(expected)
+    )
+      throw new DomainError(
+        "SNAPSHOT_UNAVAILABLE",
+        "Report source context identity mismatch",
+      );
+    return expected;
   }
   async health(): Promise<OracleHealth> {
     return OracleHealthSchema.parse(await this.request("/api/health"));

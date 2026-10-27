@@ -1,3 +1,4 @@
+import { buildIdentity } from "../../../scripts/build-identity";
 import { createServer } from "node:http";
 import { OracleClient } from "../../../packages/oracle-client/src/index";
 import { LeadStore } from "../../../packages/lead-domain/src/index";
@@ -11,6 +12,7 @@ if (
   );
 const leads = new LeadStore(process.env.LEAD_DB_PATH ?? "data/leads.sqlite");
 const app = createApp({
+  release: buildIdentity(),
   oracle: new OracleClient(
     process.env.ORACLE_API_URL ?? "http://127.0.0.1:4310",
     fetch,

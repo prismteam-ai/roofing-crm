@@ -23,7 +23,10 @@ const publicCaptureEnv = {
 const evidence = process.env.PRISM_BROWSER_EVIDENCE_DIR ?? "test-results";
 export default defineConfig({
   testDir: "tests/browser",
-  testIgnore: dataMode === "real" ? ["**/session-races.spec.ts"] : [],
+  testIgnore:
+    dataMode === "real"
+      ? ["**/session-races.spec.ts", "**/p3-map.spec.ts"]
+      : ["**/p3-map.spec.ts"],
   fullyParallel: false,
   workers: 1,
   timeout: 45000,

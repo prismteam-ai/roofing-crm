@@ -1,3 +1,5 @@
+> Historical P2 evidence. Current P3 operations, identity, maps and model gates are described in [P3_STAGING.md](P3_STAGING.md). The P2 rehearsal statements below are preserved historical claims.
+
 # P2 CRM runtime and boundaries
 
 The default local CRM reads Oracle's health-selected real public snapshot. It does not contain a county-data fallback or query any government source. Run the producer in explicit `PRISM_DATA_MODE=synthetic PRISM_ACCESS_MODE=local` mode for separate synthetic demonstrations; the consumer uses that reported mode and snapshot. A snapshot ID from the other process mode is rejected. The original README is preserved.

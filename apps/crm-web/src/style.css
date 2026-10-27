@@ -1395,3 +1395,13 @@ input[type="number"] {
 .coverage-note summary {
   cursor: pointer;
 }
+
+.property-cluster {
+  min-width: 34px;
+  height: 34px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px solid white;
+  background: #175c51;
+  color: white;
+}

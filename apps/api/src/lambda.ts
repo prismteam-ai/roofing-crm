@@ -1,3 +1,31 @@
+import {
+  answerQuestion,
+  answerFromEvidence,
+  interpretPrompt,
+} from "../../../packages/agent/src/index";
+import {
+  DomainError,
+  type SearchResponse,
+  type QueryInput,
+} from "../../../packages/contracts/src/index";
+import { createHash, randomUUID } from "node:crypto";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+import {
+  REVIEW_REGION,
+  MICRO_MODEL,
+  reviewModel,
+  reviewRegion,
+} from "../../../packages/runtime-config/src/index";
+import {
+  DynamoCampaignStore,
+  reserveCost,
+  type CampaignStore,
+  type VerifiedPrice,
+} from "../../../packages/agent/src/campaign";
+import { mapConfiguration } from "../../../packages/hosted-runtime/src/map-config";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { OracleReader } from "../../../packages/oracle-client/src/index";
@@ -35,11 +63,17 @@ export interface HttpEvent {
   isBase64Encoded?: boolean;
   requestContext?: { http?: { method?: string } };
 }
+export interface HttpResult {
+  statusCode: number;
+  body: string;
+  headers?: Record<string, string>;
+  cookies?: string[];
+}
 /** Exact API Gateway v2 boundary, also used by the packaged local emulation proof. */
 export function createLambdaHandler(
   app: (request: AppRequest) => Promise<AppResponse>,
 ) {
-  return async (event: HttpEvent) => {
+  return async (event: HttpEvent): Promise<HttpResult> => {
     const raw = event.isBase64Encoded
       ? Buffer.from(event.body ?? "", "base64").toString("utf8")
       : (event.body ?? "");
@@ -95,10 +129,22 @@ export interface HostedRuntime {
   sessions: SessionStore;
   access: () => Promise<AccessService>;
   provider?: ConverseTransport;
+  campaign?: CampaignStore;
+  price?: () => Promise<VerifiedPrice>;
+  mapConfig?: () => Promise<unknown>;
 }
 let runtime: HostedRuntime | undefined;
 function makeRuntime() {
-  const region = required("AWS_REGION");
+  const region = reviewRegion(required("AWS_REGION"));
+  reviewRegion(process.env.PRISM_REGION ?? region);
+  if (
+    process.env.AWS_DEFAULT_REGION &&
+    process.env.AWS_DEFAULT_REGION !== region
+  )
+    throw new Error("Mixed runtime regions");
+  const secretId = required("REVIEW_ACCESS_SECRET_ARN");
+  const secrets = new SecretsManagerClient({ region, maxAttempts: 1 });
+  let cachedPrice: { until: number; value: VerifiedPrice } | undefined;
   const document = DynamoDBDocumentClient.from(
     new DynamoDBClient({ region, maxAttempts: 1 }),
   );
@@ -109,7 +155,26 @@ function makeRuntime() {
     ),
     quota: new DynamoQuotaStore(document, required("QUOTA_TABLE_NAME")),
     sessions: new DynamoSessionStore(document, required("QUOTA_TABLE_NAME")),
-    access: secretAccessProvider(required("REVIEW_ACCESS_SECRET_ARN")),
+    access: secretAccessProvider(secretId, secrets),
+    campaign: new DynamoCampaignStore(document, required("QUOTA_TABLE_NAME")),
+    price: async () => {
+      if (cachedPrice && cachedPrice.until > Date.now())
+        return cachedPrice.value;
+      const out = await secrets.send(
+        new GetSecretValueCommand({ SecretId: secretId }),
+      );
+      const root = JSON.parse(out.SecretString ?? "{}");
+      const value = root.modelPrices?.[
+        required("BEDROCK_MODEL_ID")
+      ] as VerifiedPrice;
+      reserveCost(1, value);
+      cachedPrice = { until: Date.now() + 60000, value };
+      return value;
+    },
+    mapConfig:
+      process.env.PRISM_ENABLE_MAP === "true"
+        ? mapConfiguration(secretId, secrets)
+        : async () => ({ kind: "offline" }),
     provider:
       process.env.PRISM_ENABLE_MODEL === "true"
         ? bedrockTransport(region)
@@ -122,7 +187,7 @@ export function createHostedHandler(
   modelId = () => "",
   clock = Date.now,
 ) {
-  return async (event: HttpEvent) => {
+  return async (event: HttpEvent): Promise<HttpResult> => {
     try {
       const r = await loadRuntime();
       const access = await r.access();
@@ -132,6 +197,17 @@ export function createHostedHandler(
       const app = createApp({
         oracle,
         leads: r.leads,
+        mapConfig: r.mapConfig,
+        model: r.provider
+          ? {
+              id: reviewModel(modelId() || MICRO_MODEL, true),
+              region: REVIEW_REGION,
+              promptRevision:
+                process.env.PRISM_MODEL_PROMPT_REVISION === "repair-1"
+                  ? "repair-1"
+                  : "base",
+            }
+          : undefined,
         access: {
           current: async (headers) => {
             const verified = access.verify(readSessionCookie(headers));
@@ -179,15 +255,189 @@ export function createHostedHandler(
         },
         ...(r.provider
           ? {
-              agent: (prompt, query) =>
-                answerWithBedrock(oracle, r.provider!, prompt, query, {
-                  modelId: modelId(),
-                  maxRows: 50,
-                  maxTurns: 3,
-                  maxToolCalls: 2,
-                  maxTotalTokens: 12000,
-                  deadlineMs: 15000,
-                }),
+              agent: async (prompt, query, subject) => {
+                const revision =
+                  process.env.PRISM_MODEL_PROMPT_REVISION === "repair-1"
+                    ? "repair-1"
+                    : "base";
+                const model = reviewModel(modelId() || MICRO_MODEL, true);
+                if (!r.campaign || !r.price)
+                  throw new Error(
+                    "Durable model campaign and current price configuration required",
+                  );
+                const requestId = randomUUID(),
+                  promptDigest = createHash("sha256")
+                    .update(prompt)
+                    .digest("hex"),
+                  subjectDigest = createHash("sha256")
+                    .update(subject)
+                    .digest("hex");
+                let inputTokens = 0,
+                  outputTokens = 0,
+                  converseCalls = 0,
+                  reservedMicroUsd = 0,
+                  measuredMicroUsd = 0,
+                  measuredCalls = 0;
+                let reads = 0,
+                  cached:
+                    { data: SearchResponse; query: QueryInput } | undefined;
+                const boundedOracle: OracleReader = {
+                  detail: (id, snapshot) => oracle.detail(id, snapshot),
+                  health: oracle.health ? () => oracle.health!() : undefined,
+                  search: async (q) => {
+                    if (++reads > 2)
+                      throw new DomainError(
+                        "COST_LIMIT_REACHED",
+                        "Read budget exhausted",
+                      );
+                    const data = await oracle.search(q);
+                    if (
+                      data.snapshotId !== query.snapshotId ||
+                      data.rows.length > 50
+                    )
+                      throw new DomainError(
+                        "SNAPSHOT_UNAVAILABLE",
+                        "Evidence boundary mismatch",
+                      );
+                    cached = { data, query: q };
+                    return data;
+                  },
+                };
+                try {
+                  await r.campaign.authorize(model, revision);
+                  const price = await r.price();
+                  if (price.modelId !== model)
+                    throw new Error("Model price identity mismatch");
+                  await r.campaign.reserve({
+                    subject,
+                    kind: "request",
+                    modelId: model,
+                    nowMs: clock(),
+                  });
+                  interpretPrompt(prompt, query);
+                  const result = await answerWithBedrock(
+                    boundedOracle,
+                    r.provider!,
+                    prompt,
+                    query,
+                    {
+                      modelId: model,
+                      promptRevision: revision,
+                      maxRows: 50,
+                      maxTurns: 3,
+                      maxToolCalls: 2,
+                      maxTotalTokens: 12000,
+                      deadlineMs: 15000,
+                      beforeConverse: async ({ inputBytes }) => {
+                        const cost = reserveCost(inputBytes, price, clock());
+                        await r.campaign!.reserve({
+                          subject,
+                          kind: "converse",
+                          modelId: model,
+                          nowMs: clock(),
+                          reservedMicroUsd: cost,
+                        });
+                        converseCalls++;
+                        reservedMicroUsd += cost;
+                      },
+                      onUsage: async (usage) => {
+                        await r.campaign!.record({
+                          requestId,
+                          subjectDigest,
+                          promptDigest,
+                          modelId: model,
+                          revision,
+                          region: REVIEW_REGION,
+                          at: new Date(clock()).toISOString(),
+                          ...usage,
+                          measuredMicroUsd: Math.ceil(
+                            usage.inputTokens * price.inputUsdPerMillion +
+                              usage.outputTokens * price.outputUsdPerMillion,
+                          ),
+                        });
+                        measuredCalls++;
+                        measuredMicroUsd += Math.ceil(
+                          usage.inputTokens * price.inputUsdPerMillion +
+                            usage.outputTokens * price.outputUsdPerMillion,
+                        );
+                        inputTokens += usage.inputTokens;
+                        outputTokens += usage.outputTokens;
+                      },
+                    },
+                  );
+                  await r.campaign.record({
+                    requestId,
+                    subjectDigest,
+                    promptDigest,
+                    modelId: model,
+                    revision,
+                    region: REVIEW_REGION,
+                    at: new Date(clock()).toISOString(),
+                    callIndex: 0,
+                    inputTokens,
+                    outputTokens,
+                    totalTokens: inputTokens + outputTokens,
+                    evidence: {
+                      queryHash: result.toolTrace.map((x) => x.queryHash),
+                      snapshotId: query.snapshotId,
+                      propertyIds: result.results.map((x) => x.id),
+                      citations: result.citations,
+                    },
+                  });
+                  return {
+                    ...result,
+                    modelAudit: {
+                      modelId: model,
+                      region: REVIEW_REGION,
+                      promptRevision: revision,
+                      promptDigest,
+                      inputTokens,
+                      outputTokens,
+                      converseCalls,
+                      reservedMicroUsd,
+                      measuredMicroUsd,
+                      unmeasuredCalls: converseCalls - measuredCalls,
+                    },
+                  };
+                } catch (error) {
+                  if (
+                    !(error instanceof DomainError) ||
+                    (!["COST_LIMIT_REACHED", "QUERY_TIMEOUT"].includes(
+                      error.code,
+                    ) &&
+                      !(
+                        converseCalls > 0 &&
+                        ["INVALID_INPUT", "UNSUPPORTED_TOOL"].includes(
+                          error.code,
+                        )
+                      ))
+                  )
+                    throw error;
+                  const fallback = cached
+                    ? answerFromEvidence(cached.data, cached.query)
+                    : await answerQuestion(boundedOracle, prompt, query);
+                  return {
+                    ...fallback,
+                    caveats: [
+                      "Live model could not produce a valid bounded answer; this answer used deterministic evidence. No provider facts were used. Failed attempts retain reserved allowance; unmeasured usage is not claimed as zero spend.",
+                      ...fallback.caveats,
+                    ],
+                    modelAudit: {
+                      modelId: model,
+                      region: REVIEW_REGION,
+                      promptRevision: revision,
+                      promptDigest,
+                      inputTokens,
+                      outputTokens,
+                      converseCalls,
+                      reservedMicroUsd,
+                      measuredMicroUsd,
+                      unmeasuredCalls: converseCalls - measuredCalls,
+                      failureCode: error.code,
+                    },
+                  };
+                }
+              },
             }
           : {}),
       });
@@ -228,4 +478,4 @@ export async function handler(event: HttpEvent) {
 }
 // Pure exports support local emulation of the exact bundled routing and orchestration code.
 export { createApp, answerWithBedrock };
-export { DomainError } from "../../../packages/contracts/src/index";
+export { DomainError };

@@ -9,6 +9,7 @@ import {
   propertyEvidence,
   oldestOpenRoofDays,
 } from "../../map-domain/src/signals";
+import { reviewRegion } from "../../runtime-config/src/index";
 import { z } from "zod";
 import {
   DomainError,
@@ -26,6 +27,7 @@ export interface ConverseTransport {
 }
 /** Construction has no service effect. Only an explicitly enabled hosted runtime may call converse. */
 export function bedrockTransport(region: string): ConverseTransport {
+  reviewRegion(region);
   const client = new BedrockRuntimeClient({ region, maxAttempts: 1 });
   return {
     converse: (input, signal) =>
@@ -34,11 +36,22 @@ export function bedrockTransport(region: string): ConverseTransport {
 }
 export interface BedrockLimits {
   modelId: string;
+  promptRevision?: "base" | "repair-1";
   deadlineMs?: number;
   maxTurns?: number;
   maxToolCalls?: number;
   maxTotalTokens?: number;
   maxRows?: number;
+  beforeConverse?: (input: {
+    inputBytes: number;
+    callIndex: number;
+  }) => Promise<void>;
+  onUsage?: (input: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    callIndex: number;
+  }) => Promise<void>;
 }
 const Selection = z
   .object({ propertyIds: z.array(z.string()).max(50) })
@@ -157,11 +170,11 @@ export async function answerWithBedrock(
 ): Promise<AgentAnswer> {
   unsafe(prompt);
   const initial = interpretPrompt(prompt, base);
-  const maxTurns = Math.min(limits.maxTurns ?? 3, 4),
-    maxTools = Math.min(limits.maxToolCalls ?? 2, 3),
+  const maxTurns = Math.min(limits.maxTurns ?? 3, 3),
+    maxTools = Math.min(limits.maxToolCalls ?? 2, 2),
     maxRows = Math.min(limits.maxRows ?? 50, 50),
     time = Math.min(limits.deadlineMs ?? 15000, 25000),
-    maxTokens = Math.min(limits.maxTotalTokens ?? 12000, 16000);
+    maxTokens = Math.min(limits.maxTotalTokens ?? 12000, 12000);
   if (
     !limits.modelId ||
     maxTurns < 1 ||
@@ -193,7 +206,15 @@ export async function answerWithBedrock(
   const toolSchema = z.toJSONSchema(QuerySchema);
   const requestFor = (context: Message[]): ConverseCommandInput => ({
     modelId: limits.modelId,
-    system: [{ text: SYSTEM }],
+    system: [
+      {
+        text:
+          SYSTEM +
+          (limits.promptRevision === "repair-1"
+            ? " Repair 1: copy the complete fixed base query into the read tool, preserve every predicate, and select only literal IDs from that response. Never answer without the read tool."
+            : ""),
+      },
+    ],
     messages: context,
     inferenceConfig: { maxTokens: 1000, temperature: 0 },
     toolConfig: {
@@ -232,9 +253,16 @@ export async function answerWithBedrock(
         "COST_LIMIT_REACHED",
         "Conservative input-token budget exceeded before provider call",
       );
+    const callIndex = turn + 1;
+    if (limits.beforeConverse)
+      await deadline(
+        limits.beforeConverse({ inputBytes: upperBoundInputTokens, callIndex }),
+        Math.max(1, time - (Date.now() - started)),
+        controller,
+      );
     const response = await deadline(
       provider.converse(requestFor(messages), controller.signal),
-      remaining,
+      Math.max(1, time - (Date.now() - started)),
       controller,
     );
     const usage = response.usage;
@@ -256,6 +284,22 @@ export async function answerWithBedrock(
       throw new DomainError(
         "INVALID_INPUT",
         "Provider token usage was inconsistent",
+      );
+    if (usage.outputTokens! > 1000)
+      throw new DomainError(
+        "COST_LIMIT_REACHED",
+        "Provider exceeded output-token ceiling",
+      );
+    if (limits.onUsage)
+      await deadline(
+        limits.onUsage({
+          inputTokens: usage.inputTokens!,
+          outputTokens: usage.outputTokens!,
+          totalTokens: measured,
+          callIndex,
+        }),
+        Math.max(1, time - (Date.now() - started)),
+        controller,
       );
     tokens += measured;
     if (tokens > maxTokens)
@@ -288,7 +332,11 @@ export async function answerWithBedrock(
           "Provider mixed unsupported text with tool calls",
         );
       messages.push(message);
-      const pending: { toolUseId: string; data: SearchResponse }[] = [];
+      const pending: {
+        toolUseId: string;
+        data: SearchResponse;
+        query: QueryInput;
+      }[] = [];
       for (const call of calls) {
         if (++tools > maxTools)
           throw new DomainError(
@@ -359,7 +407,11 @@ export async function answerWithBedrock(
             "SNAPSHOT_UNAVAILABLE",
             "Evidence did not satisfy snapshot/result limits",
           );
-        pending.push({ toolUseId: call.toolUseId, data: latest });
+        pending.push({
+          toolUseId: call.toolUseId,
+          data: latest,
+          query: applied,
+        });
       }
       const counts = pending.map(() => 0);
       const resultMessage = (sizes: number[]): Message => ({
@@ -418,6 +470,7 @@ export async function answerWithBedrock(
           queryHash: entry.data.queryHash,
           snapshotId: entry.data.snapshotId,
           resultCount: entry.data.rows.length,
+          arguments: entry.query,
           contextRows: counts[index],
           contextTruncated: context.context.truncated,
         });

@@ -25,6 +25,11 @@ async function screenshot(page: Page, name: string) {
     contractVersion: string;
     snapshotDigest?: string;
     digest?: string;
+    buildId?: string;
+    head?: string;
+    tree?: string;
+    region?: string;
+    stage?: string;
   };
   const state = await page.locator(".app-shell").evaluate((node) => ({
     snapshotId: node.getAttribute("data-snapshot-id"),
@@ -50,6 +55,11 @@ async function screenshot(page: Page, name: string) {
     JSON.stringify(
       {
         ...state,
+        runtimeBuildId: health.buildId,
+        runtimeHead: health.head,
+        runtimeTree: health.tree,
+        region: health.region,
+        stage: health.stage,
         contractVersion: health.contractVersion,
         snapshotDigest: health.snapshotDigest ?? health.digest,
         test: test.info().title,
@@ -293,12 +303,9 @@ test("CRM independent and combined filters preserve list/map identity", async ({
     .evaluateAll((nodes) =>
       nodes.map((n) => n.getAttribute("data-property-id")).sort(),
     );
-  const map = await page
-    .getByTestId("property-map")
-    .locator("[data-property-id]")
-    .evaluateAll((nodes) =>
-      [...new Set(nodes.map((n) => n.getAttribute("data-property-id")))].sort(),
-    );
+  const map = JSON.parse(
+    (await page.getByTestId("property-map").getAttribute("data-property-ids"))!,
+  ) as string[];
   expect(map).toEqual(list);
   const mapRegion = page.getByTestId("property-map");
   const canvas = mapRegion.locator("canvas.maplibregl-canvas");

@@ -23,11 +23,13 @@
     "contract:sync": "tsx scripts/sync-contract.ts",
     "lambda:package": "tsx scripts/package-lambda.ts",
     "lambda:emulate": "tsx scripts/emulate-lambda.ts",
-    "deploy": "tsx scripts/review-ops.ts deploy --dry-run",
-    "smoke": "tsx scripts/review-ops.ts smoke --dry-run",
-    "evidence": "tsx scripts/review-ops.ts evidence --dry-run",
-    "rotate-access": "tsx scripts/review-ops.ts rotate-access --dry-run",
-    "destroy": "tsx scripts/review-ops.ts destroy --dry-run"
+    "deploy": "tsx scripts/review-ops.ts deploy",
+    "smoke": "tsx scripts/review-ops.ts smoke",
+    "evidence": "tsx scripts/review-ops.ts evidence",
+    "rotate-access": "tsx scripts/review-ops.ts rotate-access",
+    "destroy": "tsx scripts/review-ops.ts destroy",
+    "campaign": "tsx scripts/model-campaign.ts",
+    "test:map-browser": "playwright test --config playwright.map.config.ts"
   },
   "dependencies": {
     "@ai-sdk/provider": "4.0.34",

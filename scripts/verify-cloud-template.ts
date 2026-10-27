@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 const template = JSON.parse(
-  readFileSync("cdk.out/PrismCrmP2Candidate.template.json", "utf8"),
+  readFileSync("cdk.out/PrismCrmP3Review.template.json", "utf8"),
 ) as {
   Resources: Record<
     string,
@@ -56,6 +56,26 @@ assert(
   !JSON.stringify(bedrock[0].Resource).includes("*"),
   "Bedrock wildcard resource forbidden",
 );
+assert(
+  !JSON.stringify(template).includes("cdk-bootstrap"),
+  "CDK bootstrap dependency forbidden",
+);
+assert(
+  !resources.some((x) => /ECR|Custom::CDKBucketDeployment/.test(x.Type)),
+  "ECR and asset deployment custom resources forbidden",
+);
+assert(
+  JSON.stringify(runtime).includes("prism-p3/crm/lambda/"),
+  "Exact hash-addressed Lambda asset required",
+);
+assert(
+  !JSON.stringify(template).includes("us-east-2"),
+  "Mixed region forbidden",
+);
+assert(
+  JSON.stringify(template).includes("maps.geo.us-east-1.amazonaws.com"),
+  "Exact map origin missing from CSP",
+);
 const proof = {
   checks: [
     "real-node24-handler",
@@ -66,6 +86,9 @@ const proof = {
     "seven-day-logs",
     "exact-bedrock-resource",
     "shared-session-table-reference",
+    "bootstrapless-hash-pinned-code",
+    "no-ecr-or-asset-custom-resource",
+    "single-region-map-csp",
   ],
   resources: resources.length,
   serviceCalls: 0,

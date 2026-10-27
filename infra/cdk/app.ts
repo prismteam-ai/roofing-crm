@@ -6,6 +6,8 @@ import {
   RemovalPolicy,
   CfnParameter,
   Duration,
+  BootstraplessSynthesizer,
+  Fn,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Table, AttributeType, BillingMode } from "aws-cdk-lib/aws-dynamodb";
@@ -30,29 +32,52 @@ import {
 } from "aws-cdk-lib/aws-cloudfront";
 import { S3BucketOrigin, HttpOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
+
 import {
   Alarm,
   ComparisonOperator,
   TreatMissingData,
 } from "aws-cdk-lib/aws-cloudwatch";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { existsSync } from "node:fs";
-/** Synth-only P2 candidate. Genuine package, parameter references, no lookups or deployment. */
+import { validatedRegion } from "../../packages/hosted-runtime/src/release";
+import {
+  MICRO_MODEL,
+  LITE_MODEL,
+} from "../../packages/runtime-config/src/index";
+/** P3 bootstrapless template. Synthesis never performs an account lookup or service call. */
 class CrmCandidateStack extends Stack {
   constructor(scope: Construct, id: string) {
-    super(scope, id);
-    const stage = this.node.tryGetContext("stage") ?? "review";
-    const approvedDestroy =
-      this.node.tryGetContext("approvedDestroy") === "true";
-    const removal =
-      stage === "disposable" && approvedDestroy
-        ? RemovalPolicy.DESTROY
-        : RemovalPolicy.RETAIN;
+    super(scope, id, {
+      env: {
+        region: validatedRegion(process.env.PRISM_REGION ?? "us-east-1", [
+          process.env.AWS_REGION,
+          process.env.AWS_DEFAULT_REGION,
+        ]),
+      },
+      synthesizer: new BootstraplessSynthesizer(),
+    });
+    const stage = "p3-review";
+    const removal = RemovalPolicy.RETAIN;
     Tags.of(this).add("Project", "PrismAssessment");
-    Tags.of(this).add("Phase", "P2-NOT-DEPLOYED");
+    Tags.of(this).add("Phase", "P3");
     Tags.of(this).add("Stage", stage);
     Tags.of(this).add("DataRetention", "14-days");
+    const deploymentBucket = new CfnParameter(this, "DeploymentAssetBucket", {
+      type: "String",
+      allowedPattern: "[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]",
+      description: "Explicit dedicated bootstrapless task deployment bucket",
+    });
+    const archiveHash = new CfnParameter(this, "LambdaArchiveDigestPin", {
+      type: "String",
+      allowedPattern: "[a-f0-9]{64}",
+      description: "Measured exact clean-release zip SHA256",
+    });
+    const releaseBuildId = new CfnParameter(this, "ReleaseBuildPin", {
+      type: "String",
+      allowedPattern: "[a-f0-9]{64}",
+    });
+    releaseBuildId.overrideLogicalId("ReleaseBuildId");
+    archiveHash.overrideLogicalId("LambdaArchiveSha256");
     const oracle = new CfnParameter(this, "OracleApiOrigin", {
       type: "String",
       allowedPattern: "https://[A-Za-z0-9.-]+",
@@ -62,28 +87,32 @@ class CrmCandidateStack extends Stack {
       type: "String",
       noEcho: true,
       allowedPattern:
-        "arn:[a-z0-9-]+:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+",
+        "arn:aws:secretsmanager:us-east-1:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+",
       description: "Existing secret ARN reference only; shared with Oracle",
     });
     const model = new CfnParameter(this, "BedrockModelId", {
       type: "String",
-      default: "not-enabled",
-      allowedPattern: "[A-Za-z0-9._:/-]+",
+      default: MICRO_MODEL,
+      allowedValues: [MICRO_MODEL, LITE_MODEL],
       description:
-        "Authorized regional model or inference profile ID selected at the live gate",
-    });
-    const modelArn = new CfnParameter(this, "BedrockModelArn", {
-      type: "String",
-      default: "arn:aws:bedrock:us-east-2::foundation-model/not-enabled",
-      allowedPattern:
-        "arn:[a-z0-9-]+:bedrock:[a-z0-9-]+:[0-9]{0,12}:(foundation-model|inference-profile|application-inference-profile)/[A-Za-z0-9._:/-]+",
-      description: "Exact authorized model ARN; no wildcard",
+        "Direct regional model only; Lite additionally requires persisted measured Micro failures",
     });
     const enabled = new CfnParameter(this, "EnableModel", {
       type: "String",
       default: "false",
       allowedValues: ["true", "false"],
     });
+    const mapEnabled = new CfnParameter(this, "EnableMap", {
+      type: "String",
+      default: "false",
+      allowedValues: ["true", "false"],
+    });
+    const promptRevision = new CfnParameter(this, "ModelPromptRevision", {
+      type: "String",
+      default: "base",
+      allowedValues: ["base", "repair-1"],
+    });
+
     const table = (name: string) =>
       new Table(this, name, {
         partitionKey: { name: "pk", type: AttributeType.STRING },
@@ -99,7 +128,7 @@ class CrmCandidateStack extends Stack {
       {
         type: "String",
         allowedPattern:
-          "arn:[a-z0-9-]+:dynamodb:[a-z0-9-]+:[0-9]{12}:table/[A-Za-z0-9_.-]+",
+          "arn:aws:dynamodb:us-east-1:[0-9]{12}:table/[A-Za-z0-9_.-]+",
         description: "Oracle-owned shared evaluator session/quota table ARN",
       },
     );
@@ -119,14 +148,21 @@ class CrmCandidateStack extends Stack {
       retention: RetentionDays.ONE_WEEK,
       removalPolicy: removal,
     });
-    if (!existsSync("build/lambda/index.mjs"))
-      throw new Error(
-        "Build the real Lambda package with pnpm lambda:package before synthesis",
-      );
     const fn = new LambdaFunction(this, "CrmHandler", {
       runtime: Runtime.NODEJS_24_X,
       handler: "index.handler",
-      code: Code.fromAsset("build/lambda"),
+      code: Code.fromBucket(
+        Bucket.fromBucketName(
+          this,
+          "DeploymentAssets",
+          deploymentBucket.valueAsString,
+        ),
+        Fn.join("", [
+          "prism-p3/crm/lambda/",
+          archiveHash.valueAsString,
+          ".zip",
+        ]),
+      ),
       timeout: Duration.seconds(25),
       reservedConcurrentExecutions: 2,
       memorySize: 512,
@@ -139,6 +175,10 @@ class CrmCandidateStack extends Stack {
         ORACLE_APPROVED_ORIGINS: oracle.valueAsString,
         BEDROCK_MODEL_ID: model.valueAsString,
         PRISM_ENABLE_MODEL: enabled.valueAsString,
+        PRISM_ENABLE_MAP: mapEnabled.valueAsString,
+        PRISM_MODEL_PROMPT_REVISION: promptRevision.valueAsString,
+        PRISM_REGION: "us-east-1",
+        PRISM_STAGE: stage,
       },
     });
     leads.grantReadWriteData(fn);
@@ -152,7 +192,13 @@ class CrmCandidateStack extends Stack {
     fn.addToRolePolicy(
       new PolicyStatement({
         actions: ["bedrock:InvokeModel"],
-        resources: [modelArn.valueAsString],
+        resources: [
+          Fn.join("", [
+            "arn:aws:bedrock:us-east-1::foundation-model/",
+            model.valueAsString,
+          ]),
+        ],
+        conditions: { StringEquals: { "aws:RequestedRegion": "us-east-1" } },
       }),
     );
     const api = new HttpApi(this, "CrmApi");
@@ -171,7 +217,7 @@ class CrmCandidateStack extends Stack {
         contentTypeOptions: { override: true },
         frameOptions: { frameOption: "DENY" as never, override: true },
         referrerPolicy: {
-          referrerPolicy: "no-referrer" as never,
+          referrerPolicy: "strict-origin-when-cross-origin" as never,
           override: true,
         },
         strictTransportSecurity: {
@@ -181,7 +227,7 @@ class CrmCandidateStack extends Stack {
         },
         contentSecurityPolicy: {
           contentSecurityPolicy:
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.geo.us-east-1.amazonaws.com; connect-src 'self' https://maps.geo.us-east-1.amazonaws.com; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
           override: true,
         },
       },
@@ -210,20 +256,6 @@ class CrmCandidateStack extends Stack {
         },
       },
     });
-    if (!existsSync("dist/index.html"))
-      throw new Error("Build the frontend before synthesis");
-    new BucketDeployment(this, "FrontendPublication", {
-      sources: [Source.asset("dist")],
-      destinationBucket: assets,
-      distribution,
-      distributionPaths: ["/*"],
-      retainOnDelete: true,
-      prune: false,
-      logGroup: new LogGroup(this, "FrontendPublicationLogs", {
-        retention: RetentionDays.ONE_WEEK,
-        removalPolicy: removal,
-      }),
-    });
     new Alarm(this, "ApiErrors", {
       metric: fn.metricErrors({ period: Duration.minutes(5) }),
       threshold: 5,
@@ -235,12 +267,21 @@ class CrmCandidateStack extends Stack {
       value: distribution.distributionDomainName,
     });
     new CfnOutput(this, "AssetBucket", { value: assets.bucketName });
-    new CfnOutput(this, "RuntimeStatus", {
-      value:
-        "Prepared and locally emulated only; no resources created. Shared review secret and provider permission remain live gates.",
+    new CfnOutput(this, "ReleaseBuildId", {
+      value: releaseBuildId.valueAsString,
     });
+    new CfnOutput(this, "LambdaArchiveSha256", {
+      value: archiveHash.valueAsString,
+    });
+    new CfnOutput(this, "Region", { value: "us-east-1" });
+    new CfnOutput(this, "Stage", { value: stage });
+    new CfnOutput(this, "ApiOrigin", { value: api.apiEndpoint });
+    new CfnOutput(this, "FrontendDistributionId", {
+      value: distribution.distributionId,
+    });
+    new CfnOutput(this, "LeadTableName", { value: leads.tableName });
   }
 }
 const app = new App({ outdir: "cdk.out" });
-new CrmCandidateStack(app, "PrismCrmP2Candidate");
+new CrmCandidateStack(app, "PrismCrmP3Review");
 app.synth();

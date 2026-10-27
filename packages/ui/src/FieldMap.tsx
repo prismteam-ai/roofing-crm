@@ -1,3 +1,4 @@
+import { declutter } from "../../map-domain/src/declutter";
 import { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { Map as LibreMap, Marker } from "maplibre-gl";
@@ -9,6 +10,8 @@ import type {
   SearchResponse,
 } from "../../contracts/src/index";
 import {
+  LOCATION_ORIGIN,
+  locationRequest,
   OFFLINE_BASEMAP,
   validateBasemap,
   type BasemapProvider,
@@ -71,7 +74,8 @@ export function FieldMap({
   placeRef.current = placing;
   useEffect(() => {
     if (!container.current) return;
-    let mounted = true;
+    let mounted = true,
+      basemapFailed = false;
     setReady(false);
     setFallback(false);
     try {
@@ -80,44 +84,53 @@ export function FieldMap({
         center: [query.lng, query.lat],
         zoom: 11,
         attributionControl: false,
+        transformRequest:
+          approvedProvider.kind === "amazon-location"
+            ? (resource) => locationRequest(approvedProvider, resource)
+            : undefined,
         style:
-          approvedProvider.kind === "raster"
-            ? {
-                version: 8,
-                sources: {
-                  provider: {
-                    type: "raster",
-                    tiles: [approvedProvider.template],
-                    tileSize: 256,
-                    maxzoom: approvedProvider.maxZoom,
-                    attribution: approvedProvider.attribution,
+          basemap && approvedProvider.kind === "amazon-location"
+            ? `${LOCATION_ORIGIN}/v2/styles/Standard/descriptor`
+            : basemap && approvedProvider.kind === "raster"
+              ? {
+                  version: 8,
+                  sources: {
+                    provider: {
+                      type: "raster",
+                      tiles: [approvedProvider.template],
+                      tileSize: 256,
+                      maxzoom: approvedProvider.maxZoom,
+                      attribution: approvedProvider.attribution,
+                    },
                   },
+                  layers: [
+                    {
+                      id: "paper",
+                      type: "background",
+                      paint: { "background-color": "#e6ebe4" },
+                    },
+                    { id: "provider", type: "raster", source: "provider" },
+                  ],
+                }
+              : {
+                  version: 8,
+                  sources: {},
+                  layers: [
+                    {
+                      id: "paper",
+                      type: "background",
+                      paint: { "background-color": "#e6ebe4" },
+                    },
+                  ],
                 },
-                layers: [
-                  {
-                    id: "paper",
-                    type: "background",
-                    paint: { "background-color": "#e6ebe4" },
-                  },
-                  { id: "provider", type: "raster", source: "provider" },
-                ],
-              }
-            : {
-                version: 8,
-                sources: {},
-                layers: [
-                  {
-                    id: "paper",
-                    type: "background",
-                    paint: { "background-color": "#e6ebe4" },
-                  },
-                ],
-              },
       });
       map.current = instance;
-      if (approvedProvider.kind === "raster")
+      if (approvedProvider.kind !== "offline")
         instance.addControl(
-          new maplibregl.AttributionControl({ compact: false }),
+          new maplibregl.AttributionControl({
+            compact: false,
+            customAttribution: approvedProvider.attribution,
+          }),
         );
       instance.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
@@ -130,7 +143,23 @@ export function FieldMap({
         if (placeRef.current) pinRef.current(e.lngLat.lat, e.lngLat.lng);
       });
       instance.on("error", () => {
-        if (mounted) setFallback(true);
+        if (mounted) {
+          setFallback(true);
+          if (approvedProvider.kind !== "offline" && !basemapFailed) {
+            basemapFailed = true;
+            instance.setStyle({
+              version: 8,
+              sources: {},
+              layers: [
+                {
+                  id: "paper",
+                  type: "background",
+                  paint: { "background-color": "#e6ebe4" },
+                },
+              ],
+            });
+          }
+        }
       });
     } catch {
       setFallback(true);
@@ -141,7 +170,7 @@ export function FieldMap({
       map.current?.remove();
       map.current = null;
     };
-  }, [provider]);
+  }, [provider, basemap]);
   useEffect(() => {
     const m = map.current;
     if (!m || !ready || !m.isStyleLoaded() || Math.abs(query.lat) > 85) return;
@@ -175,38 +204,65 @@ export function FieldMap({
       ],
       { padding: 25, maxZoom: 14, duration: 350 },
     );
-    markers.current.forEach((x) => x.remove());
-    markers.current = [];
-    const center = document.createElement("div");
-    center.className = "center-pin";
-    center.title = "Search center";
-    markers.current.push(
-      new maplibregl.Marker({ element: center })
-        .setLngLat([query.lng, query.lat])
-        .addTo(m),
-    );
-    for (const row of rows) {
-      if (!row.coordinates) continue;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `property-marker ${selected === row.id ? "selected" : ""}`;
-      button.setAttribute("aria-label", `Map property ${row.id}`);
-      button.dataset.propertyId = row.id;
-      button.textContent = row.permits.some(
-        (x) => x.status === "open" && x.kind !== "other",
-      )
-        ? "P"
-        : "•";
-      button.onclick = (e) => {
-        e.stopPropagation();
-        onSelect(row);
-      };
+    const renderMarkers = () => {
+      markers.current.forEach((x) => x.remove());
+      markers.current = [];
+      const center = document.createElement("div");
+      center.className = "center-pin";
+      center.title = "Search center";
       markers.current.push(
-        new maplibregl.Marker({ element: button })
-          .setLngLat([row.coordinates.lng, row.coordinates.lat])
+        new maplibregl.Marker({ element: center })
+          .setLngLat([query.lng, query.lat])
           .addTo(m),
       );
-    }
+      for (const group of declutter(rows, (p) => m.project([p.lng, p.lat]))) {
+        const row = group.members[0];
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `property-marker ${group.members.some((p) => p.id === selected) ? "selected" : ""}`;
+        button.dataset.propertyIds = JSON.stringify(
+          group.members.map((p) => p.id),
+        );
+        if (group.members.length === 1) {
+          button.setAttribute("aria-label", `Map property ${row.id}`);
+          button.dataset.propertyId = row.id;
+          button.textContent = row.permits.some(
+            (x) => x.status === "open" && x.kind !== "other",
+          )
+            ? "P"
+            : "•";
+          button.onclick = (e) => {
+            e.stopPropagation();
+            onSelect(row);
+          };
+        } else {
+          button.setAttribute(
+            "aria-label",
+            `Zoom to ${group.members.length} grouped properties`,
+          );
+          button.classList.add("property-cluster");
+          button.textContent = String(group.members.length);
+          button.onclick = (e) => {
+            e.stopPropagation();
+            m.easeTo({
+              center: [group.lng, group.lat],
+              zoom: Math.min(18, m.getZoom() + 2),
+              duration: 300,
+            });
+          };
+        }
+        markers.current.push(
+          new maplibregl.Marker({ element: button })
+            .setLngLat([group.lng, group.lat])
+            .addTo(m),
+        );
+      }
+    };
+    renderMarkers();
+    m.on("moveend", renderMarkers);
+    return () => {
+      m.off("moveend", renderMarkers);
+    };
   }, [query, rows, ready, selected, onSelect]);
 
   useEffect(() => {
@@ -233,6 +289,12 @@ export function FieldMap({
             ? "maplibre"
             : "loading"
       }
+      data-property-ids={JSON.stringify(
+        rows
+          .filter((p) => p.coordinates)
+          .map((p) => p.id)
+          .sort(),
+      )}
       aria-label="Map and search area"
     >
       <div ref={container} className="map-canvas" />
@@ -240,8 +302,10 @@ export function FieldMap({
         <span className="map-label">OAKLAND COUNTY, MI</span>
         <span className="map-label muted">
           {basemap
-            ? approvedProvider.kind === "raster"
-              ? approvedProvider.attribution
+            ? approvedProvider.kind !== "offline"
+              ? approvedProvider.kind === "amazon-location"
+                ? "Amazon Location · Standard"
+                : approvedProvider.attribution
               : "Offline coordinate plot"
             : "Basemap unavailable · points retained"}
         </span>
@@ -297,9 +361,19 @@ export function FieldMap({
         </span>
         <span>
           {synthetic ? "Synthetic positions" : "Official source coordinates"} ·{" "}
-          {approvedProvider.kind === "offline"
-            ? "no external tiles"
-            : approvedProvider.attribution}
+          {approvedProvider.kind === "offline" ? (
+            "no external tiles"
+          ) : approvedProvider.kind === "amazon-location" ? (
+            <a
+              href="https://docs.aws.amazon.com/location/latest/developerguide/data-attribution.html"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Amazon Location data attribution
+            </a>
+          ) : (
+            approvedProvider.attribution
+          )}
         </span>
       </div>
       {placing && (

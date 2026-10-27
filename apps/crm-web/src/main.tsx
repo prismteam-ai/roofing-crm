@@ -1,3 +1,10 @@
+import { ReportContext } from "./ReportContext";
+import { BUILD_IDENTITY } from "../../../packages/runtime-config/src/index";
+import {
+  amazonLocationProvider,
+  OFFLINE_BASEMAP,
+  type BasemapProvider,
+} from "../../../packages/map-domain/src/basemap";
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
@@ -59,7 +66,7 @@ const basis = (p: Property) =>
   ({
     completed_roof: "Completed roof evidence",
     completed_construction: "Construction evidence",
-    built_year: "Built-year proxy",
+    built_year: "Building year proxy",
     unknown: "Age unavailable",
   })[p.roof.basis];
 const declaredSynthetic = (property: Property) =>
@@ -76,7 +83,12 @@ function App() {
     queryFromUrl(location.search),
   );
   const [health, setHealth] = useState<
-    (OracleHealth & { accessMode?: string; provider?: string }) | null
+    | (OracleHealth & {
+        accessMode?: string;
+        provider?: string;
+        model?: { id: string; region: string; promptRevision: string };
+      })
+    | null
   >(null);
   const [ready, setReady] = useState(false);
   const [accessCode, setAccessCode] = useState("");
@@ -89,6 +101,8 @@ function App() {
   const [selected, setSelected] = useState<Property | null>(null);
   const [placing, setPlacing] = useState(false);
   const [gps, setGps] = useState("");
+  const [mapProvider, setMapProvider] =
+    useState<BasemapProvider>(OFFLINE_BASEMAP);
   const [basemap, setBasemap] = useState(true);
   const [view, setView] = useState<"opportunities" | "leads">("opportunities");
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -127,6 +141,7 @@ function App() {
     closeDetail();
     setReady(false);
     setNeedsAccess(true);
+    setMapProvider(OFFLINE_BASEMAP);
     setResult(null);
     setLeads([]);
     setAnswer(null);
@@ -160,7 +175,11 @@ function App() {
     setBootError("");
     try {
       const raw = await api<
-        OracleHealth & { accessMode?: string; provider?: string }
+        OracleHealth & {
+          accessMode?: string;
+          provider?: string;
+          model?: { id: string; region: string; promptRevision: string };
+        }
       >("/api/health");
       if (
         generation !== bootstrapGeneration.current ||
@@ -171,6 +190,7 @@ function App() {
         ...OracleHealthSchema.parse(raw),
         accessMode: raw.accessMode,
         provider: raw.provider,
+        model: raw.model,
       };
       setHealth(status);
       let id = sid;
@@ -471,16 +491,38 @@ function App() {
         setStatus((error as Error).message);
     }
   };
+  useEffect(() => {
+    if (!ready) return;
+    const epoch = sessionGeneration.current;
+    void api<{ kind: string }>("/api/map-config")
+      .then((value) => {
+        if (!sameSession(epoch)) return;
+        setMapProvider(
+          value.kind === "amazon-location"
+            ? amazonLocationProvider(value, location.origin)
+            : OFFLINE_BASEMAP,
+        );
+      })
+      .catch(() => {
+        if (sameSession(epoch)) setMapProvider(OFFLINE_BASEMAP);
+      });
+  }, [ready, sid]);
   const selectedLead = leads.find(
     (x) => x.propertyId === selected?.id && x.snapshotId === selectedSnapshot,
   );
   return (
     <div
       className="app-shell"
+      data-head={BUILD_IDENTITY.head}
+      data-build-id={BUILD_IDENTITY.buildId}
+      data-region={BUILD_IDENTITY.region}
+      data-stage={BUILD_IDENTITY.stage}
+      data-model-id={health?.model?.id ?? ""}
+      data-model-region={health?.model?.region ?? ""}
       data-snapshot-id={query.snapshotId}
       data-query-hash={result?.queryHash ?? ""}
       data-query-generation={seq.current}
-      data-mode={synthetic ? "synthetic" : "real-public"}
+      data-mode={health?.dataMode ?? (synthetic ? "synthetic" : "real-public")}
     >
       <aside className="sidebar">
         <a className="brand" href="/" aria-label="Prism Roofing CRM">
@@ -569,7 +611,11 @@ function App() {
           </div>
           <div className="topbar-right">
             <span className="fixture-badge">
-              {synthetic ? "SYNTHETIC DEMO" : "REAL PUBLIC EVIDENCE"}
+              {synthetic
+                ? "SYNTHETIC DEMO"
+                : health?.dataMode === "protected-real"
+                  ? "PROTECTED REAL EVIDENCE"
+                  : "REAL PUBLIC EVIDENCE"}
             </span>
             {health?.accessMode === "review-session" && ready && (
               <button className="text-button" onClick={() => void signOut()}>
@@ -892,6 +938,7 @@ function App() {
                   onSelect={choose}
                   basemap={basemap}
                   synthetic={synthetic}
+                  provider={mapProvider}
                 />
                 <section
                   className="property-list"
@@ -982,7 +1029,13 @@ function App() {
                     <p>Turn a question into the same typed property search.</p>
                   </div>
                   <span className="offline-label">
-                    DETERMINISTIC · NO INFERENCE
+                    {answer?.mode === "deterministic-offline"
+                      ? "DETERMINISTIC · NO INFERENCE"
+                      : answer?.mode === "bedrock-converse"
+                        ? "NOVA · GROUNDED RETRIEVAL"
+                        : health?.provider === "bedrock-converse"
+                          ? "NOVA ENABLED · BOUNDED"
+                          : "DETERMINISTIC · NO INFERENCE"}
                   </span>
                 </div>
                 <div className="agent-input">
@@ -1048,7 +1101,9 @@ function App() {
                 <span>
                   {synthetic
                     ? "Synthetic fixture · separate from real data"
-                    : "Official public evidence · coverage limitations apply"}
+                    : health?.dataMode === "protected-real"
+                      ? "Protected real evidence · low-confidence building year proxies"
+                      : "Official public evidence · coverage limitations apply"}
                 </span>
               </div>
             </>
@@ -1277,6 +1332,15 @@ function App() {
               key={`${p.sourceId}:${p.recordId}:${p.digest}`}
             >
               <b>{p.sourceId}</b>
+              {p.sourceId.startsWith("official-") &&
+                p.sourceId.endsWith("-sales-pdf") && (
+                  <ReportContext
+                    key={`${sid}:${selected.id}:${p.recordId}`}
+                    sourceId={p.sourceId}
+                    snapshotId={query.snapshotId}
+                    recordId={p.recordId}
+                  />
+                )}
               <span>
                 {p.recordId} · {p.kind}
               </span>

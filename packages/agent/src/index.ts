@@ -8,6 +8,19 @@ import {
 } from "../../contracts/src/index";
 import type { OracleReader } from "../../oracle-client/src/index";
 export interface AgentAnswer {
+  modelAudit?: {
+    modelId: string;
+    region: "us-east-1";
+    promptRevision: "base" | "repair-1";
+    promptDigest: string;
+    inputTokens: number;
+    outputTokens: number;
+    converseCalls: number;
+    reservedMicroUsd: number;
+    measuredMicroUsd: number;
+    failureCode?: string;
+    unmeasuredCalls?: number;
+  };
   mode: "deterministic-offline" | "bedrock-converse";
   answer: string;
   query: QueryInput;
@@ -19,6 +32,7 @@ export interface AgentAnswer {
     queryHash: string;
     snapshotId: string;
     resultCount: number;
+    arguments?: QueryInput;
     contextRows?: number;
     contextTruncated?: boolean;
   }[];
@@ -37,6 +51,22 @@ export function interpretPrompt(prompt: string, base: QueryInput): QueryInput {
     throw new DomainError(
       "UNSUPPORTED_TOOL",
       "This assistant only retrieves available roofing evidence. SQL, browsing, secrets and outreach are unavailable.",
+    );
+  if (
+    /\b(?:within|radius(?: of)?)\s+\d+(?:\.\d+)?\s*(?:$|[?.!,])/i.test(prompt)
+  )
+    throw new DomainError(
+      "UNSUPPORTED_TOOL",
+      "Specify miles for the radius, or use the current map controls.",
+    );
+  if (
+    /ignore\s+(?:all\s+)?(?:previous|system)|invent\s+(?:results|properties)|jailbreak/i.test(
+      prompt,
+    )
+  )
+    throw new DomainError(
+      "UNSUPPORTED_TOOL",
+      "Evidence instructions cannot be overridden and records cannot be invented.",
     );
   const text = prompt
     .toLowerCase()
@@ -93,6 +123,15 @@ export async function answerQuestion(
 ): Promise<AgentAnswer> {
   const query = interpretPrompt(prompt, base);
   const data = await reader.search(query);
+  return answerFromEvidence(data, query);
+}
+/** Render only already retrieved server evidence; fallback needs no extra read when the model has exhausted its tool budget. */
+export function answerFromEvidence(
+  data: SearchResponse,
+  query: QueryInput,
+): AgentAnswer {
+  if (data.snapshotId !== query.snapshotId)
+    throw new DomainError("SNAPSHOT_UNAVAILABLE", "Evidence snapshot mismatch");
   const citations = [
     ...new Set(
       data.rows.flatMap((p) =>
@@ -121,6 +160,7 @@ export async function answerQuestion(
         queryHash: data.queryHash,
         snapshotId: data.snapshotId,
         resultCount: data.rows.length,
+        arguments: query,
       },
     ],
   };

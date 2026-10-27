@@ -1,0 +1,50 @@
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+import { z } from "zod";
+export const LocationConfigSchema = z
+  .object({
+    apiKey: z.string().min(10).max(2048),
+    allowedOrigin: z.string().url(),
+    region: z.literal("us-east-1"),
+    style: z.literal("Standard"),
+    expiresAt: z.iso.datetime(),
+    restrictionsDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
+export function mapConfiguration(
+  secretId: string,
+  client = new SecretsManagerClient({ region: "us-east-1", maxAttempts: 1 }),
+  clock = Date.now,
+) {
+  let cached: { until: number; value: unknown } | undefined;
+  return async () => {
+    if (cached && cached.until > clock()) return cached.value;
+    const out = await client.send(
+      new GetSecretValueCommand({ SecretId: secretId }),
+    );
+    const root = JSON.parse(out.SecretString ?? "{}");
+    if (!root.locationMap) return { kind: "offline" };
+    const config = LocationConfigSchema.parse(root.locationMap),
+      origin = new URL(config.allowedOrigin);
+    if (
+      origin.protocol !== "https:" ||
+      origin.username ||
+      origin.password ||
+      origin.pathname !== "/" ||
+      origin.search ||
+      origin.hash ||
+      origin.origin !== config.allowedOrigin ||
+      !/^d[a-z0-9]+\.cloudfront\.net$/.test(origin.hostname) ||
+      Date.parse(config.expiresAt) <= clock()
+    )
+      throw new Error("Restricted map configuration unavailable");
+    const value = { kind: "amazon-location", ...config };
+    cached = {
+      until: Math.min(clock() + 60000, Date.parse(config.expiresAt)),
+      value,
+    };
+    return value;
+  };
+}

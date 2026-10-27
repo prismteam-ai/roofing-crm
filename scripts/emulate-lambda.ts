@@ -1,3 +1,5 @@
+import { MemoryCampaignStore } from "../packages/agent/src/campaign";
+import { MICRO_MODEL } from "../packages/runtime-config/src/index";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -31,6 +33,7 @@ const bundleImportMs = performance.now() - importStart;
 const leads = new LeadStore(":memory:");
 const sessions = new MemorySessionStore();
 const quota = new MemoryQuotaStore();
+const campaign = new MemoryCampaignStore();
 // Ephemeral test-only material stays in process memory and is never printed or retained.
 const entry = randomUUID(),
   access = new AccessService({
@@ -137,9 +140,18 @@ const handler = packaged.createHostedHandler(
     quota,
     access: async () => access,
     provider,
+    campaign,
+    price: async () => ({
+      modelId: MICRO_MODEL,
+      region: "us-east-1",
+      inputUsdPerMillion: 0.035,
+      outputUsdPerMillion: 0.14,
+      verifiedAt: new Date().toISOString(),
+      source: "https://aws.amazon.com/bedrock/pricing/",
+    }),
   }),
   () => oracle,
-  () => "test-only-fake-model",
+  () => MICRO_MODEL,
 );
 const checks: { route: string; status: number; latencyMs: number }[] = [];
 const sessionState: { cookie?: string } = {};
@@ -212,9 +224,23 @@ const answer = JSON.parse(
       query,
     })
   ).body,
-) as { citations: string[] };
+) as {
+  citations: string[];
+  modelAudit: {
+    converseCalls: number;
+    measuredMicroUsd: number;
+    reservedMicroUsd: number;
+  };
+};
 if (answer.citations[0] !== "synthetic:SYN-EMULATED" || fakeProviderCalls !== 2)
   throw new Error("Packaged provider grounding failed");
+if (
+  answer.modelAudit.converseCalls !== 2 ||
+  answer.modelAudit.measuredMicroUsd <= 0 ||
+  answer.modelAudit.reservedMicroUsd !== 1120 ||
+  campaign.audit.length !== 3
+)
+  throw new Error("Packaged durable campaign/usage audit failed");
 await invoke("DELETE", "/api/session");
 await invoke("POST", "/api/search", query, 401);
 const malformed = await handler({
