@@ -106,6 +106,26 @@ test("CRM independent and combined filters preserve list/map identity", async ({
       [...new Set(nodes.map((n) => n.getAttribute("data-property-id")))].sort(),
     );
   expect(map).toEqual(list);
+  const mapRegion = page.getByTestId("property-map");
+  const canvas = mapRegion.locator("canvas.maplibregl-canvas");
+  await expect(canvas).toBeVisible();
+  const mapBounds = await mapRegion.boundingBox();
+  const canvasBounds = await canvas.boundingBox();
+  expect(canvasBounds!.width).toBeGreaterThan(mapBounds!.width * 0.9);
+  expect(canvasBounds!.height).toBeGreaterThan(mapBounds!.height * 0.9);
+  const propertyMarkers = mapRegion.locator("[data-property-id]");
+  for (let i = 0; i < (await propertyMarkers.count()); i++) {
+    await expect(propertyMarkers.nth(i)).toBeInViewport();
+    const markerBounds = await propertyMarkers.nth(i).boundingBox();
+    expect(markerBounds!.x).toBeGreaterThanOrEqual(mapBounds!.x);
+    expect(markerBounds!.y).toBeGreaterThanOrEqual(mapBounds!.y);
+    expect(markerBounds!.x + markerBounds!.width).toBeLessThanOrEqual(
+      mapBounds!.x + mapBounds!.width,
+    );
+    expect(markerBounds!.y + markerBounds!.height).toBeLessThanOrEqual(
+      mapBounds!.y + mapBounds!.height,
+    );
+  }
   await screenshot(page, "crm-search-map");
 });
 test("GPS denied uses pin fallback and radius/pin state are URL-addressable", async ({
