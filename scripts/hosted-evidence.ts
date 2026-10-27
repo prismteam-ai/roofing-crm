@@ -1,7 +1,12 @@
+import {
+  assertFrontendIdentity,
+  assertAssetDigests,
+} from "../packages/hosted-runtime/src/evidence-identity";
+import type { RuntimeIdentity } from "../packages/hosted-runtime/src/release";
 import { queryFromUrl } from "../packages/map-domain/src/index";
 /** Parent-invoked clean-browser proof. Keys/codes and raw protected observation rows are never returned. */
 import { chromium, expect } from "@playwright/test";
-import { writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 const get = (k: string) => {
@@ -18,6 +23,28 @@ if (
   dir.startsWith(process.cwd() + path.sep)
 )
   throw new Error("Exact review origin/private evidence destination required");
+const hash = (value: Uint8Array | string) =>
+  createHash("sha256").update(value).digest("hex");
+const packaged = JSON.parse(
+  await readFile("build/release-package.json", "utf8"),
+) as { identity: RuntimeIdentity; archiveSha256: string };
+const archiveSha = hash(await readFile("build/crm-lambda.zip"));
+if (
+  archiveSha !== get("PRISM_EXPECTED_ARCHIVE_SHA256") ||
+  archiveSha !== packaged.archiveSha256 ||
+  packaged.identity.head !== get("PRISM_EXPECTED_HEAD") ||
+  packaged.identity.tree !== get("PRISM_EXPECTED_TREE")
+)
+  throw new Error("Evidence package does not match the private release pins");
+let expectedAssets: Record<string, string> | undefined;
+if (process.env.PRISM_EXPECTED_FRONTEND_ASSET_MANIFEST) {
+  const raw = await readFile(
+    process.env.PRISM_EXPECTED_FRONTEND_ASSET_MANIFEST,
+  );
+  if (hash(raw) !== get("PRISM_EXPECTED_FRONTEND_ASSET_MANIFEST_SHA256"))
+    throw new Error("Expected frontend manifest digest mismatch");
+  expectedAssets = JSON.parse(raw.toString("utf8")) as Record<string, string>;
+}
 let code = "";
 for await (const x of process.stdin) {
   code += String(x);
@@ -58,6 +85,20 @@ try {
       viewport: { width: 1440, height: 1100 },
     }),
     page = await context.newPage();
+  const assetDigests: Record<string, string> = {},
+    assetReads: Promise<void>[] = [];
+  page.on("response", (response) => {
+    const u = new URL(response.url());
+    if (
+      u.origin === origin &&
+      /^\/assets\/[A-Za-z0-9_.-]+\.(?:js|css)$/.test(u.pathname)
+    )
+      assetReads.push(
+        response.body().then((body) => {
+          assetDigests[u.pathname.slice(1)] = hash(body);
+        }),
+      );
+  });
   await context.route("**/*", async (route) => {
     const u = new URL(route.request().url());
     if (
@@ -108,6 +149,26 @@ try {
           .map((a) => [a.name, a.value]),
       ),
     );
+  assertFrontendIdentity(state, health, packaged.identity);
+  if (
+    process.env.PRISM_ORACLE_ORIGIN &&
+    state["data-oracle-origin"] !== process.env.PRISM_ORACLE_ORIGIN
+  )
+    throw new Error("Rendered Oracle link does not match the approved origin");
+  const frontendConfigSha256 = hash(
+    JSON.stringify({
+      oracleOrigin: state["data-oracle-origin"],
+      region: state["data-region"],
+      stage: state["data-stage"],
+    }),
+  );
+  if (
+    process.env.PRISM_EXPECTED_FRONTEND_CONFIG_SHA256 &&
+    frontendConfigSha256 !== process.env.PRISM_EXPECTED_FRONTEND_CONFIG_SHA256
+  )
+    throw new Error("Rendered frontend configuration digest mismatch");
+  await Promise.all(assetReads);
+  if (expectedAssets) assertAssetDigests(assetDigests, expectedAssets);
   const snapshot = health.snapshotId,
     query = queryFromUrl(new URL(page.url()).search, snapshot);
   const response = await context.request.post(`${origin}/api/search`, {
@@ -149,6 +210,16 @@ try {
     snapshotId: snapshot,
     snapshotDigest: health.snapshotDigest ?? health.digest,
     dom: state,
+    frontendIdentityVerified: true,
+    frontendConfigSha256,
+    assetDigests,
+    ...(expectedAssets
+      ? {
+          expectedFrontendAssetManifestSha256: get(
+            "PRISM_EXPECTED_FRONTEND_ASSET_MANIFEST_SHA256",
+          ),
+        }
+      : {}),
     assertedQuery: query,
     positiveCount: result.total,
     renderedIdsDigest: createHash("sha256")

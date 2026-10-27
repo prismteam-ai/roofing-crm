@@ -514,6 +514,10 @@ function App() {
     <div
       className="app-shell"
       data-head={BUILD_IDENTITY.head}
+      data-tree={BUILD_IDENTITY.tree}
+      data-oracle-origin={
+        import.meta.env.VITE_ORACLE_STUDIO_URL ?? "http://127.0.0.1:4173"
+      }
       data-build-id={BUILD_IDENTITY.buildId}
       data-region={BUILD_IDENTITY.region}
       data-stage={BUILD_IDENTITY.stage}

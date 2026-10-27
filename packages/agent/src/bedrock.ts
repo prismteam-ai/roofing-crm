@@ -3,6 +3,7 @@ import {
   ConverseCommand,
   type ConverseCommandInput,
   type ConverseCommandOutput,
+  type BedrockRuntimeClientConfig,
   type Message,
 } from "@aws-sdk/client-bedrock-runtime";
 import {
@@ -26,9 +27,19 @@ export interface ConverseTransport {
   ): Promise<ConverseCommandOutput>;
 }
 /** Construction has no service effect. Only an explicitly enabled hosted runtime may call converse. */
-export function bedrockTransport(region: string): ConverseTransport {
+export function bedrockTransport(
+  region: string,
+  options: Pick<
+    BedrockRuntimeClientConfig,
+    "requestHandler" | "credentials"
+  > = {},
+): ConverseTransport {
   reviewRegion(region);
-  const client = new BedrockRuntimeClient({ region, maxAttempts: 1 });
+  const client = new BedrockRuntimeClient({
+    ...options,
+    region,
+    maxAttempts: 1,
+  });
   return {
     converse: (input, signal) =>
       client.send(new ConverseCommand(input), { abortSignal: signal }),
@@ -260,11 +271,23 @@ export async function answerWithBedrock(
         Math.max(1, time - (Date.now() - started)),
         controller,
       );
-    const response = await deadline(
-      provider.converse(requestFor(messages), controller.signal),
-      Math.max(1, time - (Date.now() - started)),
-      controller,
-    );
+    let response: ConverseCommandOutput;
+    try {
+      response = await deadline(
+        Promise.resolve().then(() =>
+          provider.converse(requestFor(messages), controller.signal),
+        ),
+        Math.max(1, time - (Date.now() - started)),
+        controller,
+      );
+    } catch (error) {
+      if (error instanceof DomainError) throw error;
+      // SDK/network failures are availability failures. Never return provider messages, request IDs or metadata.
+      throw new DomainError(
+        "QUERY_TIMEOUT",
+        "Model provider unavailable; deterministic evidence fallback is required",
+      );
+    }
     const usage = response.usage;
     if (
       !usage ||

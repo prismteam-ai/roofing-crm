@@ -36,6 +36,11 @@ export interface CampaignAudit {
   outputTokens: number;
   totalTokens: number;
   measuredMicroUsd?: number;
+  reservedMicroUsd?: number;
+  unmeasuredCalls?: number;
+  converseCalls?: number;
+  failureCode?: string;
+  status?: "provider-failed";
   evidence?: {
     queryHash: string[];
     snapshotId: string;

@@ -413,6 +413,25 @@ export function createHostedHandler(
                       ))
                   )
                     throw error;
+                  await r.campaign.record({
+                    requestId,
+                    subjectDigest,
+                    promptDigest,
+                    modelId: model,
+                    revision,
+                    region: REVIEW_REGION,
+                    at: new Date(clock()).toISOString(),
+                    callIndex: 0,
+                    inputTokens,
+                    outputTokens,
+                    totalTokens: inputTokens + outputTokens,
+                    reservedMicroUsd,
+                    measuredMicroUsd,
+                    unmeasuredCalls: converseCalls - measuredCalls,
+                    converseCalls,
+                    failureCode: error.code,
+                    status: "provider-failed",
+                  });
                   const fallback = cached
                     ? answerFromEvidence(cached.data, cached.query)
                     : await answerQuestion(boundedOracle, prompt, query);
