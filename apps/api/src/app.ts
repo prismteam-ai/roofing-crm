@@ -1,3 +1,4 @@
+import type { RoutingArchitecture } from "../../../packages/agent/src/architecture";
 import { IntentRejection } from "../../../packages/agent/src/intent/types";
 import { assessmentEvidence } from "../../../packages/hosted-runtime/src/assessment-evidence";
 import {
@@ -48,7 +49,7 @@ export interface AppDependencies {
     id: string;
     region: "us-east-1";
     promptRevision: "base" | "repair-1";
-    architecture: "one-call-grounded-selection-v1";
+    architecture: RoutingArchitecture;
     phase: string;
     requestScope?: "validated-agent-executions";
     limits: Readonly<Record<string, number>>;

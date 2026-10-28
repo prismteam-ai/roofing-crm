@@ -127,7 +127,7 @@ const provider: ConverseTransport = {
                 toolUseId: "fake-read",
                 name: "selectGroundedEvidence",
                 input: {
-                  selections: [{ ordinal: 0, reason: "context_match" }],
+                  ordinals: [0],
                 },
               },
             },
@@ -264,7 +264,7 @@ if (answer.citations[0] !== "synthetic:SYN-EMULATED" || fakeProviderCalls !== 1)
   throw new Error("Packaged provider grounding failed");
 if (
   answer.mode !== "bedrock-grounded" ||
-  answer.modelAudit.architecture !== "one-call-grounded-selection-v1" ||
+  answer.modelAudit.architecture !== "one-call-grounded-selection-v2" ||
   answer.modelAudit.evidenceDigest !== answer.toolTrace[0].evidenceDigest ||
   answer.modelAudit.minimizedRowCount !== 1 ||
   answer.toolTrace[0].presentationTool !== "selectGroundedEvidence" ||

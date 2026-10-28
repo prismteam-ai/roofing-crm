@@ -12,6 +12,7 @@ import {
   ROUTING_ARCHITECTURE,
   minimizedEvidenceContext,
   minimizedEvidenceRow,
+  rationaleFromMinimizedFacts,
 } from "./bedrock";
 import { CAMPAIGN_PHASE } from "./campaign";
 import { P5_LIVE_CORPUS } from "./intent/live-corpus";
@@ -158,6 +159,8 @@ export function assessAnswer(
   const validSelection =
     answer.mode !== "bedrock-grounded" ||
     (Array.isArray(ordinals) &&
+      ordinals.length === rows.length &&
+      ordinals.length > 0 &&
       new Set(ordinals).size === ordinals.length &&
       ordinals.every(
         (n) =>
@@ -165,7 +168,7 @@ export function assessAnswer(
           n >= 0 &&
           n < (answer.toolTrace[0].minimizedRowCount ?? 0),
       ) &&
-      (!q.sort || ordinals.every((n, i) => i === 0 || n > ordinals[i - 1])) &&
+      ordinals.every((n, i) => i === 0 || n > ordinals[i - 1]) &&
       (!reference || ordinals.every((n) => n < reference.rows.length)) &&
       (!reference?.rows.length || ordinals.length > 0));
   const selectedReference =
@@ -244,6 +247,19 @@ export function assessAnswer(
     (answer.mode !== "bedrock-grounded" ||
       (answer.toolTrace[0].modelSawMinimizedFacts === true &&
         validSelection &&
+        answer.toolTrace[0].presentationProtocol === ROUTING_ARCHITECTURE &&
+        answer.toolTrace[0].rationaleSource === "server-minimized-facts" &&
+        answer.toolTrace[0].presentationArgumentsDigest ===
+          digest({ ordinals }) &&
+        JSON.stringify(answer.toolTrace[0].rationaleCategories) ===
+          JSON.stringify(
+            rows.map((row, i) =>
+              rationaleFromMinimizedFacts(
+                minimizedEvidenceRow(row, ordinals![i]),
+                q,
+              ),
+            ),
+          ) &&
         /^[a-f0-9]{64}$/.test(answer.toolTrace[0].evidenceDigest ?? "") &&
         (!reference ||
           (answer.toolTrace[0].retrievedRowCount === reference.rows.length &&

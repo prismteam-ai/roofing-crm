@@ -30,7 +30,7 @@ const usage = { inputTokens: 100, outputTokens: 20, totalTokens: 120 };
 const toolUse = {
   toolUseId: "synthetic-tool-use-id",
   name: "selectGroundedEvidence",
-  input: { selections: [{ ordinal: 0, reason: "context_match" }] },
+  input: { ordinals: [0] },
 };
 it("forces exactly one presentation tool with minimized retrieved facts and no raw record IDs", async () => {
   const requests: ConverseCommandInput[] = [];

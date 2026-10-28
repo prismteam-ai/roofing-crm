@@ -63,6 +63,17 @@ it("cannot promote partial, historical, source-empty or unmeasured failures into
   expect(qualityFailure(report, "base")).toMatch(/^[a-f0-9]{64}$/);
   for (const invalid of [
     { ...report, phase: "prism-assessment-p4" },
+    { ...report, architecture: "one-call-grounded-selection-v1" },
+    {
+      ...report,
+      outcomes: report.outcomes.map((o) => ({
+        ...o,
+        modelAudit: {
+          ...measured,
+          architecture: "one-call-grounded-selection-v1",
+        },
+      })),
+    },
     { ...report, outcomes: report.outcomes.slice(1) },
     {
       ...report,

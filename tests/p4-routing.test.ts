@@ -175,7 +175,7 @@ for (const item of QUALITY_CORPUS)
                     toolUseId: "synthetic-routing",
                     name: "selectGroundedEvidence",
                     input: {
-                      selections: [{ ordinal: 0, reason: "context_match" }],
+                      ordinals: [0],
                     },
                   },
                 },
@@ -401,7 +401,7 @@ describe("P4 identity and evidence guards", () => {
                       toolUseId: "synthetic-clause",
                       name: "selectGroundedEvidence",
                       input: {
-                        selections: [{ ordinal: 0, reason: "context_match" }],
+                        ordinals: [0],
                       },
                     },
                   },

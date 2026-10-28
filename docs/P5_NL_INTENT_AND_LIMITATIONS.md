@@ -82,11 +82,11 @@ cached deterministic fallback is constructed, the shared row predicate validates
 radius, roof, confidence, owner, sale and qualifying-permit requirements. The
 official place binding and authoritative source ordering must match as well.
 Duration order ranks only the same qualifying permits. The model receives
-minimized facts and returns a strict bounded subset of zero-based ordinals, with
-fixed rationale categories. The server renders source facts and citations.
-Explicit requested ordering cannot be rewritten by selected ordinals. When no
-order was requested, model presentation order may differ from source order;
-the original page still passes source-order validation before selection.
+minimized facts and returns only a strict bounded subset of zero-based numeric
+ordinals. The server derives explanation categories, facts and citations. All
+selected ordinals remain in increasing authoritative source order. The active
+protocol is `one-call-grounded-selection-v2`; historical v1 campaign failures
+cannot authorize a repair or Lite call for v2.
 
 Empty source evidence returns an explicit no-model response. A model failure may
 render the same validated cached page without a second Oracle search. Neither

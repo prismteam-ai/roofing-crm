@@ -2,6 +2,7 @@ import { DomainError } from "../../contracts/src/index";
 export type GroundedFailureDetail =
   | "selection_schema"
   | "selection_ordinals"
+  | "selection_order"
   | "selection_rationale"
   | "usage_invalid"
   | "usage_inconsistent"
@@ -11,6 +12,9 @@ const known: Readonly<Record<string, GroundedFailureDetail>> = Object.freeze({
   "Provider supplied invalid grounded selection arguments": "selection_schema",
   "Grounded selection must be a unique bounded nonempty subset of retrieved ordinals":
     "selection_ordinals",
+  "Provider changed the requested authoritative result order":
+    "selection_order",
+  // Retained to interpret historical v1 receipts; v2 accepts no model rationale.
   "Selection rationale is not supported by the minimized evidence":
     "selection_rationale",
   "Provider token usage was invalid": "usage_invalid",

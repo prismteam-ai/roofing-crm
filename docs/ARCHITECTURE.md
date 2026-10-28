@@ -32,8 +32,11 @@ ledger. Every result must satisfy the shared predicate, including same-permit
 status/duration/business conjunctions. Source order is checked before model or
 fallback. The model sees short ordinals and allowlisted facts, not raw records,
 addresses, owner contacts, source intake bodies or arbitrary tools. It cannot
-change the query or invent IDs/counts/citations. Explicit sort requires increasing
-selected ordinals; an unspecified sort permits bounded presentation reordering.
+change the query or invent IDs/counts/citations. The active `one-call-grounded-selection-v2` protocol accepts only a nonempty
+array of distinct supplied numeric ordinals in increasing source order, including
+when no sort was specified. The server derives explanation categories from the
+same minimized facts; the model supplies no rationale or factual prose. See
+[GROUNDED_SELECTION_V2.md](GROUNDED_SELECTION_V2.md).
 The full match count, retrieved page and selected context remain separate.
 
 An empty complete source page uses no model call. A provider failure can reuse

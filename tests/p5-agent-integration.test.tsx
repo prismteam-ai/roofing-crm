@@ -84,10 +84,7 @@ function provider(
                   toolUseId: "synthetic",
                   name: "selectGroundedEvidence",
                   input: {
-                    selections: ordinals.map((ordinal) => ({
-                      ordinal,
-                      reason: "context_match",
-                    })),
+                    ordinals,
                   },
                 },
               },
@@ -366,7 +363,7 @@ it("the fixed model protocol explicitly retains authoritative source order when 
   const ordered: ConverseTransport = {
     converse: async (request, options) => {
       expect(request.system?.[0].text).toContain(
-        "If boundedQuery.sort is present, retain authoritative source order: return selected supplied ordinals in strictly increasing numeric order.",
+        "distinct supplied numeric row ordinals in strictly increasing order",
       );
       expect(
         JSON.parse(request.messages![0].content![0].text!).boundedQuery.sort,

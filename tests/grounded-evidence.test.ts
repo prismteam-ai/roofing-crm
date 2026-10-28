@@ -179,10 +179,7 @@ it("the grounded model and deterministic path see only known older roofs unless 
                     toolUseId: "age",
                     name: "selectGroundedEvidence",
                     input: {
-                      selections: rows.map((row) => ({
-                        ordinal: row.ordinal,
-                        reason: "context_match",
-                      })),
+                      ordinals: rows.map((row) => row.ordinal),
                     },
                   },
                 },
@@ -305,9 +302,7 @@ it("exposes only literal allowlisted retrieved facts, observed duration, busines
                   toolUseId: "grounded",
                   name: "selectGroundedEvidence",
                   input: {
-                    selections: [
-                      { ordinal: 0, reason: "reported_business_license" },
-                    ],
+                    ordinals: [0],
                   },
                 },
               },

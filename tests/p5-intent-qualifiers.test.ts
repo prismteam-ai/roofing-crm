@@ -198,7 +198,7 @@ it("conditional business projections retain missing-evidence rows through one ac
                   toolUseId: "synthetic",
                   name: "selectGroundedEvidence",
                   input: {
-                    selections: [{ ordinal: 0, reason: "context_match" }],
+                    ordinals: [0],
                   },
                 },
               },

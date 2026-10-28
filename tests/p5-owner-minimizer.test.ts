@@ -162,7 +162,7 @@ it.each([
                       toolUseId: "synthetic-owner-tool",
                       name: "selectGroundedEvidence",
                       input: {
-                        selections: [{ ordinal: 0, reason: "context_match" }],
+                        ordinals: [0],
                       },
                     },
                   },

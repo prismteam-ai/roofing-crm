@@ -1,3 +1,4 @@
+import type { RoutingArchitecture } from "./architecture";
 import {
   propertyMatchesQuery,
   compareQueryRows,
@@ -22,7 +23,7 @@ export interface AgentAnswer {
     region: "us-east-1";
     promptRevision: "base" | "repair-1";
     promptDigest: string;
-    architecture?: "one-call-grounded-selection-v1";
+    architecture?: RoutingArchitecture;
     evidenceDigest?: string;
     minimizedRowCount?: number;
     inputTokens: number;
@@ -59,6 +60,8 @@ export interface AgentAnswer {
     retrievedRowCount?: number;
     selectedOrdinals?: number[];
     rationaleCategories?: string[];
+    rationaleSource?: "server-minimized-facts";
+    presentationProtocol?: RoutingArchitecture;
     presentationTool?: "selectGroundedEvidence";
     presentationArgumentsDigest?: string;
     providerArgumentsDigest?: string;

@@ -206,7 +206,7 @@ const reader: OracleReader = {
   detail: async () => property,
 };
 const toolResponse = (
-  input: unknown = { selections: [{ ordinal: 0, reason: "context_match" }] },
+  input: unknown = { ordinals: [0] },
   name = "selectGroundedEvidence",
 ): ConverseCommandOutput => ({
   $metadata: {},
@@ -581,12 +581,7 @@ describe("Converse orchestration using only fake transport", () => {
           .retrievedEvidence.rows;
         expect(facts[0].roof.ageYears).toBe(property.roof.ageYears);
         return toolResponse({
-          selections: facts
-            .map((r: { ordinal: number }) => ({
-              ordinal: r.ordinal,
-              reason: "context_match",
-            }))
-            .reverse(),
+          ordinals: facts.map((r: { ordinal: number }) => r.ordinal),
         });
       },
     };
@@ -606,7 +601,7 @@ describe("Converse orchestration using only fake transport", () => {
     const projected = answer.toolTrace[0].minimizedRowCount!;
     expect(projected).toBeGreaterThan(0);
     expect(projected).toBeLessThanOrEqual(50);
-    expect(answer.results).toEqual(completeRows.slice(0, projected).reverse());
+    expect(answer.results).toEqual(completeRows.slice(0, projected));
     expect(answer.toolTrace[0]).toMatchObject({
       totalMatched: 500,
       retrievedRowCount: 50,
@@ -618,23 +613,20 @@ describe("Converse orchestration using only fake transport", () => {
   it("rejects malformed/other/multiple/mixed presentation tools and query mutation fields after its one bounded retrieval", async () => {
     const responses = [
       toolResponse({
-        selections: [{ ordinal: 0, reason: "context_match" }],
+        ordinals: [0],
         sql: "select",
       }),
-      toolResponse(
-        { selections: [{ ordinal: 0, reason: "context_match" }] },
-        "browse",
-      ),
+      toolResponse({ ordinals: [0] }, "browse"),
       toolResponse({
-        selections: [{ ordinal: 0, reason: "context_match" }],
+        ordinals: [0],
         snapshotId: "other",
       }),
       toolResponse({
-        selections: [{ ordinal: 0, reason: "context_match" }],
+        ordinals: [0],
         lat: 40,
       }),
       toolResponse({
-        selections: [{ ordinal: 0, reason: "context_match" }],
+        ordinals: [0],
         cursor: "unapproved",
       }),
       toolResponse({
@@ -643,7 +635,7 @@ describe("Converse orchestration using only fake transport", () => {
           { ordinal: 0, reason: "context_match" },
         ],
       }),
-      toolResponse({ selections: [{ ordinal: 1, reason: "context_match" }] }),
+      toolResponse({ ordinals: [1] }),
       toolResponse({ selections: [] }),
       toolResponse({
         selections: [{ ordinal: 0, reason: "observed_bbb_rating" }],

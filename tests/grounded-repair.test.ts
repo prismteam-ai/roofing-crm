@@ -78,100 +78,50 @@ const reader = (empty = false) => ({
   }),
   detail: async () => p,
 });
-it("only repair-1 adds explicit empty/nonempty/zero-based/enum instructions; base prompt stays unchanged", async () => {
+it("v2 base exposes only numeric ordinal protocol; a possible future repair never restores model rationale", async () => {
   let base = "",
     repair = "";
-  await answerWithBedrock(
-    reader(),
-    provider(
-      { selections: [{ ordinal: 0, reason: "context_match" }] },
-      (text) => (base = text),
-    ),
-    "Find evidence",
-    q,
-    { modelId: "synthetic", promptRevision: "base" },
-  );
-  await answerWithBedrock(
-    reader(),
-    provider(
-      { selections: [{ ordinal: 0, reason: "context_match" }] },
-      (text) => (repair = text),
-    ),
-    "Find evidence",
-    q,
-    { modelId: "synthetic", promptRevision: "repair-1" },
-  );
+  for (const revision of ["base", "repair-1"] as const) {
+    const result = await answerWithBedrock(
+      reader(),
+      provider({ ordinals: [0] }, (text) => {
+        if (revision === "base") base = text;
+        else repair = text;
+      }),
+      "Find evidence",
+      q,
+      { modelId: "synthetic", promptRevision: revision },
+    );
+    expect(result.mode).toBe("bedrock-grounded");
+    expect(result.toolTrace[0].rationaleSource).toBe("server-minimized-facts");
+  }
   expect(base).not.toContain("Repair1:");
   expect(repair.startsWith(base)).toBe(true);
-  for (const literal of [
-    '{"selections":[]}',
-    "numeric zero-based integer",
-    "sentinel",
-    "exactly ordinal and reason",
-    "context_match",
-    "at least one item",
-  ])
-    expect(repair).toContain(literal);
-  const valid = await answerWithBedrock(
-    reader(),
-    provider({ selections: [{ ordinal: 0, reason: "context_match" }] }),
-    "Find evidence",
-    q,
-    { modelId: "synthetic", promptRevision: "repair-1" },
-  );
-  expect(valid.mode).toBe("bedrock-grounded");
-  expect(valid.results).toHaveLength(1);
+  expect(base).toContain("only input key is ordinals");
+  expect(repair).toContain('{"ordinals":[0]}');
 });
-it("repair never weakens empty/nonempty/subset/unique/schema/rationale invariants and exposes only a fixed safe failure enum", async () => {
-  for (const [input, empty, detail] of [
-    [{ selections: [] }, false, "selection_ordinals"],
-    [
-      { selections: [{ ordinal: "0", reason: "context_match" }] },
-      false,
-      "selection_schema",
-    ],
-    [
-      { selections: [{ ordinal: -1, reason: "context_match" }] },
-      false,
-      "selection_schema",
-    ],
-    [
-      {
-        selections: [
-          { ordinal: 0, reason: "context_match" },
-          { ordinal: 0, reason: "context_match" },
-        ],
-      },
-      false,
-      "selection_ordinals",
-    ],
+it("v2 rejects empty/non-numeric/subset/unique/extra/model-rationale violations with fixed safe failure enums", async () => {
+  for (const [input, detail] of [
+    [{ ordinals: [] }, "selection_schema"],
+    [{ ordinals: ["0"] }, "selection_schema"],
+    [{ ordinals: [-1] }, "selection_schema"],
+    [{ ordinals: [0, 0] }, "selection_ordinals"],
+    [{ ordinals: [1] }, "selection_ordinals"],
     [
       { selections: [{ ordinal: 0, reason: "observed_bbb_rating" }] },
-      false,
-      "selection_rationale",
+      "selection_schema",
     ],
+    [{ ordinals: [0], reason: "observed_bbb_rating" }, "selection_schema"],
     [
-      {
-        selections: [
-          {
-            ordinal: 0,
-            reason: "context_match",
-            text: "synthetic-private-provider-detail",
-          },
-        ],
-      },
-      false,
+      { ordinals: [0], text: "synthetic-private-provider-detail" },
       "selection_schema",
     ],
   ] as const) {
     try {
-      await answerWithBedrock(
-        reader(empty),
-        provider(input),
-        "Find evidence",
-        q,
-        { modelId: "synthetic", promptRevision: "repair-1" },
-      );
+      await answerWithBedrock(reader(), provider(input), "Find evidence", q, {
+        modelId: "synthetic",
+        promptRevision: "repair-1",
+      });
       throw Error("Invalid selection accepted");
     } catch (error) {
       expect(groundedFailureDetail(error)).toBe(detail);

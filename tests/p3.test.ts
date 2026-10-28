@@ -105,10 +105,10 @@ describe("current durable campaign", () => {
       ),
     ).toBe(true);
   });
-  it("enforces UTC daily80, campaign100 and USD3 reservations without refunds or TTL reset", async () => {
+  it("enforces UTC daily100 validated/daily80 Converse, campaign100 and USD3 reservations without refunds or TTL reset", async () => {
     for (const kind of ["request", "converse"] as const) {
       const daily = new MemoryCampaignStore();
-      for (let i = 0; i < 80; i++)
+      for (let i = 0; i < (kind === "converse" ? 80 : 100); i++)
         await daily.reserve({
           kind,
           subject: `s${i}`,
@@ -176,6 +176,7 @@ describe("current durable campaign", () => {
     await expect(store.authorize(MICRO_MODEL, "repair-1")).rejects.toThrow();
     await expect(store.authorize(LITE_MODEL, "base")).rejects.toThrow();
     const gate = {
+      architecture: "one-call-grounded-selection-v2" as const,
       baseFailureSha256: hash,
       repairAttempts: 1 as const,
       measuredAt: new Date(now).toISOString(),
@@ -187,7 +188,7 @@ describe("current durable campaign", () => {
     ).not.toThrow();
     const report = {
       phase: "prism-assessment-p5",
-      architecture: "one-call-grounded-selection-v1",
+      architecture: "one-call-grounded-selection-v2",
       completedAt: new Date(now).toISOString(),
       modelId: MICRO_MODEL,
       region: "us-east-1",
@@ -203,7 +204,7 @@ describe("current durable campaign", () => {
         modelAudit: {
           modelId: MICRO_MODEL,
           region: "us-east-1",
-          architecture: "one-call-grounded-selection-v1",
+          architecture: "one-call-grounded-selection-v2",
           converseCalls: 1,
           inputTokens: 100,
           unmeasuredCalls: 0,
@@ -472,12 +473,7 @@ describe("P4 exact hosted campaign boundary", () => {
                       toolUseId: `read-${providerCalls}`,
                       name: "selectGroundedEvidence",
                       input: {
-                        selections: [
-                          {
-                            ordinal: malformed ? 49 : 0,
-                            reason: "context_match",
-                          },
-                        ],
+                        ordinals: [malformed ? 49 : 0],
                       },
                     },
                   },

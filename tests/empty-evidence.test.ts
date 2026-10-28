@@ -174,7 +174,7 @@ it("hosted empty requests retain request allowance, audit exact zeros, and canno
                 toolUse: {
                   toolUseId: "synthetic",
                   name: "selectGroundedEvidence",
-                  input: { selections: [] },
+                  input: { ordinals: [] },
                 },
               },
             ],
@@ -295,7 +295,7 @@ it("hosted empty requests retain request allowance, audit exact zeros, and canno
     zero = false;
     const rejected = JSON.parse((await invoke()).body);
     expect(rejected.mode).toBe("deterministic-fallback");
-    expect(rejected.modelAudit.failureDetail).toBe("selection_ordinals");
+    expect(rejected.modelAudit.failureDetail).toBe("selection_schema");
     expect({ reads, calls, prices }).toEqual({ reads: 2, calls: 1, prices: 1 });
     expect(rejected.results).toEqual(nonempty.rows); // the strict failed selection uses the same single cached read
     expect(reservations.map((x) => x.kind)).toEqual([

@@ -41,8 +41,8 @@ license eligibility are unsupported. The vague many-years example prioritizes
 observed durations without inventing a numeric cutoff.
 
 A nonempty grounded answer uses one source search and at most one model call.
-The model chooses ordinals from minimized facts; server rows supply facts and
-citations. Empty evidence says no model was called. Model unavailability produces
+The v2 model chooses only unique numeric ordinals from minimized facts, in
+source order; the server derives explanations, facts and citations. Empty evidence says no model was called. Model unavailability produces
 an explicit deterministic fallback from the same source query, never a model
 success. Zero acquired matches do not prove absence in the county.
 
