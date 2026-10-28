@@ -313,6 +313,7 @@ try {
       result.passed = false;
       result.reason = "empty-model-route-with-nonempty-baseline";
     }
+    result.modelSuccess = result.passed && answer.mode === "bedrock-grounded";
     outcomes.push(result);
   }
 } catch {
