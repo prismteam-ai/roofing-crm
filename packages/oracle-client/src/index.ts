@@ -8,6 +8,7 @@ import {
   QuerySchema,
   SearchResponseSchema,
   DomainError,
+  ErrorCode,
   CONTRACT_VERSION,
   type Property,
   type QueryInput,
@@ -231,20 +232,15 @@ export class OracleClient implements OracleReader {
     }
     if (!response.ok) {
       const record =
-        body && typeof body === "object"
+        body && typeof body === "object" && !Array.isArray(body)
           ? (body as Record<string, unknown>)
           : {};
-      const codes = [
-        "INVALID_CURSOR",
-        "SNAPSHOT_UNAVAILABLE",
-        "INVALID_INPUT",
-        "NOT_AUTHORIZED",
-        "RATE_LIMITED",
-        "QUERY_TIMEOUT",
-      ] as const;
+      const parsed = ErrorCode.safeParse(
+        Object.hasOwn(record, "code") ? record.code : undefined,
+      );
       throw new DomainError(
-        codes.find((c) => c === record.code) ?? "INVALID_INPUT",
-        typeof record.message === "string"
+        parsed.success ? parsed.data : "INVALID_INPUT",
+        Object.hasOwn(record, "message") && typeof record.message === "string"
           ? record.message
           : "Oracle query failed",
       );
