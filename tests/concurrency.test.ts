@@ -464,3 +464,93 @@ it("supports a fresh checkout with absent protected Return paths while preservin
     loadConcurrencyProof(inside, account, [alias], now),
   ).rejects.toThrow("outside repositories and Return");
 });
+
+it("verifies actual successful empty AWS CLI stdout as unreserved without masking reservation or transport failures", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const {
+    parseFunctionConcurrencyOutput,
+    deployedConcurrency,
+    verifyRuntimeConcurrency,
+  } = await import("../packages/hosted-runtime/src/deployment-concurrency");
+  // Replays the observed CLI transport boundary: successful process, zero stdout bytes.
+  const observed = execFileSync(process.execPath, ["-e", "process.exit(0)"], {
+    encoding: "utf8",
+  });
+  expect(observed.length).toBe(0);
+  const policy = deployedConcurrency({
+    ConcurrencyMode: "existing-account-shared",
+    FunctionReservedConcurrency: "none",
+    ExistingAccountConcurrency: "10",
+    FunctionMemoryMiB: "512",
+    ConcurrencyProofSha256: "a".repeat(64),
+    ApiRatePerSecond: "2",
+    ApiBurst: "6",
+  });
+  const readback = { memoryMiB: 512, apiRatePerSecond: 2, apiBurst: 6 };
+  expect(
+    verifyRuntimeConcurrency(policy, {
+      ...readback,
+      reservedConcurrentExecutions:
+        parseFunctionConcurrencyOutput(observed).ReservedConcurrentExecutions,
+    }).actualVerified,
+  ).toBe(true);
+  expect(parseFunctionConcurrencyOutput(" \r\n")).toEqual({});
+  expect(parseFunctionConcurrencyOutput("{}\n")).toEqual({});
+  for (const count of [0, 2, 10]) {
+    const parsed = parseFunctionConcurrencyOutput(
+      JSON.stringify({ ReservedConcurrentExecutions: count }),
+    );
+    expect(parsed.ReservedConcurrentExecutions).toBe(count);
+    expect(() =>
+      verifyRuntimeConcurrency(policy, {
+        ...readback,
+        reservedConcurrentExecutions: parsed.ReservedConcurrentExecutions,
+      }),
+    ).toThrow("Actual Lambda");
+  }
+  const reserved = deployedConcurrency({
+    ConcurrencyMode: "reserved",
+    FunctionReservedConcurrency: "2",
+    ExistingAccountConcurrency: "not-used",
+    FunctionMemoryMiB: "512",
+    ApiRatePerSecond: "2",
+    ApiBurst: "6",
+  });
+  expect(() =>
+    verifyRuntimeConcurrency(reserved, {
+      ...readback,
+      reservedConcurrentExecutions:
+        parseFunctionConcurrencyOutput(observed).ReservedConcurrentExecutions,
+    }),
+  ).toThrow("Actual Lambda");
+  expect(() =>
+    parseFunctionConcurrencyOutput(
+      execFileSync(process.execPath, ["-e", "process.exit(9)"], {
+        encoding: "utf8",
+        stdio: "pipe",
+      }),
+    ),
+  ).toThrow();
+});
+it("rejects nonempty malformed or unexpected Lambda concurrency responses", async () => {
+  const { parseFunctionConcurrencyOutput } =
+    await import("../packages/hosted-runtime/src/deployment-concurrency");
+  for (const raw of [
+    "broken",
+    "null",
+    "[]",
+    "0",
+    "false",
+    '\"\"',
+    '{"Unexpected":1}',
+    '{"ReservedConcurrentExecutions":2,"Unexpected":1}',
+    '{"ReservedConcurrentExecutions":null}',
+    '{"ReservedConcurrentExecutions":"2"}',
+    '{"ReservedConcurrentExecutions":-1}',
+    '{"ReservedConcurrentExecutions":1.5}',
+    '{"ReservedConcurrentExecutions":9007199254740992}',
+  ])
+    expect(() => parseFunctionConcurrencyOutput(raw)).toThrow(
+      "Invalid Lambda concurrency response",
+    );
+});

@@ -11,6 +11,7 @@ import {
   deploymentConcurrency,
   deployedConcurrency,
   verifyRuntimeConcurrency,
+  parseFunctionConcurrencyOutput,
 } from "../packages/hosted-runtime/src/deployment-concurrency";
 import { CONTRACT_VERSION } from "../packages/contracts/src/index";
 import {
@@ -396,7 +397,7 @@ const assertDeployed = (o: Record<string, string>) => {
       `arn:aws:lambda:${pins.region}:${pins.expectedAccountId}:function:${o.RuntimeFunctionName}`
   )
     throw new Error("Actual Lambda identity mismatch");
-  const functionConcurrency = JSON.parse(
+  const functionConcurrency = parseFunctionConcurrencyOutput(
     aws([
       "lambda",
       "get-function-concurrency",

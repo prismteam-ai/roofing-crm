@@ -126,3 +126,37 @@ export function verifyRuntimeConcurrency(
     );
   return { actualVerified: true, ...policy };
 }
+
+/** AWS CLI emits no stdout for a successful unreserved GetFunctionConcurrency call.
+ * Call only after the CLI's nonzero exit has propagated; no other AWS response uses this exception.
+ */
+export function parseFunctionConcurrencyOutput(stdout: string): {
+  ReservedConcurrentExecutions?: number;
+} {
+  if (!stdout.trim()) return {};
+  let value: unknown;
+  try {
+    value = JSON.parse(stdout);
+  } catch {
+    throw new Error("Invalid Lambda concurrency response");
+  }
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    Object.keys(value).some((key) => key !== "ReservedConcurrentExecutions")
+  )
+    throw new Error("Invalid Lambda concurrency response");
+  const reserved = (value as { ReservedConcurrentExecutions?: unknown })
+    .ReservedConcurrentExecutions;
+  if (
+    reserved !== undefined &&
+    (!Number.isSafeInteger(reserved) ||
+      typeof reserved !== "number" ||
+      reserved < 0)
+  )
+    throw new Error("Invalid Lambda concurrency response");
+  return reserved === undefined
+    ? {}
+    : { ReservedConcurrentExecutions: reserved as number };
+}
