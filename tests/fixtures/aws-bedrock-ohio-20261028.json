@@ -1,0 +1,207 @@
+{
+  "provenance": {
+    "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-2/index.json",
+    "capturedAt": "2026-10-28T22:03:37.109789+00:00",
+    "fullCatalogSha256": "a70d0dc26904126b0c892fb56c77390ca481d483a4977bb4eda3bb123cfda71b",
+    "fullCatalogBytes": 1257350,
+    "selection": "Four exact Ohio direct on-demand token products/terms copied without modification; one actual cache product retained as an exclusion witness."
+  },
+  "catalog": {
+    "offerCode": "AmazonBedrock",
+    "version": "20261028192216",
+    "publicationDate": "2026-10-28T19:22:16Z",
+    "products": {
+      "5UG3KNNU32Z3GKP2": {
+        "sku": "5UG3KNNU32Z3GKP2",
+        "productFamily": "Amazon Bedrock",
+        "attributes": {
+          "servicecode": "AmazonBedrock",
+          "location": "US East (Ohio)",
+          "locationType": "AWS Region",
+          "usagetype": "USE2-NovaMicro-input-tokens",
+          "operation": "",
+          "feature": "On-demand Inference",
+          "inferenceType": "Input tokens",
+          "model": "Nova Micro",
+          "regionCode": "us-east-2",
+          "servicename": "Amazon Bedrock"
+        }
+      },
+      "JG8SSMVQ7JJMK7UN": {
+        "sku": "JG8SSMVQ7JJMK7UN",
+        "productFamily": "Amazon Bedrock",
+        "attributes": {
+          "servicecode": "AmazonBedrock",
+          "location": "US East (Ohio)",
+          "locationType": "AWS Region",
+          "usagetype": "USE2-NovaMicro-output-tokens",
+          "operation": "",
+          "feature": "On-demand Inference",
+          "inferenceType": "Output tokens",
+          "model": "Nova Micro",
+          "regionCode": "us-east-2",
+          "servicename": "Amazon Bedrock"
+        }
+      },
+      "68N2Y76KQKQ4CEB8": {
+        "sku": "68N2Y76KQKQ4CEB8",
+        "productFamily": "Amazon Bedrock",
+        "attributes": {
+          "servicecode": "AmazonBedrock",
+          "location": "US East (Ohio)",
+          "locationType": "AWS Region",
+          "usagetype": "USE2-NovaLite-input-tokens",
+          "operation": "",
+          "feature": "On-demand Inference",
+          "inferenceType": "Input tokens",
+          "model": "Nova Lite",
+          "regionCode": "us-east-2",
+          "servicename": "Amazon Bedrock"
+        }
+      },
+      "T4U7KW6SXXKERZG3": {
+        "sku": "T4U7KW6SXXKERZG3",
+        "productFamily": "Amazon Bedrock",
+        "attributes": {
+          "servicecode": "AmazonBedrock",
+          "location": "US East (Ohio)",
+          "locationType": "AWS Region",
+          "usagetype": "USE2-NovaLite-output-tokens",
+          "operation": "",
+          "feature": "On-demand Inference",
+          "inferenceType": "Output tokens",
+          "model": "Nova Lite",
+          "regionCode": "us-east-2",
+          "servicename": "Amazon Bedrock"
+        }
+      }
+    },
+    "terms": {
+      "OnDemand": {
+        "5UG3KNNU32Z3GKP2": {
+          "5UG3KNNU32Z3GKP2.JRTCKXETXF": {
+            "offerTermCode": "JRTCKXETXF",
+            "sku": "5UG3KNNU32Z3GKP2",
+            "effectiveDate": "2026-10-01T00:00:00Z",
+            "priceDimensions": {
+              "5UG3KNNU32Z3GKP2.JRTCKXETXF.6YS6EN2CT7": {
+                "rateCode": "5UG3KNNU32Z3GKP2.JRTCKXETXF.6YS6EN2CT7",
+                "description": "$ 0.000035 per 1K tokens for Nova Micro-input-tokens in us-east-2 (Ohio)",
+                "beginRange": "0",
+                "endRange": "Inf",
+                "unit": "1K tokens",
+                "pricePerUnit": {
+                  "USD": "0.0000350000"
+                },
+                "appliesTo": []
+              }
+            },
+            "termAttributes": {}
+          }
+        },
+        "JG8SSMVQ7JJMK7UN": {
+          "JG8SSMVQ7JJMK7UN.JRTCKXETXF": {
+            "offerTermCode": "JRTCKXETXF",
+            "sku": "JG8SSMVQ7JJMK7UN",
+            "effectiveDate": "2026-10-01T00:00:00Z",
+            "priceDimensions": {
+              "JG8SSMVQ7JJMK7UN.JRTCKXETXF.6YS6EN2CT7": {
+                "rateCode": "JG8SSMVQ7JJMK7UN.JRTCKXETXF.6YS6EN2CT7",
+                "description": "$ 0.00014 per 1K tokens for Nova Micro-input-tokens in us-east-2 (Ohio)",
+                "beginRange": "0",
+                "endRange": "Inf",
+                "unit": "1K tokens",
+                "pricePerUnit": {
+                  "USD": "0.0001400000"
+                },
+                "appliesTo": []
+              }
+            },
+            "termAttributes": {}
+          }
+        },
+        "68N2Y76KQKQ4CEB8": {
+          "68N2Y76KQKQ4CEB8.JRTCKXETXF": {
+            "offerTermCode": "JRTCKXETXF",
+            "sku": "68N2Y76KQKQ4CEB8",
+            "effectiveDate": "2026-10-01T00:00:00Z",
+            "priceDimensions": {
+              "68N2Y76KQKQ4CEB8.JRTCKXETXF.6YS6EN2CT7": {
+                "rateCode": "68N2Y76KQKQ4CEB8.JRTCKXETXF.6YS6EN2CT7",
+                "description": "$0.00006 per 1K tokens for Nova Lite-input-tokens  in us-east-2 (Ohio)",
+                "beginRange": "0",
+                "endRange": "Inf",
+                "unit": "1K tokens",
+                "pricePerUnit": {
+                  "USD": "0.0000600000"
+                },
+                "appliesTo": []
+              }
+            },
+            "termAttributes": {}
+          }
+        },
+        "T4U7KW6SXXKERZG3": {
+          "T4U7KW6SXXKERZG3.JRTCKXETXF": {
+            "offerTermCode": "JRTCKXETXF",
+            "sku": "T4U7KW6SXXKERZG3",
+            "effectiveDate": "2026-10-01T00:00:00Z",
+            "priceDimensions": {
+              "T4U7KW6SXXKERZG3.JRTCKXETXF.6YS6EN2CT7": {
+                "rateCode": "T4U7KW6SXXKERZG3.JRTCKXETXF.6YS6EN2CT7",
+                "description": "$0.00024 per 1K tokens for Nova Lite-output-tokens  in us-east-2 (Ohio)",
+                "beginRange": "0",
+                "endRange": "Inf",
+                "unit": "1K tokens",
+                "pricePerUnit": {
+                  "USD": "0.0002400000"
+                },
+                "appliesTo": []
+              }
+            },
+            "termAttributes": {}
+          }
+        }
+      }
+    }
+  },
+  "excludedCacheCandidate": {
+    "product": {
+      "sku": "SF2FPAPERDZGPXCB",
+      "productFamily": "Amazon Bedrock",
+      "attributes": {
+        "servicecode": "AmazonBedrock",
+        "location": "US East (Ohio)",
+        "locationType": "AWS Region",
+        "usagetype": "USE2-NovaMicro-cache-read-input-token-count",
+        "operation": "",
+        "feature": "On-demand Inference",
+        "inferenceType": "Prompt cache read input tokens",
+        "model": "Nova Micro",
+        "regionCode": "us-east-2",
+        "servicename": "Amazon Bedrock"
+      }
+    },
+    "terms": {
+      "SF2FPAPERDZGPXCB.JRTCKXETXF": {
+        "offerTermCode": "JRTCKXETXF",
+        "sku": "SF2FPAPERDZGPXCB",
+        "effectiveDate": "2026-10-01T00:00:00Z",
+        "priceDimensions": {
+          "SF2FPAPERDZGPXCB.JRTCKXETXF.6YS6EN2CT7": {
+            "rateCode": "SF2FPAPERDZGPXCB.JRTCKXETXF.6YS6EN2CT7",
+            "description": "$0.00000875 per 1K cache read input tokens of Nova Micro in US East (Ohio)",
+            "beginRange": "0",
+            "endRange": "Inf",
+            "unit": "1K tokens",
+            "pricePerUnit": {
+              "USD": "0.0000087500"
+            },
+            "appliesTo": []
+          }
+        },
+        "termAttributes": {}
+      }
+    }
+  }
+}

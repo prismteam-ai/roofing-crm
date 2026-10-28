@@ -13,14 +13,14 @@ const PRICE_SKUS = {
   [MICRO_MODEL]: {
     name: "Nova Micro",
     token: "NovaMicro",
-    input: "XAR69MSGZSU6FEM9",
-    output: "YUSGHKDUPQRC75RK",
+    input: "5UG3KNNU32Z3GKP2",
+    output: "JG8SSMVQ7JJMK7UN",
   },
   [LITE_MODEL]: {
     name: "Nova Lite",
     token: "NovaLite",
-    input: "QRGWJ3P8FT28EYX2",
-    output: "CBZ6A6U7XK8WJ3KA",
+    input: "68N2Y76KQKQ4CEB8",
+    output: "T4U7KW6SXXKERZG3",
   },
 } as const;
 const object = (x: unknown): Record<string, unknown> =>
@@ -65,7 +65,7 @@ export function parseRegionalPriceList(
       a.regionCode !== "us-east-2" ||
       a.feature !== "On-demand Inference" ||
       a.model !== spec.name ||
-      a.usagetype !== `USE1-${spec.token}-${side}-tokens` ||
+      a.usagetype !== `USE2-${spec.token}-${side}-tokens` ||
       a.inferenceType !== (side === "input" ? "Input tokens" : "Output tokens")
     )
       return unavailable();
@@ -113,7 +113,7 @@ export function parseRegionalPriceList(
   reserveCost(1, price, verifiedAt);
   return price;
 }
-/** Anonymous fixed-origin metadata only. Runtime must reserve the P4 request allowance before calling this. */
+/** Anonymous fixed-origin metadata only. Runtime must reserve the validated request allowance before calling this. */
 export async function refreshRegionalPrice(
   modelId: string,
   transport: typeof fetch = fetch,

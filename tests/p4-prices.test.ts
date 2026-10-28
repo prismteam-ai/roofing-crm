@@ -12,10 +12,10 @@ function fixture() {
   const products: Record<string, unknown> = {},
     terms: Record<string, unknown> = {};
   for (const [model, token, side, sku, usd] of [
-    ["Nova Micro", "NovaMicro", "input", "XAR69MSGZSU6FEM9", "0.000035"],
-    ["Nova Micro", "NovaMicro", "output", "YUSGHKDUPQRC75RK", "0.00014"],
-    ["Nova Lite", "NovaLite", "input", "QRGWJ3P8FT28EYX2", "0.00006"],
-    ["Nova Lite", "NovaLite", "output", "CBZ6A6U7XK8WJ3KA", "0.00024"],
+    ["Nova Micro", "NovaMicro", "input", "5UG3KNNU32Z3GKP2", "0.000035"],
+    ["Nova Micro", "NovaMicro", "output", "JG8SSMVQ7JJMK7UN", "0.00014"],
+    ["Nova Lite", "NovaLite", "input", "68N2Y76KQKQ4CEB8", "0.00006"],
+    ["Nova Lite", "NovaLite", "output", "T4U7KW6SXXKERZG3", "0.00024"],
   ]) {
     products[sku] = {
       sku,
@@ -24,7 +24,7 @@ function fixture() {
         regionCode: "us-east-2",
         feature: "On-demand Inference",
         model,
-        usagetype: `USE1-${token}-${side}-tokens`,
+        usagetype: `USE2-${token}-${side}-tokens`,
         inferenceType: side === "input" ? "Input tokens" : "Output tokens",
       },
     };
@@ -68,12 +68,14 @@ describe("bounded official price freshness", () => {
     for (const change of [
       (x: ReturnType<typeof fixture>) => {
         (
-          x.products.XAR69MSGZSU6FEM9 as { attributes: { regionCode: string } }
+          x.products["5UG3KNNU32Z3GKP2"] as {
+            attributes: { regionCode: string };
+          }
         ).attributes.regionCode = "us-east-1";
       },
       (x: ReturnType<typeof fixture>) => {
         (
-          x.products.XAR69MSGZSU6FEM9 as { attributes: { feature: string } }
+          x.products["5UG3KNNU32Z3GKP2"] as { attributes: { feature: string } }
         ).attributes.feature = "Batch Inference";
       },
       (x: ReturnType<typeof fixture>) => {
@@ -81,14 +83,14 @@ describe("bounded official price freshness", () => {
       },
       (x: ReturnType<typeof fixture>) => {
         (
-          x.terms.OnDemand.XAR69MSGZSU6FEM9 as {
+          x.terms.OnDemand["5UG3KNNU32Z3GKP2"] as {
             term: { priceDimensions: { rate: { unit: string } } };
           }
         ).term.priceDimensions.rate.unit = "hour";
       },
       (x: ReturnType<typeof fixture>) => {
         (
-          x.terms.OnDemand.XAR69MSGZSU6FEM9 as {
+          x.terms.OnDemand["5UG3KNNU32Z3GKP2"] as {
             term: {
               priceDimensions: { rate: { pricePerUnit: { USD: string } } };
             };
@@ -96,7 +98,7 @@ describe("bounded official price freshness", () => {
         ).term.priceDimensions.rate.pricePerUnit.USD = "0";
       },
       (x: ReturnType<typeof fixture>) => {
-        x.terms.OnDemand.XAR69MSGZSU6FEM9 = {
+        x.terms.OnDemand["5UG3KNNU32Z3GKP2"] = {
           term: {},
           ambiguousSecondTerm: {},
         };
