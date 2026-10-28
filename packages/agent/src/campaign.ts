@@ -7,6 +7,7 @@ import {
   type DynamoDBDocumentClient,
 } from "@aws-sdk/lib-dynamodb";
 import { DomainError } from "../../contracts/src/index";
+import { ROUTING_ARCHITECTURE } from "./architecture";
 import {
   MICRO_MODEL,
   LITE_MODEL,
@@ -32,7 +33,7 @@ export interface CampaignAudit {
   revision: "base" | "repair-1";
   region: "us-east-1";
   at: string;
-  architecture?: "one-call-grounded-selection-v1";
+  architecture?: typeof ROUTING_ARCHITECTURE;
   evidenceDigest?: string;
   minimizedRowCount?: number;
   callIndex: number;
@@ -54,6 +55,7 @@ export interface CampaignAudit {
   };
 }
 export interface QualityGate {
+  architecture?: typeof ROUTING_ARCHITECTURE;
   baseFailureSha256: string;
   repairFailureSha256?: string;
   repairAttempts: 1;
@@ -68,6 +70,7 @@ export function qualityAllows(
   if (modelId === MICRO_MODEL && revision === "base") return;
   if (
     !gate ||
+    gate.architecture !== ROUTING_ARCHITECTURE ||
     gate.repairAttempts !== 1 ||
     !/^[a-f0-9]{64}$/.test(gate.baseFailureSha256) ||
     !Number.isFinite(Date.parse(gate.measuredAt))
@@ -88,11 +91,13 @@ export function qualityAllows(
     );
 }
 export const CAMPAIGN_PHASE = "prism-assessment-p5";
+/** Versioned quality eligibility preserves the prior architecture's gate and all budgets. */
+export const QUALITY_GATE_KEY = `quality-gate#${ROUTING_ARCHITECTURE}`;
 export const CAMPAIGN_LIMITS = Object.freeze({
   requestsTotal: 100,
-  requestsPerDay: 80,
-  // Endpoint attempts include pre-model refusals; three frozen36-case rounds need108.
-  endpointRequestsPerDay: 120,
+  requestsPerDay: 100,
+  // Four frozen36-case rounds use144 endpoint attempts and96 validated executions.
+  endpointRequestsPerDay: 160,
   requestsPerSessionHour: 40,
   converseTotal: 100,
   conversePerDay: 80,
@@ -115,17 +120,26 @@ function entries(input: CampaignReservation) {
   const all = [
     {
       key: `${input.kind}#total`,
-      limit: CAMPAIGN_LIMITS.requestsTotal,
+      limit:
+        input.kind === "converse"
+          ? CAMPAIGN_LIMITS.converseTotal
+          : CAMPAIGN_LIMITS.requestsTotal,
       units: 1,
     },
     {
       key: `${input.kind}#day#${day}`,
-      limit: CAMPAIGN_LIMITS.requestsPerDay,
+      limit:
+        input.kind === "converse"
+          ? CAMPAIGN_LIMITS.conversePerDay
+          : CAMPAIGN_LIMITS.requestsPerDay,
       units: 1,
     },
     {
       key: `${input.kind}#session#${session}#${hour}`,
-      limit: CAMPAIGN_LIMITS.requestsPerSessionHour,
+      limit:
+        input.kind === "converse"
+          ? CAMPAIGN_LIMITS.conversePerSessionHour
+          : CAMPAIGN_LIMITS.requestsPerSessionHour,
       units: 1,
     },
     ...(input.kind === "converse"
@@ -177,11 +191,18 @@ export class DynamoCampaignStore implements CampaignStore {
     const result = await this.client.send(
       new GetCommand({
         TableName: this.table,
-        Key: { pk: `campaign#${CAMPAIGN_PHASE}`, sk: "quality-gate" },
+        Key: { pk: `campaign#${CAMPAIGN_PHASE}`, sk: QUALITY_GATE_KEY },
         ConsistentRead: true,
       }),
     );
-    qualityAllows(result.Item as QualityGate | undefined, modelId, revision);
+    // The queried exact key supplies the architecture identity. Historical v1 gates
+    // remain in their old key; no request, invocation or cost counter is reset.
+    const item = result.Item;
+    const gate =
+      item?.pk === `campaign#${CAMPAIGN_PHASE}` && item?.sk === QUALITY_GATE_KEY
+        ? ({ ...item, architecture: ROUTING_ARCHITECTURE } as QualityGate)
+        : undefined;
+    qualityAllows(gate, modelId, revision);
   }
   async record(input: CampaignAudit) {
     await this.client.send(

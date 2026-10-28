@@ -8,7 +8,10 @@ import {
   verifyRuntimeConcurrency,
 } from "../packages/hosted-runtime/src/deployment-concurrency";
 import { CONTRACT_VERSION } from "../packages/contracts/src/index";
-import { CAMPAIGN_PHASE } from "../packages/agent/src/campaign";
+import {
+  CAMPAIGN_PHASE,
+  QUALITY_GATE_KEY,
+} from "../packages/agent/src/campaign";
 import {
   exactReviewOrigin,
   validateResourceBindings,
@@ -605,7 +608,7 @@ try {
         throw new Error("Exact shared table binding required");
       const item = {
         pk: { S: `campaign#${CAMPAIGN_PHASE}` },
-        sk: { S: "quality-gate" },
+        sk: { S: QUALITY_GATE_KEY },
         baseFailureSha256: { S: baseFailureSha256 },
         ...(repairFailureSha256
           ? { repairFailureSha256: { S: repairFailureSha256 } }

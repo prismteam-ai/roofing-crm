@@ -19,9 +19,9 @@ Natural-language input cannot expose arbitrary SQL, files, browser/network tools
 secrets or outreach. Unsupported/mixed/ambiguous material requests are refused
 before evidence/model use with a typed ledger. Oracle responses pass schema,
 snapshot, place, result bounds, shared predicates and source-order checks. The
-model receives a compact allowlisted projection; it returns strict row ordinals
-and rationale categories. It cannot supply factual prose, IDs or citations.
-The server renders authoritative facts. Missing evidence and fallback are visible.
+model receives a compact allowlisted projection; it returns only strict numeric
+row ordinals. It cannot supply factual prose, reasons, IDs or citations. The
+server derives factual rationale categories and renders authoritative facts. Missing evidence and fallback are visible.
 
 API/session quotas, bounded rows/tokens/deadlines, Lambda reservations and API
 rate/burst controls complement a durable model request/call/cost envelope. A
@@ -39,7 +39,7 @@ and verify CSP/CORS/CSRF/cookies/security headers and access revocation. Local
 synthetic tests do not establish those hosted/account facts. Media remains on
 hold until both required reviews explicitly allow it.
 
-Request accounting: the P5 durable lifetime request counter permits at most 100 validated agent executions, including empty results and failed invocations. Pre-model refusals do not enter that execution counter. All model-endpoint attempts, including refusals, consume the separate 120/day and 40/session-hour endpoint quota. Converse has its own durable 100-call ceiling. Earlier phase counters remain unchanged.
+Request accounting: the P5 durable lifetime request counter permits at most 100 validated agent executions, including empty results and failed invocations. Pre-model refusals do not enter that execution counter. All model-endpoint attempts, including refusals, consume the separate 160/day and 40/session-hour endpoint quota. Converse has its own durable 100-call ceiling. Earlier phase counters remain unchanged.
 
 The unreleased P5 0.4.0 contract was finalized with an optional, bounded
 `ownership.reportedOwnerObservations` field before its first P5 deployment. The
@@ -76,9 +76,15 @@ The local v7 proof reconciles 3,747 owner observations (3,746 prior Rochester
 observations unchanged) and 39,282 normalized permit observations unchanged.
 One current source case is not municipal coverage or evidence of source exhaustion.
 
-The endpoint-only daily allowance was raised from80 to120 during P5 after the
-complete Micro base and one repair rounds consumed72 attempts. Three unchanged
-36-case rounds require108 attempts because each includes12 pre-model refusals.
-The validated execution cap remains100 total and80/day; the Converse cap remains
-100 total and80/day, with the same USD3 reserved-cost ceiling. All existing
+The first two v1 model rounds required a finite endpoint allowance increase from
+80 to120/day; the third v1 round also failed quality. A separately versioned
+ordinal-only presentation protocol is now being tested against the unchanged
+36-case corpus. Four full rounds require144 endpoint attempts and96 validated
+executions. The endpoint allowance is160/day and the validated daily allowance
+is100. The validated lifetime ceiling remains100. Converse remains100 lifetime,
+80/day and40/session-hour, with the same USD3 reserved-cost ceiling. All existing
 counters and reservations are preserved; redeployment does not reset them.
+Quality eligibility uses an architecture-specific key; old v1 failures cannot
+authorize a v2 prompt repair or Lite. Micro base remains the starting model for
+this new protocol. Server-derived factual reasons are checked against the same
+retrieved source evidence; the model may only select supplied row ordinals.
