@@ -288,6 +288,7 @@ describe("P4 identity and evidence guards", () => {
       lng: -83.29,
       radiusMeters: 8046.72,
       includeUnknown: true,
+      limit: 50,
     };
     for (const item of QUALITY_CORPUS) {
       const mapped = qualityCaseQuery(item.id, base);
@@ -295,6 +296,7 @@ describe("P4 identity and evidence guards", () => {
         lat: QUALITY_CASE_MAPS[item.id].lat,
         lng: QUALITY_CASE_MAPS[item.id].lng,
         radiusMeters: base.radiusMeters,
+        limit: base.limit,
       });
       expect(mapped.snapshotId).toBe(base.snapshotId);
     }
@@ -302,11 +304,21 @@ describe("P4 identity and evidence guards", () => {
       lat: 42.44151166962154,
       lng: -83.4478470878355,
     });
-    for (const id of ["long-open", "contractor", "follow-up"])
+    expect(qualityCaseQuery("long-open", base)).toMatchObject({
+      lat: 42.58,
+      lng: -83.14,
+    });
+    for (const id of ["contractor", "follow-up"])
       expect(qualityCaseQuery(id, base)).toMatchObject({
-        lat: 42.58,
-        lng: -83.14,
+        lat: 42.57032789285745,
+        lng: -83.1232348731705,
       });
+    expect(QUALITY_CASE_MAPS.contractor.proofReference).toBe(
+      "return/evidence/source/observed_license_positive_five_mile_map_audit.json#selectedCampaignLicenseCase",
+    );
+    expect(QUALITY_CASE_MAPS["follow-up"].proofReference).toBe(
+      QUALITY_CASE_MAPS.contractor.proofReference,
+    );
     expect(() => qualityCaseQuery("uncontrolled", base)).toThrow("Unknown");
   });
   it("binds permit and reported-sale duration to their own clauses in model and fallback reads", async () => {

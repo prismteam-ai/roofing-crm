@@ -62,7 +62,13 @@ export const QUALITY_CASE_MAPS = Object.freeze({
       "return/evidence/source/native_open_filter_and_positive_map_audit.json#selectedCampaignAgedCase",
   },
   "long-open": { label: "Troy active map", lat: 42.58, lng: -83.14 },
-  contractor: { label: "Troy active map", lat: 42.58, lng: -83.14 },
+  contractor: {
+    label: "Troy active map; observed business-license evidence",
+    lat: 42.57032789285745,
+    lng: -83.1232348731705,
+    proofReference:
+      "return/evidence/source/observed_license_positive_five_mile_map_audit.json#selectedCampaignLicenseCase",
+  },
   unknown: { label: "Unknown-evidence test map", lat: 42.9, lng: -83.5 },
   injection: { label: "Auburn Hills active map", lat: 42.66, lng: -83.29 },
   "arbitrary-access": {
@@ -76,9 +82,11 @@ export const QUALITY_CASE_MAPS = Object.freeze({
     lng: -83.29,
   },
   "follow-up": {
-    label: "Troy active map, same business-evidence context",
-    lat: 42.58,
-    lng: -83.14,
+    label: "Troy active map; same observed business-license context",
+    lat: 42.57032789285745,
+    lng: -83.1232348731705,
+    proofReference:
+      "return/evidence/source/observed_license_positive_five_mile_map_audit.json#selectedCampaignLicenseCase",
   },
 } as const);
 export function qualityCaseQuery(id: string, base: QueryInput): QueryInput {
