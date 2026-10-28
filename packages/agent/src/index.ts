@@ -144,7 +144,16 @@ export function interpretPrompt(prompt: string, base: QueryInput): QueryInput {
   const roofYears = text.match(
     /(?:roofs? (?:older than|over)|roof age (?:over|above))\s+(\d+)/,
   );
-  if (roofYears) query.roofMinAgeYears = Number(roofYears[1]);
+  if (roofYears) {
+    query.roofMinAgeYears = Number(roofYears[1]);
+    const unknownOptIn =
+      /\b(?:include|including)\s+(?:properties\s+with\s+)?unknown\b/.test(text);
+    const unknownOptOut =
+      /\b(?:do\s+not|don['’]t|never)\s+include\s+(?:properties\s+with\s+)?unknown\b|\b(?:exclude|excluding|without|no)\s+(?:properties\s+with\s+)?unknown\b/.test(
+        text,
+      );
+    query.includeUnknown = unknownOptIn && !unknownOptOut;
+  }
   return QuerySchema.parse(query);
 }
 /** The model route and deterministic fallback share the same active-map/page bounds. */
@@ -180,12 +189,31 @@ export async function answerQuestion(
   const data = await reader.search(query);
   return answerFromEvidence(data, query);
 }
+/** Business-predicate check independent of interpreting the same query; invalid backend rows cannot become model context or fallback matches. */
+export function assertEvidencePredicates(
+  data: SearchResponse,
+  query: QueryInput,
+) {
+  if (
+    query.roofMinAgeYears !== undefined &&
+    data.rows.some((row) =>
+      row.roof.ageYears === null
+        ? !query.includeUnknown
+        : row.roof.ageYears <= query.roofMinAgeYears!,
+    )
+  )
+    throw new DomainError(
+      "SNAPSHOT_UNAVAILABLE",
+      "Retrieved evidence violated the explicit roof-age predicate",
+    );
+}
 /** Render only already retrieved server evidence; fallback needs no extra read when the model has exhausted its tool budget. */
 export function answerFromEvidence(
   data: SearchResponse,
   query: QueryInput,
   mode: AgentAnswer["mode"] = "deterministic-offline",
 ): AgentAnswer {
+  assertEvidencePredicates(data, query);
   if (data.snapshotId !== query.snapshotId)
     throw new DomainError("SNAPSHOT_UNAVAILABLE", "Evidence snapshot mismatch");
   const citations = [

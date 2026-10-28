@@ -5,6 +5,8 @@ import {
   QUALITY_CORPUS,
   assessAnswer,
   qualityFailure,
+  qualityCaseQuery,
+  QUALITY_CASE_MAPS,
 } from "../packages/agent/src/quality";
 import {
   boundedIntent,
@@ -106,7 +108,9 @@ function evidence(input: QueryInput): SearchResponse {
     contractVersion: CONTRACT_VERSION,
     snapshotId: q.snapshotId,
     queryHash: hash(q),
-    rows: [{ ...p, distanceMeters: 0 }],
+    rows: [
+      { ...p, coordinates: { lat: q.lat, lng: q.lng }, distanceMeters: 0 },
+    ],
     total: 1,
     truncated: false,
     nextCursor: null,
@@ -124,14 +128,14 @@ for (const item of QUALITY_CORPUS)
     let providerCalls = 0,
       reads = 0;
     const requests: string[] = [];
-    const base: QueryInput = {
+    const base: QueryInput = qualityCaseQuery(item.id, {
       snapshotId: "synthetic-p4-corpus",
-      lat: item.id === "unknown" ? 42.9 : 42.66,
-      lng: item.id === "unknown" ? -83.5 : -83.29,
+      lat: 42.66,
+      lng: -83.29,
       radiusMeters: 5 * 1609.344,
       includeUnknown: true,
       limit: 50,
-    };
+    });
     const provider: ConverseTransport = {
       converse: async (request) => {
         providerCalls++;
@@ -277,6 +281,34 @@ for (const item of QUALITY_CORPUS)
     }
   });
 describe("P4 identity and evidence guards", () => {
+  it("uses the recorded finite map presets without geocoding or radius expansion", () => {
+    const base = {
+      snapshotId: "synthetic",
+      lat: 42.66,
+      lng: -83.29,
+      radiusMeters: 8046.72,
+      includeUnknown: true,
+    };
+    for (const item of QUALITY_CORPUS) {
+      const mapped = qualityCaseQuery(item.id, base);
+      expect(mapped).toMatchObject({
+        lat: QUALITY_CASE_MAPS[item.id].lat,
+        lng: QUALITY_CASE_MAPS[item.id].lng,
+        radiusMeters: base.radiusMeters,
+      });
+      expect(mapped.snapshotId).toBe(base.snapshotId);
+    }
+    expect(qualityCaseQuery("aged-roof", base)).toMatchObject({
+      lat: 42.66,
+      lng: -83.29,
+    });
+    for (const id of ["long-open", "contractor", "follow-up"])
+      expect(qualityCaseQuery(id, base)).toMatchObject({
+        lat: 42.58,
+        lng: -83.14,
+      });
+    expect(() => qualityCaseQuery("uncontrolled", base)).toThrow("Unknown");
+  });
   it("binds permit and reported-sale duration to their own clauses in model and fallback reads", async () => {
     const base = {
       snapshotId: "synthetic",

@@ -22,6 +22,7 @@ import {
 import type { OracleReader } from "../../oracle-client/src/index";
 import {
   answerFromEvidence,
+  assertEvidencePredicates,
   boundedEvidenceQuery,
   type AgentAnswer,
 } from "./index";
@@ -366,6 +367,7 @@ export async function answerWithBedrock(
       "SNAPSHOT_UNAVAILABLE",
       "Evidence did not satisfy snapshot/result limits",
     );
+  assertEvidencePredicates(data, query);
   const projected: ReturnType<typeof minimizedEvidenceRow>[] = [];
   const context = (rows: typeof projected) =>
     minimizedEvidenceContext(data, rows);

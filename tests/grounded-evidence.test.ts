@@ -4,7 +4,9 @@ import {
   answerWithBedrock,
   minimizedEvidenceRow,
   type ConverseTransport,
+  boundedIntent,
 } from "../packages/agent/src/bedrock";
+import { answerQuestion } from "../packages/agent/src/index";
 import {
   PropertySchema,
   CONTRACT_VERSION,
@@ -85,6 +87,160 @@ const p = PropertySchema.parse({
     ],
   },
   provenance: [source],
+});
+it("explicit roof age excludes unknowns inherited from the UI unless the user explicitly opts in", () => {
+  const base = { ...q, includeUnknown: true };
+  expect(
+    boundedIntent("Find roofs older than 15 within 5 miles", base),
+  ).toMatchObject({ roofMinAgeYears: 15, includeUnknown: false });
+  for (const prompt of [
+    "Find roofs older than 15 and include unknown roof ages",
+    "Find roofs older than 15 including unknown roof evidence",
+  ])
+    expect(boundedIntent(prompt, base).includeUnknown).toBe(true);
+  expect(
+    boundedIntent(
+      "Find roofs older than 15 but do not include unknown roof ages",
+      base,
+    ).includeUnknown,
+  ).toBe(false);
+  expect(
+    boundedIntent("Show unknown roof and permit evidence", base).includeUnknown,
+  ).toBe(true);
+});
+it("the grounded model and deterministic path see only known older roofs unless unknown evidence is explicitly requested", async () => {
+  const unknown = {
+    ...p,
+    id: "synthetic-unknown",
+    roof: {
+      ...p.roof,
+      ageYears: null,
+      basis: "unknown" as const,
+      confidence: "unknown" as const,
+    },
+  };
+  for (const optIn of [false, true]) {
+    const base = { ...q, includeUnknown: true },
+      prompt =
+        "Find roofs older than 15" +
+        (optIn ? " and include unknown roof ages" : "");
+    let reads = 0,
+      calls = 0;
+    const sourceRows = [p, unknown];
+    const reader = {
+      search: async (input: QueryInput) => {
+        reads++;
+        const rows = sourceRows
+          .filter((row) =>
+            row.roof.ageYears === null
+              ? input.includeUnknown
+              : row.roof.ageYears > input.roofMinAgeYears!,
+          )
+          .map((row) => ({ ...row, distanceMeters: 0 }));
+        return {
+          contractVersion: CONTRACT_VERSION,
+          snapshotId: q.snapshotId,
+          queryHash: "synthetic-explicit-age",
+          rows,
+          total: rows.length,
+          truncated: false,
+          nextCursor: null,
+          limitations: ["Synthetic"],
+        };
+      },
+      detail: async () => p,
+    };
+    const provider: ConverseTransport = {
+      converse: async (request) => {
+        calls++;
+        const rows = JSON.parse(request.messages![0].content![0].text!)
+          .retrievedEvidence.rows as {
+          ordinal: number;
+          roof: { ageYears: number | null };
+        }[];
+        expect(rows).toHaveLength(optIn ? 2 : 1);
+        if (!optIn)
+          expect(
+            rows.every(
+              (row) => row.roof.ageYears !== null && row.roof.ageYears > 15,
+            ),
+          ).toBe(true);
+        return {
+          $metadata: {},
+          metrics: { latencyMs: 1 },
+          usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
+          stopReason: "tool_use",
+          output: {
+            message: {
+              role: "assistant",
+              content: [
+                {
+                  toolUse: {
+                    toolUseId: "age",
+                    name: "selectGroundedEvidence",
+                    input: {
+                      selections: rows.map((row) => ({
+                        ordinal: row.ordinal,
+                        reason: "context_match",
+                      })),
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        };
+      },
+    };
+    const answer = await answerWithBedrock(reader, provider, prompt, base, {
+      modelId: "synthetic",
+    });
+    const deterministic = await answerQuestion(reader, prompt, base);
+    expect(answer.query.includeUnknown).toBe(optIn);
+    expect(answer.results).toHaveLength(optIn ? 2 : 1);
+    expect(deterministic.results).toEqual(answer.results);
+    expect(reads).toBe(2);
+    expect(calls).toBe(1);
+  }
+});
+it("rejects a backend unknown-age row violating an explicit age predicate before provider use or deterministic rendering", async () => {
+  let calls = 0;
+  const invalid = { ...p, roof: { ...p.roof, ageYears: null } };
+  const reader = {
+    search: async () => ({
+      contractVersion: CONTRACT_VERSION,
+      snapshotId: q.snapshotId,
+      queryHash: "synthetic-invalid-age",
+      rows: [{ ...invalid, distanceMeters: 0 }],
+      total: 1,
+      truncated: false,
+      nextCursor: null,
+      limitations: ["Synthetic"],
+    }),
+    detail: async () => p,
+  };
+  const provider: ConverseTransport = {
+    converse: async () => {
+      calls++;
+      throw Error("No model call");
+    },
+  };
+  await expect(
+    answerWithBedrock(
+      reader,
+      provider,
+      "Find roofs older than 15",
+      { ...q, includeUnknown: true },
+      { modelId: "synthetic" },
+    ),
+  ).rejects.toThrow("roof-age predicate");
+  await expect(
+    answerQuestion(reader, "Find roofs older than 15", {
+      ...q,
+      includeUnknown: true,
+    }),
+  ).rejects.toThrow("roof-age predicate");
+  expect(calls).toBe(0);
 });
 it("exposes only literal allowlisted retrieved facts, observed duration, business role and licensing/rating evidence", async () => {
   let reads = 0,

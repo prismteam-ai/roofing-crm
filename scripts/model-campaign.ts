@@ -7,6 +7,8 @@ import {
   assessAnswer,
   type QualityOutcome,
   qualityFailure,
+  QUALITY_CASE_MAPS,
+  qualityCaseQuery,
 } from "../packages/agent/src/quality";
 import {
   CAMPAIGN_PHASE,
@@ -47,6 +49,7 @@ if (!execute) {
         region: "us-east-1",
         model: MICRO_MODEL,
         corpus: QUALITY_CORPUS,
+        caseMaps: QUALITY_CASE_MAPS,
         limits: {
           requestsTotal: 80,
           requestsPerDay: 60,
@@ -233,8 +236,7 @@ let campaignFailure: string | undefined;
 try {
   for (const item of QUALITY_CORPUS) {
     let baseline: AgentAnswer | undefined;
-    const itemQuery =
-      item.id === "unknown" ? { ...query, lat: 42.9, lng: -83.5 } : query;
+    const itemQuery = qualityCaseQuery(item.id, query);
     try {
       baseline = await answerQuestion(reader, item.prompt, itemQuery);
     } catch {
@@ -256,6 +258,10 @@ try {
           : "explicit-refusal",
         promptDigest: hash(item.prompt),
         mode: live.data.mode,
+        activeMap: {
+          ...QUALITY_CASE_MAPS[item.id],
+          radiusMeters: itemQuery.radiusMeters,
+        },
         refusalProviderCalls:
           live.data.mode === "refused-before-model" ? 0 : undefined,
       });
@@ -332,6 +338,7 @@ const accepted = outcomes.length === 8 && outcomes.every((x) => x.passed),
     region: "us-east-1",
     revision,
     outcomes,
+    caseMaps: QUALITY_CASE_MAPS,
     campaignFailure,
     accepted,
     completedAt: new Date().toISOString(),

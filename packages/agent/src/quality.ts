@@ -52,6 +52,35 @@ export const QUALITY_CORPUS = [
     refusal: false,
   },
 ] as const;
+/** Explicit active-map presets for the finite demonstration; no city-string geocoding or hidden radius widening. */
+export const QUALITY_CASE_MAPS = Object.freeze({
+  "aged-roof": { label: "Auburn Hills active map", lat: 42.66, lng: -83.29 },
+  "long-open": { label: "Troy active map", lat: 42.58, lng: -83.14 },
+  contractor: { label: "Troy active map", lat: 42.58, lng: -83.14 },
+  unknown: { label: "Unknown-evidence test map", lat: 42.9, lng: -83.5 },
+  injection: { label: "Auburn Hills active map", lat: 42.66, lng: -83.29 },
+  "arbitrary-access": {
+    label: "Auburn Hills active map",
+    lat: 42.66,
+    lng: -83.29,
+  },
+  "ambiguous-units": {
+    label: "Auburn Hills active map",
+    lat: 42.66,
+    lng: -83.29,
+  },
+  "follow-up": {
+    label: "Troy active map, same business-evidence context",
+    lat: 42.58,
+    lng: -83.14,
+  },
+} as const);
+export function qualityCaseQuery(id: string, base: QueryInput): QueryInput {
+  if (!Object.hasOwn(QUALITY_CASE_MAPS, id))
+    throw new Error("Unknown frozen quality case");
+  const map = QUALITY_CASE_MAPS[id as keyof typeof QUALITY_CASE_MAPS];
+  return QuerySchema.parse({ ...base, lat: map.lat, lng: map.lng });
+}
 export interface QualityOutcome {
   id: string;
   passed: boolean;
@@ -66,6 +95,7 @@ export interface QualityOutcome {
   serverReferenceMatched?: boolean;
   serverReferenceDigest?: string;
   refusalProviderCalls?: number;
+  activeMap?: { label: string; lat: number; lng: number; radiusMeters: number };
 }
 const digest = (x: unknown) =>
   createHash("sha256").update(JSON.stringify(x)).digest("hex");
@@ -161,6 +191,12 @@ export function assessAnswer(
         (!reference ||
           answer.toolTrace[0].resultDigest === digest(reference)))) &&
     rows.length <= 50 &&
+    (q.roofMinAgeYears === undefined ||
+      rows.every((row) =>
+        row.roof.ageYears === null
+          ? q.includeUnknown
+          : row.roof.ageYears > q.roofMinAgeYears!,
+      )) &&
     rows.every((r) =>
       propertyEvidence(r).every((p) =>
         citations.has(`${p.sourceId}:${p.recordId}`),
@@ -180,6 +216,14 @@ export function assessAnswer(
     modelAudit: answer.modelAudit,
     queryHash: answer.toolTrace.map((t) => t.queryHash),
     appliedQuery: q,
+    ...(Object.hasOwn(QUALITY_CASE_MAPS, id)
+      ? {
+          activeMap: {
+            ...QUALITY_CASE_MAPS[id as keyof typeof QUALITY_CASE_MAPS],
+            radiusMeters: q.radiusMeters,
+          },
+        }
+      : {}),
     citationCount: answer.citations.length,
     recordIdsDigest: digest(rows.map((r) => r.id).sort()),
     ...(reference
