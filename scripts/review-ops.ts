@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import { withPrivateCliInput } from "../packages/hosted-runtime/src/private-cli-input";
 import { writeReviewerAssetManifest } from "../packages/hosted-runtime/src/reviewer-assets";
 import { buildConcurrencyPolicy } from "../packages/hosted-runtime/src/concurrency";
 import {
@@ -226,16 +227,17 @@ const save = () =>
   });
 const aws = (args: string[], input?: string) => {
   try {
-    return execFileSync("aws", ["--region", pins.region, ...args], {
-      encoding: "utf8",
-      input,
-      stdio: ["pipe", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        AWS_REGION: pins.region,
-        AWS_DEFAULT_REGION: pins.region,
-      },
-    }).trim();
+    return withPrivateCliInput(operations, args, input, (preparedArgs) =>
+      execFileSync("aws", ["--region", pins.region, ...preparedArgs], {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "pipe"],
+        env: {
+          ...process.env,
+          AWS_REGION: pins.region,
+          AWS_DEFAULT_REGION: pins.region,
+        },
+      }).trim(),
+    );
   } catch (error) {
     const failure = error as {
       message?: string;
