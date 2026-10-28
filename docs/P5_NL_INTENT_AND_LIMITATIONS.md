@@ -12,7 +12,7 @@ claim to understand arbitrary natural language.
 An accepted ledger carries the exact composed query. A rejected ledger has no
 executable query and at least one material unsupported, ambiguous or conflicting
 entry. Responses expose the ledger through the API and an accessible UI. The
-111-case deterministic corpus includes the original example requests; additional
+110-case deterministic corpus includes the original example requests; additional
 mutation, integration and browser checks cover supported conjunctions, rejected
 qualifiers, query bounds and stale-answer behavior. Finite tests do not prove
 universal language correctness.

@@ -1,3 +1,9 @@
+> **Historical P1–P4 receipt — superseded.** This document records an earlier
+> attempt and is not current operating guidance. Old contracts, limits, provider
+> protocols and deployment claims below must not be promoted to current proof.
+> Use the [authoritative current documentation](README.md) and final source-pinned
+> return reports. Historical failures and observations are intentionally preserved.
+
 > Historical P2 evidence. Current P3 operations, identity, maps and model gates are described in [P3_STAGING.md](P3_STAGING.md). The P2 rehearsal statements below are preserved historical claims.
 
 # P2 CRM runtime and boundaries

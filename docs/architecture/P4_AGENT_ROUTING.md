@@ -1,3 +1,9 @@
+> **Historical P1–P4 receipt — superseded.** This document records an earlier
+> attempt and is not current operating guidance. Old contracts, limits, provider
+> protocols and deployment claims below must not be promoted to current proof.
+> Use the [authoritative current documentation](../README.md) and final source-pinned
+> return reports. Historical failures and observations are intentionally preserved.
+
 # P4 grounded retrieval and presentation
 
 The user's original assessment scope requires the model to consume retrieved evidence. That alignment overrides the later handoff choice that put a model-only router before retrieval. The earlier `one-call-tool-router-v1`/`bedrock-tool-routed` architecture and its local proofs remain historical attempts, not acceptance for this implementation. The current architecture is `one-call-grounded-selection-v1`, mode `bedrock-grounded`. It retains the same durable P4 allowance and existing `p3-review` resources; no counters or budget history are reset.

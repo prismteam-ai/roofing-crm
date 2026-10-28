@@ -1,3 +1,9 @@
+> **Historical P1–P4 receipt — superseded.** This document records an earlier
+> attempt and is not current operating guidance. Old contracts, limits, provider
+> protocols and deployment claims below must not be promoted to current proof.
+> Use the [authoritative current documentation](../README.md) and final source-pinned
+> return reports. Historical failures and observations are intentionally preserved.
+
 # CRM P1 local implementation
 
 The React/MapLibre frontend consumes the Oracle-owned contract through a generated pinned copy. The CRM API binds to127.0.0.1:4311 and accesses only the local Oracle consumer API at4310. Source acquisition, BBB, owner contact and outreach are absent.

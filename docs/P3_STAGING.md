@@ -1,3 +1,9 @@
+> **Historical P1–P4 receipt — superseded.** This document records an earlier
+> attempt and is not current operating guidance. Old contracts, limits, provider
+> protocols and deployment claims below must not be promoted to current proof.
+> Use the [authoritative current documentation](README.md) and final source-pinned
+> return reports. Historical failures and observations are intentionally preserved.
+
 # P3 CRM staging operations
 
 This supersedes the historical P2 operation rehearsal. The original README remains preserved. Region is validated as `us-east-1`; stage is `p3-review`. No operation in this repository has been executed against AWS by the CRM implementation lane. Live account work, maps and inference remain parent-owned execution gates.
