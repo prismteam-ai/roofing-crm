@@ -671,7 +671,6 @@ try {
         "--sse",
         "AES256",
         "--only-show-errors",
-        "--delete",
       ]),
     );
     await step("frontend_invalidated", () =>
