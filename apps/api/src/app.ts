@@ -1,3 +1,4 @@
+import { IntentRejection } from "../../../packages/agent/src/intent/types";
 import { assessmentEvidence } from "../../../packages/hosted-runtime/src/assessment-evidence";
 import {
   DomainError,
@@ -315,6 +316,7 @@ export function createApp(deps: AppDependencies) {
             : (error as Error).name === "ZodError")
             ? { mode: "refused-before-model" }
             : {}),
+          ...(error instanceof IntentRejection ? { intent: error.intent } : {}),
           code: domain ? error.code : "INVALID_INPUT",
           message: domain
             ? error.message

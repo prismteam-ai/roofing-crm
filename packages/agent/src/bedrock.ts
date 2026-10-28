@@ -1,3 +1,5 @@
+import { requireIntent } from "./intent";
+import type { IntentOptions } from "./intent/types";
 import {
   BedrockRuntimeClient,
   ConverseCommand,
@@ -22,6 +24,7 @@ import {
 import type { OracleReader } from "../../oracle-client/src/index";
 import {
   answerFromEvidence,
+  withIntent,
   assertEvidencePredicates,
   boundedEvidenceQuery,
   type AgentAnswer,
@@ -80,6 +83,7 @@ export function bedrockTransport(
   };
 }
 export interface BedrockLimits {
+  intentOptions?: IntentOptions;
   modelId: string;
   promptRevision?: "base" | "repair-1";
   deadlineMs?: number;
@@ -286,6 +290,9 @@ export function boundedToolArguments(input: unknown, expected: QueryInput) {
     given.snapshotId !== fixed.snapshotId ||
     given.lat !== fixed.lat ||
     given.lng !== fixed.lng ||
+    given.placeId !== fixed.placeId ||
+    given.placeIndexDigest !== fixed.placeIndexDigest ||
+    given.sort !== fixed.sort ||
     given.cursor
   )
     throw new DomainError(
@@ -313,21 +320,22 @@ export function boundedToolArguments(input: unknown, expected: QueryInput) {
     (fixed.minReportedSaleAgeYears !== undefined &&
       (given.minReportedSaleAgeYears ?? -1) < fixed.minReportedSaleAgeYears) ||
     ranks[given.minConfidence] < ranks[fixed.minConfidence] ||
-    (given.includeUnknown && !fixed.includeUnknown)
+    (given.includeUnknown && !fixed.includeUnknown) ||
+    (fixed.requiresContractor && !given.requiresContractor) ||
+    (fixed.requiresVerifiedLicense && !given.requiresVerifiedLicense) ||
+    (fixed.requiresBbbRating && !given.requiresBbbRating)
   )
     throw new DomainError(
       "INVALID_INPUT",
       "Provider weakened the user's evidence predicates",
     );
+  if (given.radiusMeters !== fixed.radiusMeters || given.limit !== fixed.limit)
+    throw new DomainError(
+      "INVALID_INPUT",
+      "Provider changed an explicitly validated radius or limit",
+    );
   const clampedFields: string[] = [];
-  if (given.radiusMeters > fixed.radiusMeters)
-    clampedFields.push("radiusMeters");
-  if (given.limit > fixed.limit) clampedFields.push("limit");
-  const query = QuerySchema.parse({
-    ...given,
-    radiusMeters: Math.min(given.radiusMeters, fixed.radiusMeters),
-    limit: Math.min(given.limit, fixed.limit),
-  });
+  const query = given;
   return { query, clampedFields, providerArgumentsDigest: hash(given) };
 }
 /** One guarded retrieval; zero matches return source evidence without calling a model. Nonempty facts allow one grounded call. */
@@ -350,7 +358,11 @@ export async function answerWithBedrock(
     (limits.maxToolCalls ?? 1) < 1
   )
     throw new DomainError("INVALID_INPUT", "Invalid bounded agent limits");
-  const query = boundedIntent(prompt, base, maxRows),
+  const intent = requireIntent(prompt, base, {
+      ...limits.intentOptions,
+      maxRows,
+    }),
+    query = intent.query,
     controller = new AbortController(),
     start = Date.now(),
     remaining = () => time - (Date.now() - start);
@@ -380,7 +392,7 @@ export async function answerWithBedrock(
       argumentsDigest: hash(query),
       resultDigest: hash(data),
     };
-    return result;
+    return withIntent(result, intent);
   }
   const projected: ReturnType<typeof minimizedEvidenceRow>[] = [];
   const context = (rows: typeof projected) =>
@@ -555,6 +567,11 @@ export async function answerWithBedrock(
       "INVALID_INPUT",
       "Grounded selection must be a unique bounded nonempty subset of retrieved ordinals",
     );
+  if (query.sort && ordinals.some((n, i) => i > 0 && n <= ordinals[i - 1]))
+    throw new DomainError(
+      "INVALID_INPUT",
+      "Provider changed the requested authoritative result order",
+    );
   for (const item of selections) {
     const p = projected[item.ordinal];
     const supported =
@@ -575,11 +592,7 @@ export async function answerWithBedrock(
         "Selection rationale is not supported by the minimized evidence",
       );
   }
-  const result = answerFromEvidence(
-    { ...data, rows: ordinals.map((n) => data.rows[n]) },
-    query,
-    "bedrock-grounded",
-  );
+  const result = answerFromEvidence(data, query, "bedrock-grounded", ordinals);
   result.answer += ` The model selected ${ordinals.length} records from ${data.rows.length} retrieved page records; ${projected.length} records fit the minimized evidence context. This selection is not complete coverage of all matches.`;
   result.toolTrace[0] = {
     ...result.toolTrace[0],
@@ -595,5 +608,5 @@ export async function answerWithBedrock(
     resultDigest: hash(data),
     contextTruncated: projected.length < data.rows.length,
   };
-  return result;
+  return withIntent(result, intent);
 }

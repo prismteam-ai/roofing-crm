@@ -1,3 +1,8 @@
+import { ConstraintLedger, PlaceResolution } from "./ConstraintLedger";
+import {
+  IntentPlanSchema,
+  type IntentPlan,
+} from "../../../packages/agent/src/intent/types";
 import { ReportContext } from "./ReportContext";
 import { BUILD_IDENTITY } from "../../../packages/runtime-config/src/index";
 import {
@@ -24,6 +29,7 @@ import {
   OAKLAND_CENTER,
   queryFromUrl,
   queryToUrl,
+  updateQueryContext,
 } from "../../../packages/map-domain/src/index";
 import {
   OracleHealthSchema,
@@ -44,14 +50,24 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { "Content-Type": "application/json" },
   });
-  const data = (await response.json()) as T & { message?: string };
+  const data = (await response.json()) as T & {
+    message?: string;
+    intent?: unknown;
+  };
   if (
     response.status === 401 &&
     requestSessionGeneration === apiSessionGeneration &&
     !(path === "/api/session" && init?.method === "POST")
   )
     window.dispatchEvent(new Event("prism-session-expired"));
-  if (!response.ok) throw new Error(data.message ?? "Request unavailable");
+  if (!response.ok) {
+    const error = new Error(data.message ?? "Request unavailable") as Error & {
+      intent?: IntentPlan;
+    };
+    const parsed = IntentPlanSchema.safeParse(data.intent);
+    if (parsed.success) error.intent = parsed.data;
+    throw error;
+  }
   return data;
 }
 const session = () => {
@@ -114,6 +130,8 @@ function App() {
   const [answer, setAnswer] = useState<AgentAnswer | null>(null);
   const [agentBusy, setAgentBusy] = useState(false);
   const [agentError, setAgentError] = useState("");
+  const [rejectedIntent, setRejectedIntent] = useState<IntentPlan | null>(null);
+  const [appliedIntent, setAppliedIntent] = useState<IntentPlan | null>(null);
   const [sid, setSid] = useState(session);
   const seq = useRef(0),
     sessionGeneration = useRef(0),
@@ -145,6 +163,8 @@ function App() {
     setResult(null);
     setLeads([]);
     setAnswer(null);
+    setRejectedIntent(null);
+    setAppliedIntent(null);
     setAgentError("");
     setAgentBusy(false);
     setStatus("");
@@ -312,6 +332,12 @@ function App() {
     setResult(null);
     closeDetail();
     setAnswer(null);
+    setRejectedIntent(null);
+    if (
+      appliedIntent &&
+      JSON.stringify(appliedIntent.query) !== JSON.stringify(query)
+    )
+      setAppliedIntent(null);
     setAgentError("");
     setLoading(true);
     setError("");
@@ -340,7 +366,7 @@ function App() {
     if (!activeSession.current) return;
     seq.current++;
     closeDetail();
-    setQuery((q) => ({ ...q, ...fields, cursor: undefined }));
+    setQuery((q) => updateQueryContext(q, fields));
   };
   const choose = (p: Property, snapshotId = query.snapshotId) => {
     if (!activeSession.current) return;
@@ -435,6 +461,8 @@ function App() {
       current = ++agentGeneration.current;
     if (!sameSession(epoch)) return;
     setAgentBusy(true);
+    setAnswer(null);
+    setRejectedIntent(null);
     setAgentError("");
     try {
       const next = await api<AgentAnswer>("/api/agent", {
@@ -447,14 +475,23 @@ function App() {
         generation === seq.current &&
         current === agentGeneration.current
       )
-        setAnswer(next);
+        setAnswer({
+          ...next,
+          ...(next.intent
+            ? { intent: IntentPlanSchema.parse(next.intent) }
+            : {}),
+        });
     } catch (e) {
       if (
         sameSession(epoch) &&
         generation === seq.current &&
         current === agentGeneration.current
-      )
+      ) {
         setAgentError((e as Error).message);
+        setRejectedIntent(
+          (e as Error & { intent?: IntentPlan }).intent ?? null,
+        );
+      }
     } finally {
       if (sameSession(epoch) && current === agentGeneration.current)
         setAgentBusy(false);
@@ -718,18 +755,29 @@ function App() {
                   Search radius
                   <select
                     aria-label="Search radius"
-                    value={(query.radiusMeters / 1609.344).toFixed(0)}
+                    value={String(query.radiusMeters / 1609.344)}
                     onChange={(e) =>
                       update({
                         radiusMeters: milesToMeters(Number(e.target.value)),
                       })
                     }
                   >
-                    {[1, 3, 5, 10, 20].map((n) => (
-                      <option key={n} value={n}>
-                        {n} miles
-                      </option>
-                    ))}
+                    {[
+                      ...new Set([
+                        1,
+                        3,
+                        5,
+                        10,
+                        20,
+                        query.radiusMeters / 1609.344,
+                      ]),
+                    ]
+                      .sort((a, b) => a - b)
+                      .map((n) => (
+                        <option key={n} value={n}>
+                          {n} miles
+                        </option>
+                      ))}
                   </select>
                 </label>
                 <button className="button secondary" onClick={useGps}>
@@ -763,6 +811,10 @@ function App() {
                   Reset
                 </button>
               </section>
+              {result?.placeResolution && (
+                <PlaceResolution place={result.placeResolution} />
+              )}
+              {appliedIntent && <ConstraintLedger intent={appliedIntent} />}
               {gps && (
                 <p className="inline-status" role="status">
                   {gps}
@@ -813,6 +865,7 @@ function App() {
                     <option value="any">Any status</option>
                     <option value="open">Open permits</option>
                     <option value="closed">Closed permits</option>
+                    <option value="unknown">Acquired status unknown</option>
                   </select>
                 </label>
                 <label>
@@ -859,8 +912,10 @@ function App() {
                     }
                   >
                     <option value="any">Any evidence state</option>
-                    <option value="regional">Regional</option>
-                    <option value="out_of_area">Out of area</option>
+                    <option value="regional">Mailing state: Michigan</option>
+                    <option value="out_of_area">
+                      Mailing state: outside Michigan
+                    </option>
                     <option value="unknown">Unknown</option>
                   </select>
                 </label>
@@ -896,6 +951,79 @@ function App() {
                   />
                 </label>
               </section>
+              <section
+                className="filter-row"
+                aria-label="Evidence requirements and result order"
+              >
+                {(
+                  [
+                    ["requiresContractor", "Require verified company identity"],
+                    [
+                      "requiresVerifiedLicense",
+                      "Require official license observation",
+                    ],
+                    ["requiresBbbRating", "Require observed BBB rating"],
+                  ] as const
+                ).map(([field, label]) => (
+                  <label className="check-label" key={field}>
+                    <input
+                      type="checkbox"
+                      aria-label={label}
+                      checked={query[field] === true}
+                      onChange={(e) =>
+                        update({ [field]: e.target.checked ? true : undefined })
+                      }
+                    />
+                    {label}
+                  </label>
+                ))}
+                <label>
+                  Result order
+                  <select
+                    aria-label="Result order"
+                    value={query.sort ?? "default"}
+                    onChange={(e) =>
+                      update({
+                        sort:
+                          e.target.value === "default"
+                            ? undefined
+                            : (e.target.value as QueryInput["sort"]),
+                      })
+                    }
+                  >
+                    <option value="default">Default evidence order</option>
+                    <option value="distance">Closest first</option>
+                    <option value="roof_age_desc">
+                      Oldest recorded roof proxy first
+                    </option>
+                    <option value="permit_open_days_desc">
+                      Longest observed open duration first
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  Page limit
+                  <select
+                    aria-label="Page limit"
+                    value={query.limit ?? 50}
+                    onChange={(e) => update({ limit: Number(e.target.value) })}
+                  >
+                    {[...new Set([1, 5, 10, 20, 50, query.limit ?? 50])]
+                      .sort((a, b) => a - b)
+                      .map((n) => (
+                        <option key={n} value={n}>
+                          {n} properties
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </section>
+              <p className="caveat">
+                Owner region describes recorded mailing state, not verified
+                current residence. An official license observation does not
+                establish active eligibility. A verified company edge is
+                distinct from a reported applicant name.
+              </p>
               <p className="caveat" data-testid="reported-sale-scope">
                 Last reported sale uses partial observed history, not ownership
                 tenure. Unknown sale dates are excluded when this filter is on;
@@ -1094,6 +1222,18 @@ function App() {
                     {agentError}
                   </p>
                 )}
+                <ConstraintLedger
+                  intent={answer?.intent ?? rejectedIntent}
+                  onApply={
+                    answer?.intent?.accepted
+                      ? () => {
+                          if (!answer.intent?.query) return;
+                          setAppliedIntent(answer.intent);
+                          setQuery(answer.intent.query);
+                        }
+                      : undefined
+                  }
+                />
                 {answer && (
                   <div
                     className="agent-answer"

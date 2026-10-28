@@ -695,7 +695,7 @@ describe("Converse orchestration using only fake transport", () => {
       expect(reads).toBe(1);
     }
   });
-  it("fixes the typed query before retrieval, clamping requested radius to the active map and page", async () => {
+  it("honors the explicit typed radius before retrieval and retains the current page limit", async () => {
     let applied: QueryInput | undefined;
     const records = {
       ...reader,
@@ -711,9 +711,9 @@ describe("Converse orchestration using only fake transport", () => {
       query,
       { modelId: "test" },
     );
-    expect(applied?.radiusMeters).toBe(query.radiusMeters);
+    expect(applied?.radiusMeters).toBe(16093.44);
     expect(applied?.limit).toBe(query.limit ?? 50);
-    expect(answer.query.radiusMeters).toBe(query.radiusMeters);
+    expect(answer.query.radiusMeters).toBe(16093.44);
   });
   it("refuses unsafe/ambiguous prompts before provider calls, and bounds usage/output/deadline", async () => {
     for (const prompt of [

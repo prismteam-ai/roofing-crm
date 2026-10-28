@@ -1300,6 +1300,10 @@ input[type="number"] {
   .filter-row > label.check-label > input {
     width: auto;
   }
+  .filter-row > label.check-label {
+    min-width: 100%;
+    white-space: normal;
+  }
   .filter-row > label > input {
     width: 100%;
   }
@@ -1313,6 +1317,7 @@ input[type="number"] {
     max-width: 190px;
     font-size: 8px;
     line-height: 1.6;
+    overflow-wrap: anywhere;
   }
   .map-options {
     font-size: 7px;
@@ -1405,4 +1410,43 @@ input[type="number"] {
   border: 2px solid white;
   background: #175c51;
   color: white;
+}
+
+.constraint-ledger,
+.place-resolution {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--line, #d8e0dc);
+  border-radius: 12px;
+  background: #f5f8f4;
+  overflow-wrap: anywhere;
+}
+.constraint-ledger h3 {
+  margin: 0 0 8px;
+}
+.constraint-ledger ol {
+  padding-left: 20px;
+}
+.constraint-ledger li {
+  margin: 12px 0;
+  padding: 10px;
+  border-left: 3px solid #7c8d80;
+}
+.constraint-ledger q,
+.constraint-ledger code,
+.place-resolution code {
+  display: block;
+  margin: 5px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.constraint-ledger li[data-classification="unsupported"],
+.constraint-ledger li[data-classification="conflicting"],
+.constraint-ledger li[data-classification="ambiguous"] {
+  border-color: #a85534;
+  background: #fff5ef;
+}
+.constraint-ledger small {
+  display: block;
+  overflow-wrap: anywhere;
 }

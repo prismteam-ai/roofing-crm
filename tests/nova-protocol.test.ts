@@ -1,3 +1,4 @@
+import { CONTRACT_VERSION } from "../packages/contracts/src/index";
 import { nonemptyEvidenceProperty } from "./support/evidence-fixture";
 import { it, expect } from "vitest";
 import type {
@@ -14,7 +15,7 @@ const query = {
   limit: 5,
 };
 const data = {
-  contractVersion: "0.3.0",
+  contractVersion: CONTRACT_VERSION,
   snapshotId: query.snapshotId,
   queryHash: "synthetic-query-hash",
   rows: [{ ...nonemptyEvidenceProperty, distanceMeters: 0 }],

@@ -2,7 +2,9 @@ import { groundedFailureDetail } from "../../../packages/agent/src/failure-detai
 import {
   answerQuestion,
   answerFromEvidence,
-  interpretPrompt,
+  requireIntent,
+  withIntent,
+  assertEvidencePredicates,
 } from "../../../packages/agent/src/index";
 import {
   DomainError,
@@ -264,7 +266,7 @@ export function createHostedHandler(
         ...(r.provider
           ? {
               agent: async (prompt, query, subject) => {
-                interpretPrompt(prompt, query);
+                const intent = requireIntent(prompt, query);
                 const startedAt = Date.now();
                 let evidenceDigest: string | undefined,
                   minimizedRowCount = 0;
@@ -311,6 +313,7 @@ export function createHostedHandler(
                         "SNAPSHOT_UNAVAILABLE",
                         "Evidence boundary mismatch",
                       );
+                    assertEvidencePredicates(data, q);
                     cached = { data, query: q };
                     return data;
                   },
@@ -488,7 +491,7 @@ export function createHostedHandler(
                           throw error;
                         })();
                   return {
-                    ...fallback,
+                    ...withIntent(fallback, intent),
                     mode: "deterministic-fallback",
                     caveats: [
                       "Live model could not produce a valid bounded answer; this answer used deterministic evidence. No provider facts were used. Failed attempts retain reserved allowance; unmeasured usage is not claimed as zero spend.",

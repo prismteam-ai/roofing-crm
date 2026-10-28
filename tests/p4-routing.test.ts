@@ -24,6 +24,7 @@ import {
   QuerySchema,
   CONTRACT_VERSION,
   PropertySchema,
+  SearchResponseSchema,
   type QueryInput,
   type SearchResponse,
 } from "../packages/contracts/src/index";
@@ -83,8 +84,16 @@ const property = PropertySchema.parse({
   ],
   ownership: {
     lastTransferDate: null,
-    historyCoverage: "unknown",
+    historyCoverage: "partial",
     ownerRegion: "unknown",
+    events: [
+      {
+        id: "SYN-REPORTED-SALE",
+        kind: "reported_sale",
+        date: "2010-01-01",
+        provenance: [source],
+      },
+    ],
   },
   provenance: [source],
 });
@@ -101,10 +110,18 @@ function evidence(input: QueryInput): SearchResponse {
           basis: "unknown" as const,
           confidence: "unknown" as const,
         },
-        permits: [],
+        permits: property.permits.map((permit) => ({
+          ...permit,
+          status: "unknown" as const,
+          statusBasis: "issued_only" as const,
+          openedAt: null,
+          closedAt: null,
+          issuedAt: "2020-01-01",
+          statusObservedAt: "2026-10-28T00:00:00Z",
+        })),
       }
     : property;
-  return {
+  return SearchResponseSchema.parse({
     contractVersion: CONTRACT_VERSION,
     snapshotId: q.snapshotId,
     queryHash: hash(q),
@@ -117,7 +134,7 @@ function evidence(input: QueryInput): SearchResponse {
     limitations: [
       "Synthetic test only; source status is explicit, reported contractor is unverified and missing license/BBB stays unknown",
     ],
-  };
+  });
 }
 for (const item of QUALITY_CORPUS)
   it(`P4 frozen corpus ${item.id}: ${item.refusal ? "refused before provider/read" : "one provider route matches exact server evidence"}`, async () => {
@@ -456,7 +473,7 @@ describe("P4 identity and evidence guards", () => {
       expect(reads).toBe(0);
     }
   });
-  it("keeps deterministic fallback inside the same active map and page limit", async () => {
+  it("honors an explicit radius in deterministic fallback while retaining its page limit", async () => {
     const base = {
       snapshotId: "synthetic",
       lat: 42.66,
@@ -477,7 +494,7 @@ describe("P4 identity and evidence guards", () => {
       base,
     );
     expect(applied).toMatchObject({
-      radiusMeters: base.radiusMeters,
+      radiusMeters: 16093.44,
       limit: 7,
     });
   });

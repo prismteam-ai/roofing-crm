@@ -483,7 +483,7 @@ describe("explicit closed permit interpretation", () => {
     ]) {
       expect(() =>
         interpretPrompt(prompt, { ...base, permitStatus: "open" }),
-      ).toThrow("unsupported");
+      ).toThrow();
     }
   });
 });

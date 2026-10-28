@@ -1,3 +1,4 @@
+import { IntentPlanSchema } from "./intent/types";
 import { createHash } from "node:crypto";
 import {
   QuerySchema,
@@ -32,7 +33,7 @@ export const QUALITY_CORPUS = [
   },
   {
     id: "unknown",
-    prompt: "Show unknown roof and permit evidence in this area",
+    prompt: "Show permits with unknown status in this area",
     refusal: false,
   },
   {
@@ -131,6 +132,12 @@ const semantic = (input: QueryInput) => {
     ownerRegion: q.ownerRegion ?? "any",
     minOwnershipYears: q.minOwnershipYears ?? null,
     minReportedSaleAgeYears: q.minReportedSaleAgeYears ?? null,
+    placeId: q.placeId ?? null,
+    placeIndexDigest: q.placeIndexDigest ?? null,
+    requiresContractor: q.requiresContractor ?? false,
+    requiresVerifiedLicense: q.requiresVerifiedLicense ?? false,
+    requiresBbbRating: q.requiresBbbRating ?? false,
+    sort: q.sort ?? null,
   };
 };
 /** Frozen prompt semantics and an optional independent server read must agree exactly. */
@@ -157,6 +164,7 @@ export function assessAnswer(
           n >= 0 &&
           n < (answer.toolTrace[0].minimizedRowCount ?? 0),
       ) &&
+      (!q.sort || ordinals.every((n, i) => i === 0 || n > ordinals[i - 1])) &&
       (!reference || ordinals.every((n) => n < reference.rows.length)) &&
       (!reference?.rows.length || ordinals.length > 0));
   const selectedReference =
@@ -216,7 +224,18 @@ export function assessAnswer(
             ),
           ].sort(),
         ));
+  const plan = IntentPlanSchema.safeParse(answer.intent);
+  const intentMatches = Boolean(
+    plan.success &&
+    plan.data.accepted &&
+    plan.data.query &&
+    digest(semantic(plan.data.query)) === digest(semantic(q)) &&
+    plan.data.ledger.every(
+      (entry) => !entry.material || entry.classification === "applied",
+    ),
+  );
   const grounded =
+    intentMatches &&
     answer.toolTrace.length === 1 &&
     answer.toolTrace[0].snapshotId === query.snapshotId &&
     answer.toolTrace[0].resultCount === rows.length &&

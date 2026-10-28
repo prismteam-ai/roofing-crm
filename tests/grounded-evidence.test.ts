@@ -104,9 +104,9 @@ it("explicit roof age excludes unknowns inherited from the UI unless the user ex
       base,
     ).includeUnknown,
   ).toBe(false);
-  expect(
-    boundedIntent("Show unknown roof and permit evidence", base).includeUnknown,
-  ).toBe(true);
+  expect(() =>
+    boundedIntent("Show unknown roof and permit evidence", base),
+  ).toThrow(); // Only-unknown roof evidence is not the includeUnknown flag.
 });
 it("the grounded model and deterministic path see only known older roofs unless unknown evidence is explicitly requested", async () => {
   const unknown = {
@@ -233,13 +233,13 @@ it("rejects a backend unknown-age row violating an explicit age predicate before
       { ...q, includeUnknown: true },
       { modelId: "synthetic" },
     ),
-  ).rejects.toThrow("roof-age predicate");
+  ).rejects.toThrow("validated source predicate");
   await expect(
     answerQuestion(reader, "Find roofs older than 15", {
       ...q,
       includeUnknown: true,
     }),
-  ).rejects.toThrow("roof-age predicate");
+  ).rejects.toThrow("validated source predicate");
   expect(calls).toBe(0);
 });
 it("exposes only literal allowlisted retrieved facts, observed duration, business role and licensing/rating evidence", async () => {
