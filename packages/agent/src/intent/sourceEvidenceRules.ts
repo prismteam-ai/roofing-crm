@@ -74,21 +74,30 @@ export function sourceEvidenceRules({
       assessmentDate,
     );
   };
+  const explicitOpenDuration =
+    "(?:(?:open\\s+)?(?:roofing\\s+)?permits?\\s+(?:that\\s+)?(?:have\\s+been|are|remain|were)\\s+(?:(?:continuously|uninterrupted(?:ly)?)\\s+)?open\\s+(?:for\\s+)?" +
+    "|(?:(?:continuously|uninterrupted(?:ly)?)\\s+)?open\\s+(?:(?:roofing\\s+)?permits?\\s+)?for\\s+" +
+    "|(?:continuously|uninterrupted(?:ly)?)\\s+open\\s+(?:(?:roofing\\s+)?permits?\\s+)?(?:for\\s+)?" +
+    "|open\\s+(?:for\\s+)?)";
   take(
     rx(
-      "\\b(?:(?:continuously|uninterrupted(?:ly)?)\\s+open\\s+(?:roofing\\s+)?permits?\\s+for|(?:open\\s+(?:roofing\\s+)?permits?\\s+(?:that\\s+)?(?:have\\s+been|are|remain)\\s+)?(?:(?:continuously|uninterrupted(?:ly)?)\\s+)?open\\s+for)\\s+(?:(?<comparison>more\\s+than|over|at\\s+least)\\s+)?" +
+      "\\b" +
+        explicitOpenDuration +
+        "(?:(?<comparison>more\\s+than|over|at\\s+least)\\s+)?" +
         numeric +
         "\\s*(?<unit>years?|days?)\\b",
     ),
-    (span, match) => {
+    (span, match) =>
       calendarBound(
         span,
         match.groups!.n,
         match.groups!.unit,
         /^(?:more|over)/.test(match.groups!.comparison ?? ""),
         "minOpenDays",
-      );
-    },
+      ),
+  );
+  take(rx("\\bminimum\\s+open\\s+days\\s+" + numeric + "\\b"), (span, match) =>
+    calendarBound(span, match.groups!.n, "days", false, "minOpenDays"),
   );
   take(
     rx(

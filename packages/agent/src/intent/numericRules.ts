@@ -119,47 +119,6 @@ export function numericRules(context: RuleContext) {
     },
   );
   take(
-    rx(
-      "\\b(?:(?:open|long-open|stalled)\\s+)?(?:roofing\\s+)?permits?\\s+(?:(?:that\\s+)?(?:are|have\\s+been|remain|were)\\s+)?(?:(?:still\\s+)?open\\s+)?(?:for\\s+)?(?:older than|over|more than)\\s+" +
-        numeric +
-        "\\s*(?<unit>years?|days?)\\b",
-    ),
-    (s, m) => {
-      apply(
-        s,
-        "permitStatus",
-        "open",
-        "Open-duration predicates require explicit open roofing status, not issuance.",
-      );
-      amount(
-        s,
-        "minOpenDays",
-        m.groups!.n,
-        0,
-        50000,
-        /^year/.test(m.groups!.unit) ? 365.25 : 1,
-        true,
-        "Minimum explicit-open duration, measured only through the source status-observation date.",
-      );
-    },
-  );
-  take(
-    rx(
-      "\\b(?:minimum\\s+open\\s+days|open\\s+for(?:\\s+at\\s+least)?)\\s*" +
-        numeric +
-        "(?:\\s*days?)?\\b",
-    ),
-    (s, m) => {
-      apply(
-        s,
-        "permitStatus",
-        "open",
-        "Minimum open days requires explicit open status.",
-      );
-      amount(s, "minOpenDays", m.groups!.n, 0, 50000);
-    },
-  );
-  take(
     /\b(?:all|any)\s+permit\s+statuses\b|\b(?<status>open|closed|unknown|stalled|long-open)\s+(?:roofing\s+)?permits?\b|\b(?:roofing\s+)?permits?\s+(?:with\s+)?(?<after>unknown|open|closed)\s+status\b/gi,
     (s, m) =>
       apply(

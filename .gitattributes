@@ -1,0 +1,2 @@
+# Preserve the pinned SPDX license bytes; the upstream text includes a trailing space.
+third-party/licenses/emitter-listener-1.1.2-SPDX-BSD-2-Clause.txt whitespace=-blank-at-eol

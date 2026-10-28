@@ -181,3 +181,33 @@ it("a later caller clock does not move the pinned source calendar basis", () => 
     vi.useRealTimers();
   }
 });
+
+for (const [question, minimum] of [
+  ["Show permits that have been open more than three years", 1097],
+  ["Show permits that are open for more than three years", 1097],
+  ["Show permits that have been open more than five days", 6],
+  ["Show open roofing permits that have been open over three years", 1097],
+  ["Show open permits for more than three years", 1097],
+  ["Show continuously open permits for at least three years", 1096],
+  ["Show permits that remain open for at least five days", 5],
+  ["Show minimum open days five", 5],
+  ["Show open for five days", 5],
+] as const)
+  it(`qualifies every accepted explicit duration through the same native/calendar rule: ${question}`, () => {
+    const plan = interpretIntent(question, base);
+    expect(plan.accepted).toBe(true);
+    expect(plan.query).toMatchObject({
+      minOpenDays: minimum,
+      permitStatus: "open",
+      permitActivityClaim: "native_reported_open",
+    });
+    expect(plan.ledger).toContainEqual(
+      expect.objectContaining({
+        typedField: "sourceAssessmentDate",
+        typedValue: SOURCE_ASSESSMENT_DATE,
+        material: true,
+        classification: "applied",
+      }),
+    );
+    expect(plan.query?.minPermitAgeSinceIssueDays).toBeUndefined();
+  });
