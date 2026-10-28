@@ -99,27 +99,104 @@ it("strictly bounds explicit reserved/API knobs and rejects ambiguous numbers", 
     }),
   ).toThrow("cannot be selected");
 });
-it("accepts fresh empty or two exact task functions and returns no account or ARN", () => {
+it("accepts fresh empty, the actual two Oracle types, or all four exact review types without returning identity fields", () => {
   expect(validateConcurrencyProof(proof, account, now)).toEqual({
     observedAt: proof.observedAt,
     concurrentExecutions: 10,
     unreservedConcurrentExecutions: 10,
     totalFunctionCount: 0,
   });
-  const functions = [
-    "PrismOracleReview-ReadApiB934CF2C-abc123",
+  const names = [
+    "PrismOracleAssessmentReview-ReadApiB934CF2C-abc123",
+    "PrismOracleAssessmentReview-AlertNotifier00EC01E7-alert123",
     "PrismCrmAssessmentReview-CrmHandler98FEA697-xyz456",
-  ].map((functionName) => ({
+    "PrismCrmAssessmentReview-AlertNotifier00EC01E7-alert456",
+  ];
+  for (const count of [2, 4]) {
+    const functions = names.slice(0, count).map((functionName) => ({
+      functionName,
+      functionArn: `arn:aws:lambda:us-east-2:${account}:function:${functionName}`,
+    }));
+    expect(
+      validateConcurrencyProof(
+        { ...proof, totalFunctionCount: count, functions },
+        account,
+        now,
+      ),
+    ).toEqual({
+      observedAt: proof.observedAt,
+      concurrentExecutions: 10,
+      unreservedConcurrentExecutions: 10,
+      totalFunctionCount: count,
+    });
+  }
+});
+it("rejects old, unrelated or changed logical types, repeated task types, wrong ARN and an over-four inventory", () => {
+  const entry = (functionName: string) => ({
     functionName,
     functionArn: `arn:aws:lambda:us-east-2:${account}:function:${functionName}`,
-  }));
-  expect(
+  });
+  for (const name of [
+    "PrismOracleReview-ReadApiB934CF2C-old123",
+    "PrismCrmReview-CrmHandler98FEA697-old123",
+    "OtherProduction",
+    "PrismOracleAssessmentReview-AnotherFunction00EC01E7-abc123",
+    "PrismOracleAssessmentReview-AlertNotifierDEADBEEF-abc123",
+    "PrismCrmAssessmentReview-AlertNotifierDEADBEEF-abc123",
+    "PrismOracleAssessmentReview-ReadApiDEADBEEF-abc123",
+  ])
+    expect(() =>
+      validateConcurrencyProof(
+        { ...proof, totalFunctionCount: 1, functions: [entry(name)] },
+        account,
+        now,
+      ),
+    ).toThrow();
+  const api = entry("PrismOracleAssessmentReview-ReadApiB934CF2C-abc123");
+  const sameType = entry(
+    "PrismOracleAssessmentReview-ReadApiB934CF2C-different123",
+  );
+  for (const functions of [
+    [api, api],
+    [api, sameType],
+  ])
+    expect(() =>
+      validateConcurrencyProof(
+        { ...proof, totalFunctionCount: 2, functions },
+        account,
+        now,
+      ),
+    ).toThrow("duplicate");
+  for (const functionArn of [
+    api.functionArn + ":alias",
+    api.functionArn.replace("us-east-2", "us-east-1"),
+    api.functionArn.replace(account, "345678901234"),
+  ])
+    expect(() =>
+      validateConcurrencyProof(
+        {
+          ...proof,
+          totalFunctionCount: 1,
+          functions: [{ ...api, functionArn }],
+        },
+        account,
+        now,
+      ),
+    ).toThrow();
+  const functions = [
+    api,
+    entry("PrismOracleAssessmentReview-AlertNotifier00EC01E7-alert123"),
+    entry("PrismCrmAssessmentReview-CrmHandler98FEA697-xyz456"),
+    entry("PrismCrmAssessmentReview-AlertNotifier00EC01E7-alert456"),
+    sameType,
+  ];
+  expect(() =>
     validateConcurrencyProof(
-      { ...proof, totalFunctionCount: 2, functions },
+      { ...proof, totalFunctionCount: 5, functions },
       account,
       now,
-    ).totalFunctionCount,
-  ).toBe(2);
+    ),
+  ).toThrow("inventory");
 });
 it("rejects stale/future, quota, account, inventory and unrelated-function proof", () => {
   const unrelated = {
@@ -140,7 +217,7 @@ it("rejects stale/future, quota, account, inventory and unrelated-function proof
     expect(() =>
       validateConcurrencyProof({ ...proof, ...delta }, account, now),
     ).toThrow();
-  const functionName = "PrismOracleReview-ReadApiB934CF2C-abc123";
+  const functionName = "PrismOracleAssessmentReview-ReadApiB934CF2C-abc123";
   const f = {
     functionName,
     functionArn: `arn:aws:lambda:us-east-2:${account}:function:${functionName}`,

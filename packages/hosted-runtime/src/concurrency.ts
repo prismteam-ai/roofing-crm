@@ -76,9 +76,12 @@ export function buildConcurrencyPolicy(
     apiBurst,
   };
 }
+/** Exactly two review applications, each with one API and one notifier; no other task functions are admitted. */
 const functionPatterns = [
-  /^PrismOracleReview-ReadApiB934CF2C-[A-Za-z0-9]+$/,
+  /^PrismOracleAssessmentReview-ReadApiB934CF2C-[A-Za-z0-9]+$/,
   /^PrismCrmAssessmentReview-CrmHandler98FEA697-[A-Za-z0-9]+$/,
+  /^PrismOracleAssessmentReview-AlertNotifier00EC01E7-[A-Za-z0-9]+$/,
+  /^PrismCrmAssessmentReview-AlertNotifier00EC01E7-[A-Za-z0-9]+$/,
 ];
 function exactKeys(value: Record<string, unknown>, keys: readonly string[]) {
   return (
@@ -115,7 +118,7 @@ export function validateConcurrencyProof(
     !/Z$/.test(p.observedAt) ||
     !Number.isInteger(p.totalFunctionCount) ||
     (p.totalFunctionCount as number) < 0 ||
-    (p.totalFunctionCount as number) > 2 ||
+    (p.totalFunctionCount as number) > functionPatterns.length ||
     !Array.isArray(p.functions) ||
     p.functions.length !== p.totalFunctionCount
   )

@@ -50,3 +50,50 @@ test("failed CLI calls also remove private input and unrelated input is refused"
     rmSync(directory, { recursive: true, force: true });
   }
 });
+test("a real child reopens the regular file while piped stdin remains unused, preserving unknown JSON fields", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const directory = mkdtempSync(path.join(os.tmpdir(), "prism-cli-child-"));
+  try {
+    const payload = JSON.stringify({
+      SecretId: "synthetic-secret-only",
+      SecretString: JSON.stringify({
+        unrelated: { retained: "synthetic-retain" },
+        signingKey: "synthetic-signing-key",
+      }),
+    });
+    const child = `const fs=require("node:fs");const args=process.argv.slice(1);if(args.some((value)=>value.includes("synthetic-signing-key")))process.exit(8);const file=new URL(args[1]);const input=JSON.parse(fs.readFileSync(file,"utf8"));const secret=JSON.parse(input.SecretString);if(secret.unrelated.retained!=="synthetic-retain"||secret.signingKey!=="synthetic-signing-key")process.exit(9);process.stdout.write(JSON.stringify({reopened:true,unknownFieldsPreserved:true}));`;
+    const output = withPrivateCliInput(
+      directory,
+      ["--cli-input-json", "file:///dev/stdin"],
+      payload,
+      (args) =>
+        execFileSync(process.execPath, ["-e", child, "--", ...args], {
+          encoding: "utf8",
+          stdio: ["pipe", "pipe", "pipe"],
+        }),
+    );
+    expect(JSON.parse(output)).toEqual({
+      reopened: true,
+      unknownFieldsPreserved: true,
+    });
+    expect(readdirSync(directory)).toEqual([]);
+    expect(() =>
+      withPrivateCliInput(
+        directory,
+        ["--cli-input-json", "file:///dev/stdin"],
+        payload,
+        (args) =>
+          execFileSync(
+            process.execPath,
+            ["-e", "process.exit(7)", "--", ...args],
+            {
+              stdio: ["pipe", "pipe", "pipe"],
+            },
+          ),
+      ),
+    ).toThrow();
+    expect(readdirSync(directory)).toEqual([]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
