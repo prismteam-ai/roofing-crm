@@ -9,6 +9,7 @@ import {
 import {
   boundedIntent,
   boundedToolArguments,
+  answerWithBedrock,
   ROUTING_ARCHITECTURE,
   type ConverseTransport,
 } from "../packages/agent/src/bedrock";
@@ -273,6 +274,139 @@ for (const item of QUALITY_CORPUS)
     }
   });
 describe("P4 identity and evidence guards", () => {
+  it("binds permit and reported-sale duration to their own clauses in model and fallback reads", async () => {
+    const base = {
+      snapshotId: "synthetic",
+      lat: 42.66,
+      lng: -83.29,
+      radiusMeters: 8046.72,
+    };
+    for (const [prompt, days, status] of [
+      [
+        "Show roofing permits for properties with last reported sale older than ten years",
+        0,
+        "any",
+      ],
+      [
+        "Show open roofing permits for properties with last reported sale older than ten years",
+        0,
+        "open",
+      ],
+      [
+        "Show open roofing permits older than five years and last reported sale older than ten years",
+        1827,
+        "open",
+      ],
+      [
+        "Show open roofing permits that have been open for more than five years and last reported sale older than ten years",
+        1827,
+        "open",
+      ],
+      [
+        "Show partial ownership records with last reported sale older than ten years",
+        0,
+        "any",
+      ],
+    ] as const) {
+      const reads: QueryInput[] = [],
+        modelInputs: QueryInput[] = [];
+      const reader = {
+        search: async (q: QueryInput) => {
+          reads.push(q);
+          return evidence(q);
+        },
+        detail: async () => property,
+      };
+      const provider: ConverseTransport = {
+        converse: async (request) => {
+          const q = JSON.parse(
+            request.messages![0].content![0].text!,
+          ).boundedQuery;
+          modelInputs.push(q);
+          return {
+            $metadata: {},
+            metrics: { latencyMs: 1 },
+            stopReason: "tool_use",
+            usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
+            output: {
+              message: {
+                role: "assistant",
+                content: [
+                  {
+                    toolUse: {
+                      toolUseId: "synthetic-clause",
+                      name: "searchRoofingEvidence",
+                      input: q,
+                    },
+                  },
+                ],
+              },
+            },
+          };
+        },
+      };
+      const routed = await answerWithBedrock(reader, provider, prompt, base, {
+        modelId: MICRO_MODEL,
+      });
+      const fallback = await answerQuestion(reader, prompt, base);
+      for (const q of [
+        boundedIntent(prompt, base),
+        routed.query,
+        fallback.query,
+        ...reads,
+        ...modelInputs,
+      ]) {
+        expect(q).toMatchObject({
+          minOpenDays: days,
+          permitStatus: status,
+          minReportedSaleAgeYears: 10,
+        });
+        expect(q.minOwnershipYears).toBeUndefined();
+      }
+      expect(modelInputs).toHaveLength(1);
+      expect(reads).toHaveLength(2);
+    }
+  });
+  it("refuses a separate unsupported tenure clause even when a valid reported-sale clause is present", async () => {
+    const base = {
+      snapshotId: "synthetic",
+      lat: 42.66,
+      lng: -83.29,
+      radiusMeters: 8046.72,
+    };
+    for (const prompt of [
+      "Show properties owned for 20 years and last reported sale older than ten years",
+      "Show last reported sale older than ten years and properties owned for 20 years",
+      "Show properties with ownership tenure over 20 years and last reported sale older than ten years",
+    ]) {
+      let providerCalls = 0,
+        reads = 0;
+      const reader = {
+        search: async (q: QueryInput) => {
+          reads++;
+          return evidence(q);
+        },
+        detail: async () => property,
+      };
+      const provider: ConverseTransport = {
+        converse: async () => {
+          providerCalls++;
+          throw Error("No provider use permitted");
+        },
+      };
+      expect(() => boundedIntent(prompt, base)).toThrow("tenure");
+      await expect(
+        answerWithBedrock(reader, provider, prompt, base, {
+          modelId: MICRO_MODEL,
+        }),
+      ).rejects.toThrow("tenure");
+      await expect(answerQuestion(reader, prompt, base)).rejects.toThrow(
+        "tenure",
+      );
+      expect(providerCalls).toBe(0);
+      expect(reads).toBe(0);
+    }
+  });
   it("keeps deterministic fallback inside the same active map and page limit", async () => {
     const base = {
       snapshotId: "synthetic",

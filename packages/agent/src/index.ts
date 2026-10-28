@@ -88,17 +88,19 @@ export function interpretPrompt(prompt: string, base: QueryInput): QueryInput {
       "Complete ownership tenure is not established by the available source. Use the distinct reported-sale observation filter instead.",
     );
   const query: QueryInput = { ...base, cursor: undefined };
-  const reportedSaleYears = text.match(
-    /(?:last\s+(?:observed\s+)?reported\s+sale|reported\s+sale(?:\s+observed)?)[^.]*?(?:older than|over|more than)\s+(\d+)\s*years?/,
-  );
+  // Bind each age to its own subject instead of crossing into later predicates.
+  const reportedSaleClause =
+    /\b(?:last\s+(?:observed\s+)?reported\s+sale|reported\s+sale(?:\s+observed)?)\s+(?:(?:that\s+)?(?:was|is)\s+)?(?:observed\s+)?(?:older than|over|more than)\s+(\d+)\s*years?\b/g;
+  const reportedSaleYears = [...text.matchAll(reportedSaleClause)][0];
   if (reportedSaleYears)
     query.minReportedSaleAgeYears = Number(reportedSaleYears[1]);
+  // A valid sale predicate must never waive a separate unsupported tenure request.
+  const nonSaleText = text.replace(reportedSaleClause, " ");
   if (
     /\b(?:ownership|tenure|owned|ownership transfer|exchanged ownership)\b/.test(
-      text,
+      nonSaleText,
     ) &&
-    /\b(?:years?|decade)\b/.test(text) &&
-    !reportedSaleYears
+    /\b(?:years?|decade)\b/.test(nonSaleText)
   )
     throw new DomainError(
       "UNSUPPORTED_TOOL",
@@ -121,7 +123,7 @@ export function interpretPrompt(prompt: string, base: QueryInput): QueryInput {
   );
   if (miles) query.radiusMeters = Number(miles[1]) * 1609.344;
   const permitYears = text.match(
-    /permits?[^.]*?(?:older than|over|more than)\s+(\d+)\s*years?/,
+    /\bpermits?\s+(?:(?:that\s+)?(?:are|have\s+been|remain|were)\s+)?(?:(?:still\s+)?open\s+)?(?:for\s+)?(?:older than|over|more than)\s+(\d+)\s*years?\b/,
   );
   if (permitYears) {
     if (query.permitStatus === "closed")
