@@ -30,11 +30,16 @@ contractor role. Neither those attachments nor a literal license status establis
 current active eligibility. No accepted verified corporate identity or BBB
 rating has been fabricated to fill those conditional gaps.
 
-There are 668 official building-year proxy observations and 1,210 stored reported
-sales in partial observed history. A building year is low-confidence roof-age
-context, not a roof installation/replacement. A reported sale date is not a complete
-transfer chain or uninterrupted ownership tenure. Missing acquired records are
-unknown, not proof that no permit, sale, contractor, license or rating exists.
+The protected v7 model has 669 source-reported building-year observations on 659
+distinct properties with a known, nonconflicting built-year proxy. The earlier
+donor file has 668 observations on 658 properties; the exact Troy assessment UI
+case adds one previously unenriched property. The 1,210 stored reported-sale
+observations remain unchanged and form only a partial observed history. The
+return packet's `private_v7_known_roof_count_audit.json` distinguishes observation
+and property counts. A building year is low-confidence roof-age context, not a
+roof installation/replacement. A reported sale date is not a complete transfer
+chain or uninterrupted ownership tenure. Missing acquired records are unknown,
+not proof that no permit, sale, contractor, license or rating exists.
 
 The safe return evidence includes
 `return/evidence/source/independence_public_candidate_offline_validation.json`,
