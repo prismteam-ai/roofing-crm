@@ -100,8 +100,9 @@ export function cdkBootstrapArguments(account: string, policies: string) {
     BOOTSTRAP_TOOLKIT_STACK,
     "--qualifier",
     BOOTSTRAP_QUALIFIER,
-    "--cloudformation-execution-policies",
-    policies,
+    ...policies
+      .split(",")
+      .flatMap((arn) => ["--cloudformation-execution-policies", arn]),
     "--termination-protection",
   ];
 }

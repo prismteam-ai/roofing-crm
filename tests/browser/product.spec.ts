@@ -443,11 +443,13 @@ test("offline assistant grounds a query and refuses unsafe tool requests", async
     snapshotId: audit(page)!.search!.query.snapshotId,
     radiusMeters: 8046.72,
     permitStatus: "open",
-    minOpenDays: 1827,
+    minOpenDays: 0,
+    minPermitAgeSinceIssueDays: 1827,
   });
   expect(observed.mode).toBe("deterministic-offline");
-  // Bind both positive fixture and legitimately empty real-public answers to an
-  // independent typed read; the public fixture contains no acquired permits.
+  // The original wording is current source-qualified activity plus calendar issue age.
+  // Neither the prepared legacy fixture nor public data has that source observation;
+  // bind its legitimate empty result to a separate typed read instead of inventing one.
   const baselineResponse = await page.request.post("/api/search", {
     data: observed.query,
   });
@@ -456,11 +458,17 @@ test("offline assistant grounds a query and refuses unsafe tool requests", async
   expect(observed.results).toEqual(baseline.rows);
   expect(observed.toolTrace[0]!.queryHash).toBe(baseline.queryHash);
   expect(observed.toolTrace[0]!.totalMatched).toBe(baseline.total);
-  if (process.env.PRISM_TEST_MODE === "real") {
-    expect(baseline.total).toBe(0);
-    expect(observed.results).toEqual([]);
-    expect(observed.citations).toEqual([]);
-  } else expect(baseline.total).toBeGreaterThan(0);
+  expect(baseline.total).toBe(0);
+  expect(observed.results).toEqual([]);
+  expect(observed.citations).toEqual([]);
+  expect(observed.intent?.ledger).toContainEqual(
+    expect.objectContaining({
+      typedField: "sourceAssessmentDate",
+      typedValue: "2026-10-28",
+      material: true,
+      classification: "applied",
+    }),
+  );
   expect(observed.intent?.accepted).toBe(true);
   expect(observed.intent?.query).toEqual(observed.query);
   expect(observed.toolTrace).toHaveLength(1);

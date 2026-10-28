@@ -116,7 +116,9 @@ it("bootstrap requires the exact ordered storage/runtime policy pair and never t
     "--qualifier",
     "prismrvw",
     "--cloudformation-execution-policies",
-    policyArns,
+    policyArns.split(",")[0],
+    "--cloudformation-execution-policies",
+    policyArns.split(",")[1],
     "--termination-protection",
   ]);
   for (const policies of [
