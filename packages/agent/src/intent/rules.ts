@@ -5,7 +5,12 @@ export type Field = ConstraintLedgerEntry["typedField"];
 export type Primitive = string | number | boolean;
 export type AppliedField = Exclude<
   Field,
-  "center" | "countyScope" | "display" | "safety" | "expression"
+  | "center"
+  | "countyScope"
+  | "display"
+  | "safety"
+  | "expression"
+  | "sourceAssessmentDate"
 >;
 /** Grammar stages can only add typed bounded constraints through these methods. */
 export interface RuleContext {

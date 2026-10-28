@@ -1,3 +1,4 @@
+import { ProviderObservations } from "./ProviderObservations";
 import type { Permit } from "../../../packages/contracts/src/index";
 import { permitOpenDays } from "../../../packages/map-domain/src/signals";
 function SourceLink({ url, label }: { url: string; label: string }) {
@@ -76,6 +77,10 @@ export function PermitEvidence({
         . Issuance alone is not open status and does not establish roof
         installation or replacement.
       </p>
+      <ProviderObservations
+        observations={p.sourceObservations}
+        municipalKind={p.kind}
+      />
       {p.matchEvidence && (
         <p className="caveat">
           Permit/property match: {p.matchEvidence.basis.replaceAll("_", " ")} ·{" "}

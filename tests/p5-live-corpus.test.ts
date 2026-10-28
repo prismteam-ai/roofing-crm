@@ -1,3 +1,7 @@
+import contractLock from "../packages/contracts/contract.lock.json" with { type: "json" };
+import { CONTRACT_VERSION } from "../packages/contracts/src/index";
+import { SOURCE_ASSESSMENT_DATE } from "../packages/runtime-config/src/source-assessment";
+import { canonicalDigest } from "../packages/agent/src/canonical";
 import { it, expect } from "vitest";
 import { P5_LIVE_CORPUS } from "../packages/agent/src/intent/live-corpus";
 import { interpretIntent } from "../packages/agent/src/intent";
@@ -39,6 +43,10 @@ it("cannot promote partial, historical, source-empty or unmeasured failures into
   };
   const report = {
     profile: "original-objective-36-retrieval-v3",
+    contractVersion: CONTRACT_VERSION,
+    contractModuleGraphSha256: contractLock.moduleGraphSha256,
+    sourceAssessmentDate: SOURCE_ASSESSMENT_DATE,
+    corpusSha256: canonicalDigest(P5_LIVE_CORPUS),
     phase: CAMPAIGN_PHASE,
     architecture: ROUTING_ARCHITECTURE,
     modelId: "us.amazon.nova-micro-v1:0",
@@ -63,6 +71,10 @@ it("cannot promote partial, historical, source-empty or unmeasured failures into
   expect(qualityFailure(report, "base")).toMatch(/^[a-f0-9]{64}$/);
   for (const invalid of [
     { ...report, phase: "prism-assessment-p4" },
+    { ...report, contractVersion: "0.4.0" },
+    { ...report, contractModuleGraphSha256: "a".repeat(64) },
+    { ...report, sourceAssessmentDate: "2026-10-27" },
+    { ...report, corpusSha256: "b".repeat(64) },
     { ...report, architecture: "one-call-grounded-selection-v1" },
     {
       ...report,

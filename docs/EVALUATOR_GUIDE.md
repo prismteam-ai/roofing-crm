@@ -12,3 +12,7 @@ Use the current live URL and access code supplied separately in the private acce
 8. Sign out, confirm the protected workspace closes, and use a fresh session for isolation checks.
 
 Future CRM modules remain disabled. The accompanying source report identifies real positive examples and remaining business-outcome gaps; a safe zero-result path is not a substitute for a requested positive demonstration.
+
+For current source closure, inspect the separate provider-status/activity/issue-age and recorded-deed-gap controls, then open a returned property to inspect source dates, status basis, unverified party roles and limitations. A zero provider-active cohort is a valid coverage result; ISSUED is never relabeled active for the demonstration. The deed-index gap is narrower than proven uninterrupted ownership; the assistant explicitly refuses the stronger tenure request.
+
+`pnpm run campaign --source-closure` prints the additional preselected 12-case plan without effects. Its authorized live form adds `--execute` and uses the same exact source/cost/usage gates as the original 36-case campaign. It emits a distinct report profile and cannot itself authorize a model repair. Both campaigns must be rerun against the final current source/package to claim current live model acceptance.

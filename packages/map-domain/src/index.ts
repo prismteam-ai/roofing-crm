@@ -28,6 +28,18 @@ export function queryFromUrl(
   if (p.has("tenure")) base.minOwnershipYears = Number(p.get("tenure"));
   if (p.has("reportedSaleYears"))
     base.minReportedSaleAgeYears = Number(p.get("reportedSaleYears"));
+  if (p.has("providerStatus"))
+    base.providerPermitStatus = p.get(
+      "providerStatus",
+    ) as QueryInput["providerPermitStatus"];
+  if (p.has("activityClaim"))
+    base.permitActivityClaim = p.get(
+      "activityClaim",
+    ) as QueryInput["permitActivityClaim"];
+  if (p.has("issueAgeDays"))
+    base.minPermitAgeSinceIssueDays = Number(p.get("issueAgeDays"));
+  if (p.has("deedGapYears"))
+    base.minRecordedDeedGapYears = Number(p.get("deedGapYears"));
   if (p.has("place")) base.placeId = p.get("place")!;
   if (p.has("placeDigest")) base.placeIndexDigest = p.get("placeDigest")!;
   if (p.has("sort")) base.sort = p.get("sort") as QueryInput["sort"];
@@ -66,6 +78,14 @@ export function queryToUrl(query: QueryInput): string {
     p.set("tenure", String(query.minOwnershipYears));
   if (query.minReportedSaleAgeYears !== undefined)
     p.set("reportedSaleYears", String(query.minReportedSaleAgeYears));
+  if (query.providerPermitStatus !== undefined)
+    p.set("providerStatus", query.providerPermitStatus);
+  if (query.permitActivityClaim !== undefined)
+    p.set("activityClaim", query.permitActivityClaim);
+  if (query.minPermitAgeSinceIssueDays !== undefined)
+    p.set("issueAgeDays", String(query.minPermitAgeSinceIssueDays));
+  if (query.minRecordedDeedGapYears !== undefined)
+    p.set("deedGapYears", String(query.minRecordedDeedGapYears));
   if (query.placeId) p.set("place", query.placeId);
   if (query.placeIndexDigest) p.set("placeDigest", query.placeIndexDigest);
   if (query.sort) p.set("sort", query.sort);

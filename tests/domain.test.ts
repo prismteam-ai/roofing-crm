@@ -176,7 +176,7 @@ describe("bounded offline agent", () => {
     );
     expect(q).toMatchObject({
       permitStatus: "open",
-      minOpenDays: 1827,
+      minPermitAgeSinceIssueDays: 1827,
       radiusMeters: 8046.72,
     });
     expect(q.roofMinAgeYears).toBeUndefined();

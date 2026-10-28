@@ -13,6 +13,7 @@ import {
   answerFromEvidence,
   withIntent,
   assertEvidencePredicates,
+  assertIntentSourceAssessment,
   boundedEvidenceQuery,
   type AgentAnswer,
 } from "./index";
@@ -185,6 +186,7 @@ export async function answerWithBedrock(
         "Evidence did not satisfy snapshot/result limits",
       );
     assertEvidencePredicates(data, query);
+    assertIntentSourceAssessment(data, intent);
     return data;
   }
   const preflight = await retrieve();

@@ -50,6 +50,7 @@ export interface AppDependencies {
     region: "us-east-2";
     promptRevision: "base" | "repair-1";
     architecture: RoutingArchitecture;
+    sourceAssessmentDate?: string;
     phase: string;
     requestScope?: "validated-agent-executions";
     limits: Readonly<Record<string, number>>;

@@ -1,6 +1,7 @@
+import { assertOperatorIdentity } from "../packages/hosted-runtime/src/operator-identity";
 import {
   bootstrapBindings,
-  executeCdkDeployment,
+  deployCdkAssembly,
 } from "../packages/hosted-runtime/src/cdk-deploy";
 import { writeFileSync } from "node:fs";
 import { withPrivateCliInput } from "../packages/hosted-runtime/src/private-cli-input";
@@ -34,7 +35,6 @@ import {
   validateReleasePins,
   validatedRegion,
   assertPinnedSource,
-  assertCallerAccount,
   assertPackageIdentity,
   assertCostEnvelope,
   APPROVED_PUBLIC_MANIFEST_SHA256,
@@ -56,6 +56,7 @@ if (
   );
 const required = [
   "PRISM_EXPECTED_ACCOUNT_ID",
+  "PRISM_EXPECTED_OPERATOR_ROLE_ARN",
   "PRISM_EXPECTED_HEAD",
   "PRISM_EXPECTED_TREE",
   "PRISM_EXPECTED_ARCHIVE_SHA256",
@@ -323,13 +324,13 @@ if (action === "deploy") {
   }
 }
 
-assertCallerAccount(
-  pins,
-  (
-    JSON.parse(aws(["sts", "get-caller-identity", "--output", "json"])) as {
-      Account: string;
-    }
-  ).Account,
+assertOperatorIdentity(
+  pins.expectedAccountId,
+  get("PRISM_EXPECTED_OPERATOR_ROLE_ARN"),
+  JSON.parse(aws(["sts", "get-caller-identity", "--output", "json"])) as {
+    Account?: string;
+    Arn?: string;
+  },
 );
 const outputs = () =>
   Object.fromEntries(
@@ -645,44 +646,13 @@ try {
       );
     }
     await step("stack_deployed_via_cdk", () =>
-      executeCdkDeployment(
+      deployCdkAssembly(
         {
           pins,
           parameters,
           outputsFile: path.join(operations, "crm-cdk-outputs.private.json"),
         },
-        (arguments_) => {
-          const output = execFileSync(
-            process.execPath,
-            ["node_modules/aws-cdk/bin/cdk", ...arguments_],
-            {
-              encoding: "utf8",
-              stdio: ["ignore", "pipe", "pipe"],
-              env: {
-                ...process.env,
-                AWS_REGION: pins.region,
-                AWS_DEFAULT_REGION: pins.region,
-                CDK_DEFAULT_ACCOUNT: pins.expectedAccountId,
-                CDK_DEFAULT_REGION: pins.region,
-              },
-            },
-          );
-          writeFileSync(
-            path.join(operations, "crm-cdk-deploy.private.log"),
-            output,
-            { mode: 0o600 },
-          );
-        },
-        (failure) =>
-          writeFileSync(
-            path.join(operations, "crm-cdk-deploy-failure.private.json"),
-            JSON.stringify(
-              { at: new Date().toISOString(), ...failure },
-              null,
-              2,
-            ),
-            { mode: 0o600 },
-          ),
+        operations,
       ),
     );
     const o = outputs();

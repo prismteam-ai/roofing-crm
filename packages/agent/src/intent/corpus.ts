@@ -35,10 +35,10 @@ const accepted: Omit<NlCorpusCase, "id" | "expected">[] = [
     query: {
       placeId: "us-26-125-80700-city",
       permitStatus: "open",
-      minOpenDays: 1827,
+      minPermitAgeSinceIssueDays: 1827,
       radiusMeters: 8046.72,
     },
-    classes: ["original-crm", "place", "duration"],
+    classes: ["original-crm", "place", "calendar-issue-age"],
   },
   ...[
     ["City of Novi, Michigan", "us-26-125-59440-city"],
@@ -107,12 +107,12 @@ const accepted: Omit<NlCorpusCase, "id" | "expected">[] = [
   },
   {
     prompt: "Show open permits older than seven days",
-    query: { permitStatus: "open", minOpenDays: 7 },
+    query: { permitStatus: "open", minPermitAgeSinceIssueDays: 8 },
     classes: ["duration"],
   },
   {
     prompt: "Show open permits older than five years",
-    query: { permitStatus: "open", minOpenDays: 1827 },
+    query: { permitStatus: "open", minPermitAgeSinceIssueDays: 1827 },
     classes: ["duration"],
   },
   {
@@ -240,7 +240,7 @@ const accepted: Omit<NlCorpusCase, "id" | "expected">[] = [
       radiusMeters: 16093.44,
       roofMinAgeYears: 15,
       permitStatus: "open",
-      minOpenDays: 1827,
+      minPermitAgeSinceIssueDays: 1827,
       limit: 10,
     },
     classes: ["mixed"],

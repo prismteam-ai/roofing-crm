@@ -1,7 +1,12 @@
 /** Preselected finite assessment campaign; no network in plan mode. Secrets enter only on stdin. */
+import { canonicalDigest as hash } from "../packages/agent/src/canonical";
+import contractLock from "../packages/contracts/contract.lock.json" with { type: "json" };
+import { SOURCE_ASSESSMENT_DATE } from "../packages/runtime-config/src/source-assessment";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { SOURCE_CLOSURE_CORPUS } from "../packages/agent/src/intent/source-corpus";
+import type { NlCorpusCase } from "../packages/agent/src/intent/corpus";
 import { P5_LIVE_CORPUS } from "../packages/agent/src/intent/live-corpus";
 import { interpretIntent } from "../packages/agent/src/intent";
 import {
@@ -10,6 +15,7 @@ import {
 } from "../packages/agent/src/campaign";
 import { officialPlaceResolver } from "../packages/places/src/index";
 import {
+  CONTRACT_VERSION,
   QuerySchema,
   SearchResponseSchema,
   type QueryInput,
@@ -34,31 +40,34 @@ import {
   reviewModel,
 } from "../packages/runtime-config/src/index";
 import { ROUTING_ARCHITECTURE } from "../packages/agent/src/bedrock";
-const canonical = (v: unknown): unknown =>
-  Array.isArray(v)
-    ? v.map(canonical)
-    : v !== null && typeof v === "object"
-      ? Object.fromEntries(
-          Object.entries(v)
-            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-            .map(([k, x]) => [k, canonical(x)]),
-        )
-      : v;
-const hash = (v: unknown) =>
-  createHash("sha256")
-    .update(typeof v === "string" ? v : JSON.stringify(canonical(v)))
-    .digest("hex");
-if (process.argv.slice(2).some((x) => x !== "--execute"))
-  throw Error("Use model-campaign [--execute]");
+const sourceClosure = process.argv.includes("--source-closure");
+const selectedCorpus: (NlCorpusCase & { contextPlace: string })[] =
+  sourceClosure
+    ? SOURCE_CLOSURE_CORPUS.map((item) => ({
+        ...item,
+        contextPlace: "Troy, Michigan",
+        classes: ["source-closure"],
+      }))
+    : P5_LIVE_CORPUS;
+const profile = sourceClosure
+  ? "source-closure-12-retrieval-v3"
+  : "original-objective-36-retrieval-v3";
+if (
+  process.argv
+    .slice(2)
+    .some((x) => !["--execute", "--source-closure"].includes(x))
+)
+  throw Error("Use model-campaign [--source-closure] [--execute]");
 if (!process.argv.includes("--execute")) {
   console.log(
     JSON.stringify(
       {
         mode: "plan",
         phase: CAMPAIGN_PHASE,
+        profile,
         limits: CAMPAIGN_LIMITS,
-        corpus: P5_LIVE_CORPUS,
-        corpusSha256: hash(P5_LIVE_CORPUS),
+        corpus: selectedCorpus,
+        corpusSha256: hash(selectedCorpus),
         liveCalls: 0,
       },
       null,
@@ -187,10 +196,11 @@ if (
   (health.snapshotDigest ?? health.digest) !==
     get("PRISM_EXPECTED_SNAPSHOT_DIGEST") ||
   health.model?.phase !== CAMPAIGN_PHASE ||
+  health.model?.sourceAssessmentDate !== SOURCE_ASSESSMENT_DATE ||
   health.model?.id !== model ||
   health.model?.promptRevision !== revision
 )
-  throw Error("Exact enabled P5 model/revision release required");
+  throw Error("Exact enabled current model/revision release required");
 const login = await request("/api/session", { accessCode: code });
 // eslint-disable-next-line no-useless-assignment -- Never persist or return the access credential.
 code = "";
@@ -201,7 +211,7 @@ const startedAt = new Date().toISOString(),
   outcomes: Record<string, unknown>[] = [];
 let campaignFailure: string | undefined;
 try {
-  for (const item of P5_LIVE_CORPUS) {
+  for (const item of selectedCorpus) {
     const attemptedAt = new Date().toISOString();
     let agentEndpointAttempted = false;
     let stage = "plan",
@@ -385,14 +395,17 @@ try {
 }
 async function writeFinalReport() {
   const report = {
-    profile: "original-objective-36-retrieval-v3",
+    profile,
+    contractVersion: CONTRACT_VERSION,
+    contractModuleGraphSha256: contractLock.moduleGraphSha256,
+    sourceAssessmentDate: SOURCE_ASSESSMENT_DATE,
     architecture: ROUTING_ARCHITECTURE,
     modelId: model,
     region: "us-east-2",
     revision,
     accepted:
       !campaignFailure &&
-      outcomes.length === 36 &&
+      outcomes.length === selectedCorpus.length &&
       outcomes.every((x) => x.passed),
     phase: CAMPAIGN_PHASE,
     startedAt,
@@ -402,14 +415,16 @@ async function writeFinalReport() {
     snapshotId: health.snapshotId,
     snapshotDigest: health.snapshotDigest,
     placeIndexDigest: officialPlaceResolver.indexDigest,
-    corpusSha256: hash(P5_LIVE_CORPUS),
-    preselectedCases: P5_LIVE_CORPUS.length,
-    acceptedCases: 24,
-    refusalCases: 12,
+    corpusSha256: hash(selectedCorpus),
+    preselectedCases: selectedCorpus.length,
+    acceptedCases: selectedCorpus.filter((item) => item.expected === "accepted")
+      .length,
+    refusalCases: selectedCorpus.filter((item) => item.expected === "refused")
+      .length,
     limits: CAMPAIGN_LIMITS,
     allChecksPassed:
       !campaignFailure &&
-      outcomes.length === 36 &&
+      outcomes.length === selectedCorpus.length &&
       outcomes.every((x) => x.passed),
     campaignFailure: campaignFailure ?? null,
     endpointAttemptCount: outcomes.filter(

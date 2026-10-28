@@ -213,7 +213,9 @@ describe("current durable campaign", () => {
         },
       })),
     };
-    expect(() => qualityFailure(report, "base")).toThrow("legacy eight-case");
+    expect(() => qualityFailure(report, "base")).toThrow(
+      "historical or source-closure-only",
+    );
     expect(() =>
       qualityFailure(
         {

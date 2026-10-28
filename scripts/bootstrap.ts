@@ -1,3 +1,4 @@
+import { assertOperatorIdentity } from "../packages/hosted-runtime/src/operator-identity";
 import { execFileSync } from "node:child_process";
 import {
   cdkBootstrapArguments,
@@ -15,8 +16,13 @@ if (!execute) {
       mode: "plan",
       region: "us-east-2",
       qualifier: "prismrvw",
+      toolkitStack: "PrismAssessmentReviewToolkit",
+      requiresExactOperatorRole: true,
       standardCdkBootstrap: true,
-      requiresExactScopedExecutionPolicy: true,
+      requiresExactScopedExecutionPolicies: [
+        "prism-assessment-review-execution-storage",
+        "prism-assessment-review-execution-runtime",
+      ],
       accountWrites: 0,
     }),
   );
@@ -27,7 +33,7 @@ if (!execute) {
   bootstrapBindings(account);
   const args = cdkBootstrapArguments(
     account,
-    process.env.PRISM_BOOTSTRAP_EXECUTION_POLICY_ARN ?? "",
+    process.env.PRISM_BOOTSTRAP_EXECUTION_POLICY_ARNS ?? "",
   );
   const who = JSON.parse(
     execFileSync(
@@ -42,9 +48,12 @@ if (!execute) {
       ],
       { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
     ),
-  ) as { Account?: string };
-  if (who.Account !== account)
-    throw new Error("Bootstrap caller account mismatch");
+  ) as { Account?: string; Arn?: string };
+  assertOperatorIdentity(
+    account,
+    process.env.PRISM_EXPECTED_OPERATOR_ROLE_ARN ?? "",
+    who,
+  );
   execFileSync(process.execPath, ["node_modules/aws-cdk/bin/cdk", ...args], {
     stdio: "inherit",
     env: {

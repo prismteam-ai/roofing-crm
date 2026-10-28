@@ -1,6 +1,10 @@
+import contractLock from "../../contracts/contract.lock.json" with { type: "json" };
+import { SOURCE_ASSESSMENT_DATE } from "../../runtime-config/src/source-assessment";
+import { canonicalDigest } from "./canonical";
 import { IntentPlanSchema } from "./intent/types";
 import { createHash } from "node:crypto";
 import {
+  CONTRACT_VERSION,
   QuerySchema,
   type QueryInput,
   type SearchResponse,
@@ -337,6 +341,10 @@ export function assessAnswer(
 export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
   const current = input as {
     profile?: string;
+    contractVersion?: string;
+    contractModuleGraphSha256?: string;
+    sourceAssessmentDate?: string;
+    corpusSha256?: string;
     phase?: string;
     architecture?: string;
     modelId?: string;
@@ -356,6 +364,10 @@ export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
   if (current?.profile === "original-objective-36-retrieval-v3") {
     if (
       current.phase !== CAMPAIGN_PHASE ||
+      current.contractVersion !== CONTRACT_VERSION ||
+      current.contractModuleGraphSha256 !== contractLock.moduleGraphSha256 ||
+      current.sourceAssessmentDate !== SOURCE_ASSESSMENT_DATE ||
+      current.corpusSha256 !== canonicalDigest(P5_LIVE_CORPUS) ||
       current.architecture !== ROUTING_ARCHITECTURE ||
       current.modelId !== "us.amazon.nova-micro-v1:0" ||
       current.region !== "us-east-2" ||
@@ -396,6 +408,6 @@ export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
     return digest(input);
   }
   throw new Error(
-    "Complete measured failed current-phase Micro grounded-evidence campaign required; the legacy eight-case profile cannot grant a P5 repair",
+    "Complete measured failed current-phase Micro grounded-evidence campaign required; historical or source-closure-only profiles cannot grant the current repair",
   );
 }

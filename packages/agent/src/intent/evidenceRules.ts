@@ -78,7 +78,7 @@ export function evidenceRules(context: RuleContext) {
         "minOwnershipYears",
         "unsupported",
         "true_tenure",
-        "Uninterrupted ownership tenure requires complete transfer evidence. A reported-sale proxy cannot be substituted.",
+        "Uninterrupted ownership tenure requires complete transfer evidence. A reported-sale proxy or bounded current-PIN deed index gap cannot be substituted. Ask explicitly for no observed recorded deed for more than ten years to query the narrower documented index observation.",
       ),
   );
   if ((base.minOwnershipYears ?? 0) > 0)
@@ -87,7 +87,7 @@ export function evidenceRules(context: RuleContext) {
       "minOwnershipYears",
       "unsupported",
       "active_true_tenure",
-      "The active tenure predicate is unsupported by the available evidence.",
+      "The active tenure predicate is unsupported by the available evidence. Clear it explicitly before choosing the separate recorded-deed-index-gap predicate; this does not prove legal ownership continuity.",
       base.minOwnershipYears,
     );
   take(

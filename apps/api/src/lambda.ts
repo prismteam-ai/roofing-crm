@@ -1,3 +1,4 @@
+import { SOURCE_ASSESSMENT_DATE } from "../../../packages/runtime-config/src/source-assessment";
 import { TurnDeadline } from "../../../packages/hosted-runtime/src/turn-deadline";
 import {
   telemetry,
@@ -219,6 +220,7 @@ export function createHostedHandler(
           ? {
               id: reviewModel(modelId() || MICRO_MODEL, true),
               architecture: ROUTING_ARCHITECTURE,
+              sourceAssessmentDate: SOURCE_ASSESSMENT_DATE,
               phase: CAMPAIGN_PHASE,
               requestScope: "validated-agent-executions",
               limits: CAMPAIGN_LIMITS,

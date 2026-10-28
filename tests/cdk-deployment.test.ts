@@ -101,25 +101,33 @@ it("retains provider output only through the private sink and raises a fixed pub
     status: 1,
   });
 });
-it("bootstrap requires the exact scoped policy rather than the broad CDK default", () => {
-  expect(
-    cdkBootstrapArguments(
-      account,
-      `arn:aws:iam::${account}:policy/prism-assessment-review-cloudformation`,
-    ),
-  ).toEqual([
+it("bootstrap requires the exact ordered storage/runtime policy pair and never the broad CDK default", () => {
+  const policyArns = ["storage", "runtime"]
+    .map(
+      (scope) =>
+        `arn:aws:iam::${account}:policy/prism-assessment-review-execution-${scope}`,
+    )
+    .join(",");
+  expect(cdkBootstrapArguments(account, policyArns)).toEqual([
     "bootstrap",
     `aws://${account}/us-east-2`,
+    "--toolkit-stack-name",
+    "PrismAssessmentReviewToolkit",
     "--qualifier",
     "prismrvw",
     "--cloudformation-execution-policies",
-    `arn:aws:iam::${account}:policy/prism-assessment-review-cloudformation`,
+    policyArns,
     "--termination-protection",
   ]);
-  for (const policy of [
+  for (const policies of [
     "arn:aws:iam::aws:policy/AdministratorAccess",
-    `arn:aws:iam::${account}:policy/Other`,
+    `arn:aws:iam::${account}:policy/prism-assessment-review-cloudformation`,
+    policyArns.split(",").reverse().join(","),
+    policyArns.split(",")[0]!,
+    policyArns + ",arn:aws:iam::aws:policy/AdministratorAccess",
     "",
   ])
-    expect(() => cdkBootstrapArguments(account, policy)).toThrow("task-scoped");
+    expect(() => cdkBootstrapArguments(account, policies)).toThrow(
+      "task-scoped",
+    );
 });

@@ -1,6 +1,7 @@
 import { declaredSynthetic } from "./useCrmController";
 import { type Lead } from "../../../packages/contracts/src/index";
 import { propertyEvidence } from "../../../packages/map-domain/src/signals";
+import { RecordedDeedEvidence } from "./RecordedDeedEvidence";
 import { OwnerObservations } from "./OwnerObservations";
 import { PermitEvidence } from "./PermitEvidence";
 import { ReportContext } from "./ReportContext";
@@ -84,6 +85,10 @@ export function PropertyDrawer({ controller }: { controller: CrmController }) {
         />
       ))}
       <h3 className="section-label">OWNERSHIP & IDENTITY</h3>
+      <RecordedDeedEvidence
+        observations={selected.ownership.recordedTransferIndexObservations}
+        minimumYears={query.minRecordedDeedGapYears}
+      />
       <OwnerObservations
         observations={selected.ownership.reportedOwnerObservations}
       />

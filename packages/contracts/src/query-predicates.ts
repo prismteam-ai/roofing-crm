@@ -1,3 +1,4 @@
+import { recordedDeedGapMatches } from "./source-observations.ts";
 import type { Permit, Property, Query, QueryInput } from "./index.ts";
 const EARTH_RADIUS_METERS = 6371008.8;
 export function distanceMeters(
@@ -27,9 +28,13 @@ export function openDays(openedAt: string | null, asOf: string): number | null {
   return Math.floor((end - start) / 86400000);
 }
 export function observedPermitStatus(permit: Permit): Permit["status"] {
+  if (
+    permit.status === "closed" &&
+    permit.statusBasis !== "issued_only" &&
+    permit.statusBasis !== "unknown"
+  )
+    return "closed";
   if (permit.status === "open" && permit.closedAt !== null) return "unknown";
-  if (permit.statusBasis === "issued_only" || permit.statusBasis === "unknown")
-    return "unknown";
   if (permit.statusBasis === "explicit_closed" && permit.status !== "closed")
     return "unknown";
   if (
@@ -37,7 +42,26 @@ export function observedPermitStatus(permit: Permit): Permit["status"] {
     (permit.status !== "open" || permit.closedAt !== null)
   )
     return "unknown";
-  return permit.status;
+  if (
+    permit.status === "open" &&
+    permit.statusBasis !== "issued_only" &&
+    permit.statusBasis !== "unknown"
+  )
+    return "open";
+  if (
+    permit.sourceObservations?.some(
+      (row) => row.supportedLifecycle === "closed",
+    )
+  )
+    return "closed";
+  if (
+    permit.sourceObservations?.some((row) => row.supportedLifecycle === "open")
+  )
+    return "open";
+  return permit.statusBasis === "issued_only" ||
+    permit.statusBasis === "unknown"
+    ? "unknown"
+    : permit.status;
 }
 /** Explicit observations are frozen at statusObservedAt; legacy fixtures retain their supplied asOf. */
 export function observedPermitOpenDays(
@@ -54,7 +78,15 @@ export function observedPermitOpenDays(
     permit.statusBasis === "explicit_open"
       ? permit.statusObservedAt?.slice(0, 10)
       : asOf;
-  return date ? openDays(permit.openedAt, date) : null;
+  const nativeDays = date ? openDays(permit.openedAt, date) : null;
+  if (nativeDays !== null) return nativeDays;
+  const documented = Math.max(
+    -1,
+    ...(permit.sourceObservations ?? [])
+      .filter((row) => row.activityClaim === "native_reported_open")
+      .map((row) => row.continuousOpenDays ?? -1),
+  );
+  return documented < 0 ? null : documented;
 }
 /** A reported sale is a partial observation; a transfer/tenure date is never substituted. */
 export function latestReportedSale(property: Property): string | null {
@@ -106,7 +138,10 @@ export function needsPermitEvidence(query: Query): boolean {
   return Boolean(
     query.requiresContractor ||
     query.requiresVerifiedLicense ||
-    query.requiresBbbRating,
+    query.requiresBbbRating ||
+    query.providerPermitStatus !== undefined ||
+    query.permitActivityClaim !== undefined ||
+    query.minPermitAgeSinceIssueDays !== undefined,
   );
 }
 
@@ -200,6 +235,13 @@ export function propertyMatchesQuery(
   )
     return false;
   if (
+    input.minRecordedDeedGapYears !== undefined &&
+    !(property.ownership.recordedTransferIndexObservations ?? []).some((row) =>
+      recordedDeedGapMatches(row, input.minRecordedDeedGapYears!),
+    )
+  )
+    return false;
+  if (
     input.minOwnershipYears !== undefined &&
     !hasMinimumVerifiedTenure(property, input.minOwnershipYears)
   )
@@ -226,8 +268,9 @@ export function permitMatchesQuery(
     minOpenDays: input.minOpenDays ?? 0,
   } as Query;
   return (
-    permit.kind !== "other" &&
+    roofingCandidateMatches(permit, input) &&
     permitEvidenceMatches(permit, query) &&
+    permitSourceObservationMatches(permit, query) &&
     (query.permitStatus === "any" ||
       observedPermitStatus(permit) === query.permitStatus) &&
     (query.minOpenDays === 0 ||
@@ -265,5 +308,50 @@ export function compareQueryRows(
     priority ||
     a.distanceMeters - b.distanceMeters ||
     (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+  );
+}
+
+/** One source observation must satisfy all source status/activity/age constraints. */
+export function permitSourceObservationMatches(
+  permit: Permit,
+  input: QueryInput,
+): boolean {
+  if (
+    input.providerPermitStatus === undefined &&
+    input.permitActivityClaim === undefined &&
+    input.minPermitAgeSinceIssueDays === undefined
+  )
+    return true;
+  return (permit.sourceObservations ?? []).some(
+    (row) =>
+      (input.providerPermitStatus === undefined ||
+        row.providerStatus === input.providerPermitStatus) &&
+      (input.permitActivityClaim === undefined ||
+        row.activityClaim === input.permitActivityClaim) &&
+      (input.minPermitAgeSinceIssueDays === undefined ||
+        (row.ageSinceIssueDays !== null &&
+          row.ageSinceIssueDays >= input.minPermitAgeSinceIssueDays)) &&
+      ((input.permitStatus ?? "any") === "any" ||
+        row.supportedLifecycle === input.permitStatus) &&
+      ((input.minOpenDays ?? 0) === 0 ||
+        (row.activityClaim === "native_reported_open" &&
+          (row.continuousOpenDays ?? -1) >= input.minOpenDays!)),
+  );
+}
+
+/** Provider roofing classification is a separate candidate basis; native duration/activity constraints retain native roofing scope. */
+export function roofingCandidateMatches(
+  permit: Permit,
+  input: QueryInput,
+): boolean {
+  return (
+    permit.kind !== "other" ||
+    ((input.minOpenDays ?? 0) === 0 &&
+      input.permitActivityClaim !== "native_reported_open" &&
+      (permit.sourceObservations ?? []).some(
+        (row) =>
+          row.category === "ROOFING" &&
+          row.categoryBasis === "provider_classification",
+      ))
   );
 }

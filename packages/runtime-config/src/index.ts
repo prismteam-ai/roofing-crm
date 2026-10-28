@@ -38,3 +38,5 @@ export const BUILD_IDENTITY: RuntimeIdentity =
         contractVersion: CONTRACT_VERSION,
         contractSha256: contractManifest.sha256,
       };
+
+export { SOURCE_ASSESSMENT_DATE } from "./source-assessment.ts";

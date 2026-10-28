@@ -38,6 +38,24 @@ export function propertyEvidence(property: Property) {
     ...property.provenance,
     ...(property.roof.provenance ?? []),
     ...property.permits.flatMap((permit) => permit.provenance),
+    ...property.permits.flatMap((permit) =>
+      (permit.sourceObservations ?? []).map((row) => ({
+        sourceId: row.provenance.sourceId,
+        recordId: row.providerRecordId,
+        observedAt: row.sourceObservedAt,
+        digest: row.provenance.recordDigest,
+        kind: "real-minimized" as const,
+      })),
+    ),
+    ...(property.ownership.recordedTransferIndexObservations ?? []).map(
+      (row) => ({
+        sourceId: row.reference.sourceId,
+        recordId: row.reference.recordSha256,
+        observedAt: row.reference.observedAt,
+        digest: row.reference.recordSha256,
+        kind: "real-minimized" as const,
+      }),
+    ),
     ...(property.ownership.events ?? []).flatMap((event) => event.provenance),
   ];
   return [

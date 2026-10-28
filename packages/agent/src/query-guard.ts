@@ -46,6 +46,15 @@ export function boundedToolArguments(input: unknown, expected: QueryInput) {
       given.ownerRegion !== fixed.ownerRegion) ||
     (fixed.minOwnershipYears !== undefined &&
       (given.minOwnershipYears ?? -1) < fixed.minOwnershipYears) ||
+    (fixed.providerPermitStatus !== undefined &&
+      given.providerPermitStatus !== fixed.providerPermitStatus) ||
+    (fixed.permitActivityClaim !== undefined &&
+      given.permitActivityClaim !== fixed.permitActivityClaim) ||
+    (fixed.minPermitAgeSinceIssueDays !== undefined &&
+      (given.minPermitAgeSinceIssueDays ?? -1) <
+        fixed.minPermitAgeSinceIssueDays) ||
+    (fixed.minRecordedDeedGapYears !== undefined &&
+      (given.minRecordedDeedGapYears ?? -1) < fixed.minRecordedDeedGapYears) ||
     (fixed.minReportedSaleAgeYears !== undefined &&
       (given.minReportedSaleAgeYears ?? -1) < fixed.minReportedSaleAgeYears) ||
     ranks[given.minConfidence] < ranks[fixed.minConfidence] ||

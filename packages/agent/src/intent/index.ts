@@ -1,5 +1,6 @@
 import type { Span, Field, Primitive, RuleContext } from "./rules";
 import { sourceOwnerMeaning } from "./syntax";
+import { sourceEvidenceRules } from "./sourceEvidenceRules";
 import { evidenceRules } from "./evidenceRules";
 import { ownerRules } from "./ownerRules";
 import { numericRules } from "./numericRules";
@@ -140,6 +141,20 @@ export function interpretIntent(
   );
   if (base.data.ownerRegion && base.data.ownerRegion !== "any")
     context("ownerRegion", base.data.ownerRegion, sourceOwnerMeaning);
+  for (const field of [
+    "providerPermitStatus",
+    "permitActivityClaim",
+    "minPermitAgeSinceIssueDays",
+    "minRecordedDeedGapYears",
+  ] as const) {
+    const value = base.data[field];
+    if (value !== undefined)
+      context(
+        field,
+        value,
+        "The active source-qualified filter remains part of the immutable query; it does not substitute native continuous history or legal ownership continuity.",
+      );
+  }
   const free = () =>
     text
       .split("")
@@ -172,7 +187,12 @@ export function interpretIntent(
     span: Span,
     field: Exclude<
       Field,
-      "center" | "countyScope" | "display" | "safety" | "expression"
+      | "center"
+      | "countyScope"
+      | "display"
+      | "safety"
+      | "expression"
+      | "sourceAssessmentDate"
     >,
     value: Primitive,
     reason: string,
@@ -272,6 +292,7 @@ export function interpretIntent(
       placeResolution = place;
     },
   };
+  sourceEvidenceRules(rules);
   evidenceRules(rules);
   ownerRules(rules);
   numericRules(rules);

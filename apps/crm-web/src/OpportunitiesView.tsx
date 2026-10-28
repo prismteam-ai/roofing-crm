@@ -1,3 +1,4 @@
+import { SourceEvidenceFilters } from "./SourceEvidenceFilters";
 import { type QueryInput } from "../../../packages/contracts/src/index";
 import {
   milesToMeters,
@@ -241,6 +242,7 @@ export function OpportunitiesView({
           />
         </label>
       </section>
+      <SourceEvidenceFilters query={query} update={update} />
       <section
         className="filter-row"
         aria-label="Evidence requirements and result order"

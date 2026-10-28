@@ -25,6 +25,11 @@ export const ConstraintField = z.enum([
   "ownerRegion",
   "minReportedSaleAgeYears",
   "minOwnershipYears",
+  "providerPermitStatus",
+  "permitActivityClaim",
+  "minPermitAgeSinceIssueDays",
+  "minRecordedDeedGapYears",
+  "sourceAssessmentDate",
   "includeUnknown",
   "minConfidence",
   "requiresContractor",
@@ -100,6 +105,7 @@ export interface PlaceResolver {
   get?(placeId: string): PlaceReference | undefined;
 }
 export interface IntentOptions {
+  sourceAssessmentDate?: string;
   placeResolver?: PlaceResolver;
   maxRows?: number;
 }

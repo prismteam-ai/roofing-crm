@@ -1,3 +1,4 @@
+import { providerObservation } from "./support/source-observations";
 import { approvedModelResponse } from "./support/retrieval-model";
 import { describe, it, expect } from "vitest";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -122,12 +123,48 @@ function evidence(input: QueryInput): SearchResponse {
         })),
       }
     : property;
+  const sourceBound =
+    q.minPermitAgeSinceIssueDays !== undefined ||
+    q.permitActivityClaim === "native_reported_open"
+      ? {
+          ...p,
+          permits: p.permits.map((permit) => ({
+            ...permit,
+            sourceObservations: [
+              providerObservation({
+                canonicalPropertyId: p.id,
+                publicSnapshotId: q.snapshotId,
+                dateIssued: "2010-01-01",
+                ageSinceIssueDays: 6144,
+                providerStatus: "IN_PROGRESS",
+                nativeStatus: "OPEN",
+                supportedLifecycle: "open",
+                statusBasis: "independent_native_status",
+                activityClaim: "native_reported_open",
+                currentlyReportedActiveIssuedMoreThanFiveYearsAgo: true,
+                openedAt: "2010-01-01",
+                continuousOpenDays: 6144,
+                continuousOpenIntervalBasis:
+                  "independent_documented_native_history",
+                provenance: {
+                  ...providerObservation().provenance,
+                  nativeStatusReceiptSha256: "a".repeat(64),
+                },
+              }),
+            ],
+          })),
+        }
+      : p;
   return SearchResponseSchema.parse({
     contractVersion: CONTRACT_VERSION,
     snapshotId: q.snapshotId,
     queryHash: hash(q),
     rows: [
-      { ...p, coordinates: { lat: q.lat, lng: q.lng }, distanceMeters: 0 },
+      {
+        ...sourceBound,
+        coordinates: { lat: q.lat, lng: q.lng },
+        distanceMeters: 0,
+      },
     ],
     total: 1,
     truncated: false,
@@ -325,31 +362,36 @@ describe("P4 identity and evidence guards", () => {
       lng: -83.29,
       radiusMeters: 8046.72,
     };
-    for (const [prompt, days, status] of [
+    for (const [prompt, days, status, issueDays] of [
       [
         "Show roofing permits for properties with last reported sale older than ten years",
         0,
         "any",
+        undefined,
       ],
       [
         "Show open roofing permits for properties with last reported sale older than ten years",
         0,
         "open",
+        undefined,
       ],
       [
         "Show open roofing permits older than five years and last reported sale older than ten years",
-        1827,
+        0,
         "open",
+        1827,
       ],
       [
         "Show open roofing permits that have been open for more than five years and last reported sale older than ten years",
         1827,
         "open",
+        undefined,
       ],
       [
         "Show partial ownership records with last reported sale older than ten years",
         0,
         "any",
+        undefined,
       ],
     ] as const) {
       const reads: QueryInput[] = [],
@@ -384,6 +426,7 @@ describe("P4 identity and evidence guards", () => {
           permitStatus: status,
           minReportedSaleAgeYears: 10,
         });
+        expect(q.minPermitAgeSinceIssueDays).toBe(issueDays);
         expect(q.minOwnershipYears).toBeUndefined();
       }
       expect(modelInputs).toHaveLength(1);

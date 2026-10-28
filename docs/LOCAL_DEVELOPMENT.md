@@ -1,11 +1,12 @@
 # Local development
 
-Requirements: Node24, pnpm11.25.0, Git, Linux x64 for the pinned native workflow validator, system `zip` and `tar`, and the pinned Playwright Chromium build. The package manager and dependencies are frozen in the source manifest/lockfile.
+Requirements: Node24, pnpm11.25.0, Git, Linux x64 for the pinned native workflow validator, system `zip` and `tar`, Docker for native alert emulation, and the pinned Playwright Chromium build. The package manager and dependencies are frozen in the source manifest/lockfile.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm run tooling:install
 pnpm exec playwright install chromium
+docker pull public.ecr.aws/lambda/nodejs@sha256:92b7cccd985332238af80ac8da42d6965d418552e88955e315da4e3c0c76ca79
 pnpm run ci:verify
 ```
 

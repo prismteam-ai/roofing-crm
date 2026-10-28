@@ -1,7 +1,10 @@
 import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { validatedRegion, type ReleasePins } from "./release";
 
 export const BOOTSTRAP_QUALIFIER = "prismrvw";
+export const BOOTSTRAP_TOOLKIT_STACK = "PrismAssessmentReviewToolkit";
 
 /** Standard bootstrap roles remain confined to the pinned candidate account/region. */
 export function bootstrapBindings(account: string, region = "us-east-2") {
@@ -59,7 +62,10 @@ export function cdkDeployArguments(input: {
     "cdk.out",
     "deploy",
     p.stackName,
+    "--toolkit-stack-name",
+    BOOTSTRAP_TOOLKIT_STACK,
     "--exclusively",
+    "--no-lookups",
     "--require-approval",
     "never",
     "--concurrency",
@@ -75,22 +81,27 @@ export function cdkDeployArguments(input: {
   ];
 }
 
-export function cdkBootstrapArguments(account: string, policy: string) {
+export function cdkBootstrapArguments(account: string, policies: string) {
   bootstrapBindings(account);
-  if (
-    policy !==
-    `arn:aws:iam::${account}:policy/prism-assessment-review-cloudformation`
-  )
+  const expected = ["storage", "runtime"]
+    .map(
+      (scope) =>
+        `arn:aws:iam::${account}:policy/prism-assessment-review-execution-${scope}`,
+    )
+    .join(",");
+  if (policies !== expected)
     throw new Error(
-      "Exact task-scoped CloudFormation execution policy required; broad default policies are forbidden",
+      "Exact ordered pair of task-scoped CloudFormation execution policies required; broad defaults are forbidden",
     );
   return [
     "bootstrap",
     `aws://${account}/us-east-2`,
+    "--toolkit-stack-name",
+    BOOTSTRAP_TOOLKIT_STACK,
     "--qualifier",
     BOOTSTRAP_QUALIFIER,
     "--cloudformation-execution-policies",
-    policy,
+    policies,
     "--termination-protection",
   ];
 }
@@ -132,4 +143,44 @@ export function executeCdkDeployment(
     failed = true;
   }
   if (failed) throw redactedCdkFailure();
+}
+
+/** Process adapter used by the guarded operator after source/account/cost validation. Provider output stays in owner-only files. */
+export function deployCdkAssembly(
+  input: CdkDeployment,
+  privateDirectory: string,
+): void {
+  if (!path.isAbsolute(privateDirectory))
+    throw new Error("Absolute private operator directory required");
+  executeCdkDeployment(
+    input,
+    (arguments_) => {
+      const output = execFileSync(
+        process.execPath,
+        ["node_modules/aws-cdk/bin/cdk", ...arguments_],
+        {
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "pipe"],
+          env: {
+            ...process.env,
+            AWS_REGION: input.pins.region,
+            AWS_DEFAULT_REGION: input.pins.region,
+            CDK_DEFAULT_ACCOUNT: input.pins.expectedAccountId,
+            CDK_DEFAULT_REGION: input.pins.region,
+          },
+        },
+      );
+      writeFileSync(
+        path.join(privateDirectory, "crm-cdk-deploy.private.log"),
+        output,
+        { mode: 0o600 },
+      );
+    },
+    (failure) =>
+      writeFileSync(
+        path.join(privateDirectory, "crm-cdk-deploy-failure.private.json"),
+        JSON.stringify({ at: new Date().toISOString(), ...failure }, null, 2),
+        { mode: 0o600 },
+      ),
+  );
 }

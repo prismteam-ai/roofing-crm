@@ -1,6 +1,7 @@
 import type { RoutingArchitecture } from "./architecture";
 import {
   propertyMatchesQuery,
+  permitMatchesQuery,
   compareQueryRows,
 } from "../../contracts/src/query-predicates";
 import { resolveQueryPlace } from "../../places/src/index";
@@ -111,6 +112,7 @@ export async function answerQuestion(
 ): Promise<AgentAnswer> {
   const intent = requireIntent(prompt, base, options);
   const data = await reader.search(intent.query);
+  assertIntentSourceAssessment(data, intent);
   return withIntent(answerFromEvidence(data, intent.query), intent);
 }
 /** One typed plan is attached to every success, empty result and deterministic fallback. */
@@ -132,6 +134,41 @@ export function withIntent(
         : []),
     ],
   };
+}
+/** Calendar issue-age and native-interval clauses bind both reads to the release's source assessment date. */
+export function assertIntentSourceAssessment(
+  data: SearchResponse,
+  intent: IntentPlan,
+): void {
+  const anchor = intent.ledger.find(
+    (entry) =>
+      entry.typedField === "sourceAssessmentDate" &&
+      entry.material &&
+      entry.classification === "applied",
+  )?.typedValue;
+  if (typeof anchor !== "string") return;
+  const query = intent.query;
+  if (
+    !query ||
+    data.rows.some(
+      (row) =>
+        !row.permits.some((permit) =>
+          (permit.sourceObservations ?? []).some(
+            (observation) =>
+              observation.assessmentAt.slice(0, 10) === anchor &&
+              permitMatchesQuery(
+                { ...permit, sourceObservations: [observation] },
+                query,
+                row.roof.asOf,
+              ),
+          ),
+        ),
+    )
+  )
+    throw new DomainError(
+      "SNAPSHOT_UNAVAILABLE",
+      "Source assessment date does not match the pinned calendar query anchor",
+    );
 }
 /** Business-predicate check independent of interpreting the same query; invalid backend rows cannot become model context or fallback matches. */
 export function assertEvidencePredicates(
@@ -219,11 +256,11 @@ export function answerFromEvidence(
     caveats: [
       ...data.limitations,
       mode === "bedrock-grounded"
-        ? "One bounded model call selected presentation order from a minimized projection of retrieved facts. The server renders authoritative facts and citations from selected source records; actual match and retrieved-page counts remain distinct."
+        ? "One bounded model call requested the exact approved read-only retrieval. The model received no source rows; the server validates all constraints, preserves result order and renders authoritative facts and citations. Match and retrieved-page counts remain distinct."
         : mode === "evidence-empty"
           ? "No matching source records were returned by this bounded query. The model was not called; this is source evidence, not a model success or proof of permit absence."
           : mode === "deterministic-fallback"
-            ? "The model did not produce an accepted grounded selection. This response uses deterministic evidence fallback; it is not a model success."
+            ? "The model did not produce an accepted typed retrieval. This response uses deterministic evidence fallback; it is not a model success."
             : "This response uses deterministic retrieval, with no model inference. Snapshot coverage and unavailable evidence remain explicit.",
       ...(unknown
         ? [`${unknown} returned properties have unknown roof age.`]
@@ -231,7 +268,7 @@ export function answerFromEvidence(
       "Building year is a low-confidence roof proxy, not a roof installation or replacement date. Issued alone is not open; duration requires explicit open status and a date.",
       "No contractor identity, license or rating is inferred from a reported name. Missing acquired permits do not prove no permit exists.",
     ],
-    answer: `I found ${data.total} matching ${data.total === 1 ? "property" : "properties"} within ${query.radiusMeters / 1609.344} miles. ${query.roofMinAgeYears !== undefined ? `Roof-age threshold: ${query.roofMinAgeYears} years. ` : ""}${query.permitStatus === "open" ? `Open permits${query.minOpenDays ? ` for at least ${query.minOpenDays} days` : ""}. ` : query.permitStatus === "closed" ? "Closed permits. " : query.permitStatus === "unknown" ? "Acquired permit status unknown. " : ""}${query.minReportedSaleAgeYears !== undefined ? `Last reported sale observed more than ${query.minReportedSaleAgeYears} years ago; this is partial observed history, not uninterrupted ownership tenure. ` : ""}${mode === "bedrock-grounded" ? "The selected presentation" : "This bounded page"} contains ${rows.length} records. Snapshot ${data.snapshotId}; query ${data.queryHash}. Review each source and confidence before qualifying a lead.`,
+    answer: `I found ${data.total} matching ${data.total === 1 ? "property" : "properties"} within ${query.radiusMeters / 1609.344} miles. ${query.roofMinAgeYears !== undefined ? `Roof-age threshold: ${query.roofMinAgeYears} years. ` : ""}${query.permitStatus === "open" ? `Source-qualified open/currently active permit observations${query.minOpenDays ? ` with independently documented native open interval of at least ${query.minOpenDays} days` : ""}. ` : query.permitStatus === "closed" ? "Closed permits. " : query.permitStatus === "unknown" ? "Acquired permit status unknown. " : ""}${query.minReportedSaleAgeYears !== undefined ? `Last reported sale observed more than ${query.minReportedSaleAgeYears} years ago; this is partial observed history, not uninterrupted ownership tenure. ` : ""}${query.providerPermitStatus !== undefined ? `Provider-normalized permit status: ${query.providerPermitStatus}; native status is independently qualified. ` : ""}${query.permitActivityClaim !== undefined ? `Activity evidence: ${query.permitActivityClaim.replaceAll("_", " ")}. ` : ""}${query.minPermitAgeSinceIssueDays !== undefined ? `Age since issue at least ${query.minPermitAgeSinceIssueDays} days at the source assessment date; not continuous open duration. ` : ""}${query.minRecordedDeedGapYears !== undefined ? `No observed recorded deed for more than ${query.minRecordedDeedGapYears} years within each documented current-PIN index window through its verified date; this does not establish legal ownership continuity. ` : ""}This bounded page contains ${rows.length} records. Snapshot ${data.snapshotId}; query ${data.queryHash}. Review each source and confidence before qualifying a lead.`,
     toolTrace: [
       {
         tool: "searchRoofingEvidence",

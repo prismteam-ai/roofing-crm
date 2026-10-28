@@ -71,6 +71,10 @@ for (const name of [
     timeout: 30000,
   });
 execFileSync("pnpm", ["run", "campaign"], { stdio: "pipe", timeout: 30000 });
+execFileSync("pnpm", ["run", "campaign", "--source-closure"], {
+  stdio: "pipe",
+  timeout: 30000,
+});
 console.log(
   JSON.stringify({
     status: "PASS_DECLARED_SCRIPT_TARGETS_AND_GUARDED_OPERATOR_PLANS",

@@ -45,7 +45,9 @@ export type GroundedRationaleCategory =
   | "reported_business_license"
   | "observed_bbb_rating"
   | "unknown_evidence"
-  | "context_match";
+  | "context_match"
+  | "provider_status_evidence"
+  | "recorded_deed_gap_evidence";
 export function minimizedEvidenceRow(
   row: SearchResponse["rows"][number],
   ordinal: number,
@@ -137,6 +139,29 @@ export function minimizedEvidenceRow(
       matchConfidence: e.matchConfidence,
     })),
     bbbObservations: uniqueRating.length,
+    sourceObservations: permits.flatMap((p) =>
+      (p.sourceObservations ?? []).map((source) => ({
+        providerStatus: source.providerStatus,
+        supportedLifecycle: source.supportedLifecycle,
+        activityClaim: source.activityClaim,
+        statusBasis: source.statusBasis,
+        ageSinceIssueDays: source.ageSinceIssueDays,
+        continuousOpenDays: source.continuousOpenDays,
+        sourceObservedAt: source.sourceObservedAt,
+        assessmentAt: source.assessmentAt,
+      })),
+    ),
+    recordedDeedIndex: (
+      row.ownership.recordedTransferIndexObservations ?? []
+    ).map((source) => ({
+      claimWindowStart: source.claimWindowStart,
+      observedThrough: source.observedThrough,
+      lastRecordedDeedDate: source.lastRecordedDeedDate,
+      noDeedObservedForMoreThanTenYears:
+        source.noDeedObservedForMoreThanTenYears,
+      ownershipContinuity: source.ownershipContinuity,
+      witnessTiming: source.witnessTiming,
+    })),
     reportedSale: {
       latestObservedDate:
         (row.ownership.events ?? [])
@@ -155,6 +180,18 @@ export function rationaleFromMinimizedFacts(
 ): GroundedRationaleCategory {
   const age = row.roof.ageYears !== null;
   const open = row.permits.open > 0 && row.permits.oldestOpenDays !== null;
+  if (
+    query?.minRecordedDeedGapYears !== undefined &&
+    row.recordedDeedIndex.length
+  )
+    return "recorded_deed_gap_evidence";
+  if (
+    (query?.providerPermitStatus !== undefined ||
+      query?.permitActivityClaim !== undefined ||
+      query?.minPermitAgeSinceIssueDays !== undefined) &&
+    row.sourceObservations.length
+  )
+    return "provider_status_evidence";
   if (query?.roofMinAgeYears !== undefined)
     return age ? "roof_age_evidence" : "unknown_evidence";
   if (
@@ -192,6 +229,7 @@ export function minimizedEvidenceContext(
       "Roof basis/confidence does not establish installation or replacement.",
       "Reported business applicant is not verified contractor role; license/BBB observations preserve literal status and match confidence.",
       "Reported-sale history is partial and does not establish tenure.",
+      "Provider ISSUED alone is not active/open; issue age is not continuous duration. Recorded-deed gaps cover only documented current-PIN windows and never establish legal ownership continuity.",
     ],
   };
 }
