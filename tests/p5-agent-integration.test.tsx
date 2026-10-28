@@ -360,6 +360,33 @@ it("an explicit sort cannot be reversed by model ordinals", async () => {
   ).rejects.toThrow("authoritative result order");
   expect({ reads, calls: calls.value }).toEqual({ reads: 1, calls: 1 });
 });
+it("the fixed model protocol explicitly retains authoritative source order when a sort is requested", async () => {
+  const calls = { value: 0 };
+  const fake = provider([0], calls);
+  const ordered: ConverseTransport = {
+    converse: async (request, options) => {
+      expect(request.system?.[0].text).toContain(
+        "If boundedQuery.sort is present, retain authoritative source order: return selected supplied ordinals in strictly increasing numeric order.",
+      );
+      expect(
+        JSON.parse(request.messages![0].content![0].text!).boundedQuery.sort,
+      ).toBe("distance");
+      return fake.converse(request, options);
+    },
+  };
+  const answer = await answerWithBedrock(
+    {
+      search: async (q) => data(q),
+      detail: async () => nonemptyEvidenceProperty,
+    },
+    ordered,
+    "Find properties sorted by distance",
+    base,
+    { modelId: "synthetic" },
+  );
+  expect(answer.mode).toBe("bedrock-grounded");
+  expect(calls.value).toBe(1);
+});
 it("invalid source order cannot enter model context or cached deterministic rendering", async () => {
   const calls = { value: 0 };
   let reads = 0;
