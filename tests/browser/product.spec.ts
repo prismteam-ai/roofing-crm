@@ -7,10 +7,12 @@ import type {
   QueryInput,
   SearchResponse,
 } from "../../packages/contracts/src/index";
+import type { AgentAnswer } from "../../packages/agent/src/index";
 type Audit = {
   external: string[];
   errors: string[];
   search?: { query: QueryInput; result: SearchResponse };
+  agent?: AgentAnswer;
 };
 const audit = (page: Page) => (page as Page & { audit?: Audit }).audit;
 const evidence = process.env.PRISM_BROWSER_EVIDENCE_DIR ?? "test-results";
@@ -84,6 +86,10 @@ async function screenshot(page: Page, name: string) {
   await page.screenshot({
     path: path.join(evidence, name + ".png"),
     fullPage: false,
+    mask: [
+      page.locator(".private-source-reported-owner"),
+      page.locator('input[type="password"]'),
+    ],
   });
 }
 async function ready(page: Page) {
@@ -186,6 +192,11 @@ test.beforeEach(async ({ context, page }) => {
       const result = (await response.json()) as SearchResponse;
       const a = audit(page);
       if (a) a.search = { query: request, result };
+    }
+    if (response.url().endsWith("/api/agent") && response.ok()) {
+      const result = (await response.json()) as AgentAnswer;
+      const a = audit(page);
+      if (a) a.agent = result;
     }
   });
   await page.goto("/");
@@ -420,8 +431,29 @@ test("offline assistant grounds a query and refuses unsafe tool requests", async
     .fill("Show open permits older than five years within five miles");
   await page.getByRole("button", { name: /Ask agent/ }).click();
   const answer = page.getByTestId("agent-answer");
+  await expect
+    .poll(() => audit(page)?.agent?.toolTrace[0]?.queryHash)
+    .toMatch(/^[a-f0-9]{64}$/);
+  const observed = audit(page)!.agent!;
+  expect(observed.query).toMatchObject({
+    snapshotId: audit(page)!.search!.query.snapshotId,
+    radiusMeters: 8046.72,
+    permitStatus: "open",
+    minOpenDays: 1827,
+  });
+  expect(observed.mode).toBe("deterministic-offline");
+  expect(observed.results.length).toBeGreaterThan(0);
+  expect(observed.intent?.accepted).toBe(true);
+  expect(observed.intent?.query).toEqual(observed.query);
+  expect(observed.toolTrace).toHaveLength(1);
+  expect(observed.toolTrace[0]).toMatchObject({
+    tool: "searchRoofingEvidence",
+    snapshotId: observed.query.snapshotId,
+    resultCount: observed.results.length,
+    arguments: observed.query,
+  });
   await expect(answer).toContainText(
-    `Results are bound to ${audit(page)?.search?.query.snapshotId}`,
+    `Snapshot ${observed.query.snapshotId}; query ${observed.toolTrace[0].queryHash}`,
   );
   await expect(answer).toContainText("at least 1827 days");
   await answer.getByText(/source citations/).click();

@@ -88,3 +88,66 @@ it("escapes a source-reported name as text rather than executable markup", () =>
   expect(html).toContain("&lt;script&gt;synthetic()&lt;/script&gt;");
   expect(html).not.toContain("<script>");
 });
+
+it.each(["Owner Name 1", "Owner Name 2"] as const)(
+  "preserves the %s assessment label and null permit event under the complete capture mask",
+  (sourceLabel) => {
+    const html = renderToStaticMarkup(
+      <OwnerObservations
+        observations={[
+          {
+            ...observation,
+            sourceLabel,
+            relatedPermitEvent: null,
+            mailingAddress: {
+              street: "SYNTHETIC_MAIL_STREET",
+              city: "SYNTHETIC_MAIL_CITY",
+              state: "SYNTHETIC_MAIL_STATE",
+              postalCode: "SYNTHETIC_MAIL_ZIP",
+            },
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain(`Source-reported ${sourceLabel}:`);
+    expect(html).toContain("not supplied by this source");
+    expect(html).not.toContain("Related permit report event: issued");
+    expect(html).not.toContain("Related permit report event: applied");
+    expect(html).toContain("Source-reported mailing address · unverified");
+    for (const value of [
+      "SYNTHETIC_MAIL_STREET",
+      "SYNTHETIC_MAIL_CITY",
+      "SYNTHETIC_MAIL_STATE",
+      "SYNTHETIC_MAIL_ZIP",
+    ])
+      expect(html).toContain(value);
+    expect(html).toContain("not independently verify residency");
+    expect(html).toContain(
+      'class="permit-detail private-source-reported-owner"',
+    );
+  },
+);
+
+it("does not invent absent mailing fields or derive an effective date from assessment observation time", () => {
+  const html = renderToStaticMarkup(
+    <OwnerObservations
+      observations={[
+        {
+          ...observation,
+          sourceLabel: "Owner Name 1",
+          relatedPermitEvent: null,
+          mailingAddress: {
+            street: null,
+            city: null,
+            state: "MI",
+            postalCode: null,
+          },
+        },
+      ]}
+    />,
+  );
+  expect(html).toContain("<dd>MI</dd>");
+  expect(html.match(/<dd>Unavailable<\/dd>/g)).toHaveLength(3);
+  expect(html).toContain("Ownership effective date: unknown");
+  expect(html).not.toContain("Related permit report event: issued");
+});
