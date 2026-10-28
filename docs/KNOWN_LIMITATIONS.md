@@ -28,3 +28,8 @@
   security review, independent review or evaluator first-use validation.
 - No final media recording/upload or remote Git publication is permitted until
   the applicable direct Human and review gates are satisfied.
+
+Rochester Hills source-labeled Owner observations are neither current legal-owner
+verification nor ten-year tenure proof. Applied reports are not issued permits.
+Printed PDF record/cost totals have documented discrepancies; the source values
+and independently fenced record rows are retained without forcing reconciliation.

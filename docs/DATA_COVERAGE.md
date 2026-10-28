@@ -49,3 +49,29 @@ Elephant Oracle/Atlas publication. An unmerged local Atlas page or CLI validatio
 must never be presented as global Atlas IPNS/MCP publication. Current publication
 approval, independent gateway proof and IPNS status are recorded separately in
 the final return; CRM does not create a new public effect.
+
+P5 also integrates the twelve explicitly linked Rochester Hills April–September
+2026 building reports: six issued and six applied. The exact cohort counts, PDF
+identity, extraction fences, joins and unresolved printed footer discrepancies
+are recorded in the final private-v6 source proof. These reports are a finite
+cohort, not complete municipal permit or lifecycle history. Every acquired raw
+record remains in protected DuckDB source views, including unmatched and ambiguous
+addresses and unlabeled grouping-party/contact text. No unlabeled party receives
+an owner, applicant or contractor role.
+
+An explicitly labeled Owner field supplies a private source-reported observation
+with its separate issued/applied event date, actual collection time, provenance
+and uncertainty. Its ownership-effective date is unknown; it does not establish
+current legal ownership, ownership at the permit event, a transfer, or uninterrupted
+tenure. Assigned issued records may supply unknown-status permit observations;
+applications remain separate report events and never establish issuance or OPEN.
+The assignment requires exactly one normalized full site address in the exact
+CITY OF ROCHESTER HILLS jurisdiction and is rechecked against the pinned snapshot
+at runtime. Source phone/grouping text remains raw working data, outside typed
+property responses and model input.
+
+Private manifest v6 adds one report-source file while preserving all seven v5
+files byte for byte. The runtime derives the typed observations from that pinned
+file. All prior observation windows remain unchanged. Source GET timestamps
+retain their original precision privately; canonical provenance normalizes the
+same instant to UTC milliseconds. No report event date replaces collection time.

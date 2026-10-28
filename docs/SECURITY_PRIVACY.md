@@ -40,3 +40,13 @@ synthetic tests do not establish those hosted/account facts. Media remains on
 hold until both required reviews explicitly allow it.
 
 Request accounting: the P5 durable lifetime request counter permits at most 100 validated agent executions, including empty results and failed invocations. Pre-model refusals do not enter that execution counter. All model-endpoint attempts, including refusals, consume the separate 80/day and 40/session-hour endpoint quota. Converse has its own durable 100-call ceiling. Earlier phase counters remain unchanged.
+
+The unreleased P5 0.4.0 contract was finalized with an optional, bounded
+`ownership.reportedOwnerObservations` field before its first P5 deployment. The
+canonical contract hash is authoritative; the manifest records the superseded
+unreleased draft. This adds private typed source observations without changing
+immutable public snapshot bytes. Private API responses can include the source
+Owner name with explicit uncertainty; the model receives the existing explicit
+minimized fact allowlist, which omits these names and raw source records. A
+captured-provider regression checks both the retained private API observation
+and absent model input. Screenshots mask `.private-source-reported-owner`.
