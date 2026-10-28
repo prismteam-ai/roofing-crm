@@ -1,6 +1,24 @@
 import type { RuleContext } from "./rules";
 export function presentationRules(context: RuleContext) {
-  const { take, apply } = context;
+  const { take, apply, note } = context;
+  // A complete conditional projection is bound before optional presence suffixes
+  // can backtrack into a shorter must-have match.
+  take(
+    /\b(?:(?<binder>with|having|requires?)\s+)?(?:(?:reported|verified|listed|observed|available|official\s+high[- ]confidence)\s+)?(?:business\s+)?(?:contractors?|licen[cs]e(?:\s+(?:observations?|evidence|records?))?|bbb\s+(?:ratings?|grades?))(?:\s+(?:details|information))?\s+where\s+(?:available|observed)\b/gi,
+    (s, m) =>
+      note(
+        s,
+        "display",
+        m.groups!.binder?.startsWith("require") ? "conflicting" : "descriptive",
+        "conditional_business_projection",
+        m.groups!.binder?.startsWith("require")
+          ? "A must-have requirement conflicts with a conditional where-available projection. Clarify whether missing observations should exclude properties."
+          : "Show available business observations without adding a presence filter; missing company, license and rating evidence remains explicit.",
+        undefined,
+        [],
+        Boolean(m.groups!.binder?.startsWith("require")),
+      ),
+  );
   take(
     /\b(?:sort(?:ed)?\s+by\s+|order(?:ed)?\s+by\s+)?(?<sort>distance|nearest|closest|oldest\s+roofs?|roof\s+age\s+descending|longest[- ]open\s+permits?|permit\s+open\s+days\s+descending)\b/gi,
     (s, m) =>

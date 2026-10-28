@@ -125,6 +125,13 @@ test("accepted place query, fractional radius and ledger survive map application
   await expect(page.getByTestId("place-resolution")).toContainText("Troy");
   await ask(page, "Find properties within five miles of Troy");
   await expect(page.getByTestId("agent-answer")).toBeVisible();
+  await ask(page, "Show properties with BBB ratings where available");
+  await expect(page.getByTestId("constraint-ledger")).toContainText(
+    "without adding a presence filter",
+  );
+  await expect(
+    page.getByLabel("Require observed BBB rating", { exact: true }),
+  ).not.toBeChecked();
   await ask(page, "Find properties with BBB rating above 80");
   await expect(page.getByTestId("constraint-ledger")).toContainText(
     "Request not run",
@@ -142,7 +149,7 @@ test("accepted place query, fractional radius and ledger survive map application
   await moved;
   await expect(page.getByTestId("place-resolution")).toHaveCount(0);
   expect(new URL(page.url()).searchParams.has("place")).toBe(false);
-  expect(state.agentRequests()).toBe(3);
+  expect(state.agentRequests()).toBe(4);
   expect(state.errors).toEqual([]);
   expect(state.external).toEqual([]);
 });

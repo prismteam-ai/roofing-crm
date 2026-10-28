@@ -17,6 +17,14 @@ mutation, integration and browser checks cover supported conjunctions, rejected
 qualifiers, query bounds and stale-answer behavior. Finite tests do not prove
 universal language correctness.
 
+`Only` is a material restriction: it must bind to an applied typed predicate in
+its clause. It cannot make an unknown-only category or descriptive business
+projection into an unrestricted search. Complete business phrases ending in
+`where available` or `where observed` are conditional projections, consumed
+before presence parsing; they do not add a must-have filter. An unsupported
+listed-party/any-license presence request is refused rather than promoted to a
+verified-company/high-confidence-license predicate.
+
 ## Places and current-map context
 
 Named centers use the frozen official Oakland place index, its geometry digest,
