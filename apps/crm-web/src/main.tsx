@@ -439,6 +439,7 @@ function App() {
     try {
       const next = await api<AgentAnswer>("/api/agent", {
         method: "POST",
+        signal: AbortSignal.timeout(28000),
         body: JSON.stringify({ prompt, query }),
       });
       if (
@@ -652,8 +653,8 @@ function App() {
             <i /> {query.snapshotId}
             <small>
               Contract {CONTRACT_VERSION} ·{" "}
-              {health?.provider === "bedrock-tool-routed"
-                ? "Bedrock tool router"
+              {health?.provider === "bedrock-grounded"
+                ? "Bedrock grounded evidence"
                 : "deterministic provider"}
             </small>
           </span>
@@ -1062,10 +1063,10 @@ function App() {
                       ? "DETERMINISTIC FALLBACK · MODEL UNAVAILABLE"
                       : answer?.mode === "deterministic-offline"
                         ? "DETERMINISTIC · NO INFERENCE"
-                        : answer?.mode === "bedrock-tool-routed"
-                          ? "NOVA · TOOL-ROUTED EVIDENCE"
-                          : health?.provider === "bedrock-tool-routed"
-                            ? "NOVA ENABLED · ONE READ"
+                        : answer?.mode === "bedrock-grounded"
+                          ? "NOVA · GROUNDED EVIDENCE"
+                          : health?.provider === "bedrock-grounded"
+                            ? "NOVA ENABLED · GROUNDED READ"
                             : "DETERMINISTIC · NO INFERENCE"}
                   </span>
                 </div>

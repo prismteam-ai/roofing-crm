@@ -25,8 +25,8 @@ const data = {
 const usage = { inputTokens: 100, outputTokens: 20, totalTokens: 120 };
 const toolUse = {
   toolUseId: "synthetic-tool-use-id",
-  name: "searchRoofingEvidence",
-  input: query,
+  name: "selectGroundedEvidence",
+  input: { selections: [] },
 };
 it("forces exactly one sole read tool and never sends a result or record IDs back to the provider", async () => {
   const requests: ConverseCommandInput[] = [];
@@ -57,13 +57,13 @@ it("forces exactly one sole read tool and never sends a result or record IDs bac
   expect(requests[0].toolConfig?.toolChoice).toEqual({ any: {} });
   expect(requests[0].toolConfig?.tools).toHaveLength(1);
   expect(requests[0].toolConfig?.tools?.[0].toolSpec?.name).toBe(
-    "searchRoofingEvidence",
+    "selectGroundedEvidence",
   );
-  expect(result.mode).toBe("bedrock-tool-routed");
+  expect(result.mode).toBe("bedrock-grounded");
   expect(result.results).toEqual([]);
   expect(result.toolTrace).toHaveLength(1);
 });
-it("still rejects mixed thinking text plus a valid tool call before reading evidence", async () => {
+it("still rejects mixed thinking text plus a valid tool call after its one bounded evidence read", async () => {
   let reads = 0;
   await expect(
     answerWithBedrock(
@@ -99,5 +99,5 @@ it("still rejects mixed thinking text plus a valid tool call before reading evid
       { modelId: "amazon.nova-micro-v1:0" },
     ),
   ).rejects.toThrow("mixed unsupported text");
-  expect(reads).toBe(0);
+  expect(reads).toBe(1);
 });

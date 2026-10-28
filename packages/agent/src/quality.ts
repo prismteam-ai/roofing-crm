@@ -6,7 +6,12 @@ import {
 } from "../../contracts/src/index";
 import { propertyEvidence } from "../../map-domain/src/signals";
 import type { AgentAnswer } from "./index";
-import { boundedIntent, ROUTING_ARCHITECTURE } from "./bedrock";
+import {
+  boundedIntent,
+  ROUTING_ARCHITECTURE,
+  minimizedEvidenceContext,
+  minimizedEvidenceRow,
+} from "./bedrock";
 import { CAMPAIGN_PHASE } from "./campaign";
 export const QUALITY_CORPUS = [
   {
@@ -96,17 +101,35 @@ export function assessAnswer(
     rows = answer.results,
     traceArguments = QuerySchema.safeParse(answer.toolTrace[0]?.arguments);
   const expected = boundedIntent(prompt, query);
+  const ordinals = answer.toolTrace[0]?.selectedOrdinals;
+  const validSelection =
+    answer.mode !== "bedrock-grounded" ||
+    (Array.isArray(ordinals) &&
+      new Set(ordinals).size === ordinals.length &&
+      ordinals.every(
+        (n) =>
+          Number.isInteger(n) &&
+          n >= 0 &&
+          n < (answer.toolTrace[0].minimizedRowCount ?? 0),
+      ) &&
+      (!reference || ordinals.every((n) => n < reference.rows.length)) &&
+      (!reference?.rows.length || ordinals.length > 0));
+  const selectedReference =
+    reference && validSelection && answer.mode === "bedrock-grounded"
+      ? ordinals!.map((n) => reference.rows[n])
+      : reference?.rows;
   const referenceMatches =
     !reference ||
     (reference.snapshotId === q.snapshotId &&
       answer.toolTrace[0]?.queryHash === reference.queryHash &&
       answer.toolTrace[0]?.totalMatched === reference.total &&
-      JSON.stringify(rows) === JSON.stringify(reference.rows) &&
+      validSelection &&
+      JSON.stringify(rows) === JSON.stringify(selectedReference) &&
       JSON.stringify([...citations].sort()) ===
         JSON.stringify(
           [
             ...new Set(
-              reference.rows.flatMap((p) =>
+              (selectedReference ?? []).flatMap((p) =>
                 propertyEvidence(p).map((s) => `${s.sourceId}:${s.recordId}`),
               ),
             ),
@@ -117,8 +140,21 @@ export function assessAnswer(
     answer.toolTrace[0].snapshotId === query.snapshotId &&
     answer.toolTrace[0].resultCount === rows.length &&
     digest(semantic(q)) === digest(semantic(expected)) &&
-    (answer.mode !== "bedrock-tool-routed" ||
-      (answer.toolTrace[0].modelSawRecords === false &&
+    (answer.mode !== "bedrock-grounded" ||
+      (answer.toolTrace[0].modelSawMinimizedFacts === true &&
+        validSelection &&
+        /^[a-f0-9]{64}$/.test(answer.toolTrace[0].evidenceDigest ?? "") &&
+        (!reference ||
+          (answer.toolTrace[0].retrievedRowCount === reference.rows.length &&
+            answer.toolTrace[0].evidenceDigest ===
+              digest(
+                minimizedEvidenceContext(
+                  reference,
+                  reference.rows
+                    .slice(0, answer.toolTrace[0].minimizedRowCount)
+                    .map(minimizedEvidenceRow),
+                ),
+              ))) &&
         answer.toolTrace[0].argumentsDigest === digest(q) &&
         traceArguments.success &&
         digest(semantic(traceArguments.data)) === digest(semantic(q)) &&
@@ -196,7 +232,7 @@ export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
         o.modelAudit.inputTokens > 0 &&
         o.modelAudit.unmeasuredCalls === 0 &&
         o.modelAudit.reservedMicroUsd > 0 &&
-        ((o.mode === "bedrock-tool-routed" &&
+        ((o.mode === "bedrock-grounded" &&
           o.serverReferenceMatched === true &&
           [
             "intent-grounding-or-server-reference-failure",
@@ -208,7 +244,7 @@ export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
     )
   )
     throw new Error(
-      "Complete measured failed P4 Micro tool-routing campaign required",
+      "Complete measured failed P4 Micro grounded-evidence campaign required",
     );
   return digest(input);
 }

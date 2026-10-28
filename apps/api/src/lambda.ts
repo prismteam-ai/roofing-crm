@@ -263,6 +263,9 @@ export function createHostedHandler(
           ? {
               agent: async (prompt, query, subject) => {
                 interpretPrompt(prompt, query);
+                const startedAt = Date.now();
+                let evidenceDigest: string | undefined,
+                  minimizedRowCount = 0;
                 const revision =
                   process.env.PRISM_MODEL_PROMPT_REVISION === "repair-1"
                     ? "repair-1"
@@ -292,7 +295,7 @@ export function createHostedHandler(
                   detail: (id, snapshot) => oracle.detail(id, snapshot),
                   health: oracle.health ? () => oracle.health!() : undefined,
                   search: async (q) => {
-                    if (++reads > 2)
+                    if (++reads > 1)
                       throw new DomainError(
                         "COST_LIMIT_REACHED",
                         "Read budget exhausted",
@@ -333,8 +336,11 @@ export function createHostedHandler(
                       maxTurns: 1,
                       maxToolCalls: 1,
                       maxTotalTokens: 12000,
-                      deadlineMs: 15000,
-                      beforeConverse: async ({ inputBytes }) => {
+                      deadlineMs: Math.max(1, 28000 - (Date.now() - startedAt)),
+                      beforeConverse: async (projection) => {
+                        const { inputBytes } = projection;
+                        evidenceDigest = projection.evidenceDigest;
+                        minimizedRowCount = projection.minimizedRowCount;
                         const cost = reserveCost(inputBytes, price, clock());
                         await r.campaign!.reserve({
                           subject,
@@ -354,6 +360,8 @@ export function createHostedHandler(
                           modelId: model,
                           revision,
                           architecture: ROUTING_ARCHITECTURE,
+                          evidenceDigest,
+                          minimizedRowCount,
                           region: REVIEW_REGION,
                           at: new Date(clock()).toISOString(),
                           ...usage,
@@ -379,6 +387,8 @@ export function createHostedHandler(
                     modelId: model,
                     revision,
                     architecture: ROUTING_ARCHITECTURE,
+                    evidenceDigest,
+                    minimizedRowCount,
                     region: REVIEW_REGION,
                     at: new Date(clock()).toISOString(),
                     callIndex: 0,
@@ -400,6 +410,8 @@ export function createHostedHandler(
                       promptRevision: revision,
                       promptDigest,
                       architecture: ROUTING_ARCHITECTURE,
+                      evidenceDigest,
+                      minimizedRowCount,
                       inputTokens,
                       outputTokens,
                       converseCalls,
@@ -429,6 +441,8 @@ export function createHostedHandler(
                     modelId: model,
                     revision,
                     architecture: ROUTING_ARCHITECTURE,
+                    evidenceDigest,
+                    minimizedRowCount,
                     region: REVIEW_REGION,
                     at: new Date(clock()).toISOString(),
                     callIndex: 0,
@@ -448,7 +462,11 @@ export function createHostedHandler(
                         cached.query,
                         "deterministic-fallback",
                       )
-                    : await answerQuestion(boundedOracle, prompt, query);
+                    : reads === 0
+                      ? await answerQuestion(boundedOracle, prompt, query)
+                      : (() => {
+                          throw error;
+                        })();
                   return {
                     ...fallback,
                     mode: "deterministic-fallback",
@@ -462,6 +480,8 @@ export function createHostedHandler(
                       promptRevision: revision,
                       promptDigest,
                       architecture: ROUTING_ARCHITECTURE,
+                      evidenceDigest,
+                      minimizedRowCount,
                       inputTokens,
                       outputTokens,
                       converseCalls,
@@ -506,6 +526,7 @@ export async function handler(event: HttpEvent) {
         {
           allowLoopback: false,
           approvedOrigins: required("ORACLE_APPROVED_ORIGINS").split(","),
+          timeoutMs: 20000,
         },
       ),
     () => required("BEDROCK_MODEL_ID"),

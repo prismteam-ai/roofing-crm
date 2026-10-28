@@ -31,7 +31,9 @@ export interface CampaignAudit {
   revision: "base" | "repair-1";
   region: "us-east-1";
   at: string;
-  architecture?: "one-call-tool-router-v1";
+  architecture?: "one-call-grounded-selection-v1";
+  evidenceDigest?: string;
+  minimizedRowCount?: number;
   callIndex: number;
   inputTokens: number;
   outputTokens: number;

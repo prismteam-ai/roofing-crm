@@ -33,6 +33,10 @@ const runtime = lambdas.find(
     x.Properties.Handler === "index.handler",
 );
 assert(Boolean(runtime), "Missing genuine Node24 API handler");
+assert(
+  runtime?.Properties.Timeout === 29,
+  "Bounded29-second CRM Lambda timeout required",
+);
 const metadata = template.Metadata?.PrismConcurrency;
 const policy = buildConcurrencyPolicy({
   ...process.env,

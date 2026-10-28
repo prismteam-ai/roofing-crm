@@ -13,7 +13,9 @@ export interface AgentAnswer {
     region: "us-east-1";
     promptRevision: "base" | "repair-1";
     promptDigest: string;
-    architecture?: "one-call-tool-router-v1";
+    architecture?: "one-call-grounded-selection-v1";
+    evidenceDigest?: string;
+    minimizedRowCount?: number;
     inputTokens: number;
     outputTokens: number;
     converseCalls: number;
@@ -22,8 +24,7 @@ export interface AgentAnswer {
     failureCode?: string;
     unmeasuredCalls?: number;
   };
-  mode:
-    "deterministic-offline" | "deterministic-fallback" | "bedrock-tool-routed";
+  mode: "deterministic-offline" | "deterministic-fallback" | "bedrock-grounded";
   answer: string;
   query: QueryInput;
   results: SearchResponse["rows"];
@@ -38,7 +39,14 @@ export interface AgentAnswer {
     arguments?: QueryInput;
     contextRows?: number;
     contextTruncated?: boolean;
-    modelSawRecords?: false;
+    modelSawMinimizedFacts?: true;
+    evidenceDigest?: string;
+    minimizedRowCount?: number;
+    retrievedRowCount?: number;
+    selectedOrdinals?: number[];
+    rationaleCategories?: string[];
+    presentationTool?: "selectGroundedEvidence";
+    presentationArgumentsDigest?: string;
     providerArgumentsDigest?: string;
     argumentsDigest?: string;
     resultDigest?: string;
@@ -195,10 +203,10 @@ export function answerFromEvidence(
     citations,
     caveats: [
       ...data.limitations,
-      mode === "bedrock-tool-routed"
-        ? "One bounded model call routed the search. All displayed facts, counts and citations are rendered from server-retrieved records; source rows were not sent to the model."
+      mode === "bedrock-grounded"
+        ? "One bounded model call selected presentation order from a minimized projection of retrieved facts. The server renders authoritative facts and citations from selected source records; actual match and retrieved-page counts remain distinct."
         : mode === "deterministic-fallback"
-          ? "The model did not produce an accepted route. This response uses deterministic evidence fallback; it is not a model success."
+          ? "The model did not produce an accepted grounded selection. This response uses deterministic evidence fallback; it is not a model success."
           : "This response uses deterministic retrieval, with no model inference. Snapshot coverage and unavailable evidence remain explicit.",
       ...(unknown
         ? [`${unknown} returned properties have unknown roof age.`]
@@ -206,7 +214,7 @@ export function answerFromEvidence(
       "Building year is a low-confidence roof proxy, not a roof installation or replacement date. Issued alone is not open; duration requires explicit open status and a date.",
       "No contractor identity, license or rating is inferred from a reported name. Missing acquired permits do not prove no permit exists.",
     ],
-    answer: `I found ${data.total} matching ${data.total === 1 ? "property" : "properties"} within ${(query.radiusMeters / 1609.344).toFixed(1)} miles. ${query.roofMinAgeYears !== undefined ? `Roof-age threshold: ${query.roofMinAgeYears} years. ` : ""}${query.permitStatus === "open" ? `Open permits${query.minOpenDays ? ` for at least ${query.minOpenDays} days` : ""}. ` : query.permitStatus === "closed" ? "Closed permits. " : ""}${query.minReportedSaleAgeYears !== undefined ? `Last reported sale observed more than ${query.minReportedSaleAgeYears} years ago; this is partial observed history, not uninterrupted ownership tenure. ` : ""}This bounded page contains ${data.rows.length} records. Snapshot ${data.snapshotId}; query ${data.queryHash}. Review each source and confidence before qualifying a lead.`,
+    answer: `I found ${data.total} matching ${data.total === 1 ? "property" : "properties"} within ${(query.radiusMeters / 1609.344).toFixed(1)} miles. ${query.roofMinAgeYears !== undefined ? `Roof-age threshold: ${query.roofMinAgeYears} years. ` : ""}${query.permitStatus === "open" ? `Open permits${query.minOpenDays ? ` for at least ${query.minOpenDays} days` : ""}. ` : query.permitStatus === "closed" ? "Closed permits. " : ""}${query.minReportedSaleAgeYears !== undefined ? `Last reported sale observed more than ${query.minReportedSaleAgeYears} years ago; this is partial observed history, not uninterrupted ownership tenure. ` : ""}${mode === "bedrock-grounded" ? "The selected presentation" : "This bounded page"} contains ${data.rows.length} records. Snapshot ${data.snapshotId}; query ${data.queryHash}. Review each source and confidence before qualifying a lead.`,
     toolTrace: [
       {
         tool: "searchRoofingEvidence",

@@ -56,12 +56,13 @@ if (!execute) {
           conversePerSessionHour: 20,
           turns: 1,
           readTools: 1,
+          presentationTools: 1,
           aggregateTokens: 12000,
           outputPerCall: 1000,
           modelUsd: 3,
         },
         progression:
-          "P4 Micro one-call routing; one measured repair, then one measured alternative if needed. Separate immutable P4 counters preserve P3 history.",
+          "P4 Micro one-call grounded evidence selection; one measured repair, then one measured alternative if needed. Separate immutable P4 counters preserve P3 history.",
         liveInferenceCalls: 0,
       },
       null,
@@ -154,7 +155,7 @@ async function request(
   method = body === undefined ? "GET" : "POST",
 ) {
   const controller = new AbortController(),
-    timer = setTimeout(() => controller.abort(), 20000);
+    timer = setTimeout(() => controller.abort(), 28000);
   try {
     const response = await fetch(new URL(route, origin), {
       method,
@@ -189,7 +190,7 @@ if (
   health.tree !== source.tree ||
   health.region !== "us-east-1" ||
   health.stage !== "p3-review" ||
-  health.provider !== "bedrock-tool-routed" ||
+  health.provider !== "bedrock-grounded" ||
   health.model?.architecture !== ROUTING_ARCHITECTURE ||
   health.model?.phase !== CAMPAIGN_PHASE ||
   health.model?.id !== model ||
@@ -283,9 +284,13 @@ try {
       reference,
     );
     if (
-      answer.mode !== "bedrock-tool-routed" ||
+      answer.mode !== "bedrock-grounded" ||
       answer.modelAudit?.architecture !== ROUTING_ARCHITECTURE ||
       answer.modelAudit?.converseCalls !== 1 ||
+      answer.modelAudit?.evidenceDigest !==
+        answer.toolTrace[0]?.evidenceDigest ||
+      answer.modelAudit?.minimizedRowCount !==
+        answer.toolTrace[0]?.minimizedRowCount ||
       answer.modelAudit?.unmeasuredCalls !== 0 ||
       answer.modelAudit?.modelId !== model ||
       answer.modelAudit?.promptRevision !== revision ||

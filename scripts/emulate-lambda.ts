@@ -110,8 +110,10 @@ const provider: ConverseTransport = {
             {
               toolUse: {
                 toolUseId: "fake-read",
-                name: "searchRoofingEvidence",
-                input: query,
+                name: "selectGroundedEvidence",
+                input: {
+                  selections: [{ ordinal: 0, reason: "context_match" }],
+                },
               },
             },
           ],

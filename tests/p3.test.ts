@@ -187,7 +187,7 @@ describe("P4 durable campaign", () => {
     ).not.toThrow();
     const report = {
       phase: "prism-assessment-p4",
-      architecture: "one-call-tool-router-v1",
+      architecture: "one-call-grounded-selection-v1",
       completedAt: new Date(now).toISOString(),
       modelId: MICRO_MODEL,
       region: "us-east-1",
@@ -199,11 +199,11 @@ describe("P4 durable campaign", () => {
         passed: i !== 0,
         reason: "intent-grounding-or-server-reference-failure",
         serverReferenceMatched: true,
-        mode: "bedrock-tool-routed",
+        mode: "bedrock-grounded",
         modelAudit: {
           modelId: MICRO_MODEL,
           region: "us-east-1",
-          architecture: "one-call-tool-router-v1",
+          architecture: "one-call-grounded-selection-v1",
           converseCalls: 1,
           inputTokens: 100,
           unmeasuredCalls: 0,
@@ -446,7 +446,8 @@ describe("P4 exact hosted campaign boundary", () => {
       );
     let providerCalls = 0,
       queryReads = 0,
-      capped = true;
+      capped = true,
+      malformed = false;
     // Reuse runtime instances, as Lambda does, so stored revocation/session validation remains real.
     const sessions = new MemorySessionStore();
     const runtime: import("../apps/api/src/lambda").HostedRuntime = {
@@ -469,8 +470,15 @@ describe("P4 exact hosted campaign boundary", () => {
                   {
                     toolUse: {
                       toolUseId: `read-${providerCalls}`,
-                      name: "searchRoofingEvidence",
-                      input: q,
+                      name: "selectGroundedEvidence",
+                      input: {
+                        selections: [
+                          {
+                            ordinal: malformed ? 49 : 0,
+                            reason: "context_match",
+                          },
+                        ],
+                      },
                     },
                   },
                 ],
@@ -550,11 +558,19 @@ describe("P4 exact hosted campaign boundary", () => {
     const exhausted = await invoke("Find evidence"),
       reused = JSON.parse(exhausted.body);
     expect(exhausted.statusCode).toBe(200);
-    expect(reused.mode).toBe("bedrock-tool-routed");
+    expect(reused.mode).toBe("bedrock-grounded");
     expect(reused.modelAudit.converseCalls).toBe(1);
     expect(providerCalls).toBe(1);
     expect(queryReads).toBe(2); // one capped fallback read, then one successful routed read
     expect(reused.citations).toEqual(["synthetic:SYN-HOSTED"]);
+    malformed = true;
+    const invalid = JSON.parse((await invoke("Find evidence")).body);
+    expect(invalid.mode).toBe("deterministic-fallback");
+    expect(invalid.modelAudit.failureCode).toBe("INVALID_INPUT");
+    expect(invalid.results).toHaveLength(1);
+    expect(providerCalls).toBe(2);
+    expect(queryReads).toBe(3); // invalid selection reuses its one cached retrieval
+
     leads.close();
   });
 });

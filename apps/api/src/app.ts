@@ -47,7 +47,7 @@ export interface AppDependencies {
     id: string;
     region: "us-east-1";
     promptRevision: "base" | "repair-1";
-    architecture: "one-call-tool-router-v1";
+    architecture: "one-call-grounded-selection-v1";
     phase: "prism-assessment-p4";
     limits: Readonly<Record<string, number>>;
   };
@@ -104,9 +104,7 @@ export function createApp(deps: AppDependencies) {
           ...(deps.release ?? BUILD_IDENTITY),
           contractVersion: CONTRACT_VERSION,
           accessMode: deps.access ? "review-session" : "local",
-          provider: deps.agent
-            ? "bedrock-tool-routed"
-            : "deterministic-offline",
+          provider: deps.agent ? "bedrock-grounded" : "deterministic-offline",
           ...(deps.model ? { model: deps.model } : {}),
         });
       }
@@ -128,9 +126,7 @@ export function createApp(deps: AppDependencies) {
             snapshotDigest: health.snapshotDigest ?? health.digest,
             publicSnapshotId: health.publicSnapshotId,
           }),
-          activeMode: deps.agent
-            ? "bedrock-tool-routed"
-            : "deterministic-offline",
+          activeMode: deps.agent ? "bedrock-grounded" : "deterministic-offline",
           model: deps.model ?? null,
         });
       }

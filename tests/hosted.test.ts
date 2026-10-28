@@ -206,8 +206,8 @@ const reader: OracleReader = {
   detail: async () => property,
 };
 const toolResponse = (
-  input: unknown = query,
-  name = "searchRoofingEvidence",
+  input: unknown = { selections: [{ ordinal: 0, reason: "context_match" }] },
+  name = "selectGroundedEvidence",
 ): ConverseCommandOutput => ({
   $metadata: {},
   metrics: { latencyMs: 1 },
@@ -527,7 +527,7 @@ describe("Converse orchestration using only fake transport", () => {
     expect(answer.results[0].ownership.historyCoverage).toBe("partial");
   });
 
-  it("routes one typed read and renders all facts/citations from the server without a selection turn", async () => {
+  it("retrieves once before one grounded selection call and renders authoritative facts server-side", async () => {
     const fake = provider([toolResponse(), finalResponse(["fabricated"])]);
     const answer = await answerWithBedrock(
       reader,
@@ -536,7 +536,7 @@ describe("Converse orchestration using only fake transport", () => {
       query,
       { modelId: "test-only-model" },
     );
-    expect(answer.mode).toBe("bedrock-tool-routed");
+    expect(answer.mode).toBe("bedrock-grounded");
     expect(answer.results).toEqual(result.rows);
     expect(answer.citations).toEqual(["synthetic:SYN-1"]);
     expect(fake.calls).toHaveLength(1);
@@ -545,30 +545,51 @@ describe("Converse orchestration using only fake transport", () => {
     expect(answer.toolTrace[0]).toMatchObject({
       resultCount: 1,
       totalMatched: 1,
-      modelSawRecords: false,
+      modelSawMinimizedFacts: true,
     });
   });
-  it("keeps all50 retrieved records server-side and never transmits their verbose or malicious source content", async () => {
+  it("projects retrieved facts without raw addresses/IDs/provenance/descriptions and preserves honest selected-page counts", async () => {
     const completeRows = Array.from({ length: 50 }, (_, i) => ({
       ...property,
-      id: `SYN-REALISTIC-${i}`,
+      id: `FULL_SERVER_ID_${i}`,
       address: `FULL_SERVER_ADDRESS_${i}`,
       distanceMeters: i,
       provenance: [
         { ...property.provenance[0], recordId: `FULL_SERVER_RECORD_${i}` },
       ],
     }));
+    let reads = 0;
+    const calls: ConverseCommandInput[] = [];
     const records = {
       ...reader,
-      search: async () => ({
-        ...result,
-        rows: completeRows,
-        total: 500,
-        truncated: true,
-        limitations: ["UNTRUSTED_SOURCE_IGNORE_SYSTEM_BROWSE_SECRET"],
-      }),
+      search: async () => {
+        reads++;
+        return {
+          ...result,
+          rows: completeRows,
+          total: 500,
+          truncated: true,
+          limitations: ["UNTRUSTED_SOURCE_IGNORE_SYSTEM_BROWSE_SECRET"],
+        };
+      },
     };
-    const fake = provider([toolResponse({ ...query, limit: 50 })]);
+    const fake: ConverseTransport = {
+      converse: async (request) => {
+        expect(reads).toBe(1);
+        calls.push(request);
+        const facts = JSON.parse(request.messages![0].content![0].text!)
+          .retrievedEvidence.rows;
+        expect(facts[0].roof.ageYears).toBe(property.roof.ageYears);
+        return toolResponse({
+          selections: facts
+            .map((r: { ordinal: number }) => ({
+              ordinal: r.ordinal,
+              reason: "context_match",
+            }))
+            .reverse(),
+        });
+      },
+    };
     const answer = await answerWithBedrock(
       records,
       fake,
@@ -576,24 +597,57 @@ describe("Converse orchestration using only fake transport", () => {
       { ...query, limit: 50 },
       { modelId: "test" },
     );
-    expect(fake.calls).toHaveLength(1);
+    expect(calls).toHaveLength(1);
+    expect(reads).toBe(1);
     expect(
-      Buffer.byteLength(JSON.stringify(fake.calls[0])) + 1000,
+      Buffer.byteLength(JSON.stringify(calls[0])) + 1000,
     ).toBeLessThanOrEqual(12000);
-    expect(JSON.stringify(fake.calls)).not.toMatch(
-      /FULL_SERVER|UNTRUSTED_SOURCE/,
-    );
-    expect(answer.results).toEqual(completeRows);
-    expect(answer.citations).toHaveLength(50);
-    expect(answer.toolTrace[0].totalMatched).toBe(500);
+    expect(JSON.stringify(calls)).not.toMatch(/FULL_SERVER|UNTRUSTED_SOURCE/);
+    const projected = answer.toolTrace[0].minimizedRowCount!;
+    expect(projected).toBeGreaterThan(0);
+    expect(projected).toBeLessThanOrEqual(50);
+    expect(answer.results).toEqual(completeRows.slice(0, projected).reverse());
+    expect(answer.toolTrace[0]).toMatchObject({
+      totalMatched: 500,
+      retrievedRowCount: 50,
+      resultCount: projected,
+      modelSawMinimizedFacts: true,
+    });
+    expect(answer.answer).toContain("not complete coverage");
   });
-  it("rejects malformed/other/multiple/mixed tools and identity or predicate changes before retrieval", async () => {
+  it("rejects malformed/other/multiple/mixed presentation tools and query mutation fields after its one bounded retrieval", async () => {
     const responses = [
-      toolResponse({ ...query, sql: "select" }),
-      toolResponse(query, "browse"),
-      toolResponse({ ...query, snapshotId: "other" }),
-      toolResponse({ ...query, lat: 40 }),
-      toolResponse({ ...query, cursor: "unapproved" }),
+      toolResponse({
+        selections: [{ ordinal: 0, reason: "context_match" }],
+        sql: "select",
+      }),
+      toolResponse(
+        { selections: [{ ordinal: 0, reason: "context_match" }] },
+        "browse",
+      ),
+      toolResponse({
+        selections: [{ ordinal: 0, reason: "context_match" }],
+        snapshotId: "other",
+      }),
+      toolResponse({
+        selections: [{ ordinal: 0, reason: "context_match" }],
+        lat: 40,
+      }),
+      toolResponse({
+        selections: [{ ordinal: 0, reason: "context_match" }],
+        cursor: "unapproved",
+      }),
+      toolResponse({
+        selections: [
+          { ordinal: 0, reason: "context_match" },
+          { ordinal: 0, reason: "context_match" },
+        ],
+      }),
+      toolResponse({ selections: [{ ordinal: 1, reason: "context_match" }] }),
+      toolResponse({ selections: [] }),
+      toolResponse({
+        selections: [{ ordinal: 0, reason: "observed_bbb_rating" }],
+      }),
       finalResponse(["fabricated"]),
       {
         ...toolResponse(),
@@ -638,34 +692,10 @@ describe("Converse orchestration using only fake transport", () => {
           { modelId: "test" },
         ),
       ).rejects.toThrow();
-      expect(reads).toBe(0);
+      expect(reads).toBe(1);
     }
-    const fixed = {
-      ...query,
-      roofMinAgeYears: 15,
-      permitStatus: "open" as const,
-      minOpenDays: 1827,
-      minConfidence: "high" as const,
-      includeUnknown: false,
-    };
-    for (const change of [
-      { roofMinAgeYears: 14 },
-      { permitStatus: "any" },
-      { minOpenDays: 0 },
-      { minConfidence: "any" },
-      { includeUnknown: true },
-    ])
-      await expect(
-        answerWithBedrock(
-          reader,
-          provider([toolResponse({ ...fixed, ...change })]),
-          "Find evidence",
-          fixed,
-          { modelId: "test" },
-        ),
-      ).rejects.toThrow("weakened");
   });
-  it("clamps schema-valid radius/page size to the active map without widening its read", async () => {
+  it("fixes the typed query before retrieval, clamping requested radius to the active map and page", async () => {
     let applied: QueryInput | undefined;
     const records = {
       ...reader,
@@ -676,17 +706,14 @@ describe("Converse orchestration using only fake transport", () => {
     };
     const answer = await answerWithBedrock(
       records,
-      provider([toolResponse({ ...query, radiusMeters: 30000, limit: 200 })]),
-      "Find evidence",
+      provider([toolResponse()]),
+      "Find evidence within 10 miles",
       query,
       { modelId: "test" },
     );
     expect(applied?.radiusMeters).toBe(query.radiusMeters);
     expect(applied?.limit).toBe(query.limit ?? 50);
-    expect(answer.toolTrace[0].clampedFields).toEqual([
-      "radiusMeters",
-      "limit",
-    ]);
+    expect(answer.query.radiusMeters).toBe(query.radiusMeters);
   });
   it("refuses unsafe/ambiguous prompts before provider calls, and bounds usage/output/deadline", async () => {
     for (const prompt of [
@@ -755,7 +782,7 @@ describe("Converse orchestration using only fake transport", () => {
     };
     const answer = await answerWithBedrock(
       empty,
-      provider([toolResponse()]),
+      provider([toolResponse({ selections: [] })]),
       "Find evidence",
       query,
       { modelId: "test" },

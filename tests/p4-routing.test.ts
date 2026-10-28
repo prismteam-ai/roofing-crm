@@ -136,9 +136,10 @@ for (const item of QUALITY_CORPUS)
       converse: async (request) => {
         providerCalls++;
         requests.push(JSON.stringify(request));
-        const q = JSON.parse(
-          request.messages![0].content![0].text!,
-        ).boundedQuery;
+        expect(
+          JSON.parse(request.messages![0].content![0].text!).retrievedEvidence
+            .rows[0].roof.ageYears,
+        ).toBe(item.id === "unknown" ? null : property.roof.ageYears);
         return {
           $metadata: {},
           metrics: { latencyMs: 1 },
@@ -151,8 +152,10 @@ for (const item of QUALITY_CORPUS)
                 {
                   toolUse: {
                     toolUseId: "synthetic-routing",
-                    name: "searchRoofingEvidence",
-                    input: q,
+                    name: "selectGroundedEvidence",
+                    input: {
+                      selections: [{ ordinal: 0, reason: "context_match" }],
+                    },
                   },
                 },
               ],
@@ -218,7 +221,7 @@ for (const item of QUALITY_CORPUS)
           })
         ).body,
       );
-      expect(health.provider).toBe("bedrock-tool-routed");
+      expect(health.provider).toBe("bedrock-grounded");
       expect(health.model).toMatchObject({
         architecture: ROUTING_ARCHITECTURE,
         phase: CAMPAIGN_PHASE,
@@ -238,7 +241,7 @@ for (const item of QUALITY_CORPUS)
         expect(campaign.audit).toHaveLength(0);
       } else {
         expect(response.statusCode).toBe(200);
-        expect(body.mode).toBe("bedrock-tool-routed");
+        expect(body.mode).toBe("bedrock-grounded");
         expect(providerCalls).toBe(1);
         expect(reads).toBe(1);
         expect(body.modelAudit).toMatchObject({
@@ -254,7 +257,7 @@ for (const item of QUALITY_CORPUS)
           JSON.parse(JSON.stringify(boundedIntent(item.prompt, base))),
         );
         expect(body.toolTrace).toHaveLength(1);
-        expect(body.toolTrace[0].modelSawRecords).toBe(false);
+        expect(body.toolTrace[0].modelSawMinimizedFacts).toBe(true);
         expect(body.toolTrace[0].arguments).toEqual(body.query);
         expect(body.toolTrace[0].argumentsDigest).toBe(
           hash(QuerySchema.parse(body.query)),
@@ -335,8 +338,10 @@ describe("P4 identity and evidence guards", () => {
                   {
                     toolUse: {
                       toolUseId: "synthetic-clause",
-                      name: "searchRoofingEvidence",
-                      input: q,
+                      name: "selectGroundedEvidence",
+                      input: {
+                        selections: [{ ordinal: 0, reason: "context_match" }],
+                      },
                     },
                   },
                 ],

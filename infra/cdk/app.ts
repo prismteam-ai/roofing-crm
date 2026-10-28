@@ -177,7 +177,7 @@ class CrmCandidateStack extends Stack {
           ".zip",
         ]),
       ),
-      timeout: Duration.seconds(25),
+      timeout: Duration.seconds(29),
       ...(concurrency.policy.reservedConcurrentExecutions === null
         ? {}
         : {
