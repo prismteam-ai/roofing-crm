@@ -26,6 +26,13 @@ const of = (type: string) => resources.filter((x) => x.Type === type);
 const assert = (ok: boolean, message: string) => {
   if (!ok) throw new Error(message);
 };
+const alertSecrets = of("AWS::SecretsManager::Secret");
+assert(
+  alertSecrets.length === 1 &&
+    alertSecrets[0]?.Properties.Name ===
+      "PrismCrmAssessmentReview-PagerDutyRouting",
+  "Alert secret physical name must remain inside the existing task-scoped deployment policy",
+);
 const lambdas = of("AWS::Lambda::Function");
 const runtime = lambdas.find(
   (x) =>
