@@ -2,7 +2,7 @@ import { it, expect } from "vitest";
 import { CAMPAIGN_LIMITS } from "../packages/agent/src/campaign";
 import { MemoryQuotaStore } from "../packages/hosted-runtime/src/quota";
 import { consumeHostedRequestQuota } from "../packages/hosted-runtime/src/request-quota";
-it("enforces session40 and endpoint daily160 across sessions without consuming/resetting the prior phase bucket", async () => {
+it("enforces session40 and endpoint daily240 across sessions without consuming/resetting the prior phase bucket", async () => {
   const store = new MemoryQuotaStore(),
     now = Date.parse("2026-10-28T06:00:00Z");
   await store.consume({
@@ -25,9 +25,13 @@ it("enforces session40 and endpoint daily160 across sessions without consuming/r
     await consumeHostedRequestQuota(store, "session-three", "model", now);
   for (let i = 0; i < 40; i++)
     await consumeHostedRequestQuota(store, "session-four", "model", now);
+  for (let i = 0; i < 40; i++)
+    await consumeHostedRequestQuota(store, "session-five", "model", now);
+  for (let i = 0; i < 40; i++)
+    await consumeHostedRequestQuota(store, "session-six", "model", now);
   expect(CAMPAIGN_LIMITS).toMatchObject({
-    requestsTotal: 100,
-    requestsPerDay: 100,
+    requestsTotal: 200,
+    requestsPerDay: 160,
     converseTotal: 100,
     conversePerDay: 80,
     modelMicroUsd: 3000000,

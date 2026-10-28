@@ -105,10 +105,10 @@ describe("current durable campaign", () => {
       ),
     ).toBe(true);
   });
-  it("enforces UTC daily100 validated/daily80 Converse, campaign100 and USD3 reservations without refunds or TTL reset", async () => {
+  it("enforces UTC daily160 validated/daily80 Converse, lifetime200 validated/100 Converse and USD3 reservations without refunds or TTL reset", async () => {
     for (const kind of ["request", "converse"] as const) {
       const daily = new MemoryCampaignStore();
-      for (let i = 0; i < (kind === "converse" ? 80 : 100); i++)
+      for (let i = 0; i < (kind === "converse" ? 80 : 160); i++)
         await daily.reserve({
           kind,
           subject: `s${i}`,
@@ -126,7 +126,7 @@ describe("current durable campaign", () => {
         }),
       ).rejects.toThrow("cap");
       const total = new MemoryCampaignStore();
-      for (let i = 0; i < 100; i++)
+      for (let i = 0; i < (kind === "converse" ? 100 : 200); i++)
         await total.reserve({
           kind,
           subject: `s${i}`,

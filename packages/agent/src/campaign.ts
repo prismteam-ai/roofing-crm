@@ -94,10 +94,10 @@ export const CAMPAIGN_PHASE = "prism-assessment-p5";
 /** Versioned quality eligibility preserves the prior architecture's gate and all budgets. */
 export const QUALITY_GATE_KEY = `quality-gate#${ROUTING_ARCHITECTURE}`;
 export const CAMPAIGN_LIMITS = Object.freeze({
-  requestsTotal: 100,
-  requestsPerDay: 100,
-  // Four frozen36-case rounds use144 endpoint attempts and96 validated executions.
-  endpointRequestsPerDay: 160,
+  requestsTotal: 200,
+  requestsPerDay: 160,
+  // Requests include empty evidence; preserve test usage and finite evaluator headroom.
+  endpointRequestsPerDay: 240,
   requestsPerSessionHour: 40,
   converseTotal: 100,
   conversePerDay: 80,

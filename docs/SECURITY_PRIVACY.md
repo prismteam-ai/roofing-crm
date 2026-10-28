@@ -39,7 +39,7 @@ and verify CSP/CORS/CSRF/cookies/security headers and access revocation. Local
 synthetic tests do not establish those hosted/account facts. Media remains on
 hold until both required reviews explicitly allow it.
 
-Request accounting: the P5 durable lifetime request counter permits at most 100 validated agent executions, including empty results and failed invocations. Pre-model refusals do not enter that execution counter. All model-endpoint attempts, including refusals, consume the separate 160/day and 40/session-hour endpoint quota. Converse has its own durable 100-call ceiling. Earlier phase counters remain unchanged.
+Request accounting: the P5 durable lifetime request counter permits at most 200 validated agent executions, including empty results and failed invocations. Pre-model refusals do not enter that execution counter. All model-endpoint attempts, including refusals, consume the separate 240/day and 40/session-hour endpoint quota. Converse has its own durable 100-call ceiling. Earlier phase counters remain unchanged.
 
 The unreleased P5 0.4.0 contract was finalized with an optional, bounded
 `ownership.reportedOwnerObservations` field before its first P5 deployment. The
@@ -76,14 +76,17 @@ The local v7 proof reconciles 3,747 owner observations (3,746 prior Rochester
 observations unchanged) and 39,282 normalized permit observations unchanged.
 One current source case is not municipal coverage or evidence of source exhaustion.
 
-The first two v1 model rounds required a finite endpoint allowance increase from
-80 to120/day; the third v1 round also failed quality. A separately versioned
-ordinal-only presentation protocol is now being tested against the unchanged
-36-case corpus. Four full rounds require144 endpoint attempts and96 validated
-executions. The endpoint allowance is160/day and the validated daily allowance
-is100. The validated lifetime ceiling remains100. Converse remains100 lifetime,
-80/day and40/session-hour, with the same USD3 reserved-cost ceiling. All existing
-counters and reservations are preserved; redeployment does not reset them.
+Three full v1 model rounds failed quality. The separately versioned ordinal-only
+protocol then passed a fresh Micro base36-case live round. Tests consumed96
+validated executions including empty evidence; retaining a100-execution lifetime
+limit would leave only4 evaluator requests. A finite amendment provides200
+validated executions lifetime,160/day and240 model-endpoint attempts/day,
+including refusals. These request allowances do not expand the actual Converse
+allowance:100 calls lifetime,80/day,40/session-hour and USD3 reserved cost remain.
+All existing counters, consumed calls and reservations remain; there is no reset
+or refund. Current measured test totals and evaluator headroom are in the final
+return report. This amendment requires a fresh final-source validation round.
+
 Quality eligibility uses an architecture-specific key; old v1 failures cannot
 authorize a v2 prompt repair or Lite. Micro base remains the starting model for
 this new protocol. Server-derived factual reasons are checked against the same
