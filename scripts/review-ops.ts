@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs";
 import { writeReviewerAssetManifest } from "../packages/hosted-runtime/src/reviewer-assets";
 import { buildConcurrencyPolicy } from "../packages/hosted-runtime/src/concurrency";
 import {
@@ -235,7 +236,28 @@ const aws = (args: string[], input?: string) => {
         AWS_DEFAULT_REGION: pins.region,
       },
     }).trim();
-  } catch {
+  } catch (error) {
+    const failure = error as {
+      message?: string;
+      stdout?: unknown;
+      stderr?: unknown;
+      status?: number;
+    };
+    writeFileSync(
+      path.join(operations, `aws-${args[0]}-${args[1]}-failure.private.json`),
+      JSON.stringify(
+        {
+          at: new Date().toISOString(),
+          message: failure.message,
+          stdout: String(failure.stdout ?? ""),
+          stderr: String(failure.stderr ?? ""),
+          status: failure.status,
+        },
+        null,
+        2,
+      ),
+      { mode: 0o600 },
+    );
     throw new Error(
       `AWS ${args[0]}/${args[1]} failed; private arguments/provider output redacted`,
     );
@@ -486,6 +508,7 @@ try {
     const upstream = await new OracleClient(upstreamOrigin, fetch, {
       allowLoopback: false,
       approvedOrigins: [upstreamOrigin],
+      timeoutMs: 28000,
     }).health();
     const oracleBuildId = get("PRISM_ORACLE_EXPECTED_BUILD_ID");
     if (
@@ -745,7 +768,21 @@ try {
       2,
     ),
   );
-} catch {
+} catch (error) {
+  await writeFile(
+    path.join(operations, `crm-${action}-failure.private.json`),
+    JSON.stringify(
+      {
+        at: new Date().toISOString(),
+        name: error instanceof Error ? error.name : "unknown",
+        message: error instanceof Error ? error.message : "non-error",
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      null,
+      2,
+    ),
+    { mode: 0o600 },
+  );
   receipt.status = "failed_private_details_redacted";
   await save();
   throw new Error(
