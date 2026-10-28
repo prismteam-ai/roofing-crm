@@ -51,3 +51,16 @@ session/property/snapshot; updates are versioned with history and archive state.
 Session and request generations prevent late responses from reopening old detail
 or showing stale query/agent results. The UI's available future sections remain
 disabled rather than pretending their workflows exist.
+
+Lead writes use one synchronous client mutation guard shared by board and detail
+controls. A schema-validated, session/property/snapshot-bound POST/PATCH reply is
+applied immediately; update versions and the requested history event must be
+confirmed. List reads merge monotonically and cannot remove or regress a newer
+confirmed lead. Session transitions clear client lead state and invalidate old
+read/write replies; an old completion cannot release a new session's pending
+guard. Backend optimistic version conflicts remain unchanged.
+
+Status-only writes preserve the unsaved note. A note save clears only the exact
+submitted draft revision after its history event is confirmed; edits during a
+save and failed saves remain in the input. The note field remains editable while
+mutation buttons and status controls are disabled.

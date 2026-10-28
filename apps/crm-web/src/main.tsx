@@ -1,3 +1,11 @@
+import {
+  LeadMutationGate,
+  confirmedLead,
+  parsedLeadRows,
+  mergeLeadRows,
+  unchangedSubmittedDraft,
+  type NoteDraft,
+} from "./lead-state";
 import { ConstraintLedger, PlaceResolution } from "./ConstraintLedger";
 import {
   IntentPlanSchema,
@@ -16,7 +24,6 @@ import { createRoot } from "react-dom/client";
 import "./style.css";
 import {
   CONTRACT_VERSION,
-  LeadSchema,
   PropertySchema,
   SearchResponseSchema,
   type Lead,
@@ -125,6 +132,15 @@ function App() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [status, setStatus] = useState("");
   const [note, setNote] = useState("");
+  const [leadMutationBusy, setLeadMutationBusy] = useState(false);
+  const leadMutationGate = useRef(new LeadMutationGate());
+  const leadsRef = useRef<Lead[]>([]);
+  const activeSessionId = useRef<string | null>(null);
+  const noteDraft = useRef<NoteDraft>({ value: "", revision: 0 });
+  const changeNote = (value: string) => {
+    noteDraft.current = { value, revision: noteDraft.current.revision + 1 };
+    setNote(value);
+  };
   const [prompt, setPrompt] = useState(
     "Show me open permits older than five years within five miles",
   );
@@ -157,6 +173,10 @@ function App() {
     leadGeneration.current++;
     agentGeneration.current++;
     activeSession.current = false;
+    activeSessionId.current = null;
+    leadMutationGate.current.reset();
+    setLeadMutationBusy(false);
+    leadsRef.current = [];
     closeDetail();
     setReady(false);
     setNeedsAccess(true);
@@ -169,7 +189,7 @@ function App() {
     setAgentError("");
     setAgentBusy(false);
     setStatus("");
-    setNote("");
+    changeNote("");
     setError("");
     setAccessCode("");
     setPlacing(false);
@@ -184,6 +204,12 @@ function App() {
     leadGeneration.current++;
     agentGeneration.current++;
     activeSession.current = true;
+    activeSessionId.current = id;
+    leadMutationGate.current.reset();
+    setLeadMutationBusy(false);
+    leadsRef.current = [];
+    setLeads([]);
+    changeNote("");
     setSid(id);
     setNeedsAccess(false);
     setReady(true);
@@ -309,14 +335,24 @@ function App() {
     };
   }, [selected?.id]);
   const refreshLeads = async () => {
-    if (!activeSession.current) return;
+    const sessionId = activeSessionId.current;
+    if (!activeSession.current || !sessionId) return;
     const epoch = sessionGeneration.current,
       current = ++leadGeneration.current;
-    const rows = await api<unknown[]>(
-      "/api/leads?sessionId=" + encodeURIComponent(sid),
+    const input = await api<unknown>(
+      "/api/leads?sessionId=" + encodeURIComponent(sessionId),
     );
-    if (sameSession(epoch) && current === leadGeneration.current)
-      setLeads(rows.map((value) => LeadSchema.parse(value)));
+    if (sameSession(epoch) && current === leadGeneration.current) {
+      const incoming = parsedLeadRows(input, sessionId);
+      leadsRef.current = mergeLeadRows(leadsRef.current, incoming, sessionId);
+      setLeads(leadsRef.current);
+    }
+  };
+  const applyConfirmedLead = (lead: Lead, sessionId: string) => {
+    // Invalidate reads begun before this confirmed write; later reads still merge monotonically.
+    leadGeneration.current++;
+    leadsRef.current = mergeLeadRows(leadsRef.current, [lead], sessionId);
+    setLeads(leadsRef.current);
   };
   useEffect(() => {
     if (!ready) return;
@@ -375,7 +411,7 @@ function App() {
     setSelectedSnapshot(snapshotId);
     setSelected(p);
     setStatus("");
-    setNote("");
+    changeNote("");
   };
   const pin = (lat: number, lng: number) => {
     update({ lat, lng });
@@ -406,54 +442,104 @@ function App() {
   };
   const createLead = async (p: Property) => {
     const epoch = sessionGeneration.current,
-      detail = detailGeneration.current;
-    if (!sameSession(epoch)) return;
+      detail = detailGeneration.current,
+      sessionId = activeSessionId.current;
+    if (!sameSession(epoch) || !sessionId) return;
+    const ticket = leadMutationGate.current.start();
+    if (!ticket) return;
+    setLeadMutationBusy(true);
+    setStatus("Saving lead…");
+    const snapshotId = selectedSnapshot || query.snapshotId;
     try {
-      await api<Lead>("/api/leads", {
+      const input = await api<unknown>("/api/leads", {
         method: "POST",
         body: JSON.stringify({
-          sessionId: sid,
+          sessionId,
           propertyId: p.id,
-          snapshotId: selectedSnapshot || query.snapshotId,
-          idempotencyKey: `${p.id}:${selectedSnapshot || query.snapshotId}`,
+          snapshotId,
+          idempotencyKey: `${p.id}:${snapshotId}`,
         }),
       });
       if (!sameSession(epoch)) return;
-      await refreshLeads();
-      if (sameSession(epoch) && detail === detailGeneration.current)
+      const lead = confirmedLead(input, {
+        sessionId,
+        propertyId: p.id,
+        snapshotId,
+      });
+      applyConfirmedLead(lead, sessionId);
+      if (detail === detailGeneration.current)
         setStatus("Lead saved. It will remain after refresh.");
     } catch (e) {
-      if (sameSession(epoch) && detail === detailGeneration.current)
-        setStatus((e as Error).message);
+      if (!sameSession(epoch)) return;
+      if (detail === detailGeneration.current) setStatus((e as Error).message);
+      void refreshLeads().catch(() => undefined);
+    } finally {
+      if (leadMutationGate.current.finish(ticket) && sameSession(epoch))
+        setLeadMutationBusy(false);
     }
   };
   const updateLead = async (
-    lead: Lead,
+    renderedLead: Lead,
     change: { status?: Lead["status"]; note?: string },
   ) => {
     const epoch = sessionGeneration.current,
-      detail = detailGeneration.current;
-    if (!sameSession(epoch)) return;
+      detail = detailGeneration.current,
+      sessionId = activeSessionId.current;
+    if (!sameSession(epoch) || !sessionId) return;
+    const ticket = leadMutationGate.current.start();
+    if (!ticket) return;
+    setLeadMutationBusy(true);
+    setStatus("Saving lead…");
+    const submittedDraft = { ...noteDraft.current };
     try {
-      await api<Lead>(`/api/leads/${lead.id}`, {
+      const lead =
+        leadsRef.current.find((row) => row.id === renderedLead.id) ??
+        renderedLead;
+      if (
+        lead.sessionId !== sessionId ||
+        lead.propertyId !== renderedLead.propertyId ||
+        lead.snapshotId !== renderedLead.snapshotId
+      )
+        throw new Error(
+          "This lead does not match the current review session and selection.",
+        );
+      const input = await api<unknown>(`/api/leads/${lead.id}`, {
         method: "PATCH",
         body: JSON.stringify({
-          sessionId: sid,
+          sessionId,
           id: lead.id,
           expectedVersion: lead.version,
           ...change,
         }),
       });
       if (!sameSession(epoch)) return;
-      await refreshLeads();
-      if (sameSession(epoch) && detail === detailGeneration.current) {
-        setNote("");
+      const confirmed = confirmedLead(input, {
+        sessionId,
+        propertyId: lead.propertyId,
+        snapshotId: lead.snapshotId,
+        id: lead.id,
+        previousVersion: lead.version,
+        previousEventCount: lead.events.length,
+        change,
+      });
+      applyConfirmedLead(confirmed, sessionId);
+      if (detail === detailGeneration.current) {
+        if (
+          change.note !== undefined &&
+          submittedDraft.value === change.note &&
+          unchangedSubmittedDraft(submittedDraft, noteDraft.current)
+        )
+          changeNote("");
         setStatus("Lead updated.");
       }
     } catch (e) {
       if (!sameSession(epoch)) return;
       if (detail === detailGeneration.current) setStatus((e as Error).message);
-      await refreshLeads().catch(() => undefined);
+      // A conflict or unknown network outcome triggers a read, never a mutation retry.
+      void refreshLeads().catch(() => undefined);
+    } finally {
+      if (leadMutationGate.current.finish(ticket) && sameSession(epoch))
+        setLeadMutationBusy(false);
     }
   };
   const ask = async () => {
@@ -1325,6 +1411,7 @@ function App() {
                       Lead status
                       <select
                         aria-label={`Lead status ${l.propertyId}`}
+                        disabled={leadMutationBusy}
                         value={l.status}
                         onChange={(e) =>
                           void updateLead(l, {
@@ -1499,7 +1586,7 @@ function App() {
               </small>
             </div>
           ))}
-          <div className="lead-actions">
+          <div className="lead-actions" aria-busy={leadMutationBusy}>
             {selectedLead ? (
               <>
                 <div className="saved-label">
@@ -1509,6 +1596,7 @@ function App() {
                   Lead status
                   <select
                     aria-label="Lead status"
+                    disabled={leadMutationBusy}
                     value={selectedLead.status}
                     onChange={(e) =>
                       void updateLead(selectedLead, {
@@ -1527,15 +1615,19 @@ function App() {
                   <textarea
                     aria-label="Lead note"
                     value={note}
-                    onChange={(e) => setNote(e.target.value)}
+                    onChange={(e) => changeNote(e.target.value)}
                     placeholder="Add a local qualification note"
                     maxLength={2000}
                   />
                 </label>
                 <button
                   className="button secondary"
-                  disabled={!note.trim()}
-                  onClick={() => void updateLead(selectedLead, { note })}
+                  disabled={leadMutationBusy || !note.trim()}
+                  onClick={() =>
+                    void updateLead(selectedLead, {
+                      note: noteDraft.current.value,
+                    })
+                  }
                 >
                   Save note
                 </button>
@@ -1552,6 +1644,7 @@ function App() {
             ) : (
               <button
                 className="button primary"
+                disabled={leadMutationBusy}
                 onClick={() => void createLead(selected)}
               >
                 Create lead <span>+</span>

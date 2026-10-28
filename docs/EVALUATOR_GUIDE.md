@@ -51,3 +51,10 @@ coverage first. Preserve the safe error and query/build identities; never copy
 credentials, raw provider bodies or private source rows into a report. A stale
 answer must clear after query change, refusal, logout or outage. The final return
 records which hosted/browser steps were actually observed and any source blocker.
+
+For lead edits, wait for the saving indicator and disabled controls to finish.
+The confirmed version appears immediately in the detail view. Changing status
+preserves a draft note; saving a note clears only the submitted draft after the
+server confirms it. A newer edit made during the save remains as the next draft.
+An external version conflict preserves the draft and shows an error; it is not
+automatically retried. Session changes close prior lead data and pending replies.
