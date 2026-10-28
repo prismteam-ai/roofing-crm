@@ -442,7 +442,21 @@ test("offline assistant grounds a query and refuses unsafe tool requests", async
     minOpenDays: 1827,
   });
   expect(observed.mode).toBe("deterministic-offline");
-  expect(observed.results.length).toBeGreaterThan(0);
+  // Bind both positive fixture and legitimately empty real-public answers to an
+  // independent typed read; the public fixture contains no acquired permits.
+  const baselineResponse = await page.request.post("/api/search", {
+    data: observed.query,
+  });
+  expect(baselineResponse.status()).toBe(200);
+  const baseline = (await baselineResponse.json()) as SearchResponse;
+  expect(observed.results).toEqual(baseline.rows);
+  expect(observed.toolTrace[0]!.queryHash).toBe(baseline.queryHash);
+  expect(observed.toolTrace[0]!.totalMatched).toBe(baseline.total);
+  if (process.env.PRISM_TEST_MODE === "real") {
+    expect(baseline.total).toBe(0);
+    expect(observed.results).toEqual([]);
+    expect(observed.citations).toEqual([]);
+  } else expect(baseline.total).toBeGreaterThan(0);
   expect(observed.intent?.accepted).toBe(true);
   expect(observed.intent?.query).toEqual(observed.query);
   expect(observed.toolTrace).toHaveLength(1);
