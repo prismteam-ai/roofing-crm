@@ -96,6 +96,45 @@ async function ask(page: Page, prompt: string) {
   await page.getByLabel("Agent prompt").fill(prompt);
   await page.getByRole("button", { name: /Ask agent/ }).click();
 }
+test("evidence link stays readable and clickable inside the sidebar across its collapse breakpoint", async ({
+  page,
+}) => {
+  const state = await fixture(page);
+  for (const width of [390, 800, 801]) {
+    await page.setViewportSize({ width, height: 844 });
+    const link = page.locator('.sidebar > a[href="/api/evidence"]');
+    await expect(link).toBeVisible();
+    await link.scrollIntoViewIfNeeded();
+    const geometry = await link.evaluate((element) => {
+      const sidebar = element.closest(".sidebar")!.getBoundingClientRect();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const text = [...range.getClientRects()];
+      const link = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        link.x + link.width / 2,
+        link.y + link.height / 2,
+      );
+      return {
+        textWithinSidebar:
+          text.length > 0 &&
+          text.every((r) => r.left >= sidebar.left && r.right <= sidebar.right),
+        clickable: hit === element || element.contains(hit),
+        horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
+      };
+    });
+    expect(geometry, `viewport ${width}`).toEqual({
+      textWithinSidebar: true,
+      clickable: true,
+      horizontalOverflow: false,
+    });
+    await link.focus();
+    await expect(link).toBeFocused();
+  }
+  expect(state.errors).toEqual([]);
+  expect(state.external).toEqual([]);
+  expect(state.agentRequests()).toBe(0);
+});
 test("accepted place query, fractional radius and ledger survive map application/reload; a later refusal replaces the prior answer", async ({
   page,
 }) => {

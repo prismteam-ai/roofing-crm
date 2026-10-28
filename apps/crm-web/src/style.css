@@ -1233,6 +1233,13 @@ input[type="number"] {
     width: 65px;
     padding: 23px 9px;
   }
+  .sidebar > a {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: 9px;
+    line-height: 1.4;
+  }
   .brand {
     justify-content: center;
   }
