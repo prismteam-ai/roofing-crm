@@ -1,16 +1,15 @@
+import { publicCaptureEnvironment } from "./packages/test-support/src/public-capture-env";
 import { defineConfig } from "@playwright/test";
 import path from "node:path";
 const dataMode = process.env.PRISM_TEST_MODE ?? "synthetic";
-const publicCaptureEnv = {
-  PRISM_DATA_MODE: dataMode,
-  PRISM_ACCESS_MODE: "local",
-  PRISM_SNAPSHOT_DIR: process.env.PRISM_SNAPSHOT_DIR ?? "",
-  PRISM_OWNER_DERIVATIVES: "",
-  PRISM_OWNER_DERIVATIVES_SHA256: "",
-  PRISM_PRIVATE_ENRICHMENT: "",
-  PRISM_PRIVATE_ENRICHMENT_SHA256: "",
-  PRISM_ENABLE_PROTECTED_VIEW: "0",
-};
+if (!["real", "synthetic"].includes(dataMode))
+  throw new Error(
+    "Public browser capture requires explicit real-public or synthetic mode; protected review uses the separate authenticated hosted evidence workflow",
+  );
+const publicCaptureEnv = publicCaptureEnvironment(
+  process.env,
+  dataMode as "real" | "synthetic",
+);
 const integration =
   dataMode === "real" ||
   process.env.PRISM_BROWSER_ORACLE_MODE === "integration";
@@ -62,6 +61,7 @@ export default defineConfig({
           {
             command:
               "pnpm --dir ../oracle-property-intelligence-platform-pipeline-oakland-mi dev",
+            env: publicCaptureEnv,
             url: "http://127.0.0.1:4173",
             reuseExistingServer: true,
             timeout: 60000,
@@ -70,7 +70,7 @@ export default defineConfig({
       : [
           {
             command: "pnpm test:oracle-fixture",
-            env: { PRISM_DATA_MODE: "synthetic" },
+            env: { ...publicCaptureEnv, PRISM_DATA_MODE: "synthetic" },
             url: "http://127.0.0.1:4310/api/health",
             reuseExistingServer: false,
             timeout: 60000,
@@ -85,6 +85,7 @@ export default defineConfig({
     },
     {
       command: "pnpm dev",
+      env: publicCaptureEnv,
       url: "http://127.0.0.1:4174",
       reuseExistingServer: true,
       timeout: 60000,
