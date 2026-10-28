@@ -43,6 +43,7 @@ import {
   oldestOpenRoofDays as openDays,
 } from "../../../packages/map-domain/src/signals";
 import { PermitEvidence } from "./PermitEvidence";
+import { OwnerObservations } from "./OwnerObservations";
 let apiSessionGeneration = 0;
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const requestSessionGeneration = apiSessionGeneration;
@@ -1416,6 +1417,9 @@ function App() {
             />
           ))}
           <h3 className="section-label">OWNERSHIP & IDENTITY</h3>
+          <OwnerObservations
+            observations={selected.ownership.reportedOwnerObservations}
+          />
           <p className="caveat">
             Transfer: {selected.ownership.lastTransferDate ?? "unavailable"} ·
             historical coverage {selected.ownership.historyCoverage}. Region:{" "}
