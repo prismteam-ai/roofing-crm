@@ -1,7 +1,9 @@
 import { buildIdentity } from "./scripts/build-identity.ts";
 import { defineConfig } from "vite";
+import { thirdPartyNoticesPlugin } from "./scripts/third-party-notices.ts";
 export default defineConfig({
   plugins: [
+    thirdPartyNoticesPlugin(),
     {
       name: "prism-release-identity",
       generateBundle() {
