@@ -9,5 +9,5 @@
   "revision_reason": "Authoritative municipal-place references, explicit unknown permit status, evidence-presence predicates and typed sorting; no inference of contractor role, active license or unchanged tenure.",
   "mode": "generated-copy",
   "generated_at": "2026-10-28T05:48:24.488017+00:00",
-  "queryPredicateSha256": "3640eae9d7c4c9a116c8c7aa2e049136a383bf3a1e2b47e0a7b9d83cdf3d8023"
+  "queryPredicateSha256": "0cd980a0c52997ae70d8ed79d03ba8475254bfb9312ad550c29373e037324401"
 }
