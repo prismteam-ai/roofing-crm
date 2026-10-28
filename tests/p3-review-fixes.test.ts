@@ -6,7 +6,10 @@ import {
   bedrockTransport,
   type ConverseTransport,
 } from "../packages/agent/src/bedrock";
-import { MemoryCampaignStore } from "../packages/agent/src/campaign";
+import {
+  CAMPAIGN_LIMITS,
+  MemoryCampaignStore,
+} from "../packages/agent/src/campaign";
 import { MICRO_MODEL } from "../packages/runtime-config/src/index";
 import {
   AccessService,
@@ -187,8 +190,8 @@ describe("independent P3 provider failure regression", () => {
             }),
           );
         else expect(warning).not.toHaveBeenCalled();
-        // A failed provider call was charged permanently; a twentieth additional call cannot fit the20/session ceiling.
-        for (let i = 0; i < 19; i++)
+        // A failed provider call stays charged against the current finite session ceiling.
+        for (let i = 0; i < CAMPAIGN_LIMITS.conversePerSessionHour - 1; i++)
           await campaign.reserve({
             subject: sid,
             kind: "converse",

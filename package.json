@@ -28,8 +28,10 @@
     "evidence": "tsx scripts/review-ops.ts evidence",
     "rotate-access": "tsx scripts/review-ops.ts rotate-access",
     "destroy": "tsx scripts/review-ops.ts destroy",
-    "campaign": "tsx scripts/model-campaign.ts",
-    "test:map-browser": "playwright test --config playwright.map.config.ts"
+    "campaign": "tsx scripts/p5-model-campaign.ts",
+    "test:map-browser": "playwright test --config playwright.map.config.ts",
+    "campaign:p5": "tsx scripts/p5-model-campaign.ts",
+    "campaign:legacy-plan": "tsx scripts/model-campaign.ts"
   },
   "dependencies": {
     "@ai-sdk/provider": "4.0.34",

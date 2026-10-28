@@ -14,6 +14,7 @@ import {
   minimizedEvidenceRow,
 } from "./bedrock";
 import { CAMPAIGN_PHASE } from "./campaign";
+import { P5_LIVE_CORPUS } from "./intent/live-corpus";
 export const QUALITY_CORPUS = [
   {
     id: "aged-roof",
@@ -308,9 +309,10 @@ export function assessAnswer(
       : {}),
   };
 }
-/** New P4 architecture evidence only. P3 failures cannot grant a P4 repair or alternative. */
+/** Measured current-phase evidence only; historical failures cannot grant a new allowance. */
 export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
-  const x = input as {
+  const current = input as {
+    profile?: string;
     phase?: string;
     architecture?: string;
     modelId?: string;
@@ -318,51 +320,58 @@ export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
     revision?: string;
     accepted?: boolean;
     completedAt?: string;
-    outcomes?: QualityOutcome[];
+    outcomes?: {
+      id: string;
+      promptDigest: string;
+      passed: boolean;
+      baselinePageRows?: number;
+      checks?: Record<string, boolean>;
+      modelAudit?: AgentAnswer["modelAudit"];
+    }[];
   };
-  if (
-    !x ||
-    x.phase !== CAMPAIGN_PHASE ||
-    x.architecture !== ROUTING_ARCHITECTURE ||
-    x.modelId !== "amazon.nova-micro-v1:0" ||
-    x.region !== "us-east-1" ||
-    x.revision !== revision ||
-    x.accepted !== false ||
-    !x.completedAt ||
-    !Number.isFinite(Date.parse(x.completedAt)) ||
-    !Array.isArray(x.outcomes) ||
-    x.outcomes.length !== QUALITY_CORPUS.length ||
-    !QUALITY_CORPUS.every((p) =>
-      x.outcomes!.some(
+  if (current?.profile === "p5-original-objective-36-v1") {
+    if (
+      current.phase !== CAMPAIGN_PHASE ||
+      current.architecture !== ROUTING_ARCHITECTURE ||
+      current.modelId !== "amazon.nova-micro-v1:0" ||
+      current.region !== "us-east-1" ||
+      current.revision !== revision ||
+      current.accepted !== false ||
+      !Number.isFinite(Date.parse(current.completedAt ?? "")) ||
+      current.outcomes?.length !== P5_LIVE_CORPUS.length ||
+      !P5_LIVE_CORPUS.every((p) =>
+        current.outcomes!.some(
+          (o) =>
+            o.id === p.id &&
+            o.promptDigest ===
+              createHash("sha256").update(p.prompt).digest("hex"),
+        ),
+      ) ||
+      !current.outcomes.some(
         (o) =>
-          o.id === p.id &&
-          o.promptDigest ===
-            createHash("sha256").update(p.prompt).digest("hex"),
-      ),
-    ) ||
-    !x.outcomes.some(
-      (o) =>
-        !o.passed &&
-        o.modelAudit?.architecture === ROUTING_ARCHITECTURE &&
-        o.modelAudit.modelId === "amazon.nova-micro-v1:0" &&
-        o.modelAudit.region === "us-east-1" &&
-        o.modelAudit.converseCalls === 1 &&
-        o.modelAudit.inputTokens > 0 &&
-        o.modelAudit.unmeasuredCalls === 0 &&
-        o.modelAudit.reservedMicroUsd > 0 &&
-        ((o.mode === "bedrock-grounded" &&
-          o.serverReferenceMatched === true &&
-          [
-            "intent-grounding-or-server-reference-failure",
-            "empty-model-route-with-nonempty-baseline",
-          ].includes(o.reason)) ||
-          ["INVALID_INPUT", "UNSUPPORTED_TOOL"].includes(
-            o.modelAudit.failureCode ?? "",
-          )),
+          !o.passed &&
+          (o.baselinePageRows ?? 0) > 0 &&
+          o.checks?.sourceSubset === true &&
+          o.checks?.sameTypedQuery === true &&
+          o.checks?.appliedLedger === true &&
+          o.modelAudit?.architecture === ROUTING_ARCHITECTURE &&
+          o.modelAudit.modelId === "amazon.nova-micro-v1:0" &&
+          o.modelAudit.region === "us-east-1" &&
+          o.modelAudit.promptRevision === revision &&
+          o.modelAudit.converseCalls === 1 &&
+          o.modelAudit.inputTokens > 0 &&
+          o.modelAudit.unmeasuredCalls === 0 &&
+          o.modelAudit.reservedMicroUsd > 0 &&
+          (o.checks.expectedModelPath === false ||
+            o.checks.sourceOrder === false),
+      )
     )
-  )
-    throw new Error(
-      "Complete measured failed P4 Micro grounded-evidence campaign required",
-    );
-  return digest(input);
+      throw Error(
+        "Complete measured failed current-phase Micro grounded-evidence campaign required",
+      );
+    return digest(input);
+  }
+  throw new Error(
+    "Complete measured failed current-phase Micro grounded-evidence campaign required; the legacy eight-case profile cannot grant a P5 repair",
+  );
 }

@@ -31,6 +31,7 @@ import {
   type VerifiedPrice,
 } from "../../../packages/agent/src/campaign";
 import { verifiedPriceProvider } from "../../../packages/agent/src/prices";
+import { consumeHostedRequestQuota } from "../../../packages/hosted-runtime/src/request-quota";
 import { mapConfiguration } from "../../../packages/hosted-runtime/src/map-config";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
@@ -209,6 +210,7 @@ export function createHostedHandler(
               id: reviewModel(modelId() || MICRO_MODEL, true),
               architecture: ROUTING_ARCHITECTURE,
               phase: CAMPAIGN_PHASE,
+              requestScope: "validated-agent-executions",
               limits: CAMPAIGN_LIMITS,
               emptyEvidencePolicy: "evidence-empty-no-model",
               region: REVIEW_REGION,
@@ -245,23 +247,7 @@ export function createHostedHandler(
           },
         },
         quota: async (subject, category) => {
-          const nowMs = clock();
-          const limits = { read: 600, write: 100, auth: 10, model: 20 };
-          await r.quota.consume({
-            subject,
-            category,
-            limit: limits[category],
-            windowSeconds: category === "auth" ? 60 : 3600,
-            nowMs,
-          });
-          if (category === "model")
-            await r.quota.consume({
-              subject: "global-model-budget",
-              category,
-              limit: 60,
-              windowSeconds: 86400,
-              nowMs,
-            });
+          await consumeHostedRequestQuota(r.quota, subject, category, clock());
         },
         ...(r.provider
           ? {

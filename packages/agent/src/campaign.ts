@@ -87,14 +87,14 @@ export function qualityAllows(
       "Lite requires measured failure of Micro and its one prompt repair",
     );
 }
-export const CAMPAIGN_PHASE = "prism-assessment-p4";
+export const CAMPAIGN_PHASE = "prism-assessment-p5";
 export const CAMPAIGN_LIMITS = Object.freeze({
-  requestsTotal: 80,
-  requestsPerDay: 60,
-  requestsPerSessionHour: 20,
-  converseTotal: 80,
-  conversePerDay: 60,
-  conversePerSessionHour: 20,
+  requestsTotal: 100,
+  requestsPerDay: 80,
+  requestsPerSessionHour: 40,
+  converseTotal: 100,
+  conversePerDay: 80,
+  conversePerSessionHour: 40,
   modelMicroUsd: 3000000,
 });
 function entries(input: CampaignReservation) {
@@ -111,14 +111,26 @@ function entries(input: CampaignReservation) {
     day = new Date(input.nowMs).toISOString().slice(0, 10),
     session = createHash("sha256").update(input.subject).digest("hex");
   const all = [
-    { key: `${input.kind}#total`, limit: 80, units: 1 },
-    { key: `${input.kind}#day#${day}`, limit: 60, units: 1 },
-    { key: `${input.kind}#session#${session}#${hour}`, limit: 20, units: 1 },
+    {
+      key: `${input.kind}#total`,
+      limit: CAMPAIGN_LIMITS.requestsTotal,
+      units: 1,
+    },
+    {
+      key: `${input.kind}#day#${day}`,
+      limit: CAMPAIGN_LIMITS.requestsPerDay,
+      units: 1,
+    },
+    {
+      key: `${input.kind}#session#${session}#${hour}`,
+      limit: CAMPAIGN_LIMITS.requestsPerSessionHour,
+      units: 1,
+    },
     ...(input.kind === "converse"
       ? [
           {
             key: "cost#reserved-microusd",
-            limit: 3000000,
+            limit: CAMPAIGN_LIMITS.modelMicroUsd,
             units: input.reservedMicroUsd ?? 0,
           },
         ]
@@ -146,13 +158,13 @@ export class MemoryCampaignStore implements CampaignStore {
     if (all.some((x) => (this.counts.get(x.key) ?? 0) + x.units > x.limit))
       throw new DomainError(
         "COST_LIMIT_REACHED",
-        "P4 campaign request, invocation or reserved-cost cap reached",
+        "P5 campaign request, invocation or reserved-cost cap reached",
       );
     for (const x of all)
       this.counts.set(x.key, (this.counts.get(x.key) ?? 0) + x.units);
   }
 }
-/** Counters intentionally have no TTL: the P4 total cannot reset during redeployment or review extension. */
+/** Counters intentionally have no TTL: prior phase totals and the P5 total cannot reset during redeployment or review extension. */
 export class DynamoCampaignStore implements CampaignStore {
   constructor(
     private readonly client: Pick<DynamoDBDocumentClient, "send">,
@@ -209,7 +221,7 @@ export class DynamoCampaignStore implements CampaignStore {
         error instanceof Error &&
         error.name === "TransactionCanceledException"
       )
-        throw new DomainError("COST_LIMIT_REACHED", "P4 campaign cap reached");
+        throw new DomainError("COST_LIMIT_REACHED", "P5 campaign cap reached");
       throw new DomainError(
         "COST_LIMIT_REACHED",
         "Campaign allowance unavailable; no provider call permitted",

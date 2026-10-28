@@ -49,7 +49,8 @@ export interface AppDependencies {
     region: "us-east-1";
     promptRevision: "base" | "repair-1";
     architecture: "one-call-grounded-selection-v1";
-    phase: "prism-assessment-p4";
+    phase: string;
+    requestScope?: "validated-agent-executions";
     limits: Readonly<Record<string, number>>;
     emptyEvidencePolicy?: "evidence-empty-no-model";
   };

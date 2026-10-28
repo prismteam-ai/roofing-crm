@@ -75,14 +75,14 @@ class AtomicCampaignDb {
     return {};
   }
 }
-describe("P4 durable campaign", () => {
+describe("current durable campaign", () => {
   it("caps overlapping requests and Converse independently across two shared adapters", async () => {
     const db = new AtomicCampaignDb(),
       a = new DynamoCampaignStore(db as never, "shared"),
       b = new DynamoCampaignStore(db as never, "shared");
     for (const kind of ["request", "converse"] as const) {
       const r = await Promise.allSettled(
-        Array.from({ length: 24 }, (_, i) =>
+        Array.from({ length: 44 }, (_, i) =>
           (i % 2 ? a : b).reserve({
             kind,
             subject: "one-session",
@@ -92,8 +92,8 @@ describe("P4 durable campaign", () => {
           }),
         ),
       );
-      expect(r.filter((x) => x.status === "fulfilled")).toHaveLength(20);
-      expect(db.items.get(`${kind}#total`)).toBe(20);
+      expect(r.filter((x) => x.status === "fulfilled")).toHaveLength(40);
+      expect(db.items.get(`${kind}#total`)).toBe(40);
     }
     expect(
       db.commands.every(
@@ -105,10 +105,10 @@ describe("P4 durable campaign", () => {
       ),
     ).toBe(true);
   });
-  it("enforces UTC daily60, campaign80 and USD3 reservations without refunds or TTL reset", async () => {
+  it("enforces UTC daily80, campaign100 and USD3 reservations without refunds or TTL reset", async () => {
     for (const kind of ["request", "converse"] as const) {
       const daily = new MemoryCampaignStore();
-      for (let i = 0; i < 60; i++)
+      for (let i = 0; i < 80; i++)
         await daily.reserve({
           kind,
           subject: `s${i}`,
@@ -126,7 +126,7 @@ describe("P4 durable campaign", () => {
         }),
       ).rejects.toThrow("cap");
       const total = new MemoryCampaignStore();
-      for (let i = 0; i < 80; i++)
+      for (let i = 0; i < 100; i++)
         await total.reserve({
           kind,
           subject: `s${i}`,
@@ -186,7 +186,7 @@ describe("P4 durable campaign", () => {
       qualityAllows({ ...gate, repairFailureSha256: hash }, LITE_MODEL, "base"),
     ).not.toThrow();
     const report = {
-      phase: "prism-assessment-p4",
+      phase: "prism-assessment-p5",
       architecture: "one-call-grounded-selection-v1",
       completedAt: new Date(now).toISOString(),
       modelId: MICRO_MODEL,
@@ -211,7 +211,7 @@ describe("P4 durable campaign", () => {
         },
       })),
     };
-    expect(qualityFailure(report, "base")).toHaveLength(64);
+    expect(() => qualityFailure(report, "base")).toThrow("legacy eight-case");
     expect(() =>
       qualityFailure(
         {

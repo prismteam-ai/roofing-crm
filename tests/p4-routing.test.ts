@@ -521,7 +521,7 @@ describe("P4 identity and evidence guards", () => {
       boundedToolArguments({ ...base, minOwnershipYears: 10 }, base),
     ).toThrow("tenure");
   });
-  it("refuses a historical P3 campaign as evidence for a P4 repair", () => {
+  it("refuses a historical campaign as evidence for a current repair", () => {
     expect(() =>
       qualityFailure(
         {
@@ -532,9 +532,9 @@ describe("P4 identity and evidence guards", () => {
         },
         "base",
       ),
-    ).toThrow("P4");
+    ).toThrow("current-phase");
   });
-  it("writes only the immutable P4 partition, with no P3 reset or access", async () => {
+  it("writes only the immutable P5 partition, with no prior phase reset or access", async () => {
     const legacy = { consumed: 41 },
       seen: string[] = [];
     const db = {
@@ -575,7 +575,7 @@ describe("P4 identity and evidence guards", () => {
       totalTokens: 120,
     });
     expect(seen.length).toBeGreaterThan(0);
-    expect(seen.every((x) => x === "campaign#prism-assessment-p4")).toBe(true);
+    expect(seen.every((x) => x === "campaign#prism-assessment-p5")).toBe(true);
     expect(legacy).toEqual({ consumed: 41 });
   });
 });

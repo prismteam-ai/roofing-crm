@@ -38,3 +38,5 @@ return for secrets/private data, inspect dependency/license findings and IAM,
 and verify CSP/CORS/CSRF/cookies/security headers and access revocation. Local
 synthetic tests do not establish those hosted/account facts. Media remains on
 hold until both required reviews explicitly allow it.
+
+Request accounting: the P5 durable lifetime request counter permits at most 100 validated agent executions, including empty results and failed invocations. Pre-model refusals do not enter that execution counter. All model-endpoint attempts, including refusals, consume the separate 80/day and 40/session-hour endpoint quota. Converse has its own durable 100-call ceiling. Earlier phase counters remain unchanged.
