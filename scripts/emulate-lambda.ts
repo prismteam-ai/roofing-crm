@@ -96,8 +96,18 @@ const oracle = {
 };
 let fakeProviderCalls = 0;
 const provider: ConverseTransport = {
-  converse: async () => {
+  converse: async (request) => {
     fakeProviderCalls++;
+    const context = JSON.parse(request.messages![0].content![0].text!);
+    if (
+      context.retrievedEvidence.rows.length !== 1 ||
+      context.retrievedEvidence.rows[0].roof.ageYears !== null ||
+      JSON.stringify(request).includes(property.address) ||
+      JSON.stringify(request).includes(property.id)
+    )
+      throw new Error(
+        "Packaged provider did not receive the minimized retrieved evidence",
+      );
     return {
       $metadata: {},
       metrics: { latencyMs: 0 },
@@ -227,8 +237,18 @@ const answer = JSON.parse(
     })
   ).body,
 ) as {
+  mode: string;
+  toolTrace: {
+    evidenceDigest: string;
+    minimizedRowCount: number;
+    presentationTool: string;
+    selectedOrdinals: number[];
+  }[];
   citations: string[];
   modelAudit: {
+    architecture: string;
+    evidenceDigest: string;
+    minimizedRowCount: number;
     converseCalls: number;
     measuredMicroUsd: number;
     reservedMicroUsd: number;
@@ -237,6 +257,12 @@ const answer = JSON.parse(
 if (answer.citations[0] !== "synthetic:SYN-EMULATED" || fakeProviderCalls !== 1)
   throw new Error("Packaged provider grounding failed");
 if (
+  answer.mode !== "bedrock-grounded" ||
+  answer.modelAudit.architecture !== "one-call-grounded-selection-v1" ||
+  answer.modelAudit.evidenceDigest !== answer.toolTrace[0].evidenceDigest ||
+  answer.modelAudit.minimizedRowCount !== 1 ||
+  answer.toolTrace[0].presentationTool !== "selectGroundedEvidence" ||
+  JSON.stringify(answer.toolTrace[0].selectedOrdinals) !== "[0]" ||
   answer.modelAudit.converseCalls !== 1 ||
   answer.modelAudit.measuredMicroUsd <= 0 ||
   answer.modelAudit.reservedMicroUsd !== 560 ||
@@ -266,6 +292,10 @@ console.log(
       checks,
       malformedStatus: malformed.statusCode,
       fakeProviderCalls,
+      modelMode: answer.mode,
+      architecture: answer.modelAudit.architecture,
+      evidenceDigest: answer.modelAudit.evidenceDigest,
+      minimizedRowCount: answer.modelAudit.minimizedRowCount,
       serviceCalls: 0,
       liveInferenceCalls: 0,
     },
