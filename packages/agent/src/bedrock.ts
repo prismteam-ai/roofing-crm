@@ -330,7 +330,7 @@ export function boundedToolArguments(input: unknown, expected: QueryInput) {
   });
   return { query, clampedFields, providerArgumentsDigest: hash(given) };
 }
-/** One guarded retrieval, then one model call grounded only in allowlisted retrieved facts. */
+/** One guarded retrieval; zero matches return source evidence without calling a model. Nonempty facts allow one grounded call. */
 export async function answerWithBedrock(
   reader: OracleReader,
   provider: ConverseTransport,
@@ -368,6 +368,20 @@ export async function answerWithBedrock(
       "Evidence did not satisfy snapshot/result limits",
     );
   assertEvidencePredicates(data, query);
+  if (data.rows.length === 0) {
+    const result = answerFromEvidence(data, query, "evidence-empty");
+    result.toolTrace[0] = {
+      ...result.toolTrace[0],
+      modelSawMinimizedFacts: false,
+      evidenceDigest: hash(minimizedEvidenceContext(data, [])),
+      minimizedRowCount: 0,
+      retrievedRowCount: 0,
+      contextTruncated: false,
+      argumentsDigest: hash(query),
+      resultDigest: hash(data),
+    };
+    return result;
+  }
   const projected: ReturnType<typeof minimizedEvidenceRow>[] = [];
   const context = (rows: typeof projected) =>
     minimizedEvidenceContext(data, rows);

@@ -74,6 +74,8 @@ const property = PropertySchema.parse({
     },
   ],
 });
+let emptyEvidence = false,
+  emulatedReads = 0;
 const oracle = {
   health: async () => ({
     snapshotId,
@@ -82,16 +84,19 @@ const oracle = {
     count: 1,
     digest: "emulation-only",
   }),
-  search: async () => ({
-    contractVersion: CONTRACT_VERSION,
-    snapshotId,
-    queryHash: "emulation-query",
-    rows: [{ ...property, distanceMeters: 0 }],
-    total: 1,
-    truncated: false,
-    nextCursor: null,
-    limitations: ["Synthetic packaged runtime emulation"],
-  }),
+  search: async () => {
+    emulatedReads++;
+    return {
+      contractVersion: CONTRACT_VERSION,
+      snapshotId,
+      queryHash: "emulation-query",
+      rows: emptyEvidence ? [] : [{ ...property, distanceMeters: 0 }],
+      total: emptyEvidence ? 0 : 1,
+      truncated: false,
+      nextCursor: null,
+      limitations: ["Synthetic packaged runtime emulation"],
+    };
+  },
   detail: async () => property,
 };
 let fakeProviderCalls = 0;
@@ -243,6 +248,7 @@ const answer = JSON.parse(
     minimizedRowCount: number;
     presentationTool: string;
     selectedOrdinals: number[];
+    modelSawMinimizedFacts?: boolean;
   }[];
   citations: string[];
   modelAudit: {
@@ -269,6 +275,30 @@ if (
   campaign.audit.length !== 2
 )
   throw new Error("Packaged durable campaign/usage audit failed");
+emptyEvidence = true;
+const beforeEmptyReads = emulatedReads;
+const emptyAnswer = JSON.parse(
+  (
+    await invoke("POST", "/api/agent", {
+      prompt: "Find roofing evidence",
+      query,
+    })
+  ).body,
+) as typeof answer;
+if (
+  emptyAnswer.mode !== "evidence-empty" ||
+  emptyAnswer.modelAudit.converseCalls !== 0 ||
+  emptyAnswer.modelAudit.reservedMicroUsd !== 0 ||
+  emptyAnswer.modelAudit.measuredMicroUsd !== 0 ||
+  emptyAnswer.toolTrace[0].modelSawMinimizedFacts !== false ||
+  emptyAnswer.toolTrace[0].minimizedRowCount !== 0 ||
+  fakeProviderCalls !== 1 ||
+  emulatedReads !== beforeEmptyReads + 1 ||
+  campaign.audit.at(-1)?.status !== "evidence-empty"
+)
+  throw new Error(
+    "Packaged empty evidence must use one read and no provider/cost reservation",
+  );
 await invoke("DELETE", "/api/session");
 await invoke("POST", "/api/search", query, 401);
 const malformed = await handler({

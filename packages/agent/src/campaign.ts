@@ -45,7 +45,7 @@ export interface CampaignAudit {
   converseCalls?: number;
   failureCode?: string;
   failureDetail?: GroundedFailureDetail;
-  status?: "provider-failed";
+  status?: "provider-failed" | "evidence-empty";
   evidence?: {
     queryHash: string[];
     snapshotId: string;

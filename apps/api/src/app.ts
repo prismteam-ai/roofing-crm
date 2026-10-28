@@ -50,6 +50,7 @@ export interface AppDependencies {
     architecture: "one-call-grounded-selection-v1";
     phase: "prism-assessment-p4";
     limits: Readonly<Record<string, number>>;
+    emptyEvidencePolicy?: "evidence-empty-no-model";
   };
   mapConfig?: () => Promise<unknown>;
   oracle: OracleReader;

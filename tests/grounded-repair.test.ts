@@ -82,15 +82,21 @@ it("only repair-1 adds explicit empty/nonempty/zero-based/enum instructions; bas
   let base = "",
     repair = "";
   await answerWithBedrock(
-    reader(true),
-    provider({ selections: [] }, (text) => (base = text)),
+    reader(),
+    provider(
+      { selections: [{ ordinal: 0, reason: "context_match" }] },
+      (text) => (base = text),
+    ),
     "Find evidence",
     q,
     { modelId: "synthetic", promptRevision: "base" },
   );
   await answerWithBedrock(
-    reader(true),
-    provider({ selections: [] }, (text) => (repair = text)),
+    reader(),
+    provider(
+      { selections: [{ ordinal: 0, reason: "context_match" }] },
+      (text) => (repair = text),
+    ),
     "Find evidence",
     q,
     { modelId: "synthetic", promptRevision: "repair-1" },
@@ -119,11 +125,6 @@ it("only repair-1 adds explicit empty/nonempty/zero-based/enum instructions; bas
 it("repair never weakens empty/nonempty/subset/unique/schema/rationale invariants and exposes only a fixed safe failure enum", async () => {
   for (const [input, empty, detail] of [
     [{ selections: [] }, false, "selection_ordinals"],
-    [
-      { selections: [{ ordinal: 0, reason: "context_match" }] },
-      true,
-      "selection_ordinals",
-    ],
     [
       { selections: [{ ordinal: "0", reason: "context_match" }] },
       false,

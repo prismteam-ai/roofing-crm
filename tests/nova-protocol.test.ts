@@ -1,3 +1,4 @@
+import { nonemptyEvidenceProperty } from "./support/evidence-fixture";
 import { it, expect } from "vitest";
 import type {
   ConverseCommandInput,
@@ -16,19 +17,21 @@ const data = {
   contractVersion: "0.3.0",
   snapshotId: query.snapshotId,
   queryHash: "synthetic-query-hash",
-  rows: [],
-  total: 0,
+  rows: [{ ...nonemptyEvidenceProperty, distanceMeters: 0 }],
+  total: 1,
   truncated: false,
   nextCursor: null,
-  limitations: ["Synthetic empty evidence; unknown remains unknown"],
+  limitations: [
+    "Synthetic nonempty evidence; source uncertainty remains explicit",
+  ],
 };
 const usage = { inputTokens: 100, outputTokens: 20, totalTokens: 120 };
 const toolUse = {
   toolUseId: "synthetic-tool-use-id",
   name: "selectGroundedEvidence",
-  input: { selections: [] },
+  input: { selections: [{ ordinal: 0, reason: "context_match" }] },
 };
-it("forces exactly one sole read tool and never sends a result or record IDs back to the provider", async () => {
+it("forces exactly one presentation tool with minimized retrieved facts and no raw record IDs", async () => {
   const requests: ConverseCommandInput[] = [];
   const result = await answerWithBedrock(
     {
@@ -60,7 +63,8 @@ it("forces exactly one sole read tool and never sends a result or record IDs bac
     "selectGroundedEvidence",
   );
   expect(result.mode).toBe("bedrock-grounded");
-  expect(result.results).toEqual([]);
+  expect(result.results).toEqual(data.rows);
+  expect(JSON.stringify(requests)).not.toContain(nonemptyEvidenceProperty.id);
   expect(result.toolTrace).toHaveLength(1);
 });
 it("still rejects mixed thinking text plus a valid tool call after its one bounded evidence read", async () => {

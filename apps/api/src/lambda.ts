@@ -208,6 +208,7 @@ export function createHostedHandler(
               architecture: ROUTING_ARCHITECTURE,
               phase: CAMPAIGN_PHASE,
               limits: CAMPAIGN_LIMITS,
+              emptyEvidencePolicy: "evidence-empty-no-model",
               region: REVIEW_REGION,
               promptRevision:
                 process.env.PRISM_MODEL_PROMPT_REVISION === "repair-1"
@@ -322,9 +323,7 @@ export function createHostedHandler(
                     modelId: model,
                     nowMs: clock(),
                   });
-                  const price = await r.price();
-                  if (price.modelId !== model)
-                    throw new Error("Model price identity mismatch");
+                  let price: VerifiedPrice | undefined;
                   const result = await answerWithBedrock(
                     boundedOracle,
                     r.provider!,
@@ -339,6 +338,9 @@ export function createHostedHandler(
                       maxTotalTokens: 12000,
                       deadlineMs: Math.max(1, 28000 - (Date.now() - startedAt)),
                       beforeConverse: async (projection) => {
+                        price = await r.price!();
+                        if (price.modelId !== model)
+                          throw new Error("Model price identity mismatch");
                         const { inputBytes } = projection;
                         evidenceDigest = projection.evidenceDigest;
                         minimizedRowCount = projection.minimizedRowCount;
@@ -354,6 +356,10 @@ export function createHostedHandler(
                         reservedMicroUsd += cost;
                       },
                       onUsage: async (usage) => {
+                        if (!price)
+                          throw new Error(
+                            "Measured usage requires the reserved model price",
+                          );
                         await r.campaign!.record({
                           requestId,
                           subjectDigest,
@@ -381,6 +387,9 @@ export function createHostedHandler(
                       },
                     },
                   );
+                  evidenceDigest = result.toolTrace[0]?.evidenceDigest;
+                  minimizedRowCount =
+                    result.toolTrace[0]?.minimizedRowCount ?? 0;
                   await r.campaign.record({
                     requestId,
                     subjectDigest,
@@ -396,6 +405,15 @@ export function createHostedHandler(
                     inputTokens,
                     outputTokens,
                     totalTokens: inputTokens + outputTokens,
+                    ...(result.mode === "evidence-empty"
+                      ? {
+                          reservedMicroUsd: 0,
+                          measuredMicroUsd: 0,
+                          unmeasuredCalls: 0,
+                          converseCalls: 0,
+                          status: "evidence-empty" as const,
+                        }
+                      : {}),
                     evidence: {
                       queryHash: result.toolTrace.map((x) => x.queryHash),
                       snapshotId: query.snapshotId,

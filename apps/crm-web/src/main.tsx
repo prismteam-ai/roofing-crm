@@ -1059,15 +1059,17 @@ function App() {
                     <p>Turn a question into the same typed property search.</p>
                   </div>
                   <span className="offline-label">
-                    {answer?.mode === "deterministic-fallback"
-                      ? "DETERMINISTIC FALLBACK · MODEL UNAVAILABLE"
-                      : answer?.mode === "deterministic-offline"
-                        ? "DETERMINISTIC · NO INFERENCE"
-                        : answer?.mode === "bedrock-grounded"
-                          ? "NOVA · GROUNDED EVIDENCE"
-                          : health?.provider === "bedrock-grounded"
-                            ? "NOVA ENABLED · GROUNDED READ"
-                            : "DETERMINISTIC · NO INFERENCE"}
+                    {answer?.mode === "evidence-empty"
+                      ? "No matches · model not called"
+                      : answer?.mode === "deterministic-fallback"
+                        ? "DETERMINISTIC FALLBACK · MODEL UNAVAILABLE"
+                        : answer?.mode === "deterministic-offline"
+                          ? "DETERMINISTIC · NO INFERENCE"
+                          : answer?.mode === "bedrock-grounded"
+                            ? "NOVA · GROUNDED EVIDENCE"
+                            : health?.provider === "bedrock-grounded"
+                              ? "NOVA ENABLED · GROUNDED READ"
+                              : "DETERMINISTIC · NO INFERENCE"}
                   </span>
                 </div>
                 <div className="agent-input">

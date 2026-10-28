@@ -289,10 +289,12 @@ try {
       answer,
       reference,
     );
+    const empty = answer.mode === "evidence-empty";
     if (
-      answer.mode !== "bedrock-grounded" ||
+      (!empty && answer.mode !== "bedrock-grounded") ||
+      (empty && (reference.total !== 0 || reference.rows.length !== 0)) ||
       answer.modelAudit?.architecture !== ROUTING_ARCHITECTURE ||
-      answer.modelAudit?.converseCalls !== 1 ||
+      answer.modelAudit?.converseCalls !== (empty ? 0 : 1) ||
       answer.modelAudit?.evidenceDigest !==
         answer.toolTrace[0]?.evidenceDigest ||
       answer.modelAudit?.minimizedRowCount !==
@@ -338,6 +340,15 @@ const accepted = outcomes.length === 8 && outcomes.every((x) => x.passed),
     region: "us-east-1",
     revision,
     outcomes,
+    modelGroundedCases: outcomes.filter(
+      (x) => x.passed && x.mode === "bedrock-grounded",
+    ).length,
+    emptySourceEvidenceCases: outcomes.filter(
+      (x) => x.passed && x.mode === "evidence-empty",
+    ).length,
+    refusedBeforeModelCases: outcomes.filter(
+      (x) => x.passed && x.mode === "refused-before-model",
+    ).length,
     caseMaps: QUALITY_CASE_MAPS,
     campaignFailure,
     accepted,

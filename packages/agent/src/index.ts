@@ -26,7 +26,11 @@ export interface AgentAnswer {
     failureDetail?: GroundedFailureDetail;
     unmeasuredCalls?: number;
   };
-  mode: "deterministic-offline" | "deterministic-fallback" | "bedrock-grounded";
+  mode:
+    | "deterministic-offline"
+    | "deterministic-fallback"
+    | "bedrock-grounded"
+    | "evidence-empty";
   answer: string;
   query: QueryInput;
   results: SearchResponse["rows"];
@@ -41,7 +45,7 @@ export interface AgentAnswer {
     arguments?: QueryInput;
     contextRows?: number;
     contextTruncated?: boolean;
-    modelSawMinimizedFacts?: true;
+    modelSawMinimizedFacts?: boolean;
     evidenceDigest?: string;
     minimizedRowCount?: number;
     retrievedRowCount?: number;
@@ -218,6 +222,17 @@ export function answerFromEvidence(
   assertEvidencePredicates(data, query);
   if (data.snapshotId !== query.snapshotId)
     throw new DomainError("SNAPSHOT_UNAVAILABLE", "Evidence snapshot mismatch");
+  if (
+    mode === "evidence-empty" &&
+    (data.total !== 0 ||
+      data.rows.length !== 0 ||
+      data.truncated ||
+      data.nextCursor)
+  )
+    throw new DomainError(
+      "SNAPSHOT_UNAVAILABLE",
+      "Empty evidence mode requires a complete zero-match response",
+    );
   const citations = [
     ...new Set(
       data.rows.flatMap((p) =>
@@ -235,9 +250,11 @@ export function answerFromEvidence(
       ...data.limitations,
       mode === "bedrock-grounded"
         ? "One bounded model call selected presentation order from a minimized projection of retrieved facts. The server renders authoritative facts and citations from selected source records; actual match and retrieved-page counts remain distinct."
-        : mode === "deterministic-fallback"
-          ? "The model did not produce an accepted grounded selection. This response uses deterministic evidence fallback; it is not a model success."
-          : "This response uses deterministic retrieval, with no model inference. Snapshot coverage and unavailable evidence remain explicit.",
+        : mode === "evidence-empty"
+          ? "No matching source records were returned by this bounded query. The model was not called; this is source evidence, not a model success or proof of permit absence."
+          : mode === "deterministic-fallback"
+            ? "The model did not produce an accepted grounded selection. This response uses deterministic evidence fallback; it is not a model success."
+            : "This response uses deterministic retrieval, with no model inference. Snapshot coverage and unavailable evidence remain explicit.",
       ...(unknown
         ? [`${unknown} returned properties have unknown roof age.`]
         : []),

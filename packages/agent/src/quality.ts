@@ -101,6 +101,7 @@ export interface QualityOutcome {
   reason: string;
   promptDigest: string;
   mode?: string;
+  modelSuccess?: boolean;
   modelAudit?: AgentAnswer["modelAudit"];
   queryHash?: string[];
   appliedQuery?: QueryInput;
@@ -162,6 +163,42 @@ export function assessAnswer(
     reference && validSelection && answer.mode === "bedrock-grounded"
       ? ordinals!.map((n) => reference.rows[n])
       : reference?.rows;
+  const emptyEvidenceValid =
+    answer.mode !== "evidence-empty" ||
+    Boolean(
+      reference &&
+      reference.total === 0 &&
+      reference.rows.length === 0 &&
+      !reference.truncated &&
+      reference.nextCursor === null &&
+      rows.length === 0 &&
+      answer.toolTrace[0]?.modelSawMinimizedFacts === false &&
+      answer.toolTrace[0]?.minimizedRowCount === 0 &&
+      answer.toolTrace[0]?.retrievedRowCount === 0 &&
+      answer.toolTrace[0]?.presentationTool === undefined &&
+      answer.toolTrace[0]?.argumentsDigest === digest(q) &&
+      traceArguments.success &&
+      digest(semantic(traceArguments.data)) === digest(semantic(q)) &&
+      answer.toolTrace[0]?.resultDigest === digest(reference) &&
+      answer.toolTrace[0]?.evidenceDigest ===
+        digest(minimizedEvidenceContext(reference, [])) &&
+      answer.modelAudit?.evidenceDigest ===
+        answer.toolTrace[0]?.evidenceDigest &&
+      answer.modelAudit?.minimizedRowCount === 0 &&
+      [
+        "converseCalls",
+        "inputTokens",
+        "outputTokens",
+        "reservedMicroUsd",
+        "measuredMicroUsd",
+        "unmeasuredCalls",
+      ].every(
+        (key) =>
+          answer.modelAudit?.[
+            key as keyof NonNullable<AgentAnswer["modelAudit"]>
+          ] === 0,
+      ),
+    );
   const referenceMatches =
     !reference ||
     (reference.snapshotId === q.snapshotId &&
@@ -218,15 +255,19 @@ export function assessAnswer(
     ) &&
     answer.caveats.length > 0 &&
     answer.answer.length > 0 &&
-    referenceMatches;
+    referenceMatches &&
+    emptyEvidenceValid;
   return {
     id,
     passed: grounded,
     reason: grounded
-      ? "exact-bounded-server-grounded-answer"
+      ? answer.mode === "evidence-empty"
+        ? "exact-bounded-zero-match-source-evidence-no-model"
+        : "exact-bounded-server-grounded-answer"
       : "intent-grounding-or-server-reference-failure",
     promptDigest: createHash("sha256").update(prompt).digest("hex"),
     mode: answer.mode,
+    modelSuccess: grounded && answer.mode === "bedrock-grounded",
     modelAudit: answer.modelAudit,
     queryHash: answer.toolTrace.map((t) => t.queryHash),
     appliedQuery: q,

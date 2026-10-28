@@ -1,3 +1,4 @@
+import { nonemptyEvidenceProperty } from "./support/evidence-fixture";
 import { describe, it, expect, vi } from "vitest";
 import { randomBytes, randomUUID } from "node:crypto";
 import { createHostedHandler } from "../apps/api/src/lambda";
@@ -121,8 +122,8 @@ describe("independent P3 provider failure regression", () => {
               contractVersion: CONTRACT_VERSION,
               snapshotId: q.snapshotId,
               queryHash: "synthetic-fallback-query",
-              rows: [],
-              total: 0,
+              rows: [{ ...nonemptyEvidenceProperty, distanceMeters: 0 }],
+              total: 1,
               truncated: false,
               nextCursor: null,
               limitations: ["Synthetic test; missing records remain unknown"],
