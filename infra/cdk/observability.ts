@@ -15,6 +15,7 @@ import { LambdaAction } from "aws-cdk-lib/aws-cloudwatch-actions";
 import { Code, Function, Runtime, Tracing } from "aws-cdk-lib/aws-lambda";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Secret } from "aws-cdk-lib/aws-secretsmanager";
+import { Role, ServicePrincipal, ManagedPolicy } from "aws-cdk-lib/aws-iam";
 
 /** Low-cardinality operational telemetry; no source data or model text in metrics. */
 export function assessmentObservability(input: {
@@ -37,7 +38,17 @@ export function assessmentObservability(input: {
     retention: RetentionDays.THREE_MONTHS,
     removalPolicy: RemovalPolicy.RETAIN,
   });
+  const alertRole = new Role(stack, "AlertRole", {
+    roleName: `${stack.stackName}-AlertRole`,
+    assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    managedPolicies: [
+      ManagedPolicy.fromAwsManagedPolicyName(
+        "service-role/AWSLambdaBasicExecutionRole",
+      ),
+    ],
+  });
   const notifier = new Function(stack, "AlertNotifier", {
+    role: alertRole,
     runtime: Runtime.NODEJS_24_X,
     handler: "index.alertHandler",
     code: input.code,

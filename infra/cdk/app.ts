@@ -43,7 +43,12 @@ import {
   ComparisonOperator,
   TreatMissingData,
 } from "aws-cdk-lib/aws-cloudwatch";
-import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import {
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+  ManagedPolicy,
+} from "aws-cdk-lib/aws-iam";
 import { validatedRegion } from "../../packages/hosted-runtime/src/release";
 import {
   MICRO_MODEL,
@@ -158,6 +163,7 @@ class CrmCandidateStack extends Stack {
         sharedTableArn.valueAsString,
       );
     const assets = new Bucket(this, "FrontendAssets", {
+      bucketName: `${this.stackName.toLowerCase()}-frontend-${this.account}-${this.region}`,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
       removalPolicy: removal,
@@ -167,7 +173,17 @@ class CrmCandidateStack extends Stack {
       retention: RetentionDays.THREE_MONTHS,
       removalPolicy: removal,
     });
+    const apiRole = new Role(this, "ApiRole", {
+      roleName: `${this.stackName}-ApiRole`,
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName(
+          "service-role/AWSLambdaBasicExecutionRole",
+        ),
+      ],
+    });
     const fn = new LambdaFunction(this, "CrmHandler", {
+      role: apiRole,
       runtime: Runtime.NODEJS_24_X,
       handler: "index.handler",
       code: Code.fromAsset(

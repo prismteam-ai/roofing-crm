@@ -26,6 +26,35 @@ const of = (type: string) => resources.filter((x) => x.Type === type);
 const assert = (ok: boolean, message: string) => {
   if (!ok) throw new Error(message);
 };
+const taskRoles = of("AWS::IAM::Role");
+assert(
+  taskRoles.length === 2 &&
+    taskRoles
+      .map((role) => role.Properties.RoleName)
+      .sort()
+      .join(",") ===
+      "PrismCrmAssessmentReview-AlertRole,PrismCrmAssessmentReview-ApiRole",
+  "Exact short full-stack-prefixed API/alert role names required",
+);
+for (const role of taskRoles)
+  assert(
+    String(role.Properties.RoleName).length <= 64,
+    "Role physical name exceeds IAM limit",
+  );
+const frontendBuckets = of("AWS::S3::Bucket");
+assert(frontendBuckets.length === 1, "Exact single frontend bucket required");
+const bucketName = frontendBuckets[0]?.Properties.BucketName;
+const bucketEncoding = JSON.stringify(bucketName);
+assert(
+  (typeof bucketName === "string" &&
+    /^prismcrmassessmentreview-frontend-\d{12}-us-east-2$/.test(bucketName) &&
+    bucketName.length <= 63) ||
+    (typeof bucketName === "object" &&
+      bucketEncoding.includes("prismcrmassessmentreview-frontend-") &&
+      bucketEncoding.includes("AWS::AccountId") &&
+      bucketEncoding.includes("-us-east-2")),
+  "Frontend bucket physical name must retain the full task prefix and exact account/region",
+);
 const alertSecrets = of("AWS::SecretsManager::Secret");
 assert(
   alertSecrets.length === 1 &&
