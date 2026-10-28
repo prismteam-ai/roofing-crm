@@ -1,7 +1,7 @@
 /** Deployment metadata validation only. No SDK, account, profile or credential access. */
 export interface ConcurrencyPolicy {
   mode: "reserved" | "existing-account-shared";
-  reservedConcurrentExecutions: 2 | null;
+  reservedConcurrentExecutions: number | null;
   existingAccountConcurrency: 10 | null;
   apiRatePerSecond: number;
   apiBurst: number;
@@ -20,13 +20,41 @@ export function buildConcurrencyPolicy(
   env: Readonly<Record<string, string | undefined>>,
 ): ConcurrencyPolicy {
   const mode = env.PRISM_CONCURRENCY_MODE ?? "reserved";
+  const integer = (key: string, fallback: number, min: number, max: number) => {
+    const raw = env[key];
+    if (raw === undefined) return fallback;
+    if (
+      !/^(?:0|[1-9]\d*)$/.test(raw) ||
+      String(Number(raw)) !== raw ||
+      !Number.isSafeInteger(Number(raw)) ||
+      Number(raw) < min ||
+      Number(raw) > max
+    )
+      throw new Error(
+        `${key} must be a canonical integer from ${min} through ${max}`,
+      );
+    return Number(raw);
+  };
+  const reserved = integer("PRISM_RESERVED_CONCURRENCY", 5, 2, 12),
+    apiRatePerSecond = integer(
+      "PRISM_API_RATE_PER_SECOND",
+      mode === "existing-account-shared" ? 2 : 5,
+      2,
+      10,
+    ),
+    apiBurst = integer(
+      "PRISM_API_BURST",
+      mode === "existing-account-shared" ? 6 : 10,
+      6,
+      20,
+    );
   if (mode === "reserved")
     return {
       mode,
-      reservedConcurrentExecutions: 2,
+      reservedConcurrentExecutions: reserved,
       existingAccountConcurrency: null,
-      apiRatePerSecond: 5,
-      apiBurst: 10,
+      apiRatePerSecond,
+      apiBurst,
     };
   if (
     mode !== "existing-account-shared" ||
@@ -36,12 +64,16 @@ export function buildConcurrencyPolicy(
     throw new Error(
       "Shared account mode requires explicit approval and exact existing quota10",
     );
+  if (env.PRISM_RESERVED_CONCURRENCY !== undefined)
+    throw new Error(
+      "Reserved concurrency cannot be selected in shared account mode",
+    );
   return {
     mode,
     reservedConcurrentExecutions: null,
     existingAccountConcurrency: 10,
-    apiRatePerSecond: 2,
-    apiBurst: 6,
+    apiRatePerSecond,
+    apiBurst,
   };
 }
 const functionPatterns = [

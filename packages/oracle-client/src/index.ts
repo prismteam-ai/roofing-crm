@@ -8,6 +8,7 @@ import {
   QuerySchema,
   SearchResponseSchema,
   DomainError,
+  CONTRACT_VERSION,
   type Property,
   type QueryInput,
   type SearchResponse,
@@ -235,7 +236,7 @@ export class OracleClient implements OracleReader {
     const response = z
       .object({
         version: z.literal("1"),
-        contractVersion: z.literal("0.2.1"),
+        contractVersion: z.literal(CONTRACT_VERSION),
         snapshotId: z.string(),
         digest: z.string(),
         source: z.record(z.string(), z.unknown()),

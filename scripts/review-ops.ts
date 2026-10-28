@@ -2,7 +2,10 @@ import { buildConcurrencyPolicy } from "../packages/hosted-runtime/src/concurren
 import {
   deploymentConcurrency,
   deployedConcurrency,
+  verifyRuntimeConcurrency,
 } from "../packages/hosted-runtime/src/deployment-concurrency";
+import { CONTRACT_VERSION } from "../packages/contracts/src/index";
+import { CAMPAIGN_PHASE } from "../packages/agent/src/campaign";
 import {
   exactReviewOrigin,
   validateResourceBindings,
@@ -326,12 +329,70 @@ const assertDeployed = (o: Record<string, string>) => {
   if (
     concurrency &&
     (actual.mode !== concurrency.policy.mode ||
-      actual.proofSha256 !== concurrency.metadata.proofSha256)
+      actual.proofSha256 !== concurrency.metadata.proofSha256 ||
+      actual.reservedConcurrentExecutions !==
+        concurrency.policy.reservedConcurrentExecutions ||
+      actual.apiRatePerSecond !== concurrency.policy.apiRatePerSecond ||
+      actual.apiBurst !== concurrency.policy.apiBurst)
   )
     throw new Error(
       "Deployed concurrency policy/proof differs from approved release",
     );
-  receipt.concurrency = actual;
+  if (
+    !/^PrismCrmP3Review-CrmHandler98FEA697-[A-Za-z0-9]+$/.test(
+      o.RuntimeFunctionName ?? "",
+    ) ||
+    !/^[a-z0-9]{1,20}$/.test(o.HttpApiId ?? "") ||
+    o.HttpApiStageName !== "$default"
+  )
+    throw new Error("Exact task runtime/API bindings missing");
+  const functionSettings = JSON.parse(
+    aws([
+      "lambda",
+      "get-function-configuration",
+      "--function-name",
+      o.RuntimeFunctionName,
+      "--output",
+      "json",
+    ]),
+  );
+  if (
+    functionSettings.FunctionName !== o.RuntimeFunctionName ||
+    functionSettings.FunctionArn !==
+      `arn:aws:lambda:${pins.region}:${pins.expectedAccountId}:function:${o.RuntimeFunctionName}`
+  )
+    throw new Error("Actual Lambda identity mismatch");
+  const functionConcurrency = JSON.parse(
+    aws([
+      "lambda",
+      "get-function-concurrency",
+      "--function-name",
+      o.RuntimeFunctionName,
+      "--output",
+      "json",
+    ]),
+  );
+  const apiStage = JSON.parse(
+    aws([
+      "apigatewayv2",
+      "get-stage",
+      "--api-id",
+      o.HttpApiId,
+      "--stage-name",
+      o.HttpApiStageName,
+      "--output",
+      "json",
+    ]),
+  );
+  if (apiStage.StageName !== o.HttpApiStageName)
+    throw new Error("Actual API stage identity mismatch");
+  receipt.concurrency = verifyRuntimeConcurrency(actual, {
+    reservedConcurrentExecutions:
+      functionConcurrency.ReservedConcurrentExecutions,
+    memoryMiB: functionSettings.MemorySize,
+    apiRatePerSecond: apiStage.DefaultRouteSettings?.ThrottlingRateLimit,
+    apiBurst: apiStage.DefaultRouteSettings?.ThrottlingBurstLimit,
+  });
 };
 const step = async (name: string, f: () => unknown | Promise<unknown>) => {
   await f();
@@ -431,7 +492,7 @@ try {
       upstream.stage !== pins.stage ||
       upstream.snapshotId !== expectedSnapshotId ||
       (upstream.snapshotDigest ?? upstream.digest) !== expectedSnapshotDigest ||
-      upstream.contractVersion !== "0.2.1"
+      upstream.contractVersion !== CONTRACT_VERSION
     )
       throw new Error("Oracle is not the exact approved staged source/build");
     await step("archive_uploaded", () =>
@@ -514,7 +575,7 @@ try {
       )
         throw new Error("Exact shared table binding required");
       const item = {
-        pk: { S: "campaign#prism-assessment-p3" },
+        pk: { S: `campaign#${CAMPAIGN_PHASE}` },
         sk: { S: "quality-gate" },
         baseFailureSha256: { S: baseFailureSha256 },
         ...(repairFailureSha256

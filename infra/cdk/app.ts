@@ -290,13 +290,20 @@ class CrmCandidateStack extends Stack {
     for (const [name, value] of Object.entries({
       ConcurrencyMode: concurrency.policy.mode,
       FunctionReservedConcurrency:
-        concurrency.policy.reservedConcurrentExecutions === null ? "none" : "2",
+        concurrency.policy.reservedConcurrentExecutions === null
+          ? "none"
+          : String(concurrency.policy.reservedConcurrentExecutions),
       ExistingAccountConcurrency:
         concurrency.policy.existingAccountConcurrency === null
           ? "not-used"
           : "10",
       ConcurrencyProofSha256: concurrency.metadata.proofSha256,
       FunctionMemoryMiB: "512",
+      ApiRatePerSecond: String(concurrency.policy.apiRatePerSecond),
+      ApiBurst: String(concurrency.policy.apiBurst),
+      RuntimeFunctionName: fn.functionName,
+      HttpApiId: api.apiId,
+      HttpApiStageName: "$default",
     }))
       new CfnOutput(this, name, { value });
     new CfnOutput(this, "ProviderDomain", {

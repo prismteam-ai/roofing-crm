@@ -1,5 +1,5 @@
 import { buildConcurrencyPolicy } from "../packages/hosted-runtime/src/concurrency";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 const template = JSON.parse(
   readFileSync("cdk.out/PrismCrmP3Review.template.json", "utf8"),
 ) as {
@@ -10,6 +10,8 @@ const template = JSON.parse(
       reservedConcurrentExecutions: number | "none";
       proofSha256: string;
       deviation: string;
+      apiRatePerSecond: number;
+      apiBurst: number;
     };
   };
   Resources: Record<
@@ -38,14 +40,33 @@ const policy = buildConcurrencyPolicy({
   PRISM_EXISTING_ACCOUNT_CONCURRENCY:
     process.env.PRISM_EXISTING_ACCOUNT_CONCURRENCY ??
     (metadata?.existingAccountConcurrency === 10 ? "10" : undefined),
+  PRISM_RESERVED_CONCURRENCY:
+    process.env.PRISM_RESERVED_CONCURRENCY ??
+    (typeof metadata?.reservedConcurrentExecutions === "number"
+      ? String(metadata.reservedConcurrentExecutions)
+      : undefined),
+  PRISM_API_RATE_PER_SECOND:
+    process.env.PRISM_API_RATE_PER_SECOND ??
+    (metadata?.apiRatePerSecond !== undefined
+      ? String(metadata.apiRatePerSecond)
+      : undefined),
+  PRISM_API_BURST:
+    process.env.PRISM_API_BURST ??
+    (metadata?.apiBurst !== undefined ? String(metadata.apiBurst) : undefined),
 });
 assert(
-  Boolean(metadata) && metadata!.mode === policy.mode,
+  Boolean(metadata) &&
+    metadata!.mode === policy.mode &&
+    metadata!.reservedConcurrentExecutions ===
+      (policy.reservedConcurrentExecutions ?? "none") &&
+    metadata!.apiRatePerSecond === policy.apiRatePerSecond &&
+    metadata!.apiBurst === policy.apiBurst,
   "Concurrency metadata missing or mode mismatch",
 );
 assert(
   policy.mode === "reserved"
-    ? runtime?.Properties.ReservedConcurrentExecutions === 2
+    ? runtime?.Properties.ReservedConcurrentExecutions ===
+        policy.reservedConcurrentExecutions
     : !Object.hasOwn(runtime!.Properties, "ReservedConcurrentExecutions"),
   "Concurrency reservation does not match explicit policy",
 );
@@ -142,6 +163,7 @@ const proof = {
   resources: resources.length,
   serviceCalls: 0,
 };
+mkdirSync("build", { recursive: true });
 writeFileSync(
   "build/cloud-template-proof.json",
   JSON.stringify(proof, null, 2) + "\n",

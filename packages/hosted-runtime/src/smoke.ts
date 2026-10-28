@@ -1,3 +1,4 @@
+import { CONTRACT_VERSION } from "../../contracts/src/index";
 /** Only the operator script may supply a reviewed HTTPS origin; tests inject loopback fixtures. */
 export async function authenticatedSmoke(
   base: string,
@@ -64,7 +65,7 @@ export async function authenticatedSmoke(
       h.snapshotId !== options.expectedSnapshotId) ||
     (options.expectedSnapshotDigest &&
       (h.snapshotDigest ?? h.digest) !== options.expectedSnapshotDigest) ||
-    h.contractVersion !== "0.2.1"
+    h.contractVersion !== CONTRACT_VERSION
   )
     throw new Error("Smoke snapshot or contract identity mismatch");
   const unauthorized = await transport(new URL("/api/leads", base), {

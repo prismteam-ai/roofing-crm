@@ -26,10 +26,12 @@ const proof = {
   totalFunctionCount: 0,
   functions: [] as { functionName: string; functionArn: string }[],
 };
-it("retains strict reserved2 by default and requires explicit exact shared opt-in", () => {
+it("defaults to bounded reserved5 and requires explicit exact historical shared opt-in", () => {
   expect(buildConcurrencyPolicy({})).toMatchObject({
     mode: "reserved",
-    reservedConcurrentExecutions: 2,
+    reservedConcurrentExecutions: 5,
+    apiRatePerSecond: 5,
+    apiBurst: 10,
   });
   for (const env of [
     { PRISM_CONCURRENCY_MODE: "other" },
@@ -54,6 +56,48 @@ it("retains strict reserved2 by default and requires explicit exact shared opt-i
     apiRatePerSecond: 2,
     apiBurst: 6,
   });
+});
+it("strictly bounds explicit reserved/API knobs and rejects ambiguous numbers", () => {
+  for (const [key, min, max] of [
+    ["PRISM_RESERVED_CONCURRENCY", 2, 12],
+    ["PRISM_API_RATE_PER_SECOND", 2, 10],
+    ["PRISM_API_BURST", 6, 20],
+  ] as const) {
+    for (const raw of [
+      "",
+      String(min - 1),
+      String(max + 1),
+      "2.5",
+      "1e1",
+      "05",
+      " 5",
+      "5\n",
+      "Infinity",
+      "9007199254740992",
+    ])
+      expect(() => buildConcurrencyPolicy({ [key]: raw })).toThrow();
+    expect(() => buildConcurrencyPolicy({ [key]: String(min) })).not.toThrow();
+    expect(() => buildConcurrencyPolicy({ [key]: String(max) })).not.toThrow();
+  }
+  expect(
+    buildConcurrencyPolicy({
+      PRISM_RESERVED_CONCURRENCY: "12",
+      PRISM_API_RATE_PER_SECOND: "10",
+      PRISM_API_BURST: "20",
+    }),
+  ).toMatchObject({
+    reservedConcurrentExecutions: 12,
+    apiRatePerSecond: 10,
+    apiBurst: 20,
+  });
+  expect(() =>
+    buildConcurrencyPolicy({
+      PRISM_CONCURRENCY_MODE: "existing-account-shared",
+      PRISM_SHARED_ACCOUNT_CONCURRENCY_APPROVED: "yes",
+      PRISM_EXISTING_ACCOUNT_CONCURRENCY: "10",
+      PRISM_RESERVED_CONCURRENCY: "5",
+    }),
+  ).toThrow("cannot be selected");
 });
 it("accepts fresh empty or two exact task functions and returns no account or ARN", () => {
   expect(validateConcurrencyProof(proof, account, now)).toEqual({
@@ -166,7 +210,23 @@ it("requires the private proof for shared synthesis configuration and reads actu
     await import("../packages/hosted-runtime/src/deployment-concurrency");
   expect(
     (await deploymentConcurrency({}, [])).policy.reservedConcurrentExecutions,
-  ).toBe(2);
+  ).toBe(5);
+  expect(
+    (
+      await deploymentConcurrency(
+        {
+          PRISM_RESERVED_CONCURRENCY: "8",
+          PRISM_API_RATE_PER_SECOND: "7",
+          PRISM_API_BURST: "16",
+        },
+        [],
+      )
+    ).policy,
+  ).toMatchObject({
+    reservedConcurrentExecutions: 8,
+    apiRatePerSecond: 7,
+    apiBurst: 16,
+  });
   const env = {
     PRISM_CONCURRENCY_MODE: "existing-account-shared",
     PRISM_SHARED_ACCOUNT_CONCURRENCY_APPROVED: "yes",
@@ -185,6 +245,8 @@ it("requires the private proof for shared synthesis configuration and reads actu
     ExistingAccountConcurrency: "10",
     FunctionMemoryMiB: "512",
     ConcurrencyProofSha256: "a".repeat(64),
+    ApiRatePerSecond: "2",
+    ApiBurst: "6",
   });
   expect(actual.reservedConcurrentExecutions).toBeNull();
   expect(actual.existingAccountConcurrency).toBe(10);
@@ -196,10 +258,51 @@ it("requires the private proof for shared synthesis configuration and reads actu
       ExistingAccountConcurrency: "10",
       FunctionMemoryMiB: "512",
       ConcurrencyProofSha256: "a".repeat(64),
+      ApiRatePerSecond: "2",
+      ApiBurst: "6",
     }),
   ).toThrow();
 });
-it("synthesizes reserved2 by default and omits reservation only for approved private shared10 proof with API2/burst6", async () => {
+it("verifies actual Lambda/API policy rather than trusting declared output metadata", async () => {
+  const { deployedConcurrency, verifyRuntimeConcurrency } =
+    await import("../packages/hosted-runtime/src/deployment-concurrency");
+  const outputs = {
+    ConcurrencyMode: "reserved",
+    FunctionReservedConcurrency: "5",
+    ExistingAccountConcurrency: "not-used",
+    FunctionMemoryMiB: "512",
+    ApiRatePerSecond: "5",
+    ApiBurst: "10",
+  };
+  const policy = deployedConcurrency(outputs),
+    observed = {
+      reservedConcurrentExecutions: 5,
+      memoryMiB: 512,
+      apiRatePerSecond: 5,
+      apiBurst: 10,
+    };
+  expect(verifyRuntimeConcurrency(policy, observed).actualVerified).toBe(true);
+  for (const delta of [
+    { reservedConcurrentExecutions: 2 },
+    { reservedConcurrentExecutions: undefined },
+    { memoryMiB: 1024 },
+    { apiRatePerSecond: 6 },
+    { apiBurst: 11 },
+  ])
+    expect(() =>
+      verifyRuntimeConcurrency(policy, { ...observed, ...delta }),
+    ).toThrow("Actual");
+  for (const delta of [
+    { FunctionReservedConcurrency: "13" },
+    { ApiRatePerSecond: "11" },
+    { ApiBurst: "21" },
+    { ApiBurst: undefined },
+  ])
+    expect(() =>
+      deployedConcurrency({ ...outputs, ...delta } as Record<string, string>),
+    ).toThrow();
+});
+it("synthesizes reserved5/default API5/burst10, bounded custom capacity, and historical private shared10/API2/burst6", async () => {
   const { execFileSync } = await import("node:child_process"),
     { readFile, rm } = await import("node:fs/promises");
   const root = await mkdtemp(path.join(os.tmpdir(), "prism-crm-shared-")),
@@ -233,6 +336,7 @@ it("synthesizes reserved2 by default and omits reservation only for approved pri
         { Type: string; Properties: Record<string, unknown> }
       >;
       Metadata: { PrismConcurrency: Record<string, unknown> };
+      Outputs: Record<string, { Value: unknown }>;
     };
   try {
     synth(baseEnv);
@@ -240,9 +344,37 @@ it("synthesizes reserved2 by default and omits reservation only for approved pri
     const fn = Object.values(strict.Resources).find(
       (r) => r.Type === "AWS::Lambda::Function",
     )!;
-    expect(fn.Properties.ReservedConcurrentExecutions).toBe(2);
+    expect(fn.Properties.ReservedConcurrentExecutions).toBe(5);
+    expect(strict.Outputs.FunctionReservedConcurrency.Value).toBe("5");
+    expect(strict.Outputs.ApiRatePerSecond.Value).toBe("5");
+    expect(strict.Outputs.ApiBurst.Value).toBe("10");
     expect(fn.Properties.MemorySize).toBe(512);
     expect(JSON.stringify(strict.Metadata)).not.toContain(":null");
+    synth({
+      ...baseEnv,
+      PRISM_RESERVED_CONCURRENCY: "12",
+      PRISM_API_RATE_PER_SECOND: "10",
+      PRISM_API_BURST: "20",
+    });
+    const custom = await template();
+    expect(
+      Object.values(custom.Resources).find(
+        (r) => r.Type === "AWS::Lambda::Function",
+      )!.Properties.ReservedConcurrentExecutions,
+    ).toBe(12);
+    expect(custom.Metadata.PrismConcurrency).toMatchObject({
+      reservedConcurrentExecutions: 12,
+      apiRatePerSecond: 10,
+      apiBurst: 20,
+    });
+    expect(custom.Outputs.FunctionReservedConcurrency.Value).toBe("12");
+    expect(custom.Outputs.ApiRatePerSecond.Value).toBe("10");
+    expect(custom.Outputs.ApiBurst.Value).toBe("20");
+    execFileSync(
+      process.execPath,
+      ["--import", "tsx", "scripts/verify-cloud-template.ts"],
+      { cwd: process.cwd(), env: baseEnv, stdio: "pipe" },
+    );
     await writeFile(
       file,
       JSON.stringify({ ...proof, observedAt: new Date().toISOString() }),

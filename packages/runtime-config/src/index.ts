@@ -1,3 +1,5 @@
+import { CONTRACT_VERSION } from "../../contracts/src/index";
+import contractManifest from "../../contracts/contract_manifest.json";
 export const REVIEW_REGION = "us-east-1" as const;
 export const REVIEW_STAGE = "p3-review" as const;
 export const MICRO_MODEL = "amazon.nova-micro-v1:0" as const;
@@ -33,7 +35,6 @@ export const BUILD_IDENTITY: RuntimeIdentity =
         region: REVIEW_REGION,
         stage: "local",
         sourceDirty: true,
-        contractVersion: "0.2.1",
-        contractSha256:
-          "ef0334150b553825338180bde8e2c07cc7753229b2c105b0966e545cb965ac4f",
+        contractVersion: CONTRACT_VERSION,
+        contractSha256: contractManifest.sha256,
       };

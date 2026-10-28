@@ -1,4 +1,5 @@
 import { runtimeIdentity } from "../packages/hosted-runtime/src/release.ts";
+import { CONTRACT_VERSION } from "../packages/contracts/src/index.ts";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -24,7 +25,7 @@ export function buildIdentity(): BuildIdentity {
     "crm",
     source,
     {
-      version: "0.2.1",
+      version: CONTRACT_VERSION,
       sha256: createHash("sha256")
         .update(readFileSync("packages/contracts/src/index.ts"))
         .digest("hex"),
