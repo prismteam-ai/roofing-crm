@@ -33,9 +33,10 @@ import type { AgentAnswer } from "../../../packages/agent/src/index";
 import { FieldMap } from "../../../packages/ui/src/FieldMap";
 import {
   propertyEvidence,
-  permitOpenDays,
+  isExplicitOpenRoofPermit,
   oldestOpenRoofDays as openDays,
 } from "../../../packages/map-domain/src/signals";
+import { PermitEvidence } from "./PermitEvidence";
 let apiSessionGeneration = 0;
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const requestSessionGeneration = apiSessionGeneration;
@@ -76,9 +77,7 @@ const declaredSynthetic = (property: Property) =>
 const knownOpenPermits = (property: Property): number | null =>
   !property.permits.length && !declaredSynthetic(property)
     ? null
-    : property.permits.filter(
-        (permit) => permit.status === "open" && permit.kind !== "other",
-      ).length;
+    : property.permits.filter(isExplicitOpenRoofPermit).length;
 function App() {
   const [query, setQuery] = useState<QueryInput>(() =>
     queryFromUrl(location.search),
@@ -864,31 +863,51 @@ function App() {
                 <label className="check-label">
                   <input
                     type="checkbox"
-                    aria-label="Filter by ownership duration"
-                    checked={query.minOwnershipYears !== undefined}
+                    aria-label="Filter by last reported sale age"
+                    checked={query.minReportedSaleAgeYears !== undefined}
                     onChange={(e) =>
                       update({
-                        minOwnershipYears: e.target.checked ? 10 : undefined,
+                        minReportedSaleAgeYears: e.target.checked
+                          ? 10
+                          : undefined,
                       })
                     }
                   />
-                  Ownership duration
+                  Last reported sale age
                 </label>
                 <label>
-                  Minimum ownership years
+                  Reported sale older than (years)
                   <input
-                    aria-label="Minimum ownership years"
+                    aria-label="Reported sale older than years"
                     type="number"
                     min="0"
                     max="200"
-                    disabled={query.minOwnershipYears === undefined}
-                    value={query.minOwnershipYears ?? 10}
+                    disabled={query.minReportedSaleAgeYears === undefined}
+                    value={query.minReportedSaleAgeYears ?? 10}
                     onChange={(e) =>
-                      update({ minOwnershipYears: Number(e.target.value) })
+                      update({
+                        minReportedSaleAgeYears: Number(e.target.value),
+                      })
                     }
                   />
                 </label>
               </section>
+              <p className="caveat" data-testid="reported-sale-scope">
+                Last reported sale uses partial observed history, not ownership
+                tenure. Unknown sale dates are excluded when this filter is on;
+                later unobserved sales may exist.
+              </p>
+              {query.minOwnershipYears !== undefined && (
+                <p className="caveat" role="status">
+                  This older link contains an unsupported ownership-tenure
+                  filter. It has not been converted to a reported-sale filter.{" "}
+                  <button
+                    onClick={() => update({ minOwnershipYears: undefined })}
+                  >
+                    Clear unsupported tenure filter
+                  </button>
+                </p>
+              )}
               <section className="results-heading">
                 <div>
                   <h2>
@@ -1242,43 +1261,14 @@ function App() {
                 ? "Declared synthetic fixture records."
                 : "Counts cover acquired roofing records only; missing coverage remains unknown."}
           </p>
-          {selected.permits.length
-            ? selected.permits.map((p) => (
-                <div className="permit-detail" key={p.id}>
-                  <div className="permit-line">
-                    <b>{p.id}</b>
-                    <span className={`permit-state ${p.status}`}>
-                      {p.status}
-                    </span>
-                  </div>
-                  <p>
-                    {p.kind.replaceAll("_", " ")} · opened{" "}
-                    {p.openedAt ?? "date unavailable"}
-                  </p>
-                  <p>
-                    Closed {p.closedAt ?? "not recorded"} · open duration{" "}
-                    {permitOpenDays(p, selected.roof.asOf) !== null
-                      ? `${permitOpenDays(p, selected.roof.asOf)} days`
-                      : "unknown / not open roofing work"}
-                  </p>
-                  <b>
-                    {p.contractor.reportedName ?? "Contractor name unavailable"}
-                  </b>
-                  <small>
-                    {p.contractor.verifiedCompanyId
-                      ? "Official company edge: " +
-                        p.contractor.verifiedCompanyId
-                      : "Source-reported name · official identity unresolved"}
-                  </small>
-                  <small>
-                    License: {p.contractor.license ?? "unavailable"} · Rating:{" "}
-                    {p.contractor.rating === null
-                      ? "unavailable"
-                      : `${p.contractor.rating}/100 (synthetic score)`}
-                  </small>
-                </div>
-              ))
-            : null}
+          {selected.permits.map((p) => (
+            <PermitEvidence
+              key={p.id}
+              permit={p}
+              asOf={selected.roof.asOf}
+              synthetic={declaredSynthetic(selected)}
+            />
+          ))}
           <h3 className="section-label">OWNERSHIP & IDENTITY</h3>
           <p className="caveat">
             Transfer: {selected.ownership.lastTransferDate ?? "unavailable"} ·

@@ -1,5 +1,5 @@
-import { CONTRACT_VERSION } from "../../contracts/src/index";
-import contractManifest from "../../contracts/contract_manifest.json";
+import { CONTRACT_VERSION } from "../../contracts/src/index.ts";
+import contractManifest from "../../contracts/contract_manifest.json" with { type: "json" };
 export const REVIEW_REGION = "us-east-1" as const;
 export const REVIEW_STAGE = "p3-review" as const;
 export const MICRO_MODEL = "amazon.nova-micro-v1:0" as const;

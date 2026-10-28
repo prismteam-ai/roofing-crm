@@ -1,10 +1,16 @@
 import type { Property } from "../../contracts/src/index";
+export function isExplicitOpenRoofPermit(permit: Property["permits"][number]) {
+  return (
+    permit.status === "open" &&
+    permit.kind !== "other" &&
+    (permit.statusBasis === undefined || permit.statusBasis === "explicit_open")
+  );
+}
 export function permitOpenDays(
   permit: Property["permits"][number],
   asOf: string,
 ): number | null {
-  if (permit.status !== "open" || permit.kind === "other" || !permit.openedAt)
-    return null;
+  if (!isExplicitOpenRoofPermit(permit) || !permit.openedAt) return null;
   const start = Date.parse(permit.openedAt),
     end = Date.parse(asOf);
   if (!Number.isFinite(start) || !Number.isFinite(end) || start > end)

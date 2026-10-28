@@ -144,13 +144,17 @@ function assertPredicates(page: Page) {
     }
     if (query.ownerRegion && query.ownerRegion !== "any")
       expect(row.ownership.ownerRegion).toBe(query.ownerRegion);
-    if (query.minOwnershipYears !== undefined) {
-      expect(row.ownership.lastTransferDate).not.toBeNull();
-      expect(
-        (Date.parse(row.roof.asOf) -
-          Date.parse(row.ownership.lastTransferDate!)) /
-          (365.25 * 86400000),
-      ).toBeGreaterThanOrEqual(query.minOwnershipYears);
+    if (query.minReportedSaleAgeYears !== undefined) {
+      const sales = (row.ownership.events ?? [])
+        .filter((e) => e.kind === "reported_sale")
+        .map((e) => e.date)
+        .sort();
+      expect(sales.length).toBeGreaterThan(0);
+      const cutoff = new Date(row.roof.asOf);
+      cutoff.setUTCFullYear(
+        cutoff.getUTCFullYear() - query.minReportedSaleAgeYears,
+      );
+      expect(sales.at(-1)! < cutoff.toISOString().slice(0, 10)).toBe(true);
     }
   }
 }
@@ -489,12 +493,9 @@ test("pending or failed searches never show stale results or actionable old deta
   await ready(page);
 });
 
-test("owner evidence filters are independent, URL-bound and never infer unavailable tenure", async ({
+test("reported-sale and owner-region filters persist independently without asserting tenure", async ({
   page,
 }) => {
-  const health = (await (await page.request.get("/api/health")).json()) as {
-    mode: string;
-  };
   await page
     .getByLabel("Owner region", { exact: true })
     .selectOption("unknown");
@@ -502,67 +503,50 @@ test("owner evidence filters are independent, URL-bound and never infer unavaila
     .poll(() => audit(page)?.search?.query.ownerRegion)
     .toBe("unknown");
   await ready(page);
-  assertPredicates(page);
-  if (health.mode === "real") {
-    await page.getByTestId("property-row").first().click();
-    await expect(page.getByTestId("property-detail")).toBeVisible();
-  }
   const response = page.waitForResponse(
     (r) =>
       r.url().endsWith("/api/search") &&
       r.request().method() === "POST" &&
-      (r.request().postDataJSON() as QueryInput).minOwnershipYears === 10,
+      (r.request().postDataJSON() as QueryInput).minReportedSaleAgeYears === 10,
   );
-  const tenure = page.getByLabel("Filter by ownership duration", {
+  const sale = page.getByLabel("Filter by last reported sale age", {
     exact: true,
   });
-  await tenure.focus();
-  await page.keyboard.press("Space");
-  const applied = await response;
-  await expect(page).toHaveURL(/tenure=10/);
-  if (health.mode === "real") {
-    expect(applied.ok()).toBe(false);
-    const failure = (await applied.json()) as { message: string };
-    expect(failure.message).toContain("Ownership tenure is unknown");
-    await expect(page.getByRole("alert")).toContainText(
-      "Ownership tenure is unknown",
-    );
-    await expect(page.getByTestId("property-row")).toHaveCount(0);
-    await expect(page.getByTestId("property-detail")).toHaveCount(0);
-    await expect(
-      page.getByTestId("property-map").locator("[data-property-id]"),
-    ).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /Create lead/ })).toHaveCount(
-      0,
-    );
-    await expect(page.locator(".app-shell")).toHaveAttribute(
-      "data-query-hash",
-      "",
-    );
-  } else {
-    expect(applied.ok()).toBe(true);
-    await expect
-      .poll(() => audit(page)?.search?.query.minOwnershipYears)
-      .toBe(10);
-    await ready(page);
-    assertPredicates(page);
-  }
+  await sale.check();
+  expect((await response).ok()).toBe(true);
+  await expect(page).toHaveURL(/reportedSaleYears=10/);
+  await expect(page).not.toHaveURL(/tenure=/);
+  await expect
+    .poll(() => audit(page)?.search?.query.minReportedSaleAgeYears)
+    .toBe(10);
+  expect(audit(page)?.search?.query.minOwnershipYears).toBeUndefined();
+  await ready(page);
+  assertPredicates(page);
+  await expect(page.getByTestId("reported-sale-scope")).toContainText(
+    "not ownership tenure",
+  );
+  await page.reload();
+  await ready(page);
+  await expect(
+    page.getByLabel("Filter by last reported sale age", { exact: true }),
+  ).toBeChecked();
+  await expect(
+    page.getByLabel("Reported sale older than years", { exact: true }),
+  ).toHaveValue("10");
   const recovery = page.waitForResponse(
     (r) =>
       r.url().endsWith("/api/search") &&
       r.ok() &&
       r.request().method() === "POST" &&
       (r.request().postDataJSON() as QueryInput).ownerRegion === "unknown" &&
-      (r.request().postDataJSON() as QueryInput).minOwnershipYears ===
+      (r.request().postDataJSON() as QueryInput).minReportedSaleAgeYears ===
         undefined,
   );
-  await tenure.uncheck();
+  await page
+    .getByLabel("Filter by last reported sale age", { exact: true })
+    .uncheck();
   await recovery;
-  await expect
-    .poll(() => audit(page)?.search?.query.minOwnershipYears)
-    .toBeUndefined();
   await ready(page);
   assertPredicates(page);
-  await expect(page.getByRole("alert")).toHaveCount(0);
-  await expect(page).not.toHaveURL(/tenure=/);
+  await expect(page).not.toHaveURL(/reportedSaleYears=/);
 });

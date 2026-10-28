@@ -25,6 +25,8 @@ export function queryFromUrl(
   if (p.has("owner"))
     base.ownerRegion = p.get("owner") as QueryInput["ownerRegion"];
   if (p.has("tenure")) base.minOwnershipYears = Number(p.get("tenure"));
+  if (p.has("reportedSaleYears"))
+    base.minReportedSaleAgeYears = Number(p.get("reportedSaleYears"));
   const parsed = QuerySchema.safeParse(base);
   return parsed.success
     ? parsed.data
@@ -50,5 +52,7 @@ export function queryToUrl(query: QueryInput): string {
     p.set("owner", query.ownerRegion);
   if (query.minOwnershipYears !== undefined)
     p.set("tenure", String(query.minOwnershipYears));
+  if (query.minReportedSaleAgeYears !== undefined)
+    p.set("reportedSaleYears", String(query.minReportedSaleAgeYears));
   return `?${p}`;
 }
