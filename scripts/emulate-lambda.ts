@@ -96,29 +96,29 @@ const oracle = {
 };
 let fakeProviderCalls = 0;
 const provider: ConverseTransport = {
-  converse: async () => ({
-    $metadata: {},
-    metrics: { latencyMs: 0 },
-    usage: { inputTokens: 20, outputTokens: 20, totalTokens: 40 },
-    stopReason: ++fakeProviderCalls === 1 ? "tool_use" : "end_turn",
-    output: {
-      message: {
-        role: "assistant",
-        content:
-          fakeProviderCalls === 1
-            ? [
-                {
-                  toolUse: {
-                    toolUseId: "fake-read",
-                    name: "searchRoofingEvidence",
-                    input: query,
-                  },
-                },
-              ]
-            : [{ text: JSON.stringify({ propertyIds: [property.id] }) }],
+  converse: async () => {
+    fakeProviderCalls++;
+    return {
+      $metadata: {},
+      metrics: { latencyMs: 0 },
+      usage: { inputTokens: 20, outputTokens: 20, totalTokens: 40 },
+      stopReason: "tool_use",
+      output: {
+        message: {
+          role: "assistant",
+          content: [
+            {
+              toolUse: {
+                toolUseId: "fake-read",
+                name: "searchRoofingEvidence",
+                input: query,
+              },
+            },
+          ],
+        },
       },
-    },
-  }),
+    };
+  },
 };
 function fromLocal<T>(run: () => T): T {
   try {
@@ -232,13 +232,13 @@ const answer = JSON.parse(
     reservedMicroUsd: number;
   };
 };
-if (answer.citations[0] !== "synthetic:SYN-EMULATED" || fakeProviderCalls !== 2)
+if (answer.citations[0] !== "synthetic:SYN-EMULATED" || fakeProviderCalls !== 1)
   throw new Error("Packaged provider grounding failed");
 if (
-  answer.modelAudit.converseCalls !== 2 ||
+  answer.modelAudit.converseCalls !== 1 ||
   answer.modelAudit.measuredMicroUsd <= 0 ||
-  answer.modelAudit.reservedMicroUsd !== 1120 ||
-  campaign.audit.length !== 3
+  answer.modelAudit.reservedMicroUsd !== 560 ||
+  campaign.audit.length !== 2
 )
   throw new Error("Packaged durable campaign/usage audit failed");
 await invoke("DELETE", "/api/session");

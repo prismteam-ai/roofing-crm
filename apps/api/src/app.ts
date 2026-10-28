@@ -14,6 +14,7 @@ import {
 import { AccessError } from "../../../packages/hosted-runtime/src/access";
 import {
   answerQuestion,
+  interpretPrompt,
   type AgentAnswer,
 } from "../../../packages/agent/src/index";
 export interface AppRequest {
@@ -45,6 +46,9 @@ export interface AppDependencies {
     id: string;
     region: "us-east-1";
     promptRevision: "base" | "repair-1";
+    architecture: "one-call-tool-router-v1";
+    phase: "prism-assessment-p4";
+    limits: Readonly<Record<string, number>>;
   };
   mapConfig?: () => Promise<unknown>;
   oracle: OracleReader;
@@ -85,6 +89,7 @@ const response = (
 };
 export function createApp(deps: AppDependencies) {
   return async (req: AppRequest): Promise<AppResponse> => {
+    let agentInvoked = false;
     try {
       const url = new URL(req.path, "http://127.0.0.1");
       if (req.method === "GET" && url.pathname === "/api/health") {
@@ -98,7 +103,9 @@ export function createApp(deps: AppDependencies) {
           ...(deps.release ?? BUILD_IDENTITY),
           contractVersion: CONTRACT_VERSION,
           accessMode: deps.access ? "review-session" : "local",
-          provider: deps.agent ? "bedrock-converse" : "deterministic-offline",
+          provider: deps.agent
+            ? "bedrock-tool-routed"
+            : "deterministic-offline",
           ...(deps.model ? { model: deps.model } : {}),
         });
       }
@@ -245,6 +252,8 @@ export function createApp(deps: AppDependencies) {
             "Typed agent prompt and query required",
           );
         const query = QuerySchema.parse(input.query);
+        interpretPrompt(input.prompt, query);
+        agentInvoked = Boolean(deps.agent);
         return response(
           200,
           await (deps.agent
@@ -277,6 +286,13 @@ export function createApp(deps: AppDependencies) {
                   : 400
           : 400,
         {
+          ...(req.path.split("?")[0] === "/api/agent" &&
+          !agentInvoked &&
+          (domain
+            ? ["UNSUPPORTED_TOOL", "INVALID_INPUT"].includes(error.code)
+            : (error as Error).name === "ZodError")
+            ? { mode: "refused-before-model" }
+            : {}),
           code: domain ? error.code : "INVALID_INPUT",
           message: domain
             ? error.message

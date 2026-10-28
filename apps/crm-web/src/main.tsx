@@ -650,8 +650,8 @@ function App() {
             <i /> {query.snapshotId}
             <small>
               Contract {CONTRACT_VERSION} ·{" "}
-              {health?.provider === "bedrock-converse"
-                ? "Bedrock adapter"
+              {health?.provider === "bedrock-tool-routed"
+                ? "Bedrock tool router"
                 : "deterministic provider"}
             </small>
           </span>
@@ -1036,13 +1036,15 @@ function App() {
                     <p>Turn a question into the same typed property search.</p>
                   </div>
                   <span className="offline-label">
-                    {answer?.mode === "deterministic-offline"
-                      ? "DETERMINISTIC · NO INFERENCE"
-                      : answer?.mode === "bedrock-converse"
-                        ? "NOVA · GROUNDED RETRIEVAL"
-                        : health?.provider === "bedrock-converse"
-                          ? "NOVA ENABLED · BOUNDED"
-                          : "DETERMINISTIC · NO INFERENCE"}
+                    {answer?.mode === "deterministic-fallback"
+                      ? "DETERMINISTIC FALLBACK · MODEL UNAVAILABLE"
+                      : answer?.mode === "deterministic-offline"
+                        ? "DETERMINISTIC · NO INFERENCE"
+                        : answer?.mode === "bedrock-tool-routed"
+                          ? "NOVA · TOOL-ROUTED EVIDENCE"
+                          : health?.provider === "bedrock-tool-routed"
+                            ? "NOVA ENABLED · ONE READ"
+                            : "DETERMINISTIC · NO INFERENCE"}
                   </span>
                 </div>
                 <div className="agent-input">

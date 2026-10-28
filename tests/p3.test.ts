@@ -75,7 +75,7 @@ class AtomicCampaignDb {
     return {};
   }
 }
-describe("P3 durable campaign", () => {
+describe("P4 durable campaign", () => {
   it("caps overlapping requests and Converse independently across two shared adapters", async () => {
     const db = new AtomicCampaignDb(),
       a = new DynamoCampaignStore(db as never, "shared"),
@@ -105,7 +105,7 @@ describe("P3 durable campaign", () => {
       ),
     ).toBe(true);
   });
-  it("enforces UTC daily60, campaign120 and USD6 reservations without refunds or TTL reset", async () => {
+  it("enforces UTC daily60, campaign80 and USD3 reservations without refunds or TTL reset", async () => {
     for (const kind of ["request", "converse"] as const) {
       const daily = new MemoryCampaignStore();
       for (let i = 0; i < 60; i++)
@@ -126,7 +126,7 @@ describe("P3 durable campaign", () => {
         }),
       ).rejects.toThrow("cap");
       const total = new MemoryCampaignStore();
-      for (let i = 0; i < 120; i++)
+      for (let i = 0; i < 80; i++)
         await total.reserve({
           kind,
           subject: `s${i}`,
@@ -150,7 +150,7 @@ describe("P3 durable campaign", () => {
       subject: "x",
       modelId: MICRO_MODEL,
       nowMs: now,
-      reservedMicroUsd: 6000000,
+      reservedMicroUsd: 3000000,
     });
     await expect(
       cost.reserve({
@@ -186,6 +186,9 @@ describe("P3 durable campaign", () => {
       qualityAllows({ ...gate, repairFailureSha256: hash }, LITE_MODEL, "base"),
     ).not.toThrow();
     const report = {
+      phase: "prism-assessment-p4",
+      architecture: "one-call-tool-router-v1",
+      completedAt: new Date(now).toISOString(),
       modelId: MICRO_MODEL,
       region: "us-east-1",
       revision: "base",
@@ -194,16 +197,33 @@ describe("P3 durable campaign", () => {
         id: p.id,
         promptDigest: createHash("sha256").update(p.prompt).digest("hex"),
         passed: i !== 0,
-        mode: "bedrock-converse",
+        reason: "intent-grounding-or-server-reference-failure",
+        serverReferenceMatched: true,
+        mode: "bedrock-tool-routed",
         modelAudit: {
           modelId: MICRO_MODEL,
           region: "us-east-1",
-          converseCalls: 2,
-          reservedMicroUsd: 1120,
+          architecture: "one-call-tool-router-v1",
+          converseCalls: 1,
+          inputTokens: 100,
+          unmeasuredCalls: 0,
+          reservedMicroUsd: 560,
         },
       })),
     };
     expect(qualityFailure(report, "base")).toHaveLength(64);
+    expect(() =>
+      qualityFailure(
+        {
+          ...report,
+          outcomes: report.outcomes.map((o) => ({
+            ...o,
+            reason: "deterministic-baseline-unavailable",
+          })),
+        },
+        "base",
+      ),
+    ).toThrow();
     expect(() =>
       qualityFailure(
         {
@@ -365,7 +385,7 @@ describe("P3 map and release boundaries", () => {
   });
 });
 
-describe("P3 exact hosted campaign boundary", () => {
+describe("P4 exact hosted campaign boundary", () => {
   it("falls back honestly when durable allowance is exhausted and never sends adversarial requests to Converse", async () => {
     const { createHostedHandler } = await import("../apps/api/src/lambda");
     const { AccessService, accessCodeDigest } =
@@ -513,7 +533,7 @@ describe("P3 exact hosted campaign boundary", () => {
     const result = await invoke("Find evidence"),
       body = JSON.parse(result.body);
     expect(result.statusCode).toBe(200);
-    expect(body.mode).toBe("deterministic-offline");
+    expect(body.mode).toBe("deterministic-fallback");
     expect(body.caveats[0]).toContain("deterministic");
     expect(body.modelAudit.converseCalls).toBe(0);
     expect(body.citations).toEqual(["synthetic:SYN-HOSTED"]);
@@ -523,17 +543,17 @@ describe("P3 exact hosted campaign boundary", () => {
     );
     expect(refusal.statusCode).toBe(400);
     expect(JSON.parse(refusal.body).code).toBe("UNSUPPORTED_TOOL");
-    expect(reservations).toEqual(["request", "converse", "request"]);
+    expect(reservations).toEqual(["request", "converse"]);
     expect(providerCalls).toBe(0);
     expect(queryReads).toBe(1);
     capped = false;
     const exhausted = await invoke("Find evidence"),
       reused = JSON.parse(exhausted.body);
     expect(exhausted.statusCode).toBe(200);
-    expect(reused.mode).toBe("deterministic-offline");
-    expect(reused.modelAudit.converseCalls).toBe(3);
-    expect(providerCalls).toBe(3);
-    expect(queryReads).toBe(3); // two model reads, then cached deterministic rendering, never a third read
+    expect(reused.mode).toBe("bedrock-tool-routed");
+    expect(reused.modelAudit.converseCalls).toBe(1);
+    expect(providerCalls).toBe(1);
+    expect(queryReads).toBe(2); // one capped fallback read, then one successful routed read
     expect(reused.citations).toEqual(["synthetic:SYN-HOSTED"]);
     leads.close();
   });

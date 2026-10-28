@@ -1,0 +1,29 @@
+# P4 evidence routing
+
+P4 replaces model selection of returned property IDs with one Bedrock Converse tool-routing call. The model receives the user's bounded question, active map query and the shared `QuerySchema`; it never receives source rows. There is one available read tool and `toolChoice: any`. A successful response contains exactly one `searchRoofingEvidence` tool invocation and no other content. The server validates that invocation, reads the Oracle once, and renders every fact, count, result, citation, snapshot ID and query hash from that response. There is no tool-result message or second model turn.
+
+## Boundaries and modes
+
+Deterministic guards reject prompt injection, arbitrary SQL/browser/filesystem/secrets/outreach operations, ambiguous or unsupported radius units, and unsupported complete ownership-tenure assertions before provider use. Explicit last-reported-sale age is a separate partial-source predicate. The provider cannot change the snapshot, map center or cursor or weaken an existing evidence predicate. A schema-valid larger radius or page is clamped to the active map/page; an invalid or weaker predicate is refused. Both the model route and deterministic fallback share the same active-map bounds. A successful route returns at most 50 rows.
+
+`bedrock-tool-routed` means one accepted provider route followed by server retrieval/rendering. `deterministic-fallback` means the model did not produce an accepted route. `deterministic-offline` means inference was not attempted. An unsupported request returns `refused-before-model`. Provider failures retain their reserved allowance; missing usage is recorded as unmeasured rather than free. The routing architecture marker is `one-call-tool-router-v1`.
+
+The response restates interpreted roof/permit filters, count and bounded page size. Roof basis, issued-only status, contractor/license/rating uncertainty and incomplete reported-sale history remain explicit. Returned record objects retain their source evidence. Tool traces contain only the typed applied query, counts/identity and digests of provider arguments, applied arguments and complete server evidence. No raw provider text is retained.
+
+## Separate durable P4 allowance
+
+The existing review environment remains `p3-review`. Campaign accounting and quality gates use the fixed DynamoDB partition `campaign#prism-assessment-p4`. P3 counters and reports remain untouched. P4 total counters have no TTL, cannot be reset by redeployment and do not refund failed attempts. Audit records retain the existing bounded 14-day retention.
+
+The additional P4 ceiling is 80 requests, 80 Converse reservations and USD 3 conservatively reserved model spend; each daily ceiling is 60 and each session/hour ceiling is 20. A request reserves at most one Converse call, 12,000 aggregate tokens and 1,000 output tokens. Runtime deadline is 15 seconds, capped at 25 seconds by the adapter. SDK attempts are one. One tool read is permitted on a successful route; failure handling permits at most one additional deterministic read when necessary and labels it as fallback.
+
+Only Micro base is initially allowed. A complete measured failed P4 eight-intent report may authorize one Micro prompt/schema repair, followed by the already enabled Lite alternative only if that measured repair also fails. A P3 report, provider transport outage, unmeasured attempt or malformed/incomplete campaign cannot unlock that progression. The operator must write P4 quality-gate metadata; code changes or local evidence alone do not authorize model use.
+
+## Price freshness
+
+A valid stored price is cached only through its 24-hour verification lifetime. After expiry, a request reserves its durable P4 request allowance before an anonymous metadata refresh from the single fixed official regional AWS Bedrock offer URL. The refresh follows no redirects, sends no credentials, permits at most 2,000,000 bytes and has a five-second wall deadline covering transport and body reads. It selects only the four previously approved direct `us-east-1` Micro/Lite on-demand input/output SKUs, rejects substitutions/ambiguous tiers/units/future effective dates, and records the price-list digest/version/publication date. A refreshed price is cached for at most 24 hours in that warm process. Failure stops provider use; stale prices never authorize calls. No new IAM, secret write, schedule or paid resource is required. Even a cold runtime metadata fetch consumes a request allowance, bounding metadata refreshes by the durable 80-request ceiling.
+
+## Acceptance and local verification
+
+The frozen P4 corpus covers aged roofs; open roofing permits older than five years; observed contractor/license/BBB details; unknown evidence; injection; arbitrary access/outreach; ambiguous units; and current-map follow-up. The fake-provider hosted suite exercises the real adapter, API guards, campaign accounting and deterministic renderer. Five valid cases require one provider call and one Oracle read; three refusals require zero of each. Full returned rows, citations, predicates, count, snapshot and query identity are compared with independent server references; reports retain record digests rather than raw provider traces.
+
+`pnpm campaign` prints the finite plan without network use. `pnpm campaign --execute` requires the existing parent-owned cloud/inference authorization, exact release/package/source/health pins and private review access. Live acceptance must be measured after integration/deployment; local provider fakes do not establish model quality or hosted acceptance. Stop after a configuration passes all eight cases and hosted smoke.

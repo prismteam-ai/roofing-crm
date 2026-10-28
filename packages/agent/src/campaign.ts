@@ -31,6 +31,7 @@ export interface CampaignAudit {
   revision: "base" | "repair-1";
   region: "us-east-1";
   at: string;
+  architecture?: "one-call-tool-router-v1";
   callIndex: number;
   inputTokens: number;
   outputTokens: number;
@@ -82,7 +83,16 @@ export function qualityAllows(
       "Lite requires measured failure of Micro and its one prompt repair",
     );
 }
-const PHASE = "prism-assessment-p3";
+export const CAMPAIGN_PHASE = "prism-assessment-p4";
+export const CAMPAIGN_LIMITS = Object.freeze({
+  requestsTotal: 80,
+  requestsPerDay: 60,
+  requestsPerSessionHour: 20,
+  converseTotal: 80,
+  conversePerDay: 60,
+  conversePerSessionHour: 20,
+  modelMicroUsd: 3000000,
+});
 function entries(input: CampaignReservation) {
   reviewModel(input.modelId, input.modelId === LITE_MODEL);
   if (
@@ -97,14 +107,14 @@ function entries(input: CampaignReservation) {
     day = new Date(input.nowMs).toISOString().slice(0, 10),
     session = createHash("sha256").update(input.subject).digest("hex");
   const all = [
-    { key: `${input.kind}#total`, limit: 120, units: 1 },
+    { key: `${input.kind}#total`, limit: 80, units: 1 },
     { key: `${input.kind}#day#${day}`, limit: 60, units: 1 },
     { key: `${input.kind}#session#${session}#${hour}`, limit: 20, units: 1 },
     ...(input.kind === "converse"
       ? [
           {
             key: "cost#reserved-microusd",
-            limit: 6000000,
+            limit: 3000000,
             units: input.reservedMicroUsd ?? 0,
           },
         ]
@@ -132,13 +142,13 @@ export class MemoryCampaignStore implements CampaignStore {
     if (all.some((x) => (this.counts.get(x.key) ?? 0) + x.units > x.limit))
       throw new DomainError(
         "COST_LIMIT_REACHED",
-        "P3 campaign request, invocation or reserved-cost cap reached",
+        "P4 campaign request, invocation or reserved-cost cap reached",
       );
     for (const x of all)
       this.counts.set(x.key, (this.counts.get(x.key) ?? 0) + x.units);
   }
 }
-/** Counters intentionally have no TTL: the P3 total cannot reset during redeployment or review extension. */
+/** Counters intentionally have no TTL: the P4 total cannot reset during redeployment or review extension. */
 export class DynamoCampaignStore implements CampaignStore {
   constructor(
     private readonly client: Pick<DynamoDBDocumentClient, "send">,
@@ -149,7 +159,7 @@ export class DynamoCampaignStore implements CampaignStore {
     const result = await this.client.send(
       new GetCommand({
         TableName: this.table,
-        Key: { pk: `campaign#${PHASE}`, sk: "quality-gate" },
+        Key: { pk: `campaign#${CAMPAIGN_PHASE}`, sk: "quality-gate" },
         ConsistentRead: true,
       }),
     );
@@ -160,7 +170,7 @@ export class DynamoCampaignStore implements CampaignStore {
       new PutCommand({
         TableName: this.table,
         Item: {
-          pk: `campaign#${PHASE}`,
+          pk: `campaign#${CAMPAIGN_PHASE}`,
           sk: `usage#${input.requestId}#${input.callIndex}`,
           ...input,
           expiresAt: Math.floor(Date.parse(input.at) / 1000) + 14 * 86400,
@@ -176,7 +186,7 @@ export class DynamoCampaignStore implements CampaignStore {
           TransactItems: entries(input).map((x) => ({
             Update: {
               TableName: this.table,
-              Key: { pk: `campaign#${PHASE}`, sk: x.key },
+              Key: { pk: `campaign#${CAMPAIGN_PHASE}`, sk: x.key },
               UpdateExpression: "ADD #consumed :units",
               ConditionExpression:
                 "attribute_not_exists(#consumed) OR #consumed <= :ceiling",
@@ -195,7 +205,7 @@ export class DynamoCampaignStore implements CampaignStore {
         error instanceof Error &&
         error.name === "TransactionCanceledException"
       )
-        throw new DomainError("COST_LIMIT_REACHED", "P3 campaign cap reached");
+        throw new DomainError("COST_LIMIT_REACHED", "P4 campaign cap reached");
       throw new DomainError(
         "COST_LIMIT_REACHED",
         "Campaign allowance unavailable; no provider call permitted",
@@ -210,6 +220,10 @@ export interface VerifiedPrice {
   outputUsdPerMillion: number;
   verifiedAt: string;
   source: string;
+  priceListSha256?: string;
+  priceListVersion?: string;
+  priceListPublicationDate?: string;
+  priceSkus?: { input: string; output: string };
 }
 export function reserveCost(
   inputBytes: number,

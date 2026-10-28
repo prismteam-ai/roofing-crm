@@ -21,10 +21,13 @@ import {
 } from "../../../packages/runtime-config/src/index";
 import {
   DynamoCampaignStore,
+  CAMPAIGN_PHASE,
+  CAMPAIGN_LIMITS,
   reserveCost,
   type CampaignStore,
   type VerifiedPrice,
 } from "../../../packages/agent/src/campaign";
+import { verifiedPriceProvider } from "../../../packages/agent/src/prices";
 import { mapConfiguration } from "../../../packages/hosted-runtime/src/map-config";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
@@ -42,6 +45,7 @@ import {
 import {
   answerWithBedrock,
   bedrockTransport,
+  ROUTING_ARCHITECTURE,
 } from "../../../packages/agent/src/bedrock";
 import {
   readSessionCookie,
@@ -144,7 +148,19 @@ function makeRuntime() {
     throw new Error("Mixed runtime regions");
   const secretId = required("REVIEW_ACCESS_SECRET_ARN");
   const secrets = new SecretsManagerClient({ region, maxAttempts: 1 });
-  let cachedPrice: { until: number; value: VerifiedPrice } | undefined;
+  const enabledModel =
+    process.env.PRISM_ENABLE_MODEL === "true"
+      ? required("BEDROCK_MODEL_ID")
+      : undefined;
+  const price = enabledModel
+    ? verifiedPriceProvider(enabledModel, async () => {
+        const out = await secrets.send(
+          new GetSecretValueCommand({ SecretId: secretId }),
+        );
+        const root = JSON.parse(out.SecretString ?? "{}");
+        return root.modelPrices?.[enabledModel];
+      })
+    : undefined;
   const document = DynamoDBDocumentClient.from(
     new DynamoDBClient({ region, maxAttempts: 1 }),
   );
@@ -157,20 +173,7 @@ function makeRuntime() {
     sessions: new DynamoSessionStore(document, required("QUOTA_TABLE_NAME")),
     access: secretAccessProvider(secretId, secrets),
     campaign: new DynamoCampaignStore(document, required("QUOTA_TABLE_NAME")),
-    price: async () => {
-      if (cachedPrice && cachedPrice.until > Date.now())
-        return cachedPrice.value;
-      const out = await secrets.send(
-        new GetSecretValueCommand({ SecretId: secretId }),
-      );
-      const root = JSON.parse(out.SecretString ?? "{}");
-      const value = root.modelPrices?.[
-        required("BEDROCK_MODEL_ID")
-      ] as VerifiedPrice;
-      reserveCost(1, value);
-      cachedPrice = { until: Date.now() + 60000, value };
-      return value;
-    },
+    price,
     mapConfig:
       process.env.PRISM_ENABLE_MAP === "true"
         ? mapConfiguration(secretId, secrets)
@@ -201,6 +204,9 @@ export function createHostedHandler(
         model: r.provider
           ? {
               id: reviewModel(modelId() || MICRO_MODEL, true),
+              architecture: ROUTING_ARCHITECTURE,
+              phase: CAMPAIGN_PHASE,
+              limits: CAMPAIGN_LIMITS,
               region: REVIEW_REGION,
               promptRevision:
                 process.env.PRISM_MODEL_PROMPT_REVISION === "repair-1"
@@ -256,6 +262,7 @@ export function createHostedHandler(
         ...(r.provider
           ? {
               agent: async (prompt, query, subject) => {
+                interpretPrompt(prompt, query);
                 const revision =
                   process.env.PRISM_MODEL_PROMPT_REVISION === "repair-1"
                     ? "repair-1"
@@ -305,16 +312,15 @@ export function createHostedHandler(
                 };
                 try {
                   await r.campaign.authorize(model, revision);
-                  const price = await r.price();
-                  if (price.modelId !== model)
-                    throw new Error("Model price identity mismatch");
                   await r.campaign.reserve({
                     subject,
                     kind: "request",
                     modelId: model,
                     nowMs: clock(),
                   });
-                  interpretPrompt(prompt, query);
+                  const price = await r.price();
+                  if (price.modelId !== model)
+                    throw new Error("Model price identity mismatch");
                   const result = await answerWithBedrock(
                     boundedOracle,
                     r.provider!,
@@ -324,8 +330,8 @@ export function createHostedHandler(
                       modelId: model,
                       promptRevision: revision,
                       maxRows: 50,
-                      maxTurns: 3,
-                      maxToolCalls: 2,
+                      maxTurns: 1,
+                      maxToolCalls: 1,
                       maxTotalTokens: 12000,
                       deadlineMs: 15000,
                       beforeConverse: async ({ inputBytes }) => {
@@ -347,6 +353,7 @@ export function createHostedHandler(
                           promptDigest,
                           modelId: model,
                           revision,
+                          architecture: ROUTING_ARCHITECTURE,
                           region: REVIEW_REGION,
                           at: new Date(clock()).toISOString(),
                           ...usage,
@@ -371,6 +378,7 @@ export function createHostedHandler(
                     promptDigest,
                     modelId: model,
                     revision,
+                    architecture: ROUTING_ARCHITECTURE,
                     region: REVIEW_REGION,
                     at: new Date(clock()).toISOString(),
                     callIndex: 0,
@@ -391,6 +399,7 @@ export function createHostedHandler(
                       region: REVIEW_REGION,
                       promptRevision: revision,
                       promptDigest,
+                      architecture: ROUTING_ARCHITECTURE,
                       inputTokens,
                       outputTokens,
                       converseCalls,
@@ -419,6 +428,7 @@ export function createHostedHandler(
                     promptDigest,
                     modelId: model,
                     revision,
+                    architecture: ROUTING_ARCHITECTURE,
                     region: REVIEW_REGION,
                     at: new Date(clock()).toISOString(),
                     callIndex: 0,
@@ -433,10 +443,15 @@ export function createHostedHandler(
                     status: "provider-failed",
                   });
                   const fallback = cached
-                    ? answerFromEvidence(cached.data, cached.query)
+                    ? answerFromEvidence(
+                        cached.data,
+                        cached.query,
+                        "deterministic-fallback",
+                      )
                     : await answerQuestion(boundedOracle, prompt, query);
                   return {
                     ...fallback,
+                    mode: "deterministic-fallback",
                     caveats: [
                       "Live model could not produce a valid bounded answer; this answer used deterministic evidence. No provider facts were used. Failed attempts retain reserved allowance; unmeasured usage is not claimed as zero spend.",
                       ...fallback.caveats,
@@ -446,6 +461,7 @@ export function createHostedHandler(
                       region: REVIEW_REGION,
                       promptRevision: revision,
                       promptDigest,
+                      architecture: ROUTING_ARCHITECTURE,
                       inputTokens,
                       outputTokens,
                       converseCalls,

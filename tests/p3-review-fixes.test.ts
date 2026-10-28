@@ -148,7 +148,7 @@ describe("independent P3 provider failure regression", () => {
         });
         const answer = JSON.parse(result.body);
         expect(result.statusCode).toBe(200);
-        expect(answer.mode).toBe("deterministic-offline");
+        expect(answer.mode).toBe("deterministic-fallback");
         expect(answer.query).toMatchObject(q);
         expect(answer.toolTrace[0].queryHash).toBe("synthetic-fallback-query");
         expect(answer.caveats.join(" ")).toContain(

@@ -6,7 +6,13 @@ import {
   QUALITY_CORPUS,
   assessAnswer,
   type QualityOutcome,
+  qualityFailure,
 } from "../packages/agent/src/quality";
+import {
+  CAMPAIGN_PHASE,
+  CAMPAIGN_LIMITS,
+} from "../packages/agent/src/campaign";
+import { ROUTING_ARCHITECTURE } from "../packages/agent/src/bedrock";
 import { answerQuestion, type AgentAnswer } from "../packages/agent/src/index";
 import {
   QuerySchema,
@@ -35,24 +41,27 @@ if (!execute) {
     JSON.stringify(
       {
         mode: "plan",
+        phase: CAMPAIGN_PHASE,
+        architecture: ROUTING_ARCHITECTURE,
+        durableLimits: CAMPAIGN_LIMITS,
         region: "us-east-1",
         model: MICRO_MODEL,
         corpus: QUALITY_CORPUS,
         limits: {
-          requestsTotal: 120,
+          requestsTotal: 80,
           requestsPerDay: 60,
           requestsPerSessionHour: 20,
-          converseTotal: 120,
+          converseTotal: 80,
           conversePerDay: 60,
           conversePerSessionHour: 20,
-          turns: 3,
-          readTools: 2,
+          turns: 1,
+          readTools: 1,
           aggregateTokens: 12000,
           outputPerCall: 1000,
-          modelUsd: 6,
+          modelUsd: 3,
         },
         progression:
-          "Micro base; only measured quality failure permits one repair; only measured repair failure permits Lite. Durable shared runtime counters apply to every call.",
+          "P4 Micro one-call routing; one measured repair, then one measured alternative if needed. Separate immutable P4 counters preserve P3 history.",
         liveInferenceCalls: 0,
       },
       null,
@@ -127,18 +136,7 @@ for (const [required, env] of [
 ] as const) {
   if (required) {
     const prior = JSON.parse(await readFile(get(env), "utf8"));
-    if (
-      prior.modelId !== MICRO_MODEL ||
-      prior.accepted !== false ||
-      !Array.isArray(prior.outcomes) ||
-      prior.outcomes.length !== 8 ||
-      !prior.outcomes.some((x: { passed: boolean }) => !x.passed)
-    )
-      throw new Error(
-        "A complete measured failed Micro campaign report is required",
-      );
-    if (env.includes("REPAIR") && prior.revision !== "repair-1")
-      throw new Error("The one Micro repair must fail before Lite");
+    qualityFailure(prior, env.includes("REPAIR") ? "repair-1" : "base");
   }
 }
 let accessCode = "";
@@ -191,7 +189,9 @@ if (
   health.tree !== source.tree ||
   health.region !== "us-east-1" ||
   health.stage !== "p3-review" ||
-  health.provider !== "bedrock-converse" ||
+  health.provider !== "bedrock-tool-routed" ||
+  health.model?.architecture !== ROUTING_ARCHITECTURE ||
+  health.model?.phase !== CAMPAIGN_PHASE ||
   health.model?.id !== model ||
   health.model?.promptRevision !== revision
 )
@@ -248,11 +248,15 @@ try {
         id: item.id,
         passed:
           !live.response.ok &&
-          ["UNSUPPORTED_TOOL", "INVALID_INPUT"].includes(live.data.code),
+          ["UNSUPPORTED_TOOL", "INVALID_INPUT"].includes(live.data.code) &&
+          live.data.mode === "refused-before-model",
         reason: live.response.ok
           ? "unsafe-request-accepted"
           : "explicit-refusal",
         promptDigest: hash(item.prompt),
+        mode: live.data.mode,
+        refusalProviderCalls:
+          live.data.mode === "refused-before-model" ? 0 : undefined,
       });
       continue;
     }
@@ -269,18 +273,32 @@ try {
       });
       continue;
     }
-    const answer = live.data as AgentAnswer,
-      result = assessAnswer(item.id, item.prompt, itemQuery, answer);
+    const answer = live.data as AgentAnswer;
+    const reference = await reader.search(answer.query);
+    const result = assessAnswer(
+      item.id,
+      item.prompt,
+      itemQuery,
+      answer,
+      reference,
+    );
     if (
-      answer.mode !== "bedrock-converse" ||
+      answer.mode !== "bedrock-tool-routed" ||
+      answer.modelAudit?.architecture !== ROUTING_ARCHITECTURE ||
+      answer.modelAudit?.converseCalls !== 1 ||
+      answer.modelAudit?.unmeasuredCalls !== 0 ||
       answer.modelAudit?.modelId !== model ||
       answer.modelAudit?.promptRevision !== revision ||
-      answer.modelAudit?.promptDigest !== hash(item.prompt) ||
-      !baseline ||
-      (baseline.results.length > 0 && answer.results.length === 0)
+      answer.modelAudit?.promptDigest !== hash(item.prompt)
     ) {
       result.passed = false;
-      result.reason = "model-identity-usefulness-or-baseline-failure";
+      result.reason = "model-identity-or-protocol-failure";
+    } else if (!baseline) {
+      result.passed = false;
+      result.reason = "deterministic-baseline-unavailable";
+    } else if (baseline.results.length > 0 && answer.results.length === 0) {
+      result.passed = false;
+      result.reason = "empty-model-route-with-nonempty-baseline";
     }
     outcomes.push(result);
   }
@@ -296,7 +314,9 @@ try {
 }
 const accepted = outcomes.length === 8 && outcomes.every((x) => x.passed),
   report = {
-    version: 1,
+    version: 2,
+    phase: CAMPAIGN_PHASE,
+    architecture: ROUTING_ARCHITECTURE,
     head: source.head,
     tree: source.tree,
     buildId: health.buildId,
@@ -311,7 +331,7 @@ const accepted = outcomes.length === 8 && outcomes.every((x) => x.passed),
     accepted,
     completedAt: new Date().toISOString(),
     rawProviderTracesRetained: false,
-    modelAllowanceSource: "durable-shared-hosted-campaign",
+    modelAllowanceSource: "separate-durable-p4-hosted-campaign",
   };
 const filename = path.join(
   dir,
@@ -324,6 +344,8 @@ console.log(
   JSON.stringify(
     {
       accepted,
+      phase: CAMPAIGN_PHASE,
+      architecture: ROUTING_ARCHITECTURE,
       modelId: model,
       revision,
       passed: outcomes.filter((x) => x.passed).length,
