@@ -54,7 +54,13 @@ export const QUALITY_CORPUS = [
 ] as const;
 /** Explicit active-map presets for the finite demonstration; no city-string geocoding or hidden radius widening. */
 export const QUALITY_CASE_MAPS = Object.freeze({
-  "aged-roof": { label: "Auburn Hills active map", lat: 42.66, lng: -83.29 },
+  "aged-roof": {
+    label: "Novi active map; known building-year proxy cohort",
+    lat: 42.44151166962154,
+    lng: -83.4478470878355,
+    proofReference:
+      "return/evidence/source/native_open_filter_and_positive_map_audit.json#selectedCampaignAgedCase",
+  },
   "long-open": { label: "Troy active map", lat: 42.58, lng: -83.14 },
   contractor: { label: "Troy active map", lat: 42.58, lng: -83.14 },
   unknown: { label: "Unknown-evidence test map", lat: 42.9, lng: -83.5 },

@@ -378,7 +378,7 @@ export async function answerWithBedrock(
         text:
           SYSTEM +
           (limits.promptRevision === "repair-1"
-            ? " Repair1: emit exactly one selectGroundedEvidence toolUse, only selections with supplied ordinals and the allowed context_match category if no more specific observed evidence applies. No other content."
+            ? ' Repair1: Return exactly one selectGroundedEvidence toolUse. Its input must have exactly the key selections. If retrievedEvidence.rows is empty, input MUST be {"selections":[]}. Otherwise selections MUST contain at least one item. Each item has exactly ordinal and reason. Ordinal MUST be a supplied numeric zero-based integer from retrievedEvidence.rows; never use strings, one-based positions, -1, null, sentinel, invented values, totalMatched or unprojected row ordinals. Reason MUST be one of roof_age_evidence, observed_open_permit, reported_business_license, observed_bbb_rating, unknown_evidence, context_match. Use context_match when no more specific observed basis applies; missing evidence does not permit an empty selection when supplied rows exist. Example for one supplied row0: {"selections":[{"ordinal":0,"reason":"context_match"}]}. No other keys, wrapper objects, prose or factual assertions.'
             : ""),
       },
     ],

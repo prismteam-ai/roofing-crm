@@ -1,3 +1,4 @@
+import { groundedFailureDetail } from "../../../packages/agent/src/failure-detail";
 import {
   answerQuestion,
   answerFromEvidence,
@@ -454,6 +455,7 @@ export function createHostedHandler(
                     unmeasuredCalls: converseCalls - measuredCalls,
                     converseCalls,
                     failureCode: error.code,
+                    failureDetail: groundedFailureDetail(error),
                     status: "provider-failed",
                   });
                   const fallback = cached
@@ -489,6 +491,7 @@ export function createHostedHandler(
                       measuredMicroUsd,
                       unmeasuredCalls: converseCalls - measuredCalls,
                       failureCode: error.code,
+                      failureDetail: groundedFailureDetail(error),
                     },
                   };
                 }

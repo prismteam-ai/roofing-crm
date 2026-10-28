@@ -299,8 +299,8 @@ describe("P4 identity and evidence guards", () => {
       expect(mapped.snapshotId).toBe(base.snapshotId);
     }
     expect(qualityCaseQuery("aged-roof", base)).toMatchObject({
-      lat: 42.66,
-      lng: -83.29,
+      lat: 42.44151166962154,
+      lng: -83.4478470878355,
     });
     for (const id of ["long-open", "contractor", "follow-up"])
       expect(qualityCaseQuery(id, base)).toMatchObject({

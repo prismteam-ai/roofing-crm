@@ -567,6 +567,7 @@ describe("P4 exact hosted campaign boundary", () => {
     const invalid = JSON.parse((await invoke("Find evidence")).body);
     expect(invalid.mode).toBe("deterministic-fallback");
     expect(invalid.modelAudit.failureCode).toBe("INVALID_INPUT");
+    expect(invalid.modelAudit.failureDetail).toBe("selection_ordinals");
     expect(invalid.results).toHaveLength(1);
     expect(providerCalls).toBe(2);
     expect(queryReads).toBe(3); // invalid selection reuses its one cached retrieval

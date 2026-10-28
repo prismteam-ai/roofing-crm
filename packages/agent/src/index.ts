@@ -1,3 +1,4 @@
+import type { GroundedFailureDetail } from "./failure-detail";
 import { propertyEvidence } from "../../map-domain/src/signals";
 import { tool } from "ai";
 import {
@@ -22,6 +23,7 @@ export interface AgentAnswer {
     reservedMicroUsd: number;
     measuredMicroUsd: number;
     failureCode?: string;
+    failureDetail?: GroundedFailureDetail;
     unmeasuredCalls?: number;
   };
   mode: "deterministic-offline" | "deterministic-fallback" | "bedrock-grounded";
