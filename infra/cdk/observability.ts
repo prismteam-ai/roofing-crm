@@ -27,6 +27,7 @@ export function assessmentObservability(input: {
 }) {
   const { stack } = input;
   const routing = new Secret(stack, "PagerDutyRouting", {
+    secretName: `${stack.stackName}-PagerDutyRouting`,
     description:
       "Populate routingKey privately only after a candidate-controlled free integration is available",
     secretStringValue: SecretValue.unsafePlainText('{"status":"unconfigured"}'),
