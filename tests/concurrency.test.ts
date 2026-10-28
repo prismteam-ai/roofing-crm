@@ -541,7 +541,7 @@ it("rejects nonempty malformed or unexpected Lambda concurrency responses", asyn
     "[]",
     "0",
     "false",
-    '\"\"',
+    '""',
     '{"Unexpected":1}',
     '{"ReservedConcurrentExecutions":2,"Unexpected":1}',
     '{"ReservedConcurrentExecutions":null}',
