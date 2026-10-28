@@ -7,8 +7,8 @@ export function assertFrontendIdentity(
 ) {
   if (
     pinned.sourceDirty ||
-    pinned.stage !== "p3-review" ||
-    pinned.region !== "us-east-1" ||
+    pinned.stage !== "review" ||
+    pinned.region !== "us-east-2" ||
     !/^[a-f0-9]{40}$/.test(pinned.head) ||
     !/^[a-f0-9]{40}$/.test(pinned.tree) ||
     !/^[a-f0-9]{64}$/.test(pinned.buildId)

@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "./support/retrieval-model";
 import { describe, it, expect } from "vitest";
 import {
   TransactWriteCommand,
@@ -39,12 +40,12 @@ const now = Date.parse("2026-10-27T20:00:00Z"),
   origin = "https://dtest123.cloudfront.net";
 const price: VerifiedPrice = {
   modelId: MICRO_MODEL,
-  region: "us-east-1",
+  region: "us-east-2",
   inputUsdPerMillion: 0.035,
   outputUsdPerMillion: 0.14,
   verifiedAt: new Date(now).toISOString(),
   source:
-    "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-1/index.json",
+    "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-2/index.json",
 };
 class AtomicCampaignDb {
   items = new Map<string, number>();
@@ -105,7 +106,7 @@ describe("current durable campaign", () => {
       ),
     ).toBe(true);
   });
-  it("enforces UTC daily160 validated/daily80 Converse, lifetime200 validated/100 Converse and USD3 reservations without refunds or TTL reset", async () => {
+  it("enforces UTC daily160 validated/daily80 Converse, lifetime200 validated/120 Converse and USD3 reservations without refunds or TTL reset", async () => {
     for (const kind of ["request", "converse"] as const) {
       const daily = new MemoryCampaignStore();
       for (let i = 0; i < (kind === "converse" ? 80 : 160); i++)
@@ -126,7 +127,7 @@ describe("current durable campaign", () => {
         }),
       ).rejects.toThrow("cap");
       const total = new MemoryCampaignStore();
-      for (let i = 0; i < (kind === "converse" ? 100 : 200); i++)
+      for (let i = 0; i < (kind === "converse" ? 120 : 200); i++)
         await total.reserve({
           kind,
           subject: `s${i}`,
@@ -176,7 +177,7 @@ describe("current durable campaign", () => {
     await expect(store.authorize(MICRO_MODEL, "repair-1")).rejects.toThrow();
     await expect(store.authorize(LITE_MODEL, "base")).rejects.toThrow();
     const gate = {
-      architecture: "one-call-grounded-selection-v2" as const,
+      architecture: "one-call-constrained-retrieval-v3" as const,
       baseFailureSha256: hash,
       repairAttempts: 1 as const,
       measuredAt: new Date(now).toISOString(),
@@ -188,10 +189,10 @@ describe("current durable campaign", () => {
     ).not.toThrow();
     const report = {
       phase: "prism-assessment-p5",
-      architecture: "one-call-grounded-selection-v2",
+      architecture: "one-call-constrained-retrieval-v3",
       completedAt: new Date(now).toISOString(),
       modelId: MICRO_MODEL,
-      region: "us-east-1",
+      region: "us-east-2",
       revision: "base",
       accepted: false,
       outcomes: QUALITY_CORPUS.map((p, i) => ({
@@ -203,8 +204,8 @@ describe("current durable campaign", () => {
         mode: "bedrock-grounded",
         modelAudit: {
           modelId: MICRO_MODEL,
-          region: "us-east-1",
-          architecture: "one-call-grounded-selection-v2",
+          region: "us-east-2",
+          architecture: "one-call-constrained-retrieval-v3",
           converseCalls: 1,
           inputTokens: 100,
           unmeasuredCalls: 0,
@@ -251,7 +252,7 @@ describe("current durable campaign", () => {
     expect(reserveCost(20, price, now)).toBe(560);
     expect(reserveCost(11000, price, now)).toBe(560);
     for (const p of [
-      { ...price, region: "us-east-2" },
+      { ...price, region: "us-east-1" },
       { ...price, source: "https://aws.amazon.com.evil.test/" },
       { ...price, verifiedAt: new Date(now + 1).toISOString() },
       { ...price, verifiedAt: new Date(now - 86400001).toISOString() },
@@ -280,7 +281,7 @@ describe("P3 map and release boundaries", () => {
     kind: "amazon-location",
     apiKey: "test-only-non-service-material",
     allowedOrigin: origin,
-    region: "us-east-1",
+    region: "us-east-2",
     style: "Standard",
     expiresAt: new Date(now + 3600000).toISOString(),
     restrictionsDigest: hash,
@@ -301,7 +302,7 @@ describe("P3 map and release boundaries", () => {
     }
     for (const url of [
       "https://evil.test/v2/tiles/x",
-      "http://maps.geo.us-east-1.amazonaws.com/v2/tiles/x",
+      "http://maps.geo.us-east-2.amazonaws.com/v2/tiles/x",
       "/v2/geocode/search",
       "/v2/routes/x",
       "/v2/styles/Other/descriptor",
@@ -313,7 +314,7 @@ describe("P3 map and release boundaries", () => {
     for (const x of [
       { ...config, expiresAt: "invalid" },
       { ...config, expiresAt: new Date(now).toISOString() },
-      { ...config, region: "us-east-2" },
+      { ...config, region: "us-east-1" },
       { ...config, allowedOrigin: "https://other.cloudfront.net" },
     ])
       expect(() => amazonLocationProvider(x, origin, now)).toThrow();
@@ -355,33 +356,33 @@ describe("P3 map and release boundaries", () => {
     expect(groups[0].lat).toBeCloseTo(1.05);
   });
   it("pins one region/direct model and deterministic exact head/tree/build identity", () => {
-    expect(reviewRegion()).toBe("us-east-1");
-    expect(() => validatedRegion("us-east-1", ["us-east-2"])).toThrow();
-    expect(() => reviewRegion("us-east-2")).toThrow();
+    expect(reviewRegion()).toBe("us-east-2");
+    expect(() => validatedRegion("us-east-2", ["us-east-1"])).toThrow();
+    expect(() => reviewRegion("us-east-1")).toThrow();
     expect(() => reviewModel(LITE_MODEL)).toThrow();
-    expect(() => reviewModel("us.amazon.nova-micro-v1:0")).toThrow();
+    expect(() => reviewModel("us.us.amazon.nova-micro-v1:0")).toThrow();
     const s = { head: "b".repeat(40), tree: "c".repeat(40), dirty: false },
       c = { version: "0.2.1", sha256: hash },
-      identity = runtimeIdentity("crm", s, c, "p3-review");
-    expect(identity).toEqual(runtimeIdentity("crm", s, c, "p3-review"));
+      identity = runtimeIdentity("crm", s, c, "review");
+    expect(identity).toEqual(runtimeIdentity("crm", s, c, "review"));
     const pins = validateReleasePins({
       expectedAccountId: "987654321098",
-      region: "us-east-1",
-      stage: "p3-review",
+      region: "us-east-2",
+      stage: "review",
       head: s.head,
       tree: s.tree,
       archiveSha256: hash,
       publicManifestSha256: APPROVED_PUBLIC_MANIFEST_SHA256,
-      assetBucket: "prism-p3-task-assets",
-      assetPrefix: "prism-p3/crm/",
-      stackName: "PrismCrmP3Review",
+      assetBucket: "cdk-prismrvw-assets-987654321098-us-east-2",
+      assetPrefix: "assessment/crm/",
+      stackName: "PrismCrmAssessmentReview",
     });
     expect(() => assertPackageIdentity(pins, identity, hash)).not.toThrow();
     expect(() =>
       assertPackageIdentity(pins, { ...identity, sourceDirty: true }, hash),
     ).toThrow();
     expect(() =>
-      runtimeIdentity("crm", { ...s, dirty: true }, c, "p3-review"),
+      runtimeIdentity("crm", { ...s, dirty: true }, c, "review"),
     ).toThrow();
   });
 });
@@ -457,29 +458,18 @@ describe("P4 exact hosted campaign boundary", () => {
       sessions,
       quota: new MemoryQuotaStore(),
       provider: {
-        converse: async () => {
+        converse: async (request) => {
           providerCalls++;
           return {
-            $metadata: {},
-            metrics: { latencyMs: 0 },
-            usage: { inputTokens: 20, outputTokens: 20, totalTokens: 40 },
-            stopReason: "tool_use",
-            output: {
-              message: {
-                role: "assistant",
-                content: [
-                  {
-                    toolUse: {
-                      toolUseId: `read-${providerCalls}`,
-                      name: "selectGroundedEvidence",
-                      input: {
-                        ordinals: [malformed ? 49 : 0],
-                      },
-                    },
-                  },
-                ],
+            ...approvedModelResponse(request),
+            content: [
+              {
+                ...approvedModelResponse(request).content[0],
+                input: malformed
+                  ? { ...request.approved, queryDigest: "synthetic-wrong" }
+                  : request.approved,
               },
-            },
+            ],
           };
         },
       },
@@ -557,16 +547,16 @@ describe("P4 exact hosted campaign boundary", () => {
     expect(reused.mode).toBe("bedrock-grounded");
     expect(reused.modelAudit.converseCalls).toBe(1);
     expect(providerCalls).toBe(1);
-    expect(queryReads).toBe(2); // one capped fallback read, then one successful routed read
+    expect(queryReads).toBe(3); // one capped fallback read, then two successful preflight/typed retrieval reads
     expect(reused.citations).toEqual(["synthetic:SYN-HOSTED"]);
     malformed = true;
     const invalid = JSON.parse((await invoke("Find evidence")).body);
     expect(invalid.mode).toBe("deterministic-fallback");
     expect(invalid.modelAudit.failureCode).toBe("INVALID_INPUT");
-    expect(invalid.modelAudit.failureDetail).toBe("selection_ordinals");
+    expect(invalid.modelAudit.failureDetail).toBe("retrieval_constraints");
     expect(invalid.results).toHaveLength(1);
     expect(providerCalls).toBe(2);
-    expect(queryReads).toBe(3); // invalid selection reuses its one cached retrieval
+    expect(queryReads).toBe(4); // invalid model arguments reuse only the new turn's validated preflight
 
     leads.close();
   });
@@ -577,14 +567,16 @@ it("rejects mixed-region/cross-account resource references and ambiguous enable 
   const good = {
     account: "987654321098",
     secretArn:
-      "arn:aws:secretsmanager:us-east-1:987654321098:secret:test-reference",
-    tableArn: "arn:aws:dynamodb:us-east-1:987654321098:table/prism-p3-shared",
-    executionRoleArn: "arn:aws:iam::987654321098:role/prism-p3-cfn",
+      "arn:aws:secretsmanager:us-east-2:987654321098:secret:test-reference",
+    tableArn:
+      "arn:aws:dynamodb:us-east-2:987654321098:table/prism-review-shared",
+    executionRoleArn:
+      "arn:aws:iam::987654321098:role/cdk-prismrvw-cfn-exec-role-987654321098-us-east-2",
     oracleOrigin: origin,
   };
   expect(() => validateResourceBindings(good)).not.toThrow();
   for (const x of [
-    { ...good, secretArn: good.secretArn.replace("us-east-1", "us-east-2") },
+    { ...good, secretArn: good.secretArn.replace("us-east-2", "us-east-1") },
     {
       ...good,
       tableArn: good.tableArn.replace("987654321098", "987654321097"),

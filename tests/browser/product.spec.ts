@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import path from "node:path";
-import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import type {
@@ -50,7 +50,9 @@ async function screenshot(page: Page, name: string) {
   const hash = createHash("sha256");
   for (const file of files) {
     hash.update(file);
-    hash.update(readFileSync(file));
+    hash.update(
+      existsSync(file) ? readFileSync(file) : "\0deleted-working-file\0",
+    );
   }
   writeFileSync(
     path.join(evidence, name + ".json"),
@@ -87,6 +89,8 @@ async function screenshot(page: Page, name: string) {
     path: path.join(evidence, name + ".png"),
     fullPage: false,
     mask: [
+      page.locator("[data-private-evidence]"),
+      page.locator(".private-protected-evidence"),
       page.locator(".private-source-reported-owner"),
       page.locator('input[type="password"]'),
     ],

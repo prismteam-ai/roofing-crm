@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { CONTRACT_VERSION } from "../../packages/contracts/src/index";
 const origin = "https://dsynthetic123.cloudfront.net",
-  mapOrigin = "https://maps.geo.us-east-1.amazonaws.com",
+  mapOrigin = "https://maps.geo.us-east-2.amazonaws.com",
   snapshotId = "map-browser-synthetic",
   queryHash = "synthetic-map-query";
 const source = {
@@ -102,7 +102,7 @@ for (const fail of [false, true])
             kind: "amazon-location",
             apiKey: "synthetic-not-service-map-material",
             allowedOrigin: origin,
-            region: "us-east-1",
+            region: "us-east-2",
             style: "Standard",
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             restrictionsDigest: "a".repeat(64),
@@ -134,7 +134,7 @@ for (const fail of [false, true])
         headers: {
           "Referrer-Policy": "strict-origin-when-cross-origin",
           "Content-Security-Policy":
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://maps.geo.us-east-1.amazonaws.com; img-src 'self' data: blob: https://maps.geo.us-east-1.amazonaws.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'",
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://maps.geo.us-east-2.amazonaws.com; img-src 'self' data: blob: https://maps.geo.us-east-2.amazonaws.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'",
         },
       });
     });

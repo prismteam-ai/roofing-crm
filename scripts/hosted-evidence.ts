@@ -67,6 +67,8 @@ const browser = await chromium.launch({
 const blockedOrigins = new Set<string>(),
   pageErrors: string[] = [],
   masks = [
+    "[data-private-evidence]",
+    ".private-protected-evidence",
     '[data-testid="property-row"]',
     ".detail-drawer > h2",
     ".detail-id",
@@ -116,7 +118,7 @@ try {
       });
     }
     if (
-      [origin, "https://maps.geo.us-east-1.amazonaws.com"].includes(u.origin) ||
+      [origin, "https://maps.geo.us-east-2.amazonaws.com"].includes(u.origin) ||
       ["data:", "blob:"].includes(u.protocol)
     )
       await route.continue();
@@ -144,8 +146,8 @@ try {
   if (
     health.head !== get("PRISM_EXPECTED_HEAD") ||
     health.tree !== get("PRISM_EXPECTED_TREE") ||
-    health.region !== "us-east-1" ||
-    health.stage !== "p3-review"
+    health.region !== "us-east-2" ||
+    health.stage !== "review"
   )
     throw new Error("Evidence runtime identity mismatch");
   await page

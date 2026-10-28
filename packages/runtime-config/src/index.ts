@@ -1,14 +1,14 @@
 import { CONTRACT_VERSION } from "../../contracts/src/index.ts";
 import contractManifest from "../../contracts/contract_manifest.json" with { type: "json" };
-export const REVIEW_REGION = "us-east-1" as const;
-export const REVIEW_STAGE = "p3-review" as const;
-export const MICRO_MODEL = "amazon.nova-micro-v1:0" as const;
-export const LITE_MODEL = "amazon.nova-lite-v1:0" as const;
+export const REVIEW_REGION = "us-east-2" as const;
+export const REVIEW_STAGE = "review" as const;
+export const MICRO_MODEL = "us.amazon.nova-micro-v1:0" as const;
+export const LITE_MODEL = "us.amazon.nova-lite-v1:0" as const;
 export function reviewRegion(
   value: string = REVIEW_REGION,
 ): typeof REVIEW_REGION {
   if (value !== REVIEW_REGION)
-    throw new Error("P3 review region must be us-east-1");
+    throw new Error("Review region must be us-east-2");
   return REVIEW_REGION;
 }
 export function reviewModel(
@@ -18,7 +18,7 @@ export function reviewModel(
   if (value === MICRO_MODEL) return value;
   if (value === LITE_MODEL && qualityFailureApproved) return value;
   throw new Error(
-    "Only direct regional Nova Micro, or quality-gated Nova Lite, is authorized",
+    "Only approved US Nova Micro or quality-gated US Nova Lite inference profiles are authorized",
   );
 }
 export type { RuntimeIdentity as BuildIdentity } from "../../hosted-runtime/src/release.ts";

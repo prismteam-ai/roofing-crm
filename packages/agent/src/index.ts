@@ -20,7 +20,7 @@ export interface AgentAnswer {
   intent?: IntentPlan;
   modelAudit?: {
     modelId: string;
-    region: "us-east-1";
+    region: "us-east-2";
     promptRevision: "base" | "repair-1";
     promptDigest: string;
     architecture?: RoutingArchitecture;
@@ -62,7 +62,9 @@ export interface AgentAnswer {
     rationaleCategories?: string[];
     rationaleSource?: "server-minimized-facts";
     presentationProtocol?: RoutingArchitecture;
-    presentationTool?: "selectGroundedEvidence";
+    presentationTool?: "retrieveProperties" | "selectGroundedEvidence";
+    retrievalReads?: number;
+    constraintDigest?: string;
     presentationArgumentsDigest?: string;
     providerArgumentsDigest?: string;
     argumentsDigest?: string;

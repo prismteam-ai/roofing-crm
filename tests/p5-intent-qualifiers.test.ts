@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "./support/retrieval-model";
 import { it, expect } from "vitest";
 import { interpretIntent, requireIntent } from "../packages/agent/src/intent";
 import {
@@ -180,32 +181,11 @@ it("conditional business projections retain missing-evidence rows through one ac
   const provider: ConverseTransport = {
     converse: async (request) => {
       calls++;
-      const q = JSON.parse(request.messages![0].content![0].text!).boundedQuery;
+      const q = JSON.parse(request.prompt).boundedQuery;
       expect(q.requiresContractor).toBeUndefined();
       expect(q.requiresVerifiedLicense).toBeUndefined();
       expect(q.requiresBbbRating).toBeUndefined();
-      return {
-        $metadata: {},
-        metrics: { latencyMs: 0 },
-        usage: { inputTokens: 20, outputTokens: 20, totalTokens: 40 },
-        stopReason: "tool_use",
-        output: {
-          message: {
-            role: "assistant",
-            content: [
-              {
-                toolUse: {
-                  toolUseId: "synthetic",
-                  name: "selectGroundedEvidence",
-                  input: {
-                    ordinals: [0],
-                  },
-                },
-              },
-            ],
-          },
-        },
-      };
+      return approvedModelResponse(request);
     },
   };
   for (const prompt of conditional.slice(0, 7)) {
@@ -215,5 +195,5 @@ it("conditional business projections retain missing-evidence rows through one ac
     expect(answer.results).toHaveLength(1);
     expect(answer.intent?.accepted).toBe(true);
   }
-  expect({ reads, calls }).toEqual({ reads: 7, calls: 7 });
+  expect({ reads, calls }).toEqual({ reads: 14, calls: 7 });
 });

@@ -32,7 +32,10 @@ export const OracleHealthSchema = z.object({
 });
 export type OracleHealth = z.infer<typeof OracleHealthSchema>;
 export interface OracleReader {
-  search(input: QueryInput): Promise<SearchResponse>;
+  search(
+    input: QueryInput,
+    options?: { signal?: AbortSignal; timeoutMs?: number },
+  ): Promise<SearchResponse>;
   detail(id: string, snapshotId: string): Promise<Property>;
   health?(): Promise<OracleHealth>;
   sourceContext?(
@@ -119,12 +122,36 @@ export class OracleClient implements OracleReader {
     )
       throw new Error("Oracle deadline must be 1–30000 milliseconds");
   }
-  private async request(path: string, init?: RequestInit): Promise<unknown> {
+  private async request(
+    path: string,
+    init?: RequestInit,
+    budget?: { signal?: AbortSignal; timeoutMs?: number },
+  ): Promise<unknown> {
+    const timeout = Math.min(this.timeout, budget?.timeoutMs ?? this.timeout);
+    if (!Number.isFinite(timeout) || timeout <= 0 || budget?.signal?.aborted)
+      throw new DomainError(
+        "QUERY_TIMEOUT",
+        "Oracle request deadline exceeded before dispatch",
+      );
     const controller = new AbortController();
+    const signal = budget?.signal
+      ? AbortSignal.any([controller.signal, budget.signal])
+      : controller.signal;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let rejectAbort: () => void = () => {};
     try {
       return await Promise.race([
-        this.perform(path, init, controller.signal),
+        this.perform(path, init, signal),
+        new Promise<never>((_, reject) => {
+          rejectAbort = () =>
+            reject(
+              new DomainError(
+                "QUERY_TIMEOUT",
+                "Oracle request exceeded its shared deadline",
+              ),
+            );
+          signal.addEventListener("abort", rejectAbort, { once: true });
+        }),
         new Promise<never>((_, reject) => {
           timer = setTimeout(() => {
             controller.abort();
@@ -134,11 +161,12 @@ export class OracleClient implements OracleReader {
                 "Oracle request exceeded its deadline",
               ),
             );
-          }, this.timeout);
+          }, timeout);
         }),
       ]);
     } finally {
       if (timer) clearTimeout(timer);
+      signal.removeEventListener("abort", rejectAbort);
     }
   }
   private async perform(
@@ -265,13 +293,20 @@ export class OracleClient implements OracleReader {
   async health(): Promise<OracleHealth> {
     return OracleHealthSchema.parse(await this.request("/api/health"));
   }
-  async search(input: QueryInput): Promise<SearchResponse> {
+  async search(
+    input: QueryInput,
+    budget?: { signal?: AbortSignal; timeoutMs?: number },
+  ): Promise<SearchResponse> {
     const query = QuerySchema.parse(input);
     const response = SearchResponseSchema.parse(
-      await this.request("/api/search", {
-        method: "POST",
-        body: JSON.stringify(query),
-      }),
+      await this.request(
+        "/api/search",
+        {
+          method: "POST",
+          body: JSON.stringify(query),
+        },
+        budget,
+      ),
     );
     if (response.snapshotId !== query.snapshotId)
       throw new DomainError(

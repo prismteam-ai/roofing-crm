@@ -1,3 +1,7 @@
+import {
+  bootstrapBindings,
+  executeCdkDeployment,
+} from "../packages/hosted-runtime/src/cdk-deploy";
 import { writeFileSync } from "node:fs";
 import { withPrivateCliInput } from "../packages/hosted-runtime/src/private-cli-input";
 import { writeReviewerAssetManifest } from "../packages/hosted-runtime/src/reviewer-assets";
@@ -20,7 +24,7 @@ import {
 import { reviewModel } from "../packages/runtime-config/src/index";
 import { OracleClient } from "../packages/oracle-client/src/index";
 import { qualityFailure } from "../packages/agent/src/quality";
-/** P3 operator entry point. Default is a local plan; cloud execution requires all exact release gates. */
+/** Review operator entry point. Default is a local plan; cloud execution requires all exact release gates. */
 import { execFileSync } from "node:child_process";
 import { readFile, writeFile, mkdir, lstat, realpath } from "node:fs/promises";
 import path from "node:path";
@@ -61,8 +65,8 @@ const required = [
   "PRISM_EXPECTED_SNAPSHOT_DIGEST",
   "PRISM_AWS_ACTUAL_USD",
   "PRISM_AWS_PENDING_USD",
-  "PRISM_P3_ACTUAL_USD",
-  "PRISM_P3_PENDING_USD",
+  "PRISM_PROJECT_ACTUAL_USD",
+  "PRISM_PROJECT_PENDING_USD",
 ];
 if (!execute) {
   console.log(
@@ -70,8 +74,8 @@ if (!execute) {
       {
         mode: "plan",
         action,
-        region: "us-east-1",
-        stage: "p3-review",
+        region: "us-east-2",
+        stage: "review",
         concurrency: buildConcurrencyPolicy(process.env),
         source: sourceIdentity(),
         missing: required.filter((x) => !process.env[x]),
@@ -80,8 +84,8 @@ if (!execute) {
             ? [
                 "Verify exact clean source, measured staging archive and frontend identity",
                 "Check caller account, private asset bucket region/public-access block and cost envelope",
-                "Upload exact hash-addressed Lambda archive; synthesize without lookups/bootstrap/ECR",
-                "Deploy exact task stack through approved execution role; upload frontend; invalidate root/index",
+                "Upload exact hash-addressed Lambda archive; publish the exact measured asset through standard CDK bootstrap roles",
+                "Deploy exact task stack with cdk deploy through approved bootstrap roles; upload frontend; invalidate root/index",
               ]
             : action === "destroy"
               ? [
@@ -102,7 +106,7 @@ if (!execute) {
   process.exit(0);
 }
 if (process.env.PRISM_CLOUD_EXECUTION_APPROVED !== "yes")
-  throw new Error("Explicit P3 cloud execution approval required");
+  throw new Error("Explicit assessment cloud execution approval required");
 if (
   process.env.PRISM_ENABLE_MODEL === "true" &&
   process.env.PRISM_LIVE_INFERENCE_APPROVED !== "yes"
@@ -135,18 +139,18 @@ if (
   throw new Error("Exact staged snapshot ID/digest required");
 const pins = validateReleasePins({
   expectedAccountId: get("PRISM_EXPECTED_ACCOUNT_ID"),
-  region: validatedRegion(process.env.PRISM_DEPLOY_REGION ?? "us-east-1", [
+  region: validatedRegion(process.env.PRISM_DEPLOY_REGION ?? "us-east-2", [
     process.env.AWS_REGION,
     process.env.AWS_DEFAULT_REGION,
   ]),
-  stage: "p3-review",
+  stage: "review",
   head: get("PRISM_EXPECTED_HEAD"),
   tree: get("PRISM_EXPECTED_TREE"),
   archiveSha256: get("PRISM_EXPECTED_ARCHIVE_SHA256"),
   publicManifestSha256: APPROVED_PUBLIC_MANIFEST_SHA256,
   assetBucket: get("PRISM_DEPLOY_ASSET_BUCKET"),
-  assetPrefix: "prism-p3/crm/",
-  stackName: "PrismCrmP3Review",
+  assetPrefix: "assessment/crm/",
+  stackName: "PrismCrmAssessmentReview",
 });
 if (action === "deploy") {
   validateResourceBindings({
@@ -168,8 +172,8 @@ assertPinnedSource(pins, sourceIdentity());
 assertCostEnvelope({
   awsActual: Number(get("PRISM_AWS_ACTUAL_USD")),
   awsPending: Number(get("PRISM_AWS_PENDING_USD")),
-  totalActual: Number(get("PRISM_P3_ACTUAL_USD")),
-  totalPending: Number(get("PRISM_P3_PENDING_USD")),
+  totalActual: Number(get("PRISM_PROJECT_ACTUAL_USD")),
+  totalPending: Number(get("PRISM_PROJECT_PENDING_USD")),
 });
 const hash = (x: Uint8Array | string) =>
     createHash("sha256").update(x).digest("hex"),
@@ -300,7 +304,7 @@ if (action === "deploy") {
     throw new Error("Invalid model prompt revision");
   if (
     process.env.PRISM_ENABLE_MODEL === "true" &&
-    (process.env.BEDROCK_MODEL_ID === "amazon.nova-lite-v1:0" ||
+    (process.env.BEDROCK_MODEL_ID === "us.amazon.nova-lite-v1:0" ||
       process.env.PRISM_MODEL_PROMPT_REVISION === "repair-1")
   ) {
     qualityFailure(
@@ -309,7 +313,7 @@ if (action === "deploy") {
       ),
       "base",
     );
-    if (process.env.BEDROCK_MODEL_ID === "amazon.nova-lite-v1:0")
+    if (process.env.BEDROCK_MODEL_ID === "us.amazon.nova-lite-v1:0")
       qualityFailure(
         JSON.parse(
           await readFile(get("PRISM_MICRO_REPAIR_FAILURE_REPORT"), "utf8"),
@@ -368,7 +372,7 @@ const assertDeployed = (o: Record<string, string>) => {
       "Deployed concurrency policy/proof differs from approved release",
     );
   if (
-    !/^PrismCrmP3Review-CrmHandler98FEA697-[A-Za-z0-9]+$/.test(
+    !/^PrismCrmAssessmentReview-CrmHandler98FEA697-[A-Za-z0-9]+$/.test(
       o.RuntimeFunctionName ?? "",
     ) ||
     !/^[a-z0-9]{1,20}$/.test(o.HttpApiId ?? "") ||
@@ -443,7 +447,7 @@ const rotate = async () => {
   const secret = get("PRISM_REVIEW_SECRET_ARN");
   if (
     !new RegExp(
-      `^arn:aws:secretsmanager:us-east-1:${pins.expectedAccountId}:secret:[A-Za-z0-9/_+=.@-]+$`,
+      `^arn:aws:secretsmanager:us-east-2:${pins.expectedAccountId}:secret:[A-Za-z0-9/_+=.@-]+$`,
     ).test(secret)
   )
     throw new Error("Exact shared secret reference required");
@@ -503,13 +507,17 @@ try {
       throw new Error("Frontend identity differs from exact Lambda release");
     process.env.PRISM_FRONTEND_ASSET_MANIFEST_SHA256 =
       await writeReviewerAssetManifest("dist", report.identity.buildId);
-    const role = get("PRISM_CFN_EXECUTION_ROLE_ARN");
+    const expectedBootstrap = bootstrapBindings(
+      pins.expectedAccountId,
+      pins.region,
+    );
     if (
-      !new RegExp(
-        `^arn:aws:iam::${pins.expectedAccountId}:role/prism-p3-[A-Za-z0-9_+=,.@/-]+$`,
-      ).test(role)
+      pins.assetBucket !== expectedBootstrap.bucket ||
+      get("PRISM_CFN_EXECUTION_ROLE_ARN") !== expectedBootstrap.executionRole
     )
-      throw new Error("Task-scoped execution role required");
+      throw new Error(
+        "Exact standard bootstrap bucket/execution role required",
+      );
     const upstreamOrigin = exactOrigin(get("PRISM_ORACLE_ORIGIN"));
     const upstream = await new OracleClient(upstreamOrigin, fetch, {
       allowLoopback: false,
@@ -527,17 +535,6 @@ try {
       upstream.contractVersion !== CONTRACT_VERSION
     )
       throw new Error("Oracle is not the exact approved staged source/build");
-    await step("archive_uploaded", () =>
-      aws([
-        "s3",
-        "cp",
-        "build/crm-lambda.zip",
-        `s3://${pins.assetBucket}/${pins.assetPrefix}lambda/${pins.archiveSha256}.zip`,
-        "--sse",
-        "AES256",
-        "--only-show-errors",
-      ]),
-    );
     execFileSync(process.execPath, ["--import", "tsx", "infra/cdk/app.ts"], {
       stdio: ["ignore", "pipe", "pipe"],
       env: {
@@ -553,7 +550,6 @@ try {
     );
     const oracle = upstreamOrigin;
     const parameters = {
-      DeploymentAssetBucket: pins.assetBucket,
       LambdaArchiveSha256: pins.archiveSha256,
       ReleaseBuildId: report.identity.buildId,
       OracleApiOrigin: oracle,
@@ -561,7 +557,8 @@ try {
       SharedSessionQuotaTableArn: get("PRISM_SHARED_TABLE_ARN"),
       EnableModel: process.env.PRISM_ENABLE_MODEL ?? "false",
       EnableMap: process.env.PRISM_ENABLE_MAP ?? "false",
-      BedrockModelId: process.env.BEDROCK_MODEL_ID ?? "amazon.nova-micro-v1:0",
+      BedrockModelId:
+        process.env.BEDROCK_MODEL_ID ?? "us.amazon.nova-micro-v1:0",
       ModelPromptRevision: process.env.PRISM_MODEL_PROMPT_REVISION ?? "base",
     };
     if (
@@ -578,7 +575,7 @@ try {
       throw new Error("Separate restricted live map approval required");
     if (
       parameters.EnableModel === "true" &&
-      (parameters.BedrockModelId === "amazon.nova-lite-v1:0" ||
+      (parameters.BedrockModelId === "us.amazon.nova-lite-v1:0" ||
         parameters.ModelPromptRevision === "repair-1")
     ) {
       const baseFailureSha256 = qualityFailure(
@@ -588,7 +585,7 @@ try {
         "base",
       );
       const repairFailureSha256 =
-        parameters.BedrockModelId === "amazon.nova-lite-v1:0"
+        parameters.BedrockModelId === "us.amazon.nova-lite-v1:0"
           ? qualityFailure(
               JSON.parse(
                 await readFile(
@@ -602,7 +599,7 @@ try {
       const tableArn = parameters.SharedSessionQuotaTableArn;
       if (
         !new RegExp(
-          `^arn:aws:dynamodb:us-east-1:${pins.expectedAccountId}:table/[A-Za-z0-9_.-]+$`,
+          `^arn:aws:dynamodb:us-east-2:${pins.expectedAccountId}:table/[A-Za-z0-9_.-]+$`,
         ).test(tableArn)
       )
         throw new Error("Exact shared table binding required");
@@ -647,22 +644,46 @@ try {
         ),
       );
     }
-    await step("stack_deployed", () =>
-      aws([
-        "cloudformation",
-        "deploy",
-        "--stack-name",
-        pins.stackName,
-        "--template-file",
-        "cdk.out/PrismCrmP3Review.template.json",
-        "--capabilities",
-        "CAPABILITY_IAM",
-        "--role-arn",
-        role,
-        "--parameter-overrides",
-        ...Object.entries(parameters).map(([k, v]) => `${k}=${v}`),
-        "--no-fail-on-empty-changeset",
-      ]),
+    await step("stack_deployed_via_cdk", () =>
+      executeCdkDeployment(
+        {
+          pins,
+          parameters,
+          outputsFile: path.join(operations, "crm-cdk-outputs.private.json"),
+        },
+        (arguments_) => {
+          const output = execFileSync(
+            process.execPath,
+            ["node_modules/aws-cdk/bin/cdk", ...arguments_],
+            {
+              encoding: "utf8",
+              stdio: ["ignore", "pipe", "pipe"],
+              env: {
+                ...process.env,
+                AWS_REGION: pins.region,
+                AWS_DEFAULT_REGION: pins.region,
+                CDK_DEFAULT_ACCOUNT: pins.expectedAccountId,
+                CDK_DEFAULT_REGION: pins.region,
+              },
+            },
+          );
+          writeFileSync(
+            path.join(operations, "crm-cdk-deploy.private.log"),
+            output,
+            { mode: 0o600 },
+          );
+        },
+        (failure) =>
+          writeFileSync(
+            path.join(operations, "crm-cdk-deploy-failure.private.json"),
+            JSON.stringify(
+              { at: new Date().toISOString(), ...failure },
+              null,
+              2,
+            ),
+            { mode: 0o600 },
+          ),
+      ),
     );
     const o = outputs();
     assertDeployed(o);

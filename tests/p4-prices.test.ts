@@ -21,7 +21,7 @@ function fixture() {
       sku,
       attributes: {
         servicecode: "AmazonBedrock",
-        regionCode: "us-east-1",
+        regionCode: "us-east-2",
         feature: "On-demand Inference",
         model,
         usagetype: `USE1-${token}-${side}-tokens`,
@@ -69,7 +69,7 @@ describe("bounded official price freshness", () => {
       (x: ReturnType<typeof fixture>) => {
         (
           x.products.XAR69MSGZSU6FEM9 as { attributes: { regionCode: string } }
-        ).attributes.regionCode = "us-east-2";
+        ).attributes.regionCode = "us-east-1";
       },
       (x: ReturnType<typeof fixture>) => {
         (

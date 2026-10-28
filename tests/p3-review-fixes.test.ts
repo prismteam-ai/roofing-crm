@@ -27,7 +27,7 @@ import { runtimeIdentity } from "../packages/hosted-runtime/src/release";
 
 const PRIVATE_MARKER = "synthetic-private-provider-detail-never-return";
 describe("independent P3 provider failure regression", () => {
-  for (const kind of ["native-sdk-error", "sdk-request-handler"] as const)
+  for (const kind of ["native-sdk-error", "ai-sdk-fetch"] as const)
     it(`${kind}: deterministic fallback retains one attempt and never exposes provider errors`, async () => {
       const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
       const now = Date.parse("2026-10-27T20:00:00Z"),
@@ -41,31 +41,22 @@ describe("independent P3 provider failure regression", () => {
         wireCalls = 0,
         reads = 0;
       const sdk =
-        kind === "sdk-request-handler"
-          ? bedrockTransport("us-east-1", {
+        kind === "ai-sdk-fetch"
+          ? bedrockTransport("us-east-2", {
               // Ephemeral synthetic signing material prevents all credential-chain/account access. The handler never opens a socket.
-              credentials: {
+              credentialProvider: async () => ({
                 accessKeyId: `synthetic-${randomBytes(8).toString("hex")}`,
                 secretAccessKey: randomBytes(32).toString("hex"),
-              },
-              requestHandler: {
-                handle: async () => {
-                  wireCalls++;
-                  return {
-                    response: {
-                      statusCode: 429,
-                      headers: {
-                        "content-type": "application/json",
-                        "x-amzn-errortype": "ThrottlingException",
-                      },
-                      body: Buffer.from(
-                        JSON.stringify({ message: PRIVATE_MARKER }),
-                      ),
-                    },
-                  };
-                },
-                updateHttpClientConfig: () => {},
-                httpHandlerConfigs: () => ({}),
+              }),
+              fetch: async () => {
+                wireCalls++;
+                return Response.json(
+                  { message: PRIVATE_MARKER },
+                  {
+                    status: 429,
+                    headers: { "x-amzn-errortype": "ThrottlingException" },
+                  },
+                );
               },
             })
           : undefined;
@@ -103,7 +94,7 @@ describe("independent P3 provider failure regression", () => {
           campaign,
           price: async () => ({
             modelId: MICRO_MODEL,
-            region: "us-east-1",
+            region: "us-east-2",
             inputUsdPerMillion: 0.035,
             outputUsdPerMillion: 0.14,
             verifiedAt: new Date(now).toISOString(),
@@ -160,7 +151,7 @@ describe("independent P3 provider failure regression", () => {
         );
         expect(providerCalls).toBe(1);
         expect(reads).toBe(1);
-        expect(wireCalls).toBe(kind === "sdk-request-handler" ? 1 : 0);
+        expect(wireCalls).toBe(kind === "ai-sdk-fetch" ? 1 : 0);
         expect(answer.modelAudit).toMatchObject({
           converseCalls: 1,
           unmeasuredCalls: 1,
@@ -182,14 +173,7 @@ describe("independent P3 provider failure regression", () => {
         expect(JSON.stringify(warning.mock.calls)).not.toContain(
           PRIVATE_MARKER,
         );
-        if (kind === "sdk-request-handler")
-          expect(warning).toHaveBeenCalledWith(
-            JSON.stringify({
-              event: "prism-bedrock-availability",
-              failureClass: "ThrottlingException",
-            }),
-          );
-        else expect(warning).not.toHaveBeenCalled();
+        expect(warning).not.toHaveBeenCalled(); // Availability is surfaced through bounded audit/metrics, never provider-error console logging.
         // A failed provider call stays charged against the current finite session ceiling.
         for (let i = 0; i < CAMPAIGN_LIMITS.conversePerSessionHour - 1; i++)
           await campaign.reserve({
@@ -219,7 +203,7 @@ describe("hosted screenshot frontend identity gate", () => {
     "crm",
     { head: "a".repeat(40), tree: "b".repeat(40), dirty: false },
     { version: "0.2.1", sha256: "c".repeat(64) },
-    "p3-review",
+    "review",
   );
   const dom = {
     "data-head": pinned.head,

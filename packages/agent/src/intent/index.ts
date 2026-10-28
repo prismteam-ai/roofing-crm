@@ -30,7 +30,7 @@ export function interpretIntent(
   const base = QuerySchema.safeParse(input);
   if (!base.success || !prompt.trim() || prompt.length > 2000) {
     return IntentPlanSchema.parse({
-      version: "p5-compositional-intent-v1",
+      version: "compositional-intent-v1",
       accepted: false,
       ledger: [
         {
@@ -375,7 +375,7 @@ export function interpretIntent(
     parsed.success &&
     ledger.every((x) => !x.material || x.classification === "applied");
   return IntentPlanSchema.parse({
-    version: "p5-compositional-intent-v1",
+    version: "compositional-intent-v1",
     accepted,
     ...(accepted ? { query: parsed.data } : {}),
     ledger,

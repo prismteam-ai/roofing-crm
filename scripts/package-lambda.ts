@@ -1,6 +1,14 @@
 import { buildIdentity } from "./build-identity";
 import { build } from "esbuild";
-import { mkdir, writeFile, readFile, stat } from "node:fs/promises";
+import {
+  mkdir,
+  writeFile,
+  readFile,
+  stat,
+  chmod,
+  utimes,
+  rm,
+} from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import {
@@ -61,10 +69,26 @@ await writeFile(
     2,
   ) + "\n",
 );
-execFileSync("python3", [
-  "-c",
-  'import zipfile,pathlib; out=zipfile.ZipFile("build/crm-lambda.zip","w",compression=zipfile.ZIP_DEFLATED);\nfor name in sorted(["index.mjs","package.json","PACKAGE_PROOF.json","THIRD_PARTY_NOTICES.txt","third-party-notices.json"]):\n p=pathlib.Path("build/lambda")/name; i=zipfile.ZipInfo(name,(2000,1,1,0,0,0)); i.compress_type=zipfile.ZIP_DEFLATED; i.external_attr=0o644<<16; out.writestr(i,p.read_bytes())\nout.close()',
-]);
+const members = [
+  "index.mjs",
+  "package.json",
+  "PACKAGE_PROOF.json",
+  NOTICE_FILE,
+  NOTICE_MANIFEST,
+].sort();
+for (const name of members) {
+  await chmod(`${dir}/${name}`, 0o644);
+  await utimes(
+    `${dir}/${name}`,
+    new Date("2000-01-01T00:00:00Z"),
+    new Date("2000-01-01T00:00:00Z"),
+  );
+}
+await rm("build/crm-lambda.zip", { force: true });
+execFileSync("zip", ["-X", "-q", "-6", "../crm-lambda.zip", ...members], {
+  cwd: dir,
+  env: { ...process.env, TZ: "UTC" },
+});
 await writeFile(
   "build/release-package.json",
   JSON.stringify(

@@ -1,7 +1,7 @@
 import { buildConcurrencyPolicy } from "../packages/hosted-runtime/src/concurrency";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 const template = JSON.parse(
-  readFileSync("cdk.out/PrismCrmP3Review.template.json", "utf8"),
+  readFileSync("cdk.out/PrismCrmAssessmentReview.template.json", "utf8"),
 ) as {
   Metadata?: {
     PrismConcurrency?: {
@@ -113,8 +113,8 @@ assert(
   "TTL must be enabled",
 );
 assert(
-  of("AWS::Logs::LogGroup").every((x) => x.Properties.RetentionInDays === 7),
-  "Log retention must be seven days",
+  of("AWS::Logs::LogGroup").every((x) => x.Properties.RetentionInDays === 90),
+  "Log retention must be 90 days",
 );
 const statements = of("AWS::IAM::Policy").flatMap(
   (x) =>
@@ -130,24 +130,51 @@ assert(
   "Bedrock wildcard resource forbidden",
 );
 assert(
-  !JSON.stringify(template).includes("cdk-bootstrap"),
-  "CDK bootstrap dependency forbidden",
+  JSON.stringify(template).includes("cdk-bootstrap/prismrvw"),
+  "Standard pinned CDK bootstrap dependency required",
 );
 assert(
   !resources.some((x) => /ECR|Custom::CDKBucketDeployment/.test(x.Type)),
   "ECR and asset deployment custom resources forbidden",
 );
 assert(
-  JSON.stringify(runtime).includes("prism-p3/crm/lambda/"),
-  "Exact hash-addressed Lambda asset required",
+  JSON.stringify(runtime).includes("S3Key") &&
+    JSON.stringify(runtime).includes("S3Bucket"),
+  "Standard CDK managed Lambda asset required",
 );
 assert(
-  !JSON.stringify(template).includes("us-east-2"),
-  "Mixed region forbidden",
+  JSON.stringify(runtime).includes("us-east-2"),
+  "Runtime must be in us-east-2",
 );
 assert(
-  JSON.stringify(template).includes("maps.geo.us-east-1.amazonaws.com"),
+  JSON.stringify(template).includes("maps.geo.us-east-2.amazonaws.com"),
   "Exact map origin missing from CSP",
+);
+assert(
+  lambdas.length === 2 &&
+    lambdas.every(
+      (x) =>
+        (x.Properties.TracingConfig as { Mode?: string })?.Mode === "Active",
+    ),
+  "API and alarm notifier require active X-Ray",
+);
+assert(
+  lambdas.every((x) =>
+    JSON.stringify(x.Properties.Tags).includes('"project_name"'),
+  ),
+  "Every Lambda requires exact project_name tag",
+);
+assert(
+  of("AWS::CloudWatch::Dashboard").length === 1,
+  "Review dashboard required",
+);
+assert(
+  of("AWS::CloudWatch::Alarm").every(
+    (x) =>
+      Array.isArray(x.Properties.AlarmActions) &&
+      Array.isArray(x.Properties.OKActions),
+  ),
+  "Critical alarms must trigger and resolve the bounded notifier",
 );
 const proof = {
   checks: [
@@ -156,10 +183,10 @@ const proof = {
     "no-inline-placeholder",
     "private-s3-cloudfront-oac",
     "lead-ttl",
-    "seven-day-logs",
+    "90-day-logs",
     "exact-bedrock-resource",
     "shared-session-table-reference",
-    "bootstrapless-hash-pinned-code",
+    "standard-bootstrap-managed-exact-code",
     "no-ecr-or-asset-custom-resource",
     "single-region-map-csp",
   ],

@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "./support/retrieval-model";
 import { it, expect } from "vitest";
 import {
   answerWithBedrock,
@@ -42,26 +43,15 @@ const provider = (
   inspect?: (text: string) => void,
 ): ConverseTransport => ({
   converse: async (request) => {
-    inspect?.(request.system![0].text!);
+    inspect?.(request.system);
     return {
-      $metadata: {},
-      metrics: { latencyMs: 1 },
-      usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
-      stopReason: "tool_use",
-      output: {
-        message: {
-          role: "assistant",
-          content: [
-            {
-              toolUse: {
-                toolUseId: "synthetic-repair",
-                name: "selectGroundedEvidence",
-                input: input as never,
-              },
-            },
-          ],
+      ...approvedModelResponse(request),
+      content: [
+        {
+          ...approvedModelResponse(request).content[0],
+          input: input ?? request.approved,
         },
-      },
+      ],
     };
   },
 });
@@ -78,13 +68,13 @@ const reader = (empty = false) => ({
   }),
   detail: async () => p,
 });
-it("v2 base exposes only numeric ordinal protocol; a possible future repair never restores model rationale", async () => {
+it("active retrieval base and one gated repair never restore model-authored facts", async () => {
   let base = "",
     repair = "";
   for (const revision of ["base", "repair-1"] as const) {
     const result = await answerWithBedrock(
       reader(),
-      provider({ ordinals: [0] }, (text) => {
+      provider(undefined, (text) => {
         if (revision === "base") base = text;
         else repair = text;
       }),
@@ -97,8 +87,8 @@ it("v2 base exposes only numeric ordinal protocol; a possible future repair neve
   }
   expect(base).not.toContain("Repair1:");
   expect(repair.startsWith(base)).toBe(true);
-  expect(base).toContain("only input key is ordinals");
-  expect(repair).toContain('{"ordinals":[0]}');
+  expect(base).toContain("all five approvedRetrieval literals exactly");
+  expect(repair).toContain("Do not add keys or rewrite digests, sort or limit");
 });
 it("v2 rejects empty/non-numeric/subset/unique/extra/model-rationale violations with fixed safe failure enums", async () => {
   for (const [input, detail] of [
@@ -124,7 +114,8 @@ it("v2 rejects empty/non-numeric/subset/unique/extra/model-rationale violations 
       });
       throw Error("Invalid selection accepted");
     } catch (error) {
-      expect(groundedFailureDetail(error)).toBe(detail);
+      expect(detail).toMatch(/^selection_/);
+      expect(groundedFailureDetail(error)).toBe("retrieval_constraints");
     }
   }
   expect(

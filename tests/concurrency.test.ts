@@ -20,7 +20,7 @@ const proof = {
   version: 1,
   observedAt: new Date(now).toISOString(),
   accountId: account,
-  region: "us-east-1",
+  region: "us-east-2",
   concurrentExecutions: 10,
   unreservedConcurrentExecutions: 10,
   totalFunctionCount: 0,
@@ -108,10 +108,10 @@ it("accepts fresh empty or two exact task functions and returns no account or AR
   });
   const functions = [
     "PrismOracleReview-ReadApiB934CF2C-abc123",
-    "PrismCrmP3Review-CrmHandler98FEA697-xyz456",
+    "PrismCrmAssessmentReview-CrmHandler98FEA697-xyz456",
   ].map((functionName) => ({
     functionName,
-    functionArn: `arn:aws:lambda:us-east-1:${account}:function:${functionName}`,
+    functionArn: `arn:aws:lambda:us-east-2:${account}:function:${functionName}`,
   }));
   expect(
     validateConcurrencyProof(
@@ -124,7 +124,7 @@ it("accepts fresh empty or two exact task functions and returns no account or AR
 it("rejects stale/future, quota, account, inventory and unrelated-function proof", () => {
   const unrelated = {
     functionName: "OtherProduction",
-    functionArn: `arn:aws:lambda:us-east-1:${account}:function:OtherProduction`,
+    functionArn: `arn:aws:lambda:us-east-2:${account}:function:OtherProduction`,
   };
   for (const delta of [
     { observedAt: new Date(now - 900001).toISOString() },
@@ -143,7 +143,7 @@ it("rejects stale/future, quota, account, inventory and unrelated-function proof
   const functionName = "PrismOracleReview-ReadApiB934CF2C-abc123";
   const f = {
     functionName,
-    functionArn: `arn:aws:lambda:us-east-1:${account}:function:${functionName}`,
+    functionArn: `arn:aws:lambda:us-east-2:${account}:function:${functionName}`,
   };
   expect(() =>
     validateConcurrencyProof(
@@ -307,9 +307,18 @@ it("synthesizes reserved5/default API5/burst10, bounded custom capacity, and his
     { readFile, rm } = await import("node:fs/promises");
   const root = await mkdtemp(path.join(os.tmpdir(), "prism-crm-shared-")),
     file = path.join(root, "proof.json");
+  await writeFile(
+    path.join(root, "index.mjs"),
+    'export const handler=async()=>({statusCode:200,body:"synthetic-synth-only"});',
+  );
+  execFileSync("zip", ["-X", "-q", "asset.zip", "index.mjs"], {
+    cwd: root,
+    stdio: "pipe",
+  });
   const baseEnv = {
+    PRISM_LAMBDA_ARCHIVE_PATH: path.join(root, "asset.zip"),
     PATH: process.env.PATH ?? "/usr/bin:/bin",
-    PRISM_REGION: "us-east-1",
+    PRISM_REGION: "us-east-2",
   };
   const synth = (env: Record<string, string>) => {
     execFileSync(process.execPath, ["--import", "tsx", "infra/cdk/app.ts"], {
@@ -329,7 +338,7 @@ it("synthesizes reserved5/default API5/burst10, bounded custom capacity, and his
   };
   const template = async () =>
     JSON.parse(
-      await readFile("cdk.out/PrismCrmP3Review.template.json", "utf8"),
+      await readFile("cdk.out/PrismCrmAssessmentReview.template.json", "utf8"),
     ) as {
       Resources: Record<
         string,
@@ -342,7 +351,9 @@ it("synthesizes reserved5/default API5/burst10, bounded custom capacity, and his
     synth(baseEnv);
     const strict = await template();
     const fn = Object.values(strict.Resources).find(
-      (r) => r.Type === "AWS::Lambda::Function",
+      (r) =>
+        r.Type === "AWS::Lambda::Function" &&
+        r.Properties.Handler === "index.handler",
     )!;
     expect(fn.Properties.ReservedConcurrentExecutions).toBe(5);
     expect(strict.Outputs.FunctionReservedConcurrency.Value).toBe("5");
@@ -359,7 +370,9 @@ it("synthesizes reserved5/default API5/burst10, bounded custom capacity, and his
     const custom = await template();
     expect(
       Object.values(custom.Resources).find(
-        (r) => r.Type === "AWS::Lambda::Function",
+        (r) =>
+          r.Type === "AWS::Lambda::Function" &&
+          r.Properties.Handler === "index.handler",
       )!.Properties.ReservedConcurrentExecutions,
     ).toBe(12);
     expect(custom.Metadata.PrismConcurrency).toMatchObject({
@@ -391,7 +404,9 @@ it("synthesizes reserved5/default API5/burst10, bounded custom capacity, and his
     synth(shared);
     const selected = await template(),
       sharedFn = Object.values(selected.Resources).find(
-        (r) => r.Type === "AWS::Lambda::Function",
+        (r) =>
+          r.Type === "AWS::Lambda::Function" &&
+          r.Properties.Handler === "index.handler",
       )!;
     expect(
       Object.hasOwn(sharedFn.Properties, "ReservedConcurrentExecutions"),

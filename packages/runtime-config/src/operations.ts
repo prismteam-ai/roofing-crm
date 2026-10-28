@@ -18,7 +18,7 @@ export function validateResourceBindings(input: {
 }) {
   if (
     !new RegExp(
-      `^arn:aws:secretsmanager:us-east-1:${input.account}:secret:[A-Za-z0-9/_+=.@-]+$`,
+      `^arn:aws:secretsmanager:us-east-2:${input.account}:secret:[A-Za-z0-9/_+=.@-]+$`,
     ).test(input.secretArn)
   )
     throw new Error(
@@ -27,7 +27,7 @@ export function validateResourceBindings(input: {
   if (
     input.tableArn &&
     !new RegExp(
-      `^arn:aws:dynamodb:us-east-1:${input.account}:table/[A-Za-z0-9_.-]+$`,
+      `^arn:aws:dynamodb:us-east-2:${input.account}:table/[A-Za-z0-9_.-]+$`,
     ).test(input.tableArn)
   )
     throw new Error(
@@ -36,7 +36,7 @@ export function validateResourceBindings(input: {
   if (
     input.executionRoleArn &&
     !new RegExp(
-      `^arn:aws:iam::${input.account}:role/prism-p3-[A-Za-z0-9_+=,.@/-]+$`,
+      `^arn:aws:iam::${input.account}:role/cdk-prismrvw-cfn-exec-role-${input.account}-us-east-2$`,
     ).test(input.executionRoleArn)
   )
     throw new Error("Exact task-scoped execution role required");

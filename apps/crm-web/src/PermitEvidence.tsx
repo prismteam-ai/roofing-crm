@@ -35,7 +35,11 @@ export function PermitEvidence({
     license = p.contractor.licenseEvidence,
     rating = p.contractor.ratingEvidence;
   return (
-    <div className="permit-detail" data-testid="permit-observation">
+    <div
+      className="permit-detail private-protected-evidence"
+      data-private-evidence="permit-observation"
+      data-testid="permit-observation"
+    >
       <div className="permit-line">
         <b>{p.permitNumber ?? p.id}</b>
         <span className={`permit-state ${status}`}>

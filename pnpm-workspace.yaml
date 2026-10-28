@@ -20,7 +20,6 @@ minimumReleaseAgeExclude:
   - ai@7.0.154
   - aws-cdk-lib@2.275.0
   - typescript-eslint@8.72.1
-  - "@aws-sdk/client-bedrock-runtime@3.1157.0"
   - "@aws-sdk/client-dynamodb@3.1157.0"
   - "@aws-sdk/client-secrets-manager@3.1157.0"
   - "@aws-sdk/core@3.978.6"
@@ -42,3 +41,5 @@ minimumReleaseAgeExclude:
   - "@aws-sdk/token-providers@3.1157.0"
   - "@smithy/core@3.37.0"
   - "@smithy/node-http-handler@4.13.0"
+  - "@ai-sdk/amazon-bedrock@5.0.127"
+  - "@ai-sdk/anthropic@4.0.91"

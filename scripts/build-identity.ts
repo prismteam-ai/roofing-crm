@@ -15,7 +15,7 @@ export function buildIdentity(): BuildIdentity {
   const region = reviewRegion(process.env.PRISM_REGION ?? REVIEW_REGION),
     stage = process.env.PRISM_STAGE ?? "local";
   if (![REVIEW_STAGE, "local"].includes(stage))
-    throw new Error("Unexpected P3 stage");
+    throw new Error("Unexpected review stage");
   const source = {
     head: git("rev-parse", "HEAD"),
     tree: git("rev-parse", "HEAD^{tree}"),

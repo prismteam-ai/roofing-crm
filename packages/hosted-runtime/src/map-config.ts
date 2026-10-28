@@ -8,7 +8,7 @@ export const LocationConfigSchema = z
   .object({
     apiKey: z.string().min(10).max(2048),
     allowedOrigin: z.string().url(),
-    region: z.literal("us-east-1"),
+    region: z.literal("us-east-2"),
     style: z.literal("Standard"),
     expiresAt: z.iso.datetime(),
     restrictionsDigest: z.string().regex(/^[a-f0-9]{64}$/),
@@ -16,7 +16,7 @@ export const LocationConfigSchema = z
   .strict();
 export function mapConfiguration(
   secretId: string,
-  client = new SecretsManagerClient({ region: "us-east-1", maxAttempts: 1 }),
+  client = new SecretsManagerClient({ region: "us-east-2", maxAttempts: 1 }),
   clock = Date.now,
 ) {
   let cached: { until: number; value: unknown } | undefined;

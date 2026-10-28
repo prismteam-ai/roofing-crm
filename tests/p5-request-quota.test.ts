@@ -32,7 +32,7 @@ it("enforces session40 and endpoint daily240 across sessions without consuming/r
   expect(CAMPAIGN_LIMITS).toMatchObject({
     requestsTotal: 200,
     requestsPerDay: 160,
-    converseTotal: 100,
+    converseTotal: 120,
     conversePerDay: 80,
     modelMicroUsd: 3000000,
   });

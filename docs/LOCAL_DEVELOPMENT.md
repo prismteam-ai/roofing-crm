@@ -1,62 +1,20 @@
 # Local development
 
-Use Node 24 and pnpm 11.25.0 from the pinned lockfile. `.node-version` records the
-project's patch pin; every receipt must record the actual runtime used. The local
-P5 lane used Node 24.22.1. Reconstruct both repository bundles as siblings using
-their original names. Do not copy working dependencies, caches, source datasets
-or credentials into a returned bundle.
-
-With a populated package store, the recorded install is:
+Requirements: Node24, pnpm11.25.0, Git, Linux x64 for the pinned native workflow validator, system `zip` and `tar`, and the pinned Playwright Chromium build. The package manager and dependencies are frozen in the source manifest/lockfile.
 
 ```sh
-pnpm install --offline --frozen-lockfile --ignore-scripts
+pnpm install --frozen-lockfile
+pnpm run tooling:install
+pnpm exec playwright install chromium
+pnpm run ci:verify
 ```
 
-An empty store requires a separately recorded dependency acquisition. Do not
-silently remove frozen/offline boundaries or enable install hooks. Native Oracle
-DuckDB packaging is validated by Oracle; the CRM Lambda itself has no native
-DuckDB ABI dependency.
+`tooling:install` verifies exact official archive and binary hashes before using actionlint. It installs only the pinned validator in the ignored local tool cache. No cloud credentials are required by CI-equivalent validation.
 
-The following commands have local implementations and produce no deployment:
+Standalone synthetic browser CI uses an explicitly labeled prepared Oracle HTTP contract fixture. It proves CRM behavior against the contract, not a real source/Oracle integration. Set `PRISM_BROWSER_ORACLE_MODE=integration` for the paired real Oracle checkout; real-data mode always requires that integration. Browser installation uses Playwright's pinned Chromium; `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` is an explicit local override only.
 
-```sh
-pnpm contract:check
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm lambda:package
-pnpm lambda:emulate
-pnpm cdk:synth
-pnpm benchmark
-```
+First start the matching Oracle checkout with `pnpm run api` (loopback4310), then use `pnpm run api` and `pnpm run dev` in separate CRM terminals for the local synthetic workspace. `pnpm run test:browser` and `pnpm run test:map-browser` run the relevant synthetic browser campaigns. `pnpm run lambda:package` produces a deterministic deployable package with third-party notices; `pnpm run lambda:emulate` exercises the packaged entry points with synthetic dependencies.
 
-`contract:check` verifies source and shared-predicate digests against the local
-manifest and also compares the producer when the sibling is present. Contract
-changes originate with Oracle and require coordinated copies; never hand-edit a
-consumer contract to make a test pass. Build/package identities require a clean
-committed tree for release proof. Build outputs are ignored local artifacts.
-Emulation uses the exact bundled handler with injected synthetic dependencies and
-fake Converse; it is not hosted or live-model evidence. Benchmark is synthetic
-lead persistence, not a county-query performance claim.
+Other documented commands: `pnpm run typecheck`, `pnpm run lint`, `pnpm run format:check`, `pnpm run test`, `pnpm run contract:check`, `pnpm run build`, `pnpm run cdk:synth`, `pnpm run workflow:check`, `pnpm run security:scan`, `pnpm run docs:check`, `pnpm run scripts:check`, `pnpm run dependency:audit`, and `pnpm run benchmark`. CDK synthesis requires a packaged Lambda asset; canonical verification orders packaging before synthesis.
 
-For local development, run the Oracle API/frontend, then the CRM API/frontend in
-separate terminals using each repository's `pnpm api` and `pnpm dev` scripts.
-Their loopback ports are Oracle 4310/4173 and CRM 4311/4174. Default local data is
-explicitly synthetic. Real/protected execution requires the pinned private input
-configuration and must never silently fall back to synthetic evidence.
-
-The focused UI ledger test serves only the local CRM frontend and intercepts
-API responses with labeled synthetic fixtures:
-
-```sh
-pnpm exec playwright test --config playwright.p5.config.ts
-```
-
-It blocks/asserts absent external requests, records no video or trace, and checks
-desktop/mobile ledger/filter persistence. Use an existing installed Chromium via
-`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` if needed; the command does not install a
-browser. The ordinary cross-application browser suite additionally requires the
-sibling Oracle and separate source-mode configuration. Final clean-reconstruction,
-real-source, hosted and accessibility evidence remains in the returned test matrix.
+`pnpm run deploy --dry-run`, `pnpm run bootstrap --dry-run`, `pnpm run smoke --dry-run`, `pnpm run evidence --dry-run`, `pnpm run rotate-access --dry-run`, `pnpm run destroy --dry-run`, and `pnpm run campaign` are no-effect plans. Actual remote actions require their separate exact account/source/archive/cost/rights gates. The release return lists which commands were actually run and their outcomes.

@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "./support/retrieval-model";
 import { it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createApp } from "../apps/api/src/app";
@@ -64,33 +65,28 @@ function data(
   };
 }
 function provider(
-  ordinals: number[],
+  tamperOrder: boolean,
   calls: { value: number },
 ): ConverseTransport {
   return {
-    converse: async () => {
+    converse: async (request) => {
       calls.value++;
       return {
-        $metadata: {},
-        metrics: { latencyMs: 0 },
-        usage: { inputTokens: 20, outputTokens: 20, totalTokens: 40 },
-        stopReason: "tool_use",
-        output: {
-          message: {
-            role: "assistant",
-            content: [
-              {
-                toolUse: {
-                  toolUseId: "synthetic",
-                  name: "selectGroundedEvidence",
-                  input: {
-                    ordinals,
-                  },
-                },
-              },
-            ],
+        ...approvedModelResponse(request),
+        content: [
+          {
+            ...approvedModelResponse(request).content[0],
+            input: tamperOrder
+              ? {
+                  ...request.approved,
+                  sort:
+                    request.approved.sort === "distance"
+                      ? "roof_age_desc"
+                      : "distance",
+                }
+              : request.approved,
           },
-        },
+        ],
       };
     },
   };
@@ -256,7 +252,7 @@ it("same-permit business predicates are validated before constructing a model re
         },
         detail: async () => property,
       },
-      provider([0], calls),
+      provider(false, calls),
       "Find open permits with verified contractors",
       base,
       { modelId: "synthetic" },
@@ -283,7 +279,7 @@ it("missing or altered official place response evidence is rejected before model
           },
           detail: async () => nonemptyEvidenceProperty,
         },
-        provider([0], calls),
+        provider(false, calls),
         "Find roofs older than 15 within five miles of Troy",
         base,
         { modelId: "synthetic" },
@@ -349,25 +345,23 @@ it("an explicit sort cannot be reversed by model ordinals", async () => {
         },
         detail: async () => old,
       },
-      provider([1, 0], calls),
+      provider(true, calls),
       "Find top two oldest roofs",
       base,
       { modelId: "synthetic" },
     ),
-  ).rejects.toThrow("authoritative result order");
+  ).rejects.toThrow("approved retrieval constraints");
   expect({ reads, calls: calls.value }).toEqual({ reads: 1, calls: 1 });
 });
 it("the fixed model protocol explicitly retains authoritative source order when a sort is requested", async () => {
   const calls = { value: 0 };
-  const fake = provider([0], calls);
+  const fake = provider(false, calls);
   const ordered: ConverseTransport = {
     converse: async (request, options) => {
-      expect(request.system?.[0].text).toContain(
-        "distinct supplied numeric row ordinals in strictly increasing order",
+      expect(request.system).toContain(
+        "cannot change its snapshot, location, constraints, sort, limit",
       );
-      expect(
-        JSON.parse(request.messages![0].content![0].text!).boundedQuery.sort,
-      ).toBe("distance");
+      expect(JSON.parse(request.prompt).boundedQuery.sort).toBe("distance");
       return fake.converse(request, options);
     },
   };
@@ -404,7 +398,7 @@ it("invalid source order cannot enter model context or cached deterministic rend
   await expect(
     answerWithBedrock(
       reader,
-      provider([0], calls),
+      provider(false, calls),
       "Find top two oldest roofs",
       base,
       { modelId: "synthetic" },

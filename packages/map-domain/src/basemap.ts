@@ -48,13 +48,13 @@ export interface AmazonLocationProvider {
   kind: "amazon-location";
   apiKey: string;
   allowedOrigin: string;
-  region: "us-east-1";
+  region: "us-east-2";
   style: "Standard";
   expiresAt: string;
   restrictionsDigest: string;
   attribution: string;
 }
-export const LOCATION_ORIGIN = "https://maps.geo.us-east-1.amazonaws.com";
+export const LOCATION_ORIGIN = "https://maps.geo.us-east-2.amazonaws.com";
 export const LOCATION_ATTRIBUTION =
   '<a href="https://docs.aws.amazon.com/location/latest/developerguide/data-attribution.html" target="_blank" rel="noreferrer">Amazon Location data attribution</a>';
 export function amazonLocationProvider(
@@ -65,7 +65,7 @@ export function amazonLocationProvider(
   const x = input as Partial<AmazonLocationProvider>;
   if (
     x.kind !== "amazon-location" ||
-    x.region !== "us-east-1" ||
+    x.region !== "us-east-2" ||
     x.style !== "Standard" ||
     x.allowedOrigin !== pageOrigin ||
     !/^https:\/\/d[a-z0-9]+\.cloudfront\.net$/.test(pageOrigin) ||

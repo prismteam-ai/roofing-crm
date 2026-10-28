@@ -17,3 +17,5 @@ private/
 *.log
 
 build/
+
+.data/tools/

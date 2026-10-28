@@ -43,7 +43,9 @@ it("labels source-reported owners and related report events without turning them
   expect(html).toContain("synthetic-owner-row");
   expect(html).toContain("Observed 2026-10-28");
   expect(html).toContain("digest aaaaaaaaaaaa");
-  expect(html).toContain('class="permit-detail private-source-reported-owner"');
+  expect(html).toContain(
+    'class="permit-detail private-source-reported-owner private-protected-evidence"',
+  );
 });
 
 it("keeps applied and issued report dates distinct and never renders unknown-role contacts", () => {
@@ -123,7 +125,7 @@ it.each(["Owner Name 1", "Owner Name 2"] as const)(
       expect(html).toContain(value);
     expect(html).toContain("not independently verify residency");
     expect(html).toContain(
-      'class="permit-detail private-source-reported-owner"',
+      'class="permit-detail private-source-reported-owner private-protected-evidence"',
     );
   },
 );

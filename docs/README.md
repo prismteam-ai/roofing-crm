@@ -1,23 +1,17 @@
-# Authoritative CRM documentation
+# Documentation index and authority
 
-These documents describe the current reusable implementation and its evidence
-boundaries. The assignment [README](../README.md) remains the original objective.
+The frozen [assignment README](history/ASSIGNMENT_README.md) and original requirement rows control product scope. Current pinned team-kit guidance governs the engineering choices where compatible. Implementation and runtime receipts must agree before release acceptance.
 
-- [Evaluator orientation](../IMPLEMENTATION.md)
 - [Architecture](ARCHITECTURE.md)
-- [Data coverage](DATA_COVERAGE.md)
-- [Local development](LOCAL_DEVELOPMENT.md)
-- [Deployment](DEPLOYMENT.md)
+- [Data coverage and source rights](DATA_COVERAGE.md)
+- [Local development and command inventory](LOCAL_DEVELOPMENT.md)
+- [Deployment and rollback](DEPLOYMENT.md)
 - [Security and privacy](SECURITY_PRIVACY.md)
-- [Evaluator guide](EVALUATOR_GUIDE.md)
+- [Observability and alerts](OBSERVABILITY.md)
+- [Evaluator walkthrough](EVALUATOR_GUIDE.md)
 - [Known limitations](KNOWN_LIMITATIONS.md)
 - [Release checklist](RELEASE_CHECKLIST.md)
-- [Detailed natural-language semantics](P5_NL_INTENT_AND_LIMITATIONS.md)
+- [Decision records](adr/001-constrained-retrieval.md)
+- [Historical records](history/README.md)
 
-The root [quickstart](../QUICKSTART.md) points to the same current instructions.
-Documents under `architecture/` and documents named P2, P3 or P4 are retained
-historical records with superseded banners. Their old contracts, inference
-protocols, limits, resource defaults, commands and deployment claims must not be
-used as current operating instructions. Historical receipts are never overwritten
-to conceal failures. Current release evidence belongs to the source-pinned return
-packet and must be revalidated after a source or package change.
+Historical source snapshots preserve their original relative-link context and commit identities. They do not override current instructions or imply current hosted acceptance.

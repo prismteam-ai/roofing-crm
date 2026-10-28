@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "./support/retrieval-model";
 import { describe, it, expect } from "vitest";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { createHostedHandler } from "../apps/api/src/lambda";
@@ -157,32 +158,11 @@ for (const item of QUALITY_CORPUS)
       converse: async (request) => {
         providerCalls++;
         requests.push(JSON.stringify(request));
-        expect(
-          JSON.parse(request.messages![0].content![0].text!).retrievedEvidence
-            .rows[0].roof.ageYears,
-        ).toBe(item.id === "unknown" ? null : property.roof.ageYears);
-        return {
-          $metadata: {},
-          metrics: { latencyMs: 1 },
-          stopReason: "tool_use",
-          usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  toolUse: {
-                    toolUseId: "synthetic-routing",
-                    name: "selectGroundedEvidence",
-                    input: {
-                      ordinals: [0],
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        };
+        expect(JSON.parse(request.prompt).sourceSummary.boundedPageRows).toBe(
+          1,
+        );
+        expect(JSON.parse(request.prompt).retrievedEvidence).toBeUndefined();
+        return approvedModelResponse(request);
       },
     };
     const access = new AccessService(
@@ -216,7 +196,7 @@ for (const item of QUALITY_CORPUS)
         provider,
         price: async () => ({
           modelId: MICRO_MODEL,
-          region: "us-east-1" as const,
+          region: "us-east-2" as const,
           inputUsdPerMillion: 0.035,
           outputUsdPerMillion: 0.14,
           verifiedAt: new Date(now).toISOString(),
@@ -264,7 +244,7 @@ for (const item of QUALITY_CORPUS)
         expect(response.statusCode).toBe(200);
         expect(body.mode).toBe("bedrock-grounded");
         expect(providerCalls).toBe(1);
-        expect(reads).toBe(1);
+        expect(reads).toBe(2);
         expect(body.modelAudit).toMatchObject({
           architecture: ROUTING_ARCHITECTURE,
           converseCalls: 1,
@@ -278,7 +258,7 @@ for (const item of QUALITY_CORPUS)
           JSON.parse(JSON.stringify(boundedIntent(item.prompt, base))),
         );
         expect(body.toolTrace).toHaveLength(1);
-        expect(body.toolTrace[0].modelSawMinimizedFacts).toBe(true);
+        expect(body.toolTrace[0].modelSawMinimizedFacts).toBe(false);
         expect(body.toolTrace[0].arguments).toEqual(body.query);
         expect(body.toolTrace[0].argumentsDigest).toBe(
           hash(QuerySchema.parse(body.query)),
@@ -383,32 +363,9 @@ describe("P4 identity and evidence guards", () => {
       };
       const provider: ConverseTransport = {
         converse: async (request) => {
-          const q = JSON.parse(
-            request.messages![0].content![0].text!,
-          ).boundedQuery;
+          const q = JSON.parse(request.prompt).boundedQuery;
           modelInputs.push(q);
-          return {
-            $metadata: {},
-            metrics: { latencyMs: 1 },
-            stopReason: "tool_use",
-            usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
-            output: {
-              message: {
-                role: "assistant",
-                content: [
-                  {
-                    toolUse: {
-                      toolUseId: "synthetic-clause",
-                      name: "selectGroundedEvidence",
-                      input: {
-                        ordinals: [0],
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          };
+          return approvedModelResponse(request);
         },
       };
       const routed = await answerWithBedrock(reader, provider, prompt, base, {
@@ -430,7 +387,7 @@ describe("P4 identity and evidence guards", () => {
         expect(q.minOwnershipYears).toBeUndefined();
       }
       expect(modelInputs).toHaveLength(1);
-      expect(reads).toHaveLength(2);
+      expect(reads).toHaveLength(3);
     }
   });
   it("refuses a separate unsupported tenure clause even when a valid reported-sale clause is present", async () => {
@@ -455,7 +412,7 @@ describe("P4 identity and evidence guards", () => {
         detail: async () => property,
       };
       const provider: ConverseTransport = {
-        converse: async () => {
+        converse: async (_request) => {
           providerCalls++;
           throw Error("No provider use permitted");
         },
@@ -534,7 +491,7 @@ describe("P4 identity and evidence guards", () => {
       ),
     ).toThrow("current-phase");
   });
-  it("writes only the immutable P5 partition, with no prior phase reset or access", async () => {
+  it("writes only the immutable active retrieval partition, with no prior phase reset or access", async () => {
     const legacy = { consumed: 41 },
       seen: string[] = [];
     const db = {
@@ -567,7 +524,7 @@ describe("P4 identity and evidence guards", () => {
       modelId: MICRO_MODEL,
       revision: "base",
       architecture: ROUTING_ARCHITECTURE,
-      region: "us-east-1",
+      region: "us-east-2",
       at: new Date(now).toISOString(),
       callIndex: 1,
       inputTokens: 100,
@@ -575,7 +532,9 @@ describe("P4 identity and evidence guards", () => {
       totalTokens: 120,
     });
     expect(seen.length).toBeGreaterThan(0);
-    expect(seen.every((x) => x === "campaign#prism-assessment-p5")).toBe(true);
+    expect(
+      seen.every((x) => x === "campaign#prism-assessment-review-retrieval-v3"),
+    ).toBe(true);
     expect(legacy).toEqual({ consumed: 41 });
   });
 });

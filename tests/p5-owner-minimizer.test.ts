@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "./support/retrieval-model";
 import { expect, it } from "vitest";
 import {
   CONTRACT_VERSION,
@@ -8,7 +9,7 @@ import {
   minimizedEvidenceContext,
   minimizedEvidenceRow,
 } from "../packages/agent/src/bedrock";
-import type { ConverseCommandInput } from "@aws-sdk/client-bedrock-runtime";
+import type { ConverseCommandInput } from "../packages/agent/src/bedrock";
 import { nonemptyEvidenceProperty } from "./support/evidence-fixture";
 
 const privateSentinel = "SYNTHETIC_PRIVATE_REPORTED_OWNER_DO_NOT_SEND_TO_MODEL";
@@ -148,35 +149,14 @@ it.each([
       {
         converse: async (request) => {
           requests.push(structuredClone(request));
-          return {
-            $metadata: {},
-            metrics: { latencyMs: 1 },
-            usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
-            stopReason: "tool_use",
-            output: {
-              message: {
-                role: "assistant",
-                content: [
-                  {
-                    toolUse: {
-                      toolUseId: "synthetic-owner-tool",
-                      name: "selectGroundedEvidence",
-                      input: {
-                        ordinals: [0],
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          };
+          return approvedModelResponse(request);
         },
       },
       "Find roofing evidence",
       query,
-      { modelId: "amazon.nova-micro-v1:0" },
+      { modelId: "us.amazon.nova-micro-v1:0" },
     );
-    expect(reads).toBe(1);
+    expect(reads).toBe(2);
     expect(requests).toHaveLength(1);
     expect(result.mode).toBe("bedrock-grounded");
     expect(

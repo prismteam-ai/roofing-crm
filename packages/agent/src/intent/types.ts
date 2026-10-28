@@ -69,7 +69,7 @@ export const ConstraintLedgerEntrySchema = z
 export type ConstraintLedgerEntry = z.infer<typeof ConstraintLedgerEntrySchema>;
 export const IntentPlanSchema = z
   .object({
-    version: z.literal("p5-compositional-intent-v1"),
+    version: z.literal("compositional-intent-v1"),
     accepted: z.boolean(),
     query: QuerySchema.optional(),
     ledger: z.array(ConstraintLedgerEntrySchema).max(120),

@@ -1,46 +1,36 @@
-# Roofing CRM & Lead Identification UI
+# Prism Roofing CRM
 
-## Context
+An Oakland County evidence workspace for map searches, source-backed roof and permit observations, a bounded natural-language agent, and durable lead management. The CRM consumes Oracle projections; it does not independently ingest county or provider data.
 
-Roofing companies need a practical CRM for finding and qualifying residential and commercial roofing leads in their service area. The immediate requirement is a map-based CRM that helps sales teams explore local properties, surface roofs that are aging or have stalled open permits, and turn those signals into actionable outreach opportunities.
+## Evaluate
 
-Data gathering and ingestion pipelines are covered by a separate user story and are **out of scope** for this work. This story assumes property, permit, and related enrichment data are already available for the UI and agent to consume.
+Use the live URL and review code in the separately supplied private access guide. The source repository never contains that code. Open the workspace, choose a map center and radius, inspect source evidence, save a lead, and use the agent. [Evaluator guide](docs/EVALUATOR_GUIDE.md) explains the bounded workflows and factual limits.
 
-## Description
+For a local synthetic workspace, first start the Oracle API from its matching checkout. Use Node24 and pnpm11.25.0:
 
-Create a map-based roofing lead CRM that enables users to locate properties from their current GPS position or a pin drop on the map, set a search radius, and review candidate roofs that meet lead criteria—primarily roof age (for example, older than 15 years) and open roofing permits (especially permits that have remained open for many years).
+```sh
+pnpm install --frozen-lockfile
+pnpm run api
+```
 
-The UI should present property and permit details, including contractor information and BBB rating scores where available. Users should also be able to query the platform in natural language through a RAG-backed agent to discover roofing opportunities (for example, “show me open roofing permits older than five years within five miles of [city xyz]”).
+In another terminal:
 
-## Acceptance Criteria
-- Default the map and search experience to a particular county, with support for exploring properties in the user’s selected area.
-- Allow users to center property search on current GPS location and/or a pin dropped on the map.
-- Allow users to set a configurable search radius around the selected location.
-- Display properties within the radius that have roofs older than a configurable age threshold (default suggestion: 15 years).
-- Display properties within the radius that have open roofing permits, with emphasis on permits that have remained open for an extended period.
-- Show permit details in the UI, including permit status, age/open duration, contractor name, and BBB rating score when available.
-- Present a browsable list of matching roofing lead candidates derived from the map/radius filters.
-- Support creating and managing CRM lead records from identified properties and permits.
-- Provide a RAG-backed agent that answers natural-language queries about roofing opportunities using available property and permit data.
-- Keep data gathering, ingestion, and source-system integration out of scope; consume pre-existing/available datasets.
-- Show (disabled) sections on the CRM that would expand the product beyond the initial lead-identification workflow.
+```sh
+pnpm run dev
+```
 
-## Demo Transcript
-- Open the CRM centered on a particular county.
-- Drop a pin (or use GPS) and set a search radius.
-- Show roofs older than the age threshold (e.g., 15 years) within the radius.
-- Highlight properties with open roofing permits, prioritizing long-open permits.
-- Open a selected property/permit and review contractor details and BBB rating where available.
-- Convert one or more matches into CRM lead records.
-- Ask the RAG agent a natural-language query for roofing opportunities in the area and show relevant results.
-- Demonstrate filtering leads by roof age, permit status/open duration, and location radius.
-- Show disabled/placeholder sections for future CRM expansions beyond lead identification.
+The API is local-only and the default fixture is synthetic. See [local development](docs/LOCAL_DEVELOPMENT.md) for the complete command and tool requirements.
 
-## Out of Scope
-- Property, permit, ownership, or enrichment data collection and ingestion pipelines (separate story).
-- Live BBB API integration beyond displaying scores already present in available data.
-- Actual outbound messaging to property owners (can be mocked or deferred).
+## Architecture and current engineering path
 
-## Reference
-- [Soofi XYZ Team Kit](https://github.com/soofi-xyz/soofi-xyz-team-kit)
-- [Elephant Oracle Skills](https://github.com/elephant-xyz/skills)
+React/MapLibre → API Gateway/Node24 Lambda → a pinned Oracle read API plus DynamoDB sessions, lead history and quota ledgers. One Vercel AI SDK/Zod tool can request an immutable server-approved retrieval. Facts and citations are rendered by the server. There are at most two bounded read-only Oracle queries and one model attempt per accepted turn; empty and refused queries skip the model.
+
+The review environment uses `us-east-2`, standard CDK bootstrap/deploy, private S3 with CloudFront OAC, Powertools, active X-Ray, 90-day logs and bounded alarm notification. The previous runtime remains a separately retained rollback; no old stack is destroyed by this source update.
+
+[Documentation index](docs/README.md) · [Delivered scope](IMPLEMENTATION.md) · [Architecture](docs/ARCHITECTURE.md) · [Coverage and rights](docs/DATA_COVERAGE.md) · [Known limitations](docs/KNOWN_LIMITATIONS.md)
+
+## Verification and release status
+
+`pnpm run ci:verify` is the canonical local/CI command. The pinned GitHub Actions workflow runs the same command after frozen installation, tool installation and browser setup. Local parity is not a claim that GitHub-hosted Actions have executed. Current hosted release acceptance and source-specific outcomes must be checked against the accompanying review return and runtime identities.
+
+The original [assignment contract](docs/history/ASSIGNMENT_README.md) remains controlling. Original positive source outcomes are not satisfied merely by an empty-result implementation. No PR, official submission, media production, Atlas/global IPNS or new real-data publication is performed by this release-candidate work.

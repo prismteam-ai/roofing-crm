@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "./support/retrieval-model";
 import { it, expect } from "vitest";
 import { createHash } from "node:crypto";
 import {
@@ -153,40 +154,10 @@ it("the grounded model and deterministic path see only known older roofs unless 
     const provider: ConverseTransport = {
       converse: async (request) => {
         calls++;
-        const rows = JSON.parse(request.messages![0].content![0].text!)
-          .retrievedEvidence.rows as {
-          ordinal: number;
-          roof: { ageYears: number | null };
-        }[];
-        expect(rows).toHaveLength(optIn ? 2 : 1);
-        if (!optIn)
-          expect(
-            rows.every(
-              (row) => row.roof.ageYears !== null && row.roof.ageYears > 15,
-            ),
-          ).toBe(true);
-        return {
-          $metadata: {},
-          metrics: { latencyMs: 1 },
-          usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
-          stopReason: "tool_use",
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  toolUse: {
-                    toolUseId: "age",
-                    name: "selectGroundedEvidence",
-                    input: {
-                      ordinals: rows.map((row) => row.ordinal),
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        };
+        const summary = JSON.parse(request.prompt).sourceSummary;
+        expect(summary.boundedPageRows).toBe(optIn ? 2 : 1);
+        expect(JSON.stringify(request)).not.toContain(p.address);
+        return approvedModelResponse(request);
       },
     };
     const answer = await answerWithBedrock(reader, provider, prompt, base, {
@@ -196,7 +167,7 @@ it("the grounded model and deterministic path see only known older roofs unless 
     expect(answer.query.includeUnknown).toBe(optIn);
     expect(answer.results).toHaveLength(optIn ? 2 : 1);
     expect(deterministic.results).toEqual(answer.results);
-    expect(reads).toBe(2);
+    expect(reads).toBe(3);
     expect(calls).toBe(1);
   }
 });
@@ -217,7 +188,7 @@ it("rejects a backend unknown-age row violating an explicit age predicate before
     detail: async () => p,
   };
   const provider: ConverseTransport = {
-    converse: async () => {
+    converse: async (_request) => {
       calls++;
       throw Error("No model call");
     },
@@ -259,8 +230,8 @@ it("exposes only literal allowlisted retrieved facts, observed duration, busines
       expect(reads).toBe(1);
       const raw = JSON.stringify(request);
       expect(raw).not.toContain("DO_NOT_SEND_RAW");
-      const message = JSON.parse(request.messages![0].content![0].text!),
-        row = message.retrievedEvidence.rows[0];
+      const message = JSON.parse(request.prompt),
+        row = minimizedEvidenceRow(data.rows[0], 0);
       expect(row).toMatchObject({
         ordinal: 0,
         roof: { ageYears: 26, basis: "built_year", confidence: "low" },
@@ -283,33 +254,12 @@ it("exposes only literal allowlisted retrieved facts, observed duration, busines
           oldestOpenObservedAt: "2021-01-01",
         },
       });
-      expect(message.evidenceDigest).toBe(
-        createHash("sha256")
-          .update(JSON.stringify(message.retrievedEvidence))
-          .digest("hex"),
+      expect(message.sourceSummary.boundedPageRows).toBe(1);
+      expect(message.retrievedEvidence).toBeUndefined();
+      expect(request.approved.queryDigest).toBe(
+        createHash("sha256").update(JSON.stringify(searched[0])).digest("hex"),
       );
-      return {
-        $metadata: {},
-        metrics: { latencyMs: 1 },
-        usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
-        stopReason: "tool_use",
-        output: {
-          message: {
-            role: "assistant",
-            content: [
-              {
-                toolUse: {
-                  toolUseId: "grounded",
-                  name: "selectGroundedEvidence",
-                  input: {
-                    ordinals: [0],
-                  },
-                },
-              },
-            ],
-          },
-        },
-      };
+      return approvedModelResponse(request);
     },
   };
   const answer = await answerWithBedrock(
@@ -326,7 +276,7 @@ it("exposes only literal allowlisted retrieved facts, observed duration, busines
     q,
     { modelId: "synthetic" },
   );
-  expect(reads).toBe(1);
+  expect(reads).toBe(2);
   expect(calls).toBe(1);
   expect(searched[0]).toMatchObject(q);
   expect(answer.results).toEqual(data.rows);
@@ -335,10 +285,12 @@ it("exposes only literal allowlisted retrieved facts, observed duration, busines
     retrievedRowCount: 1,
     minimizedRowCount: 1,
     selectedOrdinals: [0],
-    modelSawMinimizedFacts: true,
+    modelSawMinimizedFacts: false,
   });
   expect(answer.answer).toContain("9 matching properties");
-  expect(answer.answer).toContain("not complete coverage");
+  expect(answer.toolTrace[0].totalMatched).toBeGreaterThan(
+    answer.results.length,
+  );
 });
 it("does not promote issued-only or unknown records to open evidence in the minimized facts", () => {
   const row = {

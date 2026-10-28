@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "./support/retrieval-model";
 import { it, expect } from "vitest";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
@@ -69,7 +70,7 @@ it("a complete zero-match retrieval returns honest source evidence with one read
       detail: async () => nonemptyEvidenceProperty,
     },
     {
-      converse: async () => {
+      converse: async (_request) => {
         calls++;
         throw Error("Must not call");
       },
@@ -123,7 +124,7 @@ it("inconsistent empty pages, wrong snapshots and false empty rendering fail bef
           detail: async () => nonemptyEvidenceProperty,
         },
         {
-          converse: async () => {
+          converse: async (_request) => {
             calls++;
             throw Error("Must not call");
           },
@@ -159,27 +160,11 @@ it("hosted empty requests retain request allowance, audit exact zeros, and canno
     zero = true;
   const reservations: CampaignReservation[] = [];
   const provider: ConverseTransport = {
-    converse: async () => {
+    converse: async (request) => {
       calls++;
       return {
-        $metadata: {},
-        metrics: { latencyMs: 0 },
-        stopReason: "tool_use",
-        usage: { inputTokens: 20, outputTokens: 20, totalTokens: 40 },
-        output: {
-          message: {
-            role: "assistant",
-            content: [
-              {
-                toolUse: {
-                  toolUseId: "synthetic",
-                  name: "selectGroundedEvidence",
-                  input: { ordinals: [] },
-                },
-              },
-            ],
-          },
-        },
+        ...approvedModelResponse(request),
+        content: [{ ...approvedModelResponse(request).content[0], input: {} }],
       };
     },
   };
@@ -201,7 +186,7 @@ it("hosted empty requests retain request allowance, audit exact zeros, and canno
       prices++;
       return {
         modelId: MICRO_MODEL,
-        region: "us-east-1",
+        region: "us-east-2",
         inputUsdPerMillion: 0.035,
         outputUsdPerMillion: 0.14,
         verifiedAt: new Date(now).toISOString(),
@@ -295,7 +280,7 @@ it("hosted empty requests retain request allowance, audit exact zeros, and canno
     zero = false;
     const rejected = JSON.parse((await invoke()).body);
     expect(rejected.mode).toBe("deterministic-fallback");
-    expect(rejected.modelAudit.failureDetail).toBe("selection_schema");
+    expect(rejected.modelAudit.failureDetail).toBe("retrieval_constraints");
     expect({ reads, calls, prices }).toEqual({ reads: 2, calls: 1, prices: 1 });
     expect(rejected.results).toEqual(nonempty.rows); // the strict failed selection uses the same single cached read
     expect(reservations.map((x) => x.kind)).toEqual([

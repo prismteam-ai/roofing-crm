@@ -5,6 +5,8 @@ coverage
 test-results
 playwright-report
 pnpm-lock.yaml
-README.md
 
 build
+
+# Exact historical snapshots are hash-checked by docs:check.
+docs/history/**

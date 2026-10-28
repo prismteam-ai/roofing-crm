@@ -47,7 +47,7 @@ export interface AppDependencies {
   release?: BuildIdentity;
   model?: {
     id: string;
-    region: "us-east-1";
+    region: "us-east-2";
     promptRevision: "base" | "repair-1";
     architecture: RoutingArchitecture;
     phase: string;

@@ -8,7 +8,7 @@ import {
 import { reserveCost, type VerifiedPrice } from "./campaign";
 
 export const REGIONAL_PRICE_LIST_URL =
-  "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-1/index.json";
+  "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-2/index.json";
 const PRICE_SKUS = {
   [MICRO_MODEL]: {
     name: "Nova Micro",
@@ -62,7 +62,7 @@ export function parseRegionalPriceList(
     if (
       product.sku !== sku ||
       a.servicecode !== "AmazonBedrock" ||
-      a.regionCode !== "us-east-1" ||
+      a.regionCode !== "us-east-2" ||
       a.feature !== "On-demand Inference" ||
       a.model !== spec.name ||
       a.usagetype !== `USE1-${spec.token}-${side}-tokens` ||
@@ -100,7 +100,7 @@ export function parseRegionalPriceList(
   };
   const price: VerifiedPrice = {
     modelId,
-    region: "us-east-1",
+    region: "us-east-2",
     inputUsdPerMillion: read("input"),
     outputUsdPerMillion: read("output"),
     verifiedAt: new Date(verifiedAt).toISOString(),

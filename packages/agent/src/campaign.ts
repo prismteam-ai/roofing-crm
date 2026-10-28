@@ -21,9 +21,13 @@ export interface CampaignReservation {
   reservedMicroUsd?: number;
 }
 export interface CampaignStore {
-  reserve(input: CampaignReservation): Promise<void>;
-  authorize(modelId: string, revision: "base" | "repair-1"): Promise<void>;
-  record(input: CampaignAudit): Promise<void>;
+  reserve(input: CampaignReservation, signal?: AbortSignal): Promise<void>;
+  authorize(
+    modelId: string,
+    revision: "base" | "repair-1",
+    signal?: AbortSignal,
+  ): Promise<void>;
+  record(input: CampaignAudit, signal?: AbortSignal): Promise<void>;
 }
 export interface CampaignAudit {
   requestId: string;
@@ -31,7 +35,7 @@ export interface CampaignAudit {
   promptDigest: string;
   modelId: string;
   revision: "base" | "repair-1";
-  region: "us-east-1";
+  region: "us-east-2";
   at: string;
   architecture?: typeof ROUTING_ARCHITECTURE;
   evidenceDigest?: string;
@@ -90,7 +94,7 @@ export function qualityAllows(
       "Lite requires measured failure of Micro and its one prompt repair",
     );
 }
-export const CAMPAIGN_PHASE = "prism-assessment-p5";
+export const CAMPAIGN_PHASE = "prism-assessment-review-retrieval-v3";
 /** Versioned quality eligibility preserves the prior architecture's gate and all budgets. */
 export const QUALITY_GATE_KEY = `quality-gate#${ROUTING_ARCHITECTURE}`;
 export const CAMPAIGN_LIMITS = Object.freeze({
@@ -99,7 +103,7 @@ export const CAMPAIGN_LIMITS = Object.freeze({
   // Requests include empty evidence; preserve test usage and finite evaluator headroom.
   endpointRequestsPerDay: 240,
   requestsPerSessionHour: 40,
-  converseTotal: 100,
+  converseTotal: 120,
   conversePerDay: 80,
   conversePerSessionHour: 40,
   modelMicroUsd: 3000000,
@@ -163,30 +167,46 @@ export class MemoryCampaignStore implements CampaignStore {
   private counts = new Map<string, number>();
   readonly audit: CampaignAudit[] = [];
   constructor(readonly gate?: QualityGate) {}
-  async authorize(modelId: string, revision: "base" | "repair-1") {
+  async authorize(
+    modelId: string,
+    revision: "base" | "repair-1",
+    signal?: AbortSignal,
+  ) {
+    if (signal?.aborted)
+      throw new DomainError("QUERY_TIMEOUT", "Campaign deadline exceeded");
     qualityAllows(this.gate, modelId, revision);
   }
-  async record(input: CampaignAudit) {
+  async record(input: CampaignAudit, signal?: AbortSignal) {
+    if (signal?.aborted)
+      throw new DomainError("QUERY_TIMEOUT", "Campaign deadline exceeded");
     this.audit.push(structuredClone(input));
   }
-  async reserve(input: CampaignReservation) {
+  async reserve(input: CampaignReservation, signal?: AbortSignal) {
+    if (signal?.aborted)
+      throw new DomainError("QUERY_TIMEOUT", "Campaign deadline exceeded");
     const all = entries(input);
     if (all.some((x) => (this.counts.get(x.key) ?? 0) + x.units > x.limit))
       throw new DomainError(
         "COST_LIMIT_REACHED",
-        "P5 campaign request, invocation or reserved-cost cap reached",
+        "Assessment campaign request, invocation or reserved-cost cap reached",
       );
     for (const x of all)
       this.counts.set(x.key, (this.counts.get(x.key) ?? 0) + x.units);
   }
 }
-/** Counters intentionally have no TTL: prior phase totals and the P5 total cannot reset during redeployment or review extension. */
+/** Counters intentionally have no TTL: prior phase totals and the current assessment total cannot reset during redeployment or review extension. */
 export class DynamoCampaignStore implements CampaignStore {
   constructor(
     private readonly client: Pick<DynamoDBDocumentClient, "send">,
     private readonly table: string,
   ) {}
-  async authorize(modelId: string, revision: "base" | "repair-1") {
+  async authorize(
+    modelId: string,
+    revision: "base" | "repair-1",
+    signal?: AbortSignal,
+  ) {
+    if (signal?.aborted)
+      throw new DomainError("QUERY_TIMEOUT", "Campaign deadline exceeded");
     if (modelId === MICRO_MODEL && revision === "base") return;
     const result = await this.client.send(
       new GetCommand({
@@ -194,6 +214,7 @@ export class DynamoCampaignStore implements CampaignStore {
         Key: { pk: `campaign#${CAMPAIGN_PHASE}`, sk: QUALITY_GATE_KEY },
         ConsistentRead: true,
       }),
+      { abortSignal: signal },
     );
     // The queried exact key supplies the architecture identity. Historical v1 gates
     // remain in their old key; no request, invocation or cost counter is reset.
@@ -204,7 +225,9 @@ export class DynamoCampaignStore implements CampaignStore {
         : undefined;
     qualityAllows(gate, modelId, revision);
   }
-  async record(input: CampaignAudit) {
+  async record(input: CampaignAudit, signal?: AbortSignal) {
+    if (signal?.aborted)
+      throw new DomainError("QUERY_TIMEOUT", "Campaign deadline exceeded");
     await this.client.send(
       new PutCommand({
         TableName: this.table,
@@ -216,9 +239,12 @@ export class DynamoCampaignStore implements CampaignStore {
         },
         ConditionExpression: "attribute_not_exists(pk)",
       }),
+      { abortSignal: signal },
     );
   }
-  async reserve(input: CampaignReservation) {
+  async reserve(input: CampaignReservation, signal?: AbortSignal) {
+    if (signal?.aborted)
+      throw new DomainError("QUERY_TIMEOUT", "Campaign deadline exceeded");
     try {
       await this.client.send(
         new TransactWriteCommand({
@@ -237,6 +263,7 @@ export class DynamoCampaignStore implements CampaignStore {
             },
           })),
         }),
+        { abortSignal: signal },
       );
     } catch (error) {
       if (error instanceof DomainError) throw error;
@@ -244,7 +271,10 @@ export class DynamoCampaignStore implements CampaignStore {
         error instanceof Error &&
         error.name === "TransactionCanceledException"
       )
-        throw new DomainError("COST_LIMIT_REACHED", "P5 campaign cap reached");
+        throw new DomainError(
+          "COST_LIMIT_REACHED",
+          "Assessment campaign cap reached",
+        );
       throw new DomainError(
         "COST_LIMIT_REACHED",
         "Campaign allowance unavailable; no provider call permitted",
@@ -254,7 +284,7 @@ export class DynamoCampaignStore implements CampaignStore {
 }
 export interface VerifiedPrice {
   modelId: string;
-  region: "us-east-1";
+  region: "us-east-2";
   inputUsdPerMillion: number;
   outputUsdPerMillion: number;
   verifiedAt: string;
@@ -272,7 +302,7 @@ export function reserveCost(
   if (
     !price ||
     ![MICRO_MODEL, LITE_MODEL].includes(price.modelId as typeof MICRO_MODEL) ||
-    price.region !== "us-east-1" ||
+    price.region !== "us-east-2" ||
     !/^https:\/\/(?:aws\.amazon\.com\/bedrock\/pricing\/?|pricing\.us-east-1\.amazonaws\.com\/offers\/v1\.0\/aws\/AmazonBedrock\/.*)$/.test(
       price.source,
     ) ||

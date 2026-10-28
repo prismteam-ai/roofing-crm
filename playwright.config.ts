@@ -11,6 +11,9 @@ const publicCaptureEnv = {
   PRISM_PRIVATE_ENRICHMENT_SHA256: "",
   PRISM_ENABLE_PROTECTED_VIEW: "0",
 };
+const integration =
+  dataMode === "real" ||
+  process.env.PRISM_BROWSER_ORACLE_MODE === "integration";
 const evidence = process.env.PRISM_BROWSER_EVIDENCE_DIR ?? "test-results";
 export default defineConfig({
   testDir: "tests/browser",
@@ -37,7 +40,7 @@ export default defineConfig({
     launchOptions: {
       ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
         ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
-        : { executablePath: "/usr/bin/google-chrome" }),
+        : {}),
       args: [
         "--no-sandbox",
         "--use-angle=swiftshader",
@@ -46,21 +49,33 @@ export default defineConfig({
     },
   },
   webServer: [
-    {
-      command:
-        "pnpm --dir ../oracle-property-intelligence-platform-pipeline-oakland-mi api",
-      env: publicCaptureEnv,
-      url: "http://127.0.0.1:4310/api/health",
-      reuseExistingServer: true,
-      timeout: 60000,
-    },
-    {
-      command:
-        "pnpm --dir ../oracle-property-intelligence-platform-pipeline-oakland-mi dev",
-      url: "http://127.0.0.1:4173",
-      reuseExistingServer: true,
-      timeout: 60000,
-    },
+    ...(integration
+      ? [
+          {
+            command:
+              "pnpm --dir ../oracle-property-intelligence-platform-pipeline-oakland-mi api",
+            env: publicCaptureEnv,
+            url: "http://127.0.0.1:4310/api/health",
+            reuseExistingServer: true,
+            timeout: 60000,
+          },
+          {
+            command:
+              "pnpm --dir ../oracle-property-intelligence-platform-pipeline-oakland-mi dev",
+            url: "http://127.0.0.1:4173",
+            reuseExistingServer: true,
+            timeout: 60000,
+          },
+        ]
+      : [
+          {
+            command: "pnpm test:oracle-fixture",
+            env: { PRISM_DATA_MODE: "synthetic" },
+            url: "http://127.0.0.1:4310/api/health",
+            reuseExistingServer: false,
+            timeout: 60000,
+          },
+        ]),
     {
       command: "pnpm api",
       env: publicCaptureEnv,

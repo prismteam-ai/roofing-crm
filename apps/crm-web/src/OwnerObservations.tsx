@@ -32,7 +32,8 @@ export function OwnerObservations({
       {owners.map((observation, index) => (
         <div
           key={index}
-          className="permit-detail private-source-reported-owner"
+          className="permit-detail private-source-reported-owner private-protected-evidence"
+          data-private-evidence="source-reported-owner"
           data-testid="source-reported-owner-observation"
         >
           <p>

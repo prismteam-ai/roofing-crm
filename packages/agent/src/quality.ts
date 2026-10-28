@@ -245,12 +245,20 @@ export function assessAnswer(
     answer.toolTrace[0].resultCount === rows.length &&
     digest(semantic(q)) === digest(semantic(expected)) &&
     (answer.mode !== "bedrock-grounded" ||
-      (answer.toolTrace[0].modelSawMinimizedFacts === true &&
+      (answer.toolTrace[0].modelSawMinimizedFacts === false &&
         validSelection &&
+        answer.toolTrace[0].presentationTool === "retrieveProperties" &&
+        answer.toolTrace[0].retrievalReads === 2 &&
         answer.toolTrace[0].presentationProtocol === ROUTING_ARCHITECTURE &&
         answer.toolTrace[0].rationaleSource === "server-minimized-facts" &&
         answer.toolTrace[0].presentationArgumentsDigest ===
-          digest({ ordinals }) &&
+          digest({
+            template: "verified_property_search",
+            queryDigest: digest(q),
+            constraintDigest: answer.toolTrace[0].constraintDigest,
+            limit: q.limit,
+            sort: q.sort ?? "distance",
+          }) &&
         JSON.stringify(answer.toolTrace[0].rationaleCategories) ===
           JSON.stringify(
             rows.map((row, i) =>
@@ -345,12 +353,12 @@ export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
       modelAudit?: AgentAnswer["modelAudit"];
     }[];
   };
-  if (current?.profile === "p5-original-objective-36-v1") {
+  if (current?.profile === "original-objective-36-retrieval-v3") {
     if (
       current.phase !== CAMPAIGN_PHASE ||
       current.architecture !== ROUTING_ARCHITECTURE ||
-      current.modelId !== "amazon.nova-micro-v1:0" ||
-      current.region !== "us-east-1" ||
+      current.modelId !== "us.amazon.nova-micro-v1:0" ||
+      current.region !== "us-east-2" ||
       current.revision !== revision ||
       current.accepted !== false ||
       !Number.isFinite(Date.parse(current.completedAt ?? "")) ||
@@ -371,8 +379,8 @@ export function qualityFailure(input: unknown, revision: "base" | "repair-1") {
           o.checks?.sameTypedQuery === true &&
           o.checks?.appliedLedger === true &&
           o.modelAudit?.architecture === ROUTING_ARCHITECTURE &&
-          o.modelAudit.modelId === "amazon.nova-micro-v1:0" &&
-          o.modelAudit.region === "us-east-1" &&
+          o.modelAudit.modelId === "us.amazon.nova-micro-v1:0" &&
+          o.modelAudit.region === "us-east-2" &&
           o.modelAudit.promptRevision === revision &&
           o.modelAudit.converseCalls === 1 &&
           o.modelAudit.inputTokens > 0 &&

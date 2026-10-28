@@ -29,8 +29,8 @@ it("freezes 24 accepted and 12 refused source-bound cases before any live call",
 it("cannot promote partial, historical, source-empty or unmeasured failures into a model-repair allowance", () => {
   const measured = {
     architecture: ROUTING_ARCHITECTURE,
-    modelId: "amazon.nova-micro-v1:0",
-    region: "us-east-1",
+    modelId: "us.amazon.nova-micro-v1:0",
+    region: "us-east-2",
     promptRevision: "base",
     converseCalls: 1,
     inputTokens: 100,
@@ -38,11 +38,11 @@ it("cannot promote partial, historical, source-empty or unmeasured failures into
     reservedMicroUsd: 560,
   };
   const report = {
-    profile: "p5-original-objective-36-v1",
+    profile: "original-objective-36-retrieval-v3",
     phase: CAMPAIGN_PHASE,
     architecture: ROUTING_ARCHITECTURE,
-    modelId: "amazon.nova-micro-v1:0",
-    region: "us-east-1",
+    modelId: "us.amazon.nova-micro-v1:0",
+    region: "us-east-2",
     revision: "base",
     accepted: false,
     completedAt: "2026-10-28T06:00:00Z",

@@ -1,3 +1,4 @@
+import { approvedModelResponse } from "../tests/support/retrieval-model";
 import { MemoryCampaignStore } from "../packages/agent/src/campaign";
 import { MICRO_MODEL } from "../packages/runtime-config/src/index";
 import { pathToFileURL } from "node:url";
@@ -103,38 +104,17 @@ let fakeProviderCalls = 0;
 const provider: ConverseTransport = {
   converse: async (request) => {
     fakeProviderCalls++;
-    const context = JSON.parse(request.messages![0].content![0].text!);
+    const context = JSON.parse(request.prompt);
     if (
-      context.retrievedEvidence.rows.length !== 1 ||
-      context.retrievedEvidence.rows[0].roof.ageYears !== null ||
+      context.sourceSummary.boundedPageRows !== 1 ||
+      context.retrievedEvidence !== undefined ||
       JSON.stringify(request).includes(property.address) ||
       JSON.stringify(request).includes(property.id)
     )
       throw new Error(
         "Packaged provider did not receive the minimized retrieved evidence",
       );
-    return {
-      $metadata: {},
-      metrics: { latencyMs: 0 },
-      usage: { inputTokens: 20, outputTokens: 20, totalTokens: 40 },
-      stopReason: "tool_use",
-      output: {
-        message: {
-          role: "assistant",
-          content: [
-            {
-              toolUse: {
-                toolUseId: "fake-read",
-                name: "selectGroundedEvidence",
-                input: {
-                  ordinals: [0],
-                },
-              },
-            },
-          ],
-        },
-      },
-    };
+    return approvedModelResponse(request);
   },
 };
 function fromLocal<T>(run: () => T): T {
@@ -160,7 +140,7 @@ const handler = packaged.createHostedHandler(
     campaign,
     price: async () => ({
       modelId: MICRO_MODEL,
-      region: "us-east-1",
+      region: "us-east-2",
       inputUsdPerMillion: 0.035,
       outputUsdPerMillion: 0.14,
       verifiedAt: new Date().toISOString(),
@@ -264,10 +244,10 @@ if (answer.citations[0] !== "synthetic:SYN-EMULATED" || fakeProviderCalls !== 1)
   throw new Error("Packaged provider grounding failed");
 if (
   answer.mode !== "bedrock-grounded" ||
-  answer.modelAudit.architecture !== "one-call-grounded-selection-v2" ||
+  answer.modelAudit.architecture !== "one-call-constrained-retrieval-v3" ||
   answer.modelAudit.evidenceDigest !== answer.toolTrace[0].evidenceDigest ||
   answer.modelAudit.minimizedRowCount !== 1 ||
-  answer.toolTrace[0].presentationTool !== "selectGroundedEvidence" ||
+  answer.toolTrace[0].presentationTool !== "retrieveProperties" ||
   JSON.stringify(answer.toolTrace[0].selectedOrdinals) !== "[0]" ||
   answer.modelAudit.converseCalls !== 1 ||
   answer.modelAudit.measuredMicroUsd <= 0 ||

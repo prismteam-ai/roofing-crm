@@ -1,3 +1,9 @@
+import { TurnDeadline } from "../../../packages/hosted-runtime/src/turn-deadline";
+import {
+  telemetry,
+  operationForPath,
+} from "../../../packages/hosted-runtime/src/observability";
+export { alertHandler } from "../../../packages/hosted-runtime/src/alerts";
 import { groundedFailureDetail } from "../../../packages/agent/src/failure-detail";
 import {
   answerQuestion,
@@ -193,8 +199,12 @@ export function createHostedHandler(
   oracleFactory: (cookie: string) => OracleReader,
   modelId = () => "",
   clock = Date.now,
+  turnBudgetMs = 27000,
 ) {
-  return async (event: HttpEvent): Promise<HttpResult> => {
+  const execute = async (
+    event: HttpEvent,
+    budget: TurnDeadline,
+  ): Promise<HttpResult> => {
     try {
       const r = await loadRuntime();
       const access = await r.access();
@@ -253,7 +263,7 @@ export function createHostedHandler(
           ? {
               agent: async (prompt, query, subject) => {
                 const intent = requireIntent(prompt, query);
-                const startedAt = Date.now();
+                const startedAt = performance.now();
                 let evidenceDigest: string | undefined,
                   minimizedRowCount = 0;
                 const revision =
@@ -284,13 +294,13 @@ export function createHostedHandler(
                 const boundedOracle: OracleReader = {
                   detail: (id, snapshot) => oracle.detail(id, snapshot),
                   health: oracle.health ? () => oracle.health!() : undefined,
-                  search: async (q) => {
-                    if (++reads > 1)
+                  search: async (q, options) => {
+                    if (++reads > 2)
                       throw new DomainError(
                         "COST_LIMIT_REACHED",
                         "Read budget exhausted",
                       );
-                    const data = await oracle.search(q);
+                    const data = await oracle.search(q, options);
                     if (
                       data.snapshotId !== query.snapshotId ||
                       data.rows.length > 50
@@ -305,13 +315,20 @@ export function createHostedHandler(
                   },
                 };
                 try {
-                  await r.campaign.authorize(model, revision);
-                  await r.campaign.reserve({
-                    subject,
-                    kind: "request",
-                    modelId: model,
-                    nowMs: clock(),
-                  });
+                  await budget.run(() =>
+                    r.campaign!.authorize(model, revision, budget.signal),
+                  );
+                  await budget.run(() =>
+                    r.campaign!.reserve(
+                      {
+                        subject,
+                        kind: "request",
+                        modelId: model,
+                        nowMs: clock(),
+                      },
+                      budget.signal,
+                    ),
+                  );
                   let price: VerifiedPrice | undefined;
                   const result = await answerWithBedrock(
                     boundedOracle,
@@ -325,7 +342,17 @@ export function createHostedHandler(
                       maxTurns: 1,
                       maxToolCalls: 1,
                       maxTotalTokens: 12000,
-                      deadlineMs: Math.max(1, 28000 - (Date.now() - startedAt)),
+                      deadlineMs: Math.max(
+                        1,
+                        Math.min(
+                          23000 - (performance.now() - startedAt),
+                          budget.remaining() - 3000,
+                        ),
+                      ),
+                      requestSignal: budget.signal,
+                      onDispatch: () => {
+                        converseCalls++;
+                      },
                       beforeConverse: async (projection) => {
                         price = await r.price!();
                         if (price.modelId !== model)
@@ -334,14 +361,18 @@ export function createHostedHandler(
                         evidenceDigest = projection.evidenceDigest;
                         minimizedRowCount = projection.minimizedRowCount;
                         const cost = reserveCost(inputBytes, price, clock());
-                        await r.campaign!.reserve({
-                          subject,
-                          kind: "converse",
-                          modelId: model,
-                          nowMs: clock(),
-                          reservedMicroUsd: cost,
-                        });
-                        converseCalls++;
+                        await budget.run(() =>
+                          r.campaign!.reserve(
+                            {
+                              subject,
+                              kind: "converse",
+                              modelId: model,
+                              nowMs: clock(),
+                              reservedMicroUsd: cost,
+                            },
+                            budget.signal,
+                          ),
+                        );
                         reservedMicroUsd += cost;
                       },
                       onUsage: async (usage) => {
@@ -349,27 +380,36 @@ export function createHostedHandler(
                           throw new Error(
                             "Measured usage requires the reserved model price",
                           );
-                        await r.campaign!.record({
-                          requestId,
-                          subjectDigest,
-                          promptDigest,
-                          modelId: model,
-                          revision,
-                          architecture: ROUTING_ARCHITECTURE,
-                          evidenceDigest,
-                          minimizedRowCount,
-                          region: REVIEW_REGION,
-                          at: new Date(clock()).toISOString(),
-                          ...usage,
-                          measuredMicroUsd: Math.ceil(
-                            usage.inputTokens * price.inputUsdPerMillion +
-                              usage.outputTokens * price.outputUsdPerMillion,
+                        const measuredPrice = price;
+                        await budget.run(() =>
+                          r.campaign!.record(
+                            {
+                              requestId,
+                              subjectDigest,
+                              promptDigest,
+                              modelId: model,
+                              revision,
+                              architecture: ROUTING_ARCHITECTURE,
+                              evidenceDigest,
+                              minimizedRowCount,
+                              region: REVIEW_REGION,
+                              at: new Date(clock()).toISOString(),
+                              ...usage,
+                              measuredMicroUsd: Math.ceil(
+                                usage.inputTokens *
+                                  measuredPrice.inputUsdPerMillion +
+                                  usage.outputTokens *
+                                    measuredPrice.outputUsdPerMillion,
+                              ),
+                            },
+                            budget.signal,
                           ),
-                        });
+                        );
                         measuredCalls++;
                         measuredMicroUsd += Math.ceil(
-                          usage.inputTokens * price.inputUsdPerMillion +
-                            usage.outputTokens * price.outputUsdPerMillion,
+                          usage.inputTokens * measuredPrice.inputUsdPerMillion +
+                            usage.outputTokens *
+                              measuredPrice.outputUsdPerMillion,
                         );
                         inputTokens += usage.inputTokens;
                         outputTokens += usage.outputTokens;
@@ -379,37 +419,42 @@ export function createHostedHandler(
                   evidenceDigest = result.toolTrace[0]?.evidenceDigest;
                   minimizedRowCount =
                     result.toolTrace[0]?.minimizedRowCount ?? 0;
-                  await r.campaign.record({
-                    requestId,
-                    subjectDigest,
-                    promptDigest,
-                    modelId: model,
-                    revision,
-                    architecture: ROUTING_ARCHITECTURE,
-                    evidenceDigest,
-                    minimizedRowCount,
-                    region: REVIEW_REGION,
-                    at: new Date(clock()).toISOString(),
-                    callIndex: 0,
-                    inputTokens,
-                    outputTokens,
-                    totalTokens: inputTokens + outputTokens,
-                    ...(result.mode === "evidence-empty"
-                      ? {
-                          reservedMicroUsd: 0,
-                          measuredMicroUsd: 0,
-                          unmeasuredCalls: 0,
-                          converseCalls: 0,
-                          status: "evidence-empty" as const,
-                        }
-                      : {}),
-                    evidence: {
-                      queryHash: result.toolTrace.map((x) => x.queryHash),
-                      snapshotId: query.snapshotId,
-                      propertyIds: result.results.map((x) => x.id),
-                      citations: result.citations,
-                    },
-                  });
+                  await budget.run(() =>
+                    r.campaign!.record(
+                      {
+                        requestId,
+                        subjectDigest,
+                        promptDigest,
+                        modelId: model,
+                        revision,
+                        architecture: ROUTING_ARCHITECTURE,
+                        evidenceDigest,
+                        minimizedRowCount,
+                        region: REVIEW_REGION,
+                        at: new Date(clock()).toISOString(),
+                        callIndex: 0,
+                        inputTokens,
+                        outputTokens,
+                        totalTokens: inputTokens + outputTokens,
+                        ...(result.mode === "evidence-empty"
+                          ? {
+                              reservedMicroUsd: 0,
+                              measuredMicroUsd: 0,
+                              unmeasuredCalls: 0,
+                              converseCalls: 0,
+                              status: "evidence-empty" as const,
+                            }
+                          : {}),
+                        evidence: {
+                          queryHash: result.toolTrace.map((x) => x.queryHash),
+                          snapshotId: query.snapshotId,
+                          propertyIds: result.results.map((x) => x.id),
+                          citations: result.citations,
+                        },
+                      },
+                      budget.signal,
+                    ),
+                  );
                   return {
                     ...result,
                     modelAudit: {
@@ -442,29 +487,34 @@ export function createHostedHandler(
                       ))
                   )
                     throw error;
-                  await r.campaign.record({
-                    requestId,
-                    subjectDigest,
-                    promptDigest,
-                    modelId: model,
-                    revision,
-                    architecture: ROUTING_ARCHITECTURE,
-                    evidenceDigest,
-                    minimizedRowCount,
-                    region: REVIEW_REGION,
-                    at: new Date(clock()).toISOString(),
-                    callIndex: 0,
-                    inputTokens,
-                    outputTokens,
-                    totalTokens: inputTokens + outputTokens,
-                    reservedMicroUsd,
-                    measuredMicroUsd,
-                    unmeasuredCalls: converseCalls - measuredCalls,
-                    converseCalls,
-                    failureCode: error.code,
-                    failureDetail: groundedFailureDetail(error),
-                    status: "provider-failed",
-                  });
+                  await budget.run(() =>
+                    r.campaign!.record(
+                      {
+                        requestId,
+                        subjectDigest,
+                        promptDigest,
+                        modelId: model,
+                        revision,
+                        architecture: ROUTING_ARCHITECTURE,
+                        evidenceDigest,
+                        minimizedRowCount,
+                        region: REVIEW_REGION,
+                        at: new Date(clock()).toISOString(),
+                        callIndex: 0,
+                        inputTokens,
+                        outputTokens,
+                        totalTokens: inputTokens + outputTokens,
+                        reservedMicroUsd,
+                        measuredMicroUsd,
+                        unmeasuredCalls: converseCalls - measuredCalls,
+                        converseCalls,
+                        failureCode: error.code,
+                        failureDetail: groundedFailureDetail(error),
+                        status: "provider-failed",
+                      },
+                      budget.signal,
+                    ),
+                  );
                   const fallback = cached
                     ? answerFromEvidence(
                         cached.data,
@@ -521,8 +571,34 @@ export function createHostedHandler(
       };
     }
   };
+  return async (event: HttpEvent): Promise<HttpResult> => {
+    const budget = new TurnDeadline(Math.min(27000, turnBudgetMs));
+    try {
+      return await budget.run(() => execute(event, budget));
+    } catch {
+      return {
+        statusCode: 503,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+        body: JSON.stringify({
+          code: "QUERY_TIMEOUT",
+          message: "Assessment request deadline exceeded",
+        }),
+      };
+    } finally {
+      budget.dispose();
+    }
+  };
 }
 export async function handler(event: HttpEvent) {
+  return telemetry.observe(
+    operationForPath(event.rawPath ?? "", event.requestContext?.http?.method),
+    () => handle(event),
+  );
+}
+async function handle(event: HttpEvent) {
   return createHostedHandler(
     () => (runtime ??= makeRuntime()),
     (cookie) =>

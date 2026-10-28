@@ -1,5 +1,6 @@
 import { DomainError } from "../../contracts/src/index";
 export type GroundedFailureDetail =
+  | "retrieval_constraints"
   | "selection_schema"
   | "selection_ordinals"
   | "selection_order"
@@ -9,6 +10,11 @@ export type GroundedFailureDetail =
   | "usage_budget"
   | "presentation_protocol";
 const known: Readonly<Record<string, GroundedFailureDetail>> = Object.freeze({
+  "Provider altered or omitted approved retrieval constraints":
+    "retrieval_constraints",
+  "Exactly one typed retrieval tool without mixed text or reasoning is required":
+    "presentation_protocol",
+  "Provider requested an unsupported retrieval tool": "presentation_protocol",
   "Provider supplied invalid grounded selection arguments": "selection_schema",
   "Grounded selection must be a unique bounded nonempty subset of retrieved ordinals":
     "selection_ordinals",

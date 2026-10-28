@@ -1,3 +1,4 @@
+import { assessmentObservability } from "./observability";
 import path from "node:path";
 import { deploymentConcurrency } from "../../packages/hosted-runtime/src/deployment-concurrency";
 import {
@@ -8,7 +9,7 @@ import {
   RemovalPolicy,
   CfnParameter,
   Duration,
-  BootstraplessSynthesizer,
+  DefaultStackSynthesizer,
   Fn,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
@@ -18,6 +19,7 @@ import {
   Function as LambdaFunction,
   Runtime,
   Code,
+  Tracing,
 } from "aws-cdk-lib/aws-lambda";
 import { HttpApi, HttpMethod, CfnStage } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -37,6 +39,7 @@ import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 
 import {
   Alarm,
+  Metric,
   ComparisonOperator,
   TreatMissingData,
 } from "aws-cdk-lib/aws-cloudwatch";
@@ -46,7 +49,7 @@ import {
   MICRO_MODEL,
   LITE_MODEL,
 } from "../../packages/runtime-config/src/index";
-/** P3 bootstrapless template. Synthesis never performs an account lookup or service call. */
+/** Neutral review stack. Synthesis is local; deployment uses standard CDK assets and bootstrap roles. */
 class CrmCandidateStack extends Stack {
   constructor(
     scope: Construct,
@@ -55,14 +58,17 @@ class CrmCandidateStack extends Stack {
   ) {
     super(scope, id, {
       env: {
-        region: validatedRegion(process.env.PRISM_REGION ?? "us-east-1", [
+        account:
+          process.env.PRISM_EXPECTED_ACCOUNT_ID ??
+          process.env.CDK_DEFAULT_ACCOUNT,
+        region: validatedRegion(process.env.PRISM_REGION ?? "us-east-2", [
           process.env.AWS_REGION,
           process.env.AWS_DEFAULT_REGION,
         ]),
       },
-      synthesizer: new BootstraplessSynthesizer(),
+      synthesizer: new DefaultStackSynthesizer({ qualifier: "prismrvw" }),
     });
-    const stage = "p3-review";
+    const stage = "review";
     this.templateOptions.metadata = {
       PrismConcurrency: Object.fromEntries(
         Object.entries(concurrency.metadata).map(([key, value]) => [
@@ -72,15 +78,14 @@ class CrmCandidateStack extends Stack {
       ),
     };
     const removal = RemovalPolicy.RETAIN;
-    Tags.of(this).add("Project", "PrismAssessment");
-    Tags.of(this).add("Phase", "P3");
-    Tags.of(this).add("Stage", stage);
-    Tags.of(this).add("DataRetention", "14-days");
-    const deploymentBucket = new CfnParameter(this, "DeploymentAssetBucket", {
-      type: "String",
-      allowedPattern: "[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]",
-      description: "Explicit dedicated bootstrapless task deployment bucket",
-    });
+    for (const [key, value] of Object.entries({
+      project_name: "prism-assessment",
+      repository: "roofing-crm",
+      service: "prism-crm-review",
+      environment: "review",
+      purpose: "candidate-assessment",
+    }))
+      Tags.of(this).add(key, value);
     const archiveHash = new CfnParameter(this, "LambdaArchiveDigestPin", {
       type: "String",
       allowedPattern: "[a-f0-9]{64}",
@@ -101,7 +106,7 @@ class CrmCandidateStack extends Stack {
       type: "String",
       noEcho: true,
       allowedPattern:
-        "arn:aws:secretsmanager:us-east-1:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+",
+        "arn:aws:secretsmanager:us-east-2:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+",
       description: "Existing secret ARN reference only; shared with Oracle",
     });
     const model = new CfnParameter(this, "BedrockModelId", {
@@ -109,7 +114,7 @@ class CrmCandidateStack extends Stack {
       default: MICRO_MODEL,
       allowedValues: [MICRO_MODEL, LITE_MODEL],
       description:
-        "Direct regional model only; Lite additionally requires persisted measured Micro failures",
+        "US Nova inference profile; Lite additionally requires persisted measured Micro failures",
     });
     const enabled = new CfnParameter(this, "EnableModel", {
       type: "String",
@@ -142,7 +147,7 @@ class CrmCandidateStack extends Stack {
       {
         type: "String",
         allowedPattern:
-          "arn:aws:dynamodb:us-east-1:[0-9]{12}:table/[A-Za-z0-9_.-]+",
+          "arn:aws:dynamodb:us-east-2:[0-9]{12}:table/[A-Za-z0-9_.-]+",
         description: "Oracle-owned shared evaluator session/quota table ARN",
       },
     );
@@ -159,24 +164,18 @@ class CrmCandidateStack extends Stack {
       autoDeleteObjects: false,
     });
     const logs = new LogGroup(this, "ApiLogs", {
-      retention: RetentionDays.ONE_WEEK,
+      retention: RetentionDays.THREE_MONTHS,
       removalPolicy: removal,
     });
     const fn = new LambdaFunction(this, "CrmHandler", {
       runtime: Runtime.NODEJS_24_X,
       handler: "index.handler",
-      code: Code.fromBucket(
-        Bucket.fromBucketName(
-          this,
-          "DeploymentAssets",
-          deploymentBucket.valueAsString,
+      code: Code.fromAsset(
+        path.resolve(
+          process.env.PRISM_LAMBDA_ARCHIVE_PATH ?? "build/crm-lambda.zip",
         ),
-        Fn.join("", [
-          "prism-p3/crm/lambda/",
-          archiveHash.valueAsString,
-          ".zip",
-        ]),
       ),
+      tracing: Tracing.ACTIVE,
       timeout: Duration.seconds(29),
       ...(concurrency.policy.reservedConcurrentExecutions === null
         ? {}
@@ -187,6 +186,11 @@ class CrmCandidateStack extends Stack {
       memorySize: 512,
       logGroup: logs,
       environment: {
+        POWERTOOLS_SERVICE_NAME: "prism-crm-review",
+        POWERTOOLS_METRICS_NAMESPACE: "PrismAssessment",
+        POWERTOOLS_LOGGER_LOG_EVENT: "false",
+        POWERTOOLS_TRACER_CAPTURE_RESPONSE: "false",
+        POWERTOOLS_TRACER_CAPTURE_ERROR: "false",
         LEADS_TABLE_NAME: leads.tableName,
         PRISM_LAMBDA_ARCHIVE_SHA256: archiveHash.valueAsString,
         PRISM_FRONTEND_ASSET_MANIFEST_SHA256:
@@ -199,7 +203,7 @@ class CrmCandidateStack extends Stack {
         PRISM_ENABLE_MODEL: enabled.valueAsString,
         PRISM_ENABLE_MAP: mapEnabled.valueAsString,
         PRISM_MODEL_PROMPT_REVISION: promptRevision.valueAsString,
-        PRISM_REGION: "us-east-1",
+        PRISM_REGION: "us-east-2",
         PRISM_STAGE: stage,
       },
     });
@@ -216,11 +220,20 @@ class CrmCandidateStack extends Stack {
         actions: ["bedrock:InvokeModel"],
         resources: [
           Fn.join("", [
-            "arn:aws:bedrock:us-east-1::foundation-model/",
+            "arn:aws:bedrock:us-east-2:",
+            this.account,
+            ":inference-profile/",
             model.valueAsString,
           ]),
+          ...["us-east-1", "us-east-2", "us-west-2"].map((region) =>
+            Fn.join("", [
+              "arn:aws:bedrock:",
+              region,
+              "::foundation-model/",
+              Fn.select(1, Fn.split("us.", model.valueAsString)),
+            ]),
+          ),
         ],
-        conditions: { StringEquals: { "aws:RequestedRegion": "us-east-1" } },
       }),
     );
     const api = new HttpApi(this, "CrmApi");
@@ -254,7 +267,7 @@ class CrmCandidateStack extends Stack {
         },
         contentSecurityPolicy: {
           contentSecurityPolicy:
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.geo.us-east-1.amazonaws.com https://tile.openstreetmap.org; connect-src 'self' https://maps.geo.us-east-1.amazonaws.com https://tile.openstreetmap.org; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.geo.us-east-2.amazonaws.com https://tile.openstreetmap.org; connect-src 'self' https://maps.geo.us-east-2.amazonaws.com https://tile.openstreetmap.org; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
           override: true,
         },
       },
@@ -283,12 +296,37 @@ class CrmCandidateStack extends Stack {
         },
       },
     });
-    new Alarm(this, "ApiErrors", {
+    const apiErrors = new Alarm(this, "ApiErrors", {
       metric: fn.metricErrors({ period: Duration.minutes(5) }),
-      threshold: 5,
+      threshold: 1,
       evaluationPeriods: 1,
       comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
       treatMissingData: TreatMissingData.NOT_BREACHING,
+    });
+    const criticalErrors = new Alarm(this, "CriticalRequestErrors", {
+      metric: new Metric({
+        namespace: "PrismAssessment",
+        metricName: "RequestError",
+        dimensionsMap: { service: "prism-crm-review" },
+        period: Duration.minutes(5),
+        statistic: "Sum",
+      }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: TreatMissingData.NOT_BREACHING,
+    });
+    assessmentObservability({
+      stack: this,
+      api: fn,
+      code: Code.fromAsset(
+        path.resolve(
+          process.env.PRISM_LAMBDA_ARCHIVE_PATH ?? "build/crm-lambda.zip",
+        ),
+      ),
+      alarms: [apiErrors, criticalErrors],
+      pagerDutyEnabled: process.env.PRISM_PAGERDUTY_ENABLED === "1",
+      reservedMode: concurrency.policy.reservedConcurrentExecutions !== null,
     });
     for (const [name, value] of Object.entries({
       ConcurrencyMode: concurrency.policy.mode,
@@ -319,7 +357,7 @@ class CrmCandidateStack extends Stack {
     new CfnOutput(this, "LambdaArchiveSha256", {
       value: archiveHash.valueAsString,
     });
-    new CfnOutput(this, "Region", { value: "us-east-1" });
+    new CfnOutput(this, "Region", { value: "us-east-2" });
     new CfnOutput(this, "Stage", { value: stage });
     new CfnOutput(this, "ApiOrigin", { value: api.apiEndpoint });
     new CfnOutput(this, "FrontendDistributionId", {
@@ -337,5 +375,5 @@ const concurrency = await deploymentConcurrency(
     quota: app.node.tryGetContext("existingAccountConcurrency"),
   },
 );
-new CrmCandidateStack(app, "PrismCrmP3Review", concurrency);
+new CrmCandidateStack(app, "PrismCrmAssessmentReview", concurrency);
 app.synth();

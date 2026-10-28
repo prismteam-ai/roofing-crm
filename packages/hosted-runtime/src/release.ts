@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-export const STAGING_REGION = "us-east-1" as const;
-export const STAGING_STAGE = "p3-review" as const;
+export const STAGING_REGION = "us-east-2" as const;
+export const STAGING_STAGE = "review" as const;
 export const APPROVED_PUBLIC_MANIFEST_SHA256 =
   "d3f82cc0b00eb8345f94c7e5ffb21e37fd928bc9c5af771d005e6f700d879bbb";
 export const APPROVED_PRIVATE_MANIFEST_SHA256 =
@@ -45,7 +45,7 @@ export function validatedRegion(
     ambient.some((r) => r !== undefined && r !== "" && r !== region)
   )
     throw new Error(
-      "Review deployment region must be us-east-1; mixed regions are rejected",
+      "Review deployment region must be us-east-2; mixed regions are rejected",
     );
   return STAGING_REGION;
 }
@@ -73,10 +73,10 @@ export function validateReleasePins(p: ReleasePins): ReleasePins {
       "Only the exact reviewed current public/protected manifests are authorized",
     );
   if (
-    !/^prism-p3-[a-z0-9][a-z0-9.-]{1,52}[a-z0-9]$/.test(p.assetBucket) ||
+    p.assetBucket !== `cdk-prismrvw-assets-${p.expectedAccountId}-us-east-2` ||
     /\.\.|example|placeholder|replace|not-configured/i.test(p.assetBucket) ||
-    !/^prism-p3\/(oracle|crm)\/$/.test(p.assetPrefix) ||
-    !/^Prism(Oracle|Crm)[A-Za-z0-9-]{0,100}$/.test(p.stackName)
+    !/^assessment\/(oracle|crm)\/$/.test(p.assetPrefix) ||
+    !/^Prism(Oracle|Crm)AssessmentReview$/.test(p.stackName)
   )
     throw new Error(
       "Dedicated task asset bucket/prefix and exact stack name required",
