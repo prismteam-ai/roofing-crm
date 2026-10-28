@@ -1,3 +1,4 @@
+import { assessmentEvidence } from "../../../packages/hosted-runtime/src/assessment-evidence";
 import {
   DomainError,
   LeadCreateSchema,
@@ -107,6 +108,30 @@ export function createApp(deps: AppDependencies) {
             ? "bedrock-tool-routed"
             : "deterministic-offline",
           ...(deps.model ? { model: deps.model } : {}),
+        });
+      }
+      if (req.method === "GET" && url.pathname === "/api/evidence") {
+        if (url.search)
+          throw new DomainError(
+            "INVALID_INPUT",
+            "Evidence parameters are unsupported",
+          );
+        if (!deps.oracle.health)
+          throw new DomainError(
+            "SNAPSHOT_UNAVAILABLE",
+            "Oracle health unavailable",
+          );
+        const health = await deps.oracle.health();
+        return response(200, {
+          ...assessmentEvidence(deps.release ?? BUILD_IDENTITY, {
+            snapshotId: health.snapshotId,
+            snapshotDigest: health.snapshotDigest ?? health.digest,
+            publicSnapshotId: health.publicSnapshotId,
+          }),
+          activeMode: deps.agent
+            ? "bedrock-tool-routed"
+            : "deterministic-offline",
+          model: deps.model ?? null,
         });
       }
       const object = () => {

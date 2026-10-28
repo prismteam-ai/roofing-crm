@@ -608,6 +608,9 @@ function App() {
             </div>
           </div>
         </div>
+        <a href="/api/evidence" target="_blank" rel="noopener noreferrer">
+          Assessment evidence ↗
+        </a>
       </aside>
       <main>
         <header className="topbar">

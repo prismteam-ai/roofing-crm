@@ -188,6 +188,9 @@ class CrmCandidateStack extends Stack {
       logGroup: logs,
       environment: {
         LEADS_TABLE_NAME: leads.tableName,
+        PRISM_LAMBDA_ARCHIVE_SHA256: archiveHash.valueAsString,
+        PRISM_FRONTEND_ASSET_MANIFEST_SHA256:
+          process.env.PRISM_FRONTEND_ASSET_MANIFEST_SHA256 ?? "unbuilt-local",
         QUOTA_TABLE_NAME: quota.tableName,
         REVIEW_ACCESS_SECRET_ARN: secret.valueAsString,
         ORACLE_API_URL: oracle.valueAsString,

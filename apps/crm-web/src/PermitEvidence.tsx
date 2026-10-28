@@ -81,7 +81,13 @@ export function PermitEvidence({
           {p.matchEvidence.caveats.join(" ")}
         </p>
       )}
-      <b>{p.contractor.reportedName ?? "Contractor name unavailable"}</b>
+      {p.provenance.some(
+        (x) => x.sourceId === "official-troy-issued-permits",
+      ) && <small>Business applicant · contractor role unverified</small>}
+      <b>
+        {p.contractor.reportedName ??
+          "Reported business/contractor name unavailable"}
+      </b>
       <small>
         {p.contractor.verifiedCompanyId
           ? `Official company edge: ${p.contractor.verifiedCompanyId}`
