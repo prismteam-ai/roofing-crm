@@ -258,6 +258,7 @@ const aws = (args: string[], input?: string) => {
       ),
       { mode: 0o600 },
     );
+    // eslint-disable-next-line preserve-caught-error -- The full cause is stored in the owner-only diagnostic above; do not print it through CLI error causes.
     throw new Error(
       `AWS ${args[0]}/${args[1]} failed; private arguments/provider output redacted`,
     );
@@ -785,6 +786,7 @@ try {
   );
   receipt.status = "failed_private_details_redacted";
   await save();
+  // eslint-disable-next-line preserve-caught-error -- The full cause is stored in the owner-only diagnostic above; do not print it through CLI error causes.
   throw new Error(
     "Guarded operation failed; private receipt retained, secret/provider output redacted",
   );
