@@ -600,22 +600,33 @@ export async function handler(event: HttpEvent) {
     () => handle(event),
   );
 }
+/** Hosted-only upstream ceiling accommodates the measured21.134s cold Oracle health response.
+ * The outer27s turn and agent remaining-budget caps remain authoritative; no retries are added.
+ */
+export function createHostedOracleClient(
+  origin: string,
+  approvedOrigins: readonly string[],
+  cookie: string,
+  transport: typeof fetch = fetch,
+) {
+  return new OracleClient(
+    origin,
+    (url, init) =>
+      transport(url, {
+        ...init,
+        headers: { ...init?.headers, Cookie: cookie },
+      }),
+    { allowLoopback: false, approvedOrigins, timeoutMs: 26000 },
+  );
+}
 async function handle(event: HttpEvent) {
   return createHostedHandler(
     () => (runtime ??= makeRuntime()),
     (cookie) =>
-      new OracleClient(
+      createHostedOracleClient(
         required("ORACLE_API_URL"),
-        (url, init) =>
-          fetch(url, {
-            ...init,
-            headers: { ...init?.headers, Cookie: cookie },
-          }),
-        {
-          allowLoopback: false,
-          approvedOrigins: required("ORACLE_APPROVED_ORIGINS").split(","),
-          timeoutMs: 20000,
-        },
+        required("ORACLE_APPROVED_ORIGINS").split(","),
+        cookie,
       ),
     () => required("BEDROCK_MODEL_ID"),
   )(event);
