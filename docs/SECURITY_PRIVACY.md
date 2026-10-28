@@ -39,7 +39,7 @@ and verify CSP/CORS/CSRF/cookies/security headers and access revocation. Local
 synthetic tests do not establish those hosted/account facts. Media remains on
 hold until both required reviews explicitly allow it.
 
-Request accounting: the P5 durable lifetime request counter permits at most 100 validated agent executions, including empty results and failed invocations. Pre-model refusals do not enter that execution counter. All model-endpoint attempts, including refusals, consume the separate 80/day and 40/session-hour endpoint quota. Converse has its own durable 100-call ceiling. Earlier phase counters remain unchanged.
+Request accounting: the P5 durable lifetime request counter permits at most 100 validated agent executions, including empty results and failed invocations. Pre-model refusals do not enter that execution counter. All model-endpoint attempts, including refusals, consume the separate 120/day and 40/session-hour endpoint quota. Converse has its own durable 100-call ceiling. Earlier phase counters remain unchanged.
 
 The unreleased P5 0.4.0 contract was finalized with an optional, bounded
 `ownership.reportedOwnerObservations` field before its first P5 deployment. The
@@ -75,3 +75,10 @@ cannot prove uninterrupted tenure; the source also describes a later parcel spli
 The local v7 proof reconciles 3,747 owner observations (3,746 prior Rochester
 observations unchanged) and 39,282 normalized permit observations unchanged.
 One current source case is not municipal coverage or evidence of source exhaustion.
+
+The endpoint-only daily allowance was raised from80 to120 during P5 after the
+complete Micro base and one repair rounds consumed72 attempts. Three unchanged
+36-case rounds require108 attempts because each includes12 pre-model refusals.
+The validated execution cap remains100 total and80/day; the Converse cap remains
+100 total and80/day, with the same USD3 reserved-cost ceiling. All existing
+counters and reservations are preserved; redeployment does not reset them.

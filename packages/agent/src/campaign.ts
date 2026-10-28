@@ -91,6 +91,8 @@ export const CAMPAIGN_PHASE = "prism-assessment-p5";
 export const CAMPAIGN_LIMITS = Object.freeze({
   requestsTotal: 100,
   requestsPerDay: 80,
+  // Endpoint attempts include pre-model refusals; three frozen36-case rounds need108.
+  endpointRequestsPerDay: 120,
   requestsPerSessionHour: 40,
   converseTotal: 100,
   conversePerDay: 80,

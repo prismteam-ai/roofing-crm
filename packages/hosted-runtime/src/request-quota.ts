@@ -24,7 +24,7 @@ export async function consumeHostedRequestQuota(
     await store.consume({
       subject: `global-model-budget#${CAMPAIGN_PHASE}`,
       category,
-      limit: CAMPAIGN_LIMITS.requestsPerDay,
+      limit: CAMPAIGN_LIMITS.endpointRequestsPerDay,
       windowSeconds: 86400,
       nowMs,
     });
