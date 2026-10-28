@@ -1,3 +1,4 @@
+import { writeReviewerAssetManifest } from "../packages/hosted-runtime/src/reviewer-assets";
 import { buildConcurrencyPolicy } from "../packages/hosted-runtime/src/concurrency";
 import {
   deploymentConcurrency,
@@ -472,6 +473,8 @@ try {
     );
     if (frontend.buildId !== report.identity.buildId)
       throw new Error("Frontend identity differs from exact Lambda release");
+    process.env.PRISM_FRONTEND_ASSET_MANIFEST_SHA256 =
+      await writeReviewerAssetManifest("dist", report.identity.buildId);
     const role = get("PRISM_CFN_EXECUTION_ROLE_ARN");
     if (
       !new RegExp(
@@ -656,6 +659,10 @@ try {
         "--paths",
         "/",
         "/index.html",
+        "/release-identity.json",
+        "/assessment-asset-manifest.json",
+        "/assessment-publication-manifest.json",
+        "/assessment-gateway-proof.json",
         "/release-identity.json",
       ]),
     );
