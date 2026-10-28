@@ -55,6 +55,41 @@ it("does not treat issued-only or contradictory status as open duration or compl
   expect(html).toContain("does not establish roof installation or replacement");
   expect(html).toContain("BBB rating: unavailable / not verified");
 });
+it("freezes explicit-open duration at its status observation and preserves inactive license labels", () => {
+  const open = PermitSchema.parse({
+    ...permit,
+    statusBasis: "explicit_open",
+    reportedStatus: "Open",
+    statusObservedAt: "2020-01-11T14:00:00Z",
+    openedAt: "2020-01-01",
+    contractor: {
+      ...permit.contractor,
+      licenseEvidence: {
+        identifier: "SYN-INACTIVE",
+        type: "Synthetic company license",
+        status: "Inactive",
+        sourceUrl: "https://example.invalid/license",
+        observedAt: "2026-10-27T00:00:00Z",
+        matchBasis: "Synthetic exact business-name match",
+        confidence: "medium",
+      },
+    },
+  });
+  expect(permitOpenDays(open, "2026-10-27")).toBe(10);
+  expect(
+    permitOpenDays({ ...open, statusObservedAt: undefined }, "2026-10-27"),
+  ).toBeNull();
+  expect(
+    permitOpenDays({ ...open, closedAt: "2020-01-11" }, "2026-10-27"),
+  ).toBeNull();
+  const html = renderToStaticMarkup(
+    <PermitEvidence permit={open} asOf="2026-10-27" />,
+  );
+  expect(html).toContain("10 days as of 2020-01-11");
+  expect(html).toContain("status Inactive");
+  expect(html).toContain("official identity unresolved");
+  expect(html).not.toContain("status Active");
+});
 it("shows observed license/BBB provenance, match confidence and safe source links without converting a numeric score", () => {
   const withEvidence = PermitSchema.parse({
     ...permit,

@@ -68,7 +68,7 @@ export function PermitEvidence({
         Open duration:{" "}
         {days === null
           ? "unknown / not explicitly open roofing work"
-          : `${days} days`}
+          : `${days} days as of ${p.statusBasis === "explicit_open" ? p.statusObservedAt?.slice(0, 10) : asOf}`}
         . Issuance alone is not open status and does not establish roof
         installation or replacement.
       </p>

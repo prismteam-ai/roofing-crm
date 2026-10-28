@@ -2,6 +2,7 @@ import type { Property } from "../../contracts/src/index";
 export function isExplicitOpenRoofPermit(permit: Property["permits"][number]) {
   return (
     permit.status === "open" &&
+    permit.closedAt === null &&
     permit.kind !== "other" &&
     (permit.statusBasis === undefined || permit.statusBasis === "explicit_open")
   );
@@ -11,8 +12,14 @@ export function permitOpenDays(
   asOf: string,
 ): number | null {
   if (!isExplicitOpenRoofPermit(permit) || !permit.openedAt) return null;
+  // Explicit status is an observation, never an assumption that a permit is still open today.
+  const observedAsOf =
+    permit.statusBasis === "explicit_open"
+      ? permit.statusObservedAt?.slice(0, 10)
+      : asOf;
+  if (!observedAsOf) return null;
   const start = Date.parse(permit.openedAt),
-    end = Date.parse(asOf);
+    end = Date.parse(observedAsOf);
   if (!Number.isFinite(start) || !Number.isFinite(end) || start > end)
     return null;
   return Math.floor((end - start) / 86400000);

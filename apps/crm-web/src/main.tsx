@@ -1038,7 +1038,7 @@ function App() {
                           </span>
                           <span>
                             {openDays(p) !== null
-                              ? `${openDays(p)?.toLocaleString()} days open`
+                              ? `${openDays(p)?.toLocaleString()} days open at observation`
                               : "Open duration unknown"}
                           </span>
                         </div>
