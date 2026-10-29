@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "sourceHead": "650064114bdb9778f0d9a9fbc8741aa7544708e6",
+  "meaning": "Immutable P6 source documentation; recover exact content with git show <sourceHead>:<path>. Current docs index controls operation.",
+  "files": [
+    {
+      "path": "IMPLEMENTATION.md",
+      "bytes": 1110,
+      "sha256": "9f1ac6ea7987b98d55205bae711c02b50df5548e69e8e0671bb608bdea317d23"
+    },
+    {
+      "path": "QUICKSTART.md",
+      "bytes": 225,
+      "sha256": "54eec9ec30055c2fb381b7abdbb2b6806eb4cc2dcdd0b2a41a38d070781e262d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2697,
+      "sha256": "57bd54ad17320803a717c001c933108980c9a765c2a96ca13cb8ea5e0773f36e"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "bytes": 1676,
+      "sha256": "40dd9e9171f309943de7de4024c6b32d2744daed53a38999d2a3994150988167"
+    },
+    {
+      "path": "docs/DATA_COVERAGE.md",
+      "bytes": 3662,
+      "sha256": "fa3640cd913182afe0f7ab9b0e6d05a37a28449587760e01e5ec986289963650"
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "bytes": 3696,
+      "sha256": "53f953db050d0df0780fc3eb34d1551257d044249714a4eee06a37acf150c7ef"
+    },
+    {
+      "path": "docs/EVALUATOR_GUIDE.md",
+      "bytes": 2557,
+      "sha256": "5cde0274e6449c80ee93bc26143d853b538d98ac44e4ca93d1dc426707700d5a"
+    },
+    {
+      "path": "docs/GROUNDED_SELECTION_V2.md",
+      "bytes": 323,
+      "sha256": "26d4200b065d1ebea72f65b218a4830a9badc444495f89d0e0fc7ae29afa06b1"
+    },
+    {
+      "path": "docs/KNOWN_LIMITATIONS.md",
+      "bytes": 1468,
+      "sha256": "71b8d833594f605fb304cef0b9cf05acabfb32957dd4fccd36056d30785ddc9f"
+    },
+    {
+      "path": "docs/LOCAL_DEVELOPMENT.md",
+      "bytes": 3179,
+      "sha256": "4ce74f51ba291d029d8a88e43b638d22b548d9119fb52c94eeb3a1c08d5cb81b"
+    },
+    {
+      "path": "docs/OBSERVABILITY.md",
+      "bytes": 1799,
+      "sha256": "1ad47eca7142c53b33a63aaafb01526bfa540c0d24a2161b83132584456d0f40"
+    },
+    {
+      "path": "docs/P2_CRM_RUNTIME.md",
+      "bytes": 316,
+      "sha256": "8331016334a474461e7abd822cc5d80b974b787971eaf9fa1d7642b46dc8cf6e"
+    },
+    {
+      "path": "docs/P3_STAGING.md",
+      "bytes": 312,
+      "sha256": "f542ed5204f5134da3a09a63e516c19242f0d7736dabcf22a59a4f9c66e749fe"
+    },
+    {
+      "path": "docs/P5_NL_INTENT_AND_LIMITATIONS.md",
+      "bytes": 330,
+      "sha256": "8cefe7a2e340600991fd7a25e6d1b7d8bca267ab184463e80809ea6accd5891b"
+    },
+    {
+      "path": "docs/README.md",
+      "bytes": 1006,
+      "sha256": "fbffbf61fb6a94de94f9a86fdb0de4332d81a312157c814fe92924ef0c01707b"
+    },
+    {
+      "path": "docs/RELEASE_CHECKLIST.md",
+      "bytes": 1409,
+      "sha256": "2e22a42d9eb4104b97993cec767996da6929fb39562799608937af91dfdf8a05"
+    },
+    {
+      "path": "docs/SECURITY_PRIVACY.md",
+      "bytes": 3254,
+      "sha256": "f60df98d99b169a2ae2cc7ae0e79d93340352aa228cb99cdbdf86bf9e07e44fc"
+    },
+    {
+      "path": "docs/adr/001-constrained-retrieval.md",
+      "bytes": 4773,
+      "sha256": "3e9355bf330b8242a8bcebc393af372488f3c28e954c2ebde649ca031ac2013c"
+    },
+    {
+      "path": "docs/adr/002-captured-standard-map-sprites.md",
+      "bytes": 2034,
+      "sha256": "405211e6ead4a3de6b835fc43478524657743b74a9c42d846983c772e8118cc9"
+    },
+    {
+      "path": "docs/adr/002-engineering-path-and-data-tiers.md",
+      "bytes": 1191,
+      "sha256": "9b0641542fe5261fe56b71442d215bf9cdca1b195335bb8b9d8064e733e2ef8e"
+    },
+    {
+      "path": "docs/architecture/BOUNDARY.md",
+      "bytes": 776,
+      "sha256": "640e13e79e6a2956abf8ff263055649990eec64bc0716fe1615da3e7fe83f166"
+    },
+    {
+      "path": "docs/architecture/CRM_LOCAL_IMPLEMENTATION.md",
+      "bytes": 3351,
+      "sha256": "4840ac20060717d2d9a13f9c28b226cfbc1ab86ab3f84b1384ecb014c6f78a2c"
+    },
+    {
+      "path": "docs/architecture/P4_AGENT_ROUTING.md",
+      "bytes": 13560,
+      "sha256": "e7e3937ccfeca41a25e7a5e7c9c758b46c30b40778b82fb2406a266d1209c273"
+    },
+    {
+      "path": "docs/history/ASSIGNMENT_README.md",
+      "bytes": 3814,
+      "sha256": "7bd6f86916baad7d1bdc1700ee42a4ee98196f3bfcd7e9217b9a1d5af51b7bd5"
+    },
+    {
+      "path": "docs/history/P5_SOURCE_DOCUMENTS.json",
+      "bytes": 5338,
+      "sha256": "3be12e0e7efc3d03d81525768bb3db2e1e37e10cfc4fbbaa3bbe578c69a5629a"
+    },
+    {
+      "path": "docs/history/README.md",
+      "bytes": 434,
+      "sha256": "45eb927fc47dc1c3daa5598ead381714993fcae4fea8cc5984d31525ff9ab086"
+    },
+    {
+      "path": "docs/history/p5/IMPLEMENTATION.md",
+      "bytes": 2106,
+      "sha256": "b46bf118527594d2778960a4ce4f331870c0b9a376cb20e62d4edc0eeaa0baea"
+    },
+    {
+      "path": "docs/history/p5/QUICKSTART.md",
+      "bytes": 1803,
+      "sha256": "004512dc42bcce515409f2adc584d43ab7f4c56d9c75f330b6ad791b85d3cf1d"
+    },
+    {
+      "path": "docs/history/p5/README.md",
+      "bytes": 3814,
+      "sha256": "7bd6f86916baad7d1bdc1700ee42a4ee98196f3bfcd7e9217b9a1d5af51b7bd5"
+    },
+    {
+      "path": "docs/history/p5/docs/ARCHITECTURE.md",
+      "bytes": 3979,
+      "sha256": "7d104945a7da5a166117a57360c8c92ff2c52dbd1e4b426cee8b3b3357cecc67"
+    },
+    {
+      "path": "docs/history/p5/docs/DATA_COVERAGE.md",
+      "bytes": 7816,
+      "sha256": "1b8420f2d3982dea008914177e8e911c92e6d48a99c9aedb5e9904ba22c155a1"
+    },
+    {
+      "path": "docs/history/p5/docs/DEPLOYMENT.md",
+      "bytes": 2582,
+      "sha256": "9fadc5dc76de3b1ad869b91c779ceafd913835dbe9ab126010c6ed0f63f97c45"
+    },
+    {
+      "path": "docs/history/p5/docs/EVALUATOR_GUIDE.md",
+      "bytes": 3810,
+      "sha256": "e6a0f3a5a0a0fffe361e05ee3c1875dc8981f01dd330a7dfc0cd1098ba91f651"
+    },
+    {
+      "path": "docs/history/p5/docs/GROUNDED_SELECTION_V2.md",
+      "bytes": 3065,
+      "sha256": "ae4bccadf63d0b693c1ae7a81c7898730537c61aa4d41faf692493510b489697"
+    },
+    {
+      "path": "docs/history/p5/docs/KNOWN_LIMITATIONS.md",
+      "bytes": 4179,
+      "sha256": "a4b1efe66084f3086fc9f6df917f650353f113de78af8768f3bb237bfc5d31fd"
+    },
+    {
+      "path": "docs/history/p5/docs/LOCAL_DEVELOPMENT.md",
+      "bytes": 2709,
+      "sha256": "285828886b543623136f01cf57949b3fc6bc1f51cff09c07fbda65bbc46674c8"
+    },
+    {
+      "path": "docs/history/p5/docs/P2_CRM_RUNTIME.md",
+      "bytes": 9590,
+      "sha256": "4fb19582f45e0547298ab06bf2d1f372c94ccd8fa70158607b073e461f1f97a5"
+    },
+    {
+      "path": "docs/history/p5/docs/P3_STAGING.md",
+      "bytes": 15254,
+      "sha256": "70beb13bfe776b641e6758981c2a638d7021794da45680bc507ab0764e708120"
+    },
+    {
+      "path": "docs/history/p5/docs/P5_NL_INTENT_AND_LIMITATIONS.md",
+      "bytes": 6816,
+      "sha256": "10a9ba205f2bf8897fbbaabd000946857a224eaf4cde4c2b8c10bff369ce6229"
+    },
+    {
+      "path": "docs/history/p5/docs/README.md",
+      "bytes": 1180,
+      "sha256": "293a2ce09e989d60887b1f94b6be218505f056f97b44194885d417f23380d513"
+    },
+    {
+      "path": "docs/history/p5/docs/RELEASE_CHECKLIST.md",
+      "bytes": 2871,
+      "sha256": "c9fffe9dbd0414e33f09e951cb315b64cc05a6e40b3e17549cf866d5030a15a1"
+    },
+    {
+      "path": "docs/history/p5/docs/SECURITY_PRIVACY.md",
+      "bytes": 6624,
+      "sha256": "5f687ec72611dd24079ad071593680eace83f07db874876764e66cbf795fc000"
+    },
+    {
+      "path": "docs/history/p5/docs/architecture/BOUNDARY.md",
+      "bytes": 776,
+      "sha256": "640e13e79e6a2956abf8ff263055649990eec64bc0716fe1615da3e7fe83f166"
+    },
+    {
+      "path": "docs/history/p5/docs/architecture/CRM_LOCAL_IMPLEMENTATION.md",
+      "bytes": 3323,
+      "sha256": "994e935406a9b8d0dffb059eb0ce5828a64371180f237624ed3dc3690e9a88d0"
+    },
+    {
+      "path": "docs/history/p5/docs/architecture/P4_AGENT_ROUTING.md",
+      "bytes": 13560,
+      "sha256": "e7e3937ccfeca41a25e7a5e7c9c758b46c30b40778b82fb2406a266d1209c273"
+    },
+    {
+      "path": "docs/observability/METRIC_REGISTRATION.json",
+      "bytes": 2999,
+      "sha256": "28c8573c3631238200e5ef7e6f42fa3c7988747cf2440485e0324a1aee096982"
+    }
+  ]
+}

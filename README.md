@@ -4,13 +4,13 @@ An Oakland County evidence workspace for map searches, source-backed roof and pe
 
 ## Evaluate
 
-Use the live URL and review code in the separately supplied private access guide. The source repository never contains that code. Open the workspace, choose a map center and radius, inspect source evidence, save a lead, and use the agent. [Evaluator guide](docs/EVALUATOR_GUIDE.md) explains the bounded workflows and factual limits.
+Open the retained [CRM review workspace](https://d1rvqgm0k272e6.cloudfront.net) with the separately delivered low-privilege review capability. The inherited accepted hosted source is `6500641`; [release status](docs/RELEASE_STATUS.json) routes current identity and acceptance to runtime health and the immutable release packet. A review code may later be deliberately delivered as a public review capability; privileged credentials are never supplied. Open the workspace, choose a map center and radius, inspect source evidence, save a lead, and use the agent. [Evaluator guide](docs/EVALUATOR_GUIDE.md) explains the bounded workflows and factual limits.
 
 For a local synthetic workspace, first start the Oracle API from its matching checkout. Use Node24 and pnpm11.25.0:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm run api
+PRISM_ACCESS_MODE=local pnpm run api
 ```
 
 In another terminal:
