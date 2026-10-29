@@ -1,3 +1,7 @@
+# Historical media-readiness gate — superseded
+
+> **Historical:** The body below preserves the earlier gate and is not current permission guidance. The 2026-10-29 lead ruling authorizes local integrated recording, captions, transcript and submission-package preparation after final runtime verification. Upload, GitHub writes, Ready transition, employer messaging and official submission remain prohibited. Follow the active [evaluator guide](EVALUATOR_GUIDE.md) and [release checklist](RELEASE_CHECKLIST.md); the final external receipt binds the recording to the deployed source.
+
 # Conditional media readiness
 
 No recording, audio, narration, subtitle file, caption script, shot list or production media is created by this phase. The direct user gate requires both operator and external Lead greenlights before media work. The later packet's suggestion to prepare a script does not replace that gate. This is an evidence-readiness checklist only.

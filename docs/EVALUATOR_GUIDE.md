@@ -1,28 +1,38 @@
 # Evaluator guide
 
-Open the retained [CRM workspace](https://d1rvqgm0k272e6.cloudfront.net) with the separately delivered low-privilege review capability. The evaluator needs no clone, installation, Docker, local server or AWS account. P6 acceptance is dated baseline evidence; confirm current health and frontend identities against [release status](RELEASE_STATUS.json) and the immutable release packet. A later PR may intentionally supply this limited public review capability; privileged credentials, live sessions and provider keys remain excluded.
+Open the [CRM workspace](https://d1rvqgm0k272e6.cloudfront.net) over HTTPS and enter the separately delivered low-privilege review capability. No clone, installation, Docker, local server or AWS account is needed. The capability opens bounded protected evidence and isolated lead workflows; it grants no administration, source acquisition, publication or outreach.
 
-1. Open the workspace and confirm the data-mode/snapshot label.
-2. Choose GPS or pin-drop center, adjust the radius, and inspect synchronized map/list results.
-3. Apply an age predicate; inspect its evidence basis/confidence. Building-year proxies are labeled honestly.
-4. Apply current/open or duration predicates; a positive example requires explicit admitted source status. Issued-only or unknown records must not appear as authoritative open permits.
-5. Open detail, inspect native evidence/coverage/limitations and save a lead. Change its status and note, refresh, then inspect versioned history. No outreach is sent.
-6. Ask a grounded natural-language question. Inspect the applied constraint ledger and retrieval trace. Accepted nonempty cases show one typed retrieval call and two bounded reads; empty/refused cases skip the model. Unsupported/ambiguous constraints are visible rather than silently dropped.
-7. Inspect any recorded-transfer and contractor/license evidence only at the claim strength supported by its source. BBB unavailability is explicit.
-8. Sign out, confirm the protected workspace closes, and use a fresh session for isolation checks.
+## Five-minute walkthrough
 
-Future CRM modules remain disabled. The accompanying source report identifies real positive examples and remaining business-outcome gaps; a safe zero-result path is not a substitute for a requested positive demonstration.
+1. Confirm the displayed data mode and snapshot. Choose a map center using GPS or a pin, then adjust the radius. If location permission is denied, use the pin controls; no permission change is required.
+2. Try City of Novi, Michigan, within five miles, proxy age greater than 15 years, with unknown ages excluded. The accepted dated baseline returned 648 matches / 50 rows. Check the current receipt before treating those as current counts. Building year is labeled as a low-confidence roof-age proxy, not an installation date.
+3. Inspect synchronized map/list results and open a property. Review source dates, confidence, coverage and citations. A bounded page is not the whole result set.
+4. Save one assessment lead, change its status and note, refresh and inspect versioned history. No outreach is sent. Preserve a draft note if a version conflict requires reloading the current lead.
+5. Ask the grounded agent the same age/radius question. Inspect its constraint ledger, retrieval trace and citations, then apply the result to the map/list. Accepted nonempty answers use one typed tool call and at most two bounded reads; empty/refused requests skip the model.
+6. Try a current/open or long-open roofing-permit request. The completed free-source campaign did not establish a qualified positive cohort. A truthful empty/insufficient-evidence response is expected; issued-only records must not be relabeled OPEN. [Known limitations](KNOWN_LIMITATIONS.md) records the source disposition.
+7. Inspect contractor/license or recorded-deed-gap evidence only at the claim strength supported by its source. A current-PIN deed-index gap does not prove uninterrupted legal ownership, and unavailable BBB information is not a zero rating.
+8. Sign out and confirm the protected workspace closes. Future CRM modules remain disabled. The matching [Oracle workspace](https://dknck94i8grek.cloudfront.net) exposes run, coverage and artifact evidence.
 
-For current source closure, inspect the separate provider-status/activity/issue-age and recorded-deed-gap controls, then open a returned property to inspect source dates, status basis, unverified party roles and limitations. A zero provider-active cohort is a valid coverage result; ISSUED is never relabeled active for the demonstration. The deed-index gap is narrower than proven uninterrupted ownership; the assistant explicitly refuses the stronger tenure request.
+No paid source is required, purchased or needed to reproduce this runtime. Original source-positive outcomes remain distinct from safe empty-result behavior.
 
-`pnpm run campaign --source-closure` prints the additional preselected 12-case plan without effects. Its authorized live form adds `--execute` and uses the same exact source/cost/usage gates as the original 36-case campaign. It emits a distinct report profile and cannot itself authorize a model repair. Both campaigns must be rerun against the final current source/package to claim current live model acceptance.
+## Release identity and availability
 
-## First use, access expiry and recovery
+[Release status](RELEASE_STATUS.json) records the accepted 2026-10-29 runtime and its dated acceptance hash. The final access package supplies a source-independent promotion receipt binding the served frontend and API to final head/tree, package, contract and snapshot. A documentation revision or successful health response alone is not later-release acceptance. Earlier accepted browser/API/MCP/map/model/lead checks are complete evidence for their exact identities, not a permanently pending checklist.
 
-Use a fresh browser profile, open the URL over HTTPS, enter the review capability and confirm the displayed snapshot/source identity. This capability permits bounded review of protected projections and isolated lead workflows; it grants no administration, source acquisition, public publication or outreach. Ordinary quotas and expiration remain enforced. Sign out when finished. Expired/revoked access must deny protected requests. The final access package must state the actual rotation/expiry and retained-through date and be rehearsed from three desktop contexts, one mobile context and a direct API client. Until that receipt exists, do not treat this checklist as a P7 pass.
+The accepted availability check covered at least fourteen days and a finite map expiry of **2026-11-12T08:17:25Z**. This is the last verified dependency expiry, not a promise that a new release has fourteen more days. The final access receipt must state the actual retained-through date and any renewed map expiry, with at least fourteen days after final release or employer acknowledgment, whichever is later. No perpetual availability is promised.
 
-A connection/DNS/TLS failure and an application failure are different evidence. Record the failing step/time without credentials or protected rows. The final release cannot depend on the evaluator contacting the candidate to debug ordinary first use. Media and official submission remain separate gates.
+Session cookies last **one hour**. The review capability remains usable only until owner rotation/revocation; its lifetime differs from a browser session and from runtime retention. Re-enter the separately supplied capability for a new session when it remains valid. Never send the code, cookies or protected rows in a bug report.
 
-The original age/agent examples use a city placeholder and a sample Oakland radius; they do not mandate Troy. Real Oakland age-filter positives already exist using the explicitly labeled building-year proxy. The historical evidence-empty Troy case remains a test result, not a missing mandatory named-city criterion. The current release rehearsal must identify its actual lawful Oakland location, query/snapshot and proxy basis. The current-active and long-open permit evidence gaps remain distinct and material.
+## Quotas and recovery
 
-The accepted strict age example is City of Novi, Michigan, within five miles (8046.72 meters), minimum proxy age fifteen years, unknown ages excluded. Its accepted grounded baseline had 648 matches and returned 50 on the page. This is historical accepted evidence; compare the current deployment's dated rehearsal receipt. A separate query that included unknown ages is not used as proof of a strict aged-roof positive. The result describes a labeled proxy, not a verified roof-installation date.
+Hosted per-subject limits are 600 reads/hour, 100 writes/hour and 10 authentication attempts/minute. Agent endpoint admission is 40 requests/session-hour and 240/day globally. The shared durable validated-request budget is 200 total / 160 per UTC day / 40 per session-hour; Converse attempts are separately capped at 120 total / 80 per UTC day / 40 per session-hour. Failed attempts keep their reservations. Redeploy, sign-out and UTC rollover do not reset cumulative limits.
+
+At the accepted 2026-10-29 snapshot, 77 Converse reservations left 43 cumulative and only 4 that UTC day; validated requests were 110 total / 108 that day. These are dated observations, not current remaining allowance. Rehearsal, evaluator and operator calls share the ledger. The final receipt must include a fresh headroom observation; do not repeatedly submit requests to test a limit.
+
+- **Session expired or access denied:** re-enter the capability once if it remains valid. Revoked/rotated access requires the separately delivered replacement; no AWS credentials are needed.
+- **Quota response:** stop retries. Observe the response's reset information and the applicable UTC/session window. A cumulative cap requires an owner decision, not repeated sign-ins or a reset workaround.
+- **Cold load or transient connection error:** allow the initial load to finish, then use the visible retry once. If DNS/TLS or service errors persist, record the time, route and sanitized status. Do not blindly repeat lead writes or model calls whose outcome is unknown; check lead history first.
+- **Map unavailable:** continue with accessible points, pin controls and the list. Repeated provider failure is a release defect; fallback is not proof of a working live map.
+- **Empty or refused evidence query:** inspect the applied constraints and source coverage. Do not weaken filters silently or infer missing evidence.
+
+The final first-use receipt covers three fresh desktop contexts, one mobile context and a direct API/MCP client. Media recording may be prepared locally; upload, PR creation and official submission are separate unperformed external gates.

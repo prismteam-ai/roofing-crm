@@ -1,17 +1,12 @@
 {
-  "schemaVersion": 2,
-  "purpose": "Deployment identity and evidence authority; a source checkout alone does not certify a hosted release",
+  "schemaVersion": 3,
+  "purpose": "Dated accepted-release pins and external promotion authority; a source checkout does not certify deployment",
   "currentRuntime": {
     "siteUrl": "https://d1rvqgm0k272e6.cloudfront.net",
     "healthPath": "/api/health",
     "identityRule": "Read authenticated runtime health and deployed frontend identity; match source head/tree, build/archive, contract and snapshot to the immutable release evidence packet.",
     "acceptanceRule": "Use the dated clean-browser/API/MCP/model/map/lead/access and privacy receipts for that exact runtime identity. A successful health response alone is not full acceptance.",
-    "sourceCheckoutRule": "Documentation-only revisions do not certify a new deployment. The final return records source documentation heads separately from deployed code/package identities where applicable."
-  },
-  "inheritedAcceptedBaseline": {
-    "sourceHead": "650064114bdb9778f0d9a9fbc8741aa7544708e6",
-    "evidenceAt": "2026-10-29T02:43:52.023644+00:00",
-    "meaning": "Dated P6 accepted hosted baseline; retained history, not a statement of which source is currently deployed"
+    "sourceCheckoutRule": "Final source commits and runtime acceptance are bound by a source-independent external receipt supplied with the final access package. Never guess a final head/build or rewrite source to contain its own identity."
   },
   "contractVersion": "0.5.0",
   "contractModuleGraphSha256": "017475a11c52252bbfc6ca2aedb90585638ad6c1b16f41321c7e8799c19d2612",
@@ -20,15 +15,15 @@
     "sourceManifestSha256": "5d835ee72a5893b0e441c4fbe22d03ae564a3bfd5cfb248b0d88263f4404a044",
     "publicProfile": "Retained immutable public run04",
     "meaning": "Exact loaded identities must be read from current runtime and release receipts; a redeploy is not source refresh.",
-    "freeSourceClosure": "Completed finite lawful free-source route; no new qualified current-active/long-open cohort admitted; reviewed v8/0.5.0 unchanged. Unsearched paid full history remains unknown and is not a completion prerequisite."
+    "freeSourceClosure": "Completed finite lawful free-source route; no qualified current-active/long-open cohort established. Reviewed v8/0.5.0 unchanged. No paid source is required, purchased or needed for reproduction. Unsearched paid full history remains unknown."
   },
   "currentAccountObservation": {
-    "at": "2026-10-29T03:45:27.196686+00:00",
+    "at": "2026-10-29T06:17:02.717965Z",
     "plan": "FREE",
     "status": "ACTIVE",
     "remainingCreditsUsd": 140,
     "mutations": 0,
-    "meaning": "Read-only dated observation, not final billing or permanent availability"
+    "meaning": "Dated read-only observation, not a final invoice or permanent availability"
   },
   "strictAgeExample": {
     "municipality": "City of Novi, Michigan",
@@ -41,5 +36,42 @@
     "meaning": "Historical accepted strict positive. Compare the final current-runtime rehearsal receipt; do not convert unknown-age matches into strict age positives."
   },
   "publicationBoundary": "Historical CID1/CID2 public identity; current retained run04 and bounded CLI/Atlas outputs local-only. New public/Atlas/IPNS/on-chain/registry effects require separate authorization and verified receipts.",
-  "submissionBoundary": "Qualifying PR, playable media and Ready transition are separate externally authorized gates; a source checkout or test pass is not official submission."
+  "submissionBoundary": "Qualifying PR, playable media and Ready transition are separate externally authorized gates; a source checkout or test pass is not official submission.",
+  "acceptedRelease": {
+    "acceptedAt": "2026-10-29T06:44:22.094594Z",
+    "sourceHead": "f40b75a1d8be8e5c064c3b308312711060fddaf0",
+    "sourceTree": "a4c3386c368ccf9f3f041051810f01eb7c88dfba",
+    "buildId": "47428e78a80729177b13f093aee890072d0e9036883d0fe328343850eaf3e26e",
+    "lambdaArchiveSha256": "6bbf7c9436f3a4dc8c305506273630340c08efff67ec0b2a8f29a9171a3bfa10",
+    "frontendManifestSha256": "ae35116f6d78c80b0e7c2beb9e7f4680aa115a95b967212ca61f162ae0e0a986",
+    "stage": "review",
+    "region": "us-east-2",
+    "receiptPathWithinAcceptedReturn": "evidence/runtime/p7-final-runtime-acceptance.json",
+    "receiptSha256": "359e24ea8fcbd1a2ea88dd85a39d1f99948662a6018728c3ac15208ab22c9c74",
+    "meaning": "Accepted scoped runtime/access baseline, not a claim that every original positive-source outcome is met or a later documentation commit is already deployed."
+  },
+  "releaseAssemblyAuthority": {
+    "date": "2026-10-29",
+    "ruling": "ACCEPT_P7_TECHNICAL_GREEN_WITH_DISCLOSED_FREE_SOURCE_LIMITATION__FREEZE_ARCHITECTURE_AND_DATA_SOURCES__AUTHORIZE_P8_LOCAL_MEDIA_AND_SUBMISSION_PACKAGE",
+    "acceptedReturnSha256": "ff678af51276bca181285e9df6b1415a1b4b4362fff41841fefea82e86be05ba",
+    "finalPromotionRule": "The external final release receipt, not a predicted source field here, binds final head/tree, archive, frontend, contract, snapshots, deployment time, first-use checks, retention and access headroom."
+  },
+  "availability": {
+    "lastVerifiedMapExpiresAt": "2026-11-12T08:17:25Z",
+    "sessionTtlSeconds": 3600,
+    "reviewCodeLifetime": "Until owner rotation or revocation",
+    "retentionRule": "At least fourteen days after final release or employer acknowledgment, whichever is later; actual retained-through date and finite dependency renewals are recorded in the external final access receipt.",
+    "qualification": "The accepted map expiry is not an automatic fourteen-day extension for a subsequent release."
+  },
+  "usageLimits": {
+    "converseTotal": 120,
+    "converseUtcDay": 80,
+    "converseSessionHour": 40,
+    "validatedRequestsTotal": 200,
+    "validatedRequestsUtcDay": 160,
+    "validatedRequestsSessionHour": 40,
+    "agentEndpointUtcDay": 240,
+    "redeployResetsCounters": false,
+    "remainingRule": "Use dated durable-ledger readback from the final receipt, not static source values."
+  }
 }

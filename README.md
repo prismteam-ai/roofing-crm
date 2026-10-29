@@ -1,12 +1,24 @@
 # Prism Roofing CRM
 
-An Oakland County evidence workspace for map searches, source-backed roof and permit observations, a bounded natural-language agent, and durable lead management. The CRM consumes Oracle projections; it does not independently ingest county or provider data.
+An Oakland County evidence workspace for map searches, source-backed roof and permit observations, a grounded natural-language agent, and durable lead management. The CRM consumes Oracle projections; it does not independently ingest county or provider data.
 
 ## Evaluate
 
-Open the retained [CRM review workspace](https://d1rvqgm0k272e6.cloudfront.net) with the separately delivered low-privilege review capability. The inherited accepted hosted source is `6500641`; [release status](docs/RELEASE_STATUS.json) routes current identity and acceptance to runtime health and the immutable release packet. A review code may later be deliberately delivered as a public review capability; privileged credentials are never supplied. Open the workspace, choose a map center and radius, inspect source evidence, save a lead, and use the agent. [Evaluator guide](docs/EVALUATOR_GUIDE.md) explains the bounded workflows and factual limits.
+Open the [CRM review workspace](https://d1rvqgm0k272e6.cloudfront.net) with the separately delivered low-privilege review capability. No AWS account, installation or local server is needed. Choose a map center and radius, inspect evidence, save a lead and ask the agent. Start with the [evaluator guide](docs/EVALUATOR_GUIDE.md) for the real example, access limits and recovery steps.
 
-For a local synthetic workspace, first start the Oracle API from its matching checkout. Use Node24 and pnpm11.25.0:
+The completed free-source campaign did not establish a positive current-active or long-open roofing-permit cohort. No paid source is required, purchased or needed to reproduce this runtime. [Known limitations](docs/KNOWN_LIMITATIONS.md) explains this finite source outcome and the narrower claims supported by the available evidence.
+
+## Implementation and verification
+
+React/MapLibre → API Gateway/Node 24 Lambda → a pinned Oracle read API plus DynamoDB sessions, lead history and quota ledgers. A Vercel AI SDK/Zod tool requests an immutable server-approved retrieval. Deterministic server code supplies facts and citations. Each accepted nonempty turn has at most two bounded read-only Oracle queries and one model attempt; empty and refused queries skip the model.
+
+The review environment uses the existing stacks in `us-east-2`, standard CDK deployment, private S3 with CloudFront OAC, Powertools, active X-Ray, 90-day logs and bounded alarm notification. Previous runtime resources remain retained for rollback. Availability, session expiry and map expiry are separate finite limits described in the evaluator guide.
+
+`pnpm run ci:verify` is the canonical local/CI command. The pinned GitHub Actions workflow uses the same command after tool setup. Local parity is not proof that GitHub-hosted Actions ran. The [release status](docs/RELEASE_STATUS.json) records the dated accepted baseline; a source-independent release receipt binds any subsequent final source, deployed packages, frontend, contract and snapshots. Health alone does not establish full acceptance.
+
+## Local workspace
+
+Use Node 24 and pnpm 11.25.0. First start the matching Oracle checkout in synthetic/local mode, then run:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -19,18 +31,8 @@ In another terminal:
 pnpm run dev
 ```
 
-The API is local-only and the default fixture is synthetic. See [local development](docs/LOCAL_DEVELOPMENT.md) for the complete command and tool requirements.
+See [local development](docs/LOCAL_DEVELOPMENT.md) for Oracle startup, tools and verification. Local fixtures are labeled synthetic and do not prove real source coverage.
 
-## Architecture and current engineering path
+[Documentation index](docs/README.md) · [Delivered scope](IMPLEMENTATION.md) · [Architecture](docs/ARCHITECTURE.md) · [Coverage and rights](docs/DATA_COVERAGE.md)
 
-React/MapLibre → API Gateway/Node24 Lambda → a pinned Oracle read API plus DynamoDB sessions, lead history and quota ledgers. One Vercel AI SDK/Zod tool can request an immutable server-approved retrieval. Facts and citations are rendered by the server. There are at most two bounded read-only Oracle queries and one model attempt per accepted turn; empty and refused queries skip the model.
-
-The review environment uses `us-east-2`, standard CDK bootstrap/deploy, private S3 with CloudFront OAC, Powertools, active X-Ray, 90-day logs and bounded alarm notification. The previous runtime remains a separately retained rollback; no old stack is destroyed by this source update.
-
-[Documentation index](docs/README.md) · [Delivered scope](IMPLEMENTATION.md) · [Architecture](docs/ARCHITECTURE.md) · [Coverage and rights](docs/DATA_COVERAGE.md) · [Known limitations](docs/KNOWN_LIMITATIONS.md)
-
-## Verification and release status
-
-`pnpm run ci:verify` is the canonical local/CI command. The pinned GitHub Actions workflow runs the same command after frozen installation, tool installation and browser setup. Local parity is not a claim that GitHub-hosted Actions have executed. Current hosted release acceptance and source-specific outcomes must be checked against the accompanying review return and runtime identities.
-
-The original [assignment contract](docs/history/ASSIGNMENT_README.md) remains controlling. Original positive source outcomes are not satisfied merely by an empty-result implementation. No PR, official submission, media production, Atlas/global IPNS or new real-data publication is performed by this release-candidate work.
+The preserved [original assignment](docs/history/ASSIGNMENT_README.md) controls the employer requirements. This implementation README does not replace it. Local media and PR preparation are separate from video upload, GitHub writes, Ready transition and official submission; those external gates are not claimed here.
