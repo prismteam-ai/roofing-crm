@@ -1,3 +1,4 @@
+import type { ProviderFailureDiagnostic } from "./provider-failure";
 import type { GroundedFailureDetail } from "./failure-detail";
 import { createHash } from "node:crypto";
 import {
@@ -50,6 +51,7 @@ export interface CampaignAudit {
   converseCalls?: number;
   failureCode?: string;
   failureDetail?: GroundedFailureDetail;
+  providerFailure?: ProviderFailureDiagnostic;
   status?: "provider-failed" | "evidence-empty";
   evidence?: {
     queryHash: string[];

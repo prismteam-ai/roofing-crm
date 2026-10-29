@@ -1,6 +1,6 @@
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
-import { generateText, tool } from "ai";
+import { generateText, tool, jsonSchema } from "ai";
 import { z } from "zod";
 import { reviewRegion } from "../../runtime-config/src/index";
 
@@ -21,6 +21,38 @@ export function retrievalArgumentsSchema(approved: ApprovedRetrieval) {
     limit: z.literal(approved.limit),
     sort: z.literal(approved.sort),
   });
+}
+
+/** Nova1 accepts only these three top-level wire fields. Zod strict validation remains authoritative. */
+export function retrievalWireSchema(approved: ApprovedRetrieval) {
+  const strict = retrievalArgumentsSchema(approved);
+  return jsonSchema<ApprovedRetrieval>(
+    {
+      type: "object",
+      properties: {
+        template: { type: "string", enum: [approved.template] },
+        queryDigest: { type: "string", enum: [approved.queryDigest] },
+        constraintDigest: { type: "string", enum: [approved.constraintDigest] },
+        limit: { type: "integer", enum: [approved.limit] },
+        sort: { type: "string", enum: [approved.sort] },
+      },
+      required: [
+        "template",
+        "queryDigest",
+        "constraintDigest",
+        "limit",
+        "sort",
+      ],
+    },
+    {
+      validate: (input) => {
+        const parsed = strict.safeParse(input);
+        return parsed.success
+          ? { success: true, value: parsed.data }
+          : { success: false, error: parsed.error };
+      },
+    },
+  );
 }
 
 export interface ModelRequest {
@@ -85,8 +117,7 @@ export function bedrockTransport(
           retrieveProperties: tool({
             description:
               "Execute the one approved snapshot-bound property retrieval. Copy every approved literal exactly; no other query, record ID, fact or operation is permitted.",
-            inputSchema: retrievalArgumentsSchema(request.approved),
-            strict: true,
+            inputSchema: retrievalWireSchema(request.approved),
           }),
         },
         experimental_telemetry: { isEnabled: false },

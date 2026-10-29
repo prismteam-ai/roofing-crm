@@ -5,6 +5,7 @@ import {
   operationForPath,
 } from "../../../packages/hosted-runtime/src/observability";
 export { alertHandler } from "../../../packages/hosted-runtime/src/alerts";
+import { providerFailureDiagnostic } from "../../../packages/agent/src/provider-failure";
 import { groundedFailureDetail } from "../../../packages/agent/src/failure-detail";
 import {
   answerQuestion,
@@ -476,6 +477,7 @@ export function createHostedHandler(
                     },
                   };
                 } catch (error) {
+                  const providerFailure = providerFailureDiagnostic(error);
                   if (
                     !(error instanceof DomainError) ||
                     (!["COST_LIMIT_REACHED", "QUERY_TIMEOUT"].includes(
@@ -483,9 +485,10 @@ export function createHostedHandler(
                     ) &&
                       !(
                         converseCalls > 0 &&
-                        ["INVALID_INPUT", "UNSUPPORTED_TOOL"].includes(
-                          error.code,
-                        )
+                        (providerFailure !== undefined ||
+                          ["INVALID_INPUT", "UNSUPPORTED_TOOL"].includes(
+                            error.code,
+                          ))
                       ))
                   )
                     throw error;
@@ -512,6 +515,7 @@ export function createHostedHandler(
                         converseCalls,
                         failureCode: error.code,
                         failureDetail: groundedFailureDetail(error),
+                        ...(providerFailure ? { providerFailure } : {}),
                         status: "provider-failed",
                       },
                       budget.signal,
@@ -551,6 +555,7 @@ export function createHostedHandler(
                       unmeasuredCalls: converseCalls - measuredCalls,
                       failureCode: error.code,
                       failureDetail: groundedFailureDetail(error),
+                      ...(providerFailure ? { providerFailure } : {}),
                     },
                   };
                 }

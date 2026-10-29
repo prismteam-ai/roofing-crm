@@ -1,5 +1,10 @@
+import {
+  providerFailureDiagnostic,
+  type ProviderFailureDiagnostic,
+} from "./provider-failure";
 import { DomainError } from "../../contracts/src/index";
 export type GroundedFailureDetail =
+  | ProviderFailureDiagnostic["kind"]
   | "retrieval_constraints"
   | "selection_schema"
   | "selection_ordinals"
@@ -36,6 +41,8 @@ const known: Readonly<Record<string, GroundedFailureDetail>> = Object.freeze({
 export function groundedFailureDetail(
   error: unknown,
 ): GroundedFailureDetail | undefined {
+  const provider = providerFailureDiagnostic(error);
+  if (provider) return provider.kind;
   return error instanceof DomainError && Object.hasOwn(known, error.message)
     ? known[error.message]
     : undefined;

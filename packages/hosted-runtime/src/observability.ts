@@ -1,3 +1,4 @@
+import { sanitizeProviderFailureDiagnostic } from "../../agent/src/provider-failure";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { Tracer } from "@aws-lambda-powertools/tracer";
@@ -114,9 +115,17 @@ export class RuntimeTelemetry {
           try {
             const value = JSON.parse(response.body) as {
               mode?: string;
-              modelAudit?: { converseCalls?: unknown };
+              modelAudit?: {
+                converseCalls?: unknown;
+                providerFailure?: unknown;
+              };
               toolTrace?: { retrievalReads?: unknown }[];
             };
+            const providerFailure = sanitizeProviderFailureDiagnostic(
+              value.modelAudit?.providerFailure,
+            );
+            if (providerFailure)
+              this.logger.info("model_provider_failed", { ...providerFailure });
             if (value.mode === "deterministic-fallback")
               this.metrics.addMetric(
                 "AgentProviderFailure",

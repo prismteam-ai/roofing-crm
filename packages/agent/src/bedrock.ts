@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { classifyProviderFailure } from "./provider-failure";
 import { z } from "zod";
 import { requireIntent } from "./intent";
 import type { IntentOptions } from "./intent/types";
@@ -302,10 +303,7 @@ export async function answerWithBedrock(
     );
   } catch (error) {
     if (error instanceof DomainError) throw error;
-    throw new DomainError(
-      "QUERY_TIMEOUT",
-      "Model provider unavailable; deterministic evidence fallback is required",
-    );
+    throw classifyProviderFailure(error, signal.aborted);
   }
   const usage = response.usage;
   if (

@@ -27,7 +27,7 @@ const credentials = async () => ({
   secretAccessKey: "synthetic-test-secret-never-an-actual-credential",
 });
 
-it("the actual Vercel AI SDK provider signs one Bedrock call with a strict Zod tool and preserves measured usage", async () => {
+it("the actual Vercel AI SDK provider signs one Bedrock call with a Nova-compatible wire schema, strict Zod validation and measured usage", async () => {
   const calls: Request[] = [];
   const provider = bedrockTransport(REVIEW_REGION, {
     credentialProvider: credentials,
@@ -62,7 +62,19 @@ it("the actual Vercel AI SDK provider signs one Bedrock call with a strict Zod t
   const body = (await calls[0].json()) as {
     toolConfig: {
       toolChoice: unknown;
-      tools: { toolSpec: { name: string; inputSchema: { json: unknown } } }[];
+      tools: {
+        toolSpec: {
+          name: string;
+          strict?: boolean;
+          inputSchema: {
+            json: {
+              type: string;
+              properties: Record<string, { type: string; enum: unknown[] }>;
+              required: string[];
+            };
+          };
+        };
+      }[];
     };
     inferenceConfig: { maxTokens: number };
   };
@@ -71,6 +83,34 @@ it("the actual Vercel AI SDK provider signs one Bedrock call with a strict Zod t
   });
   expect(body.toolConfig.tools).toHaveLength(1);
   expect(body.toolConfig.tools[0].toolSpec.name).toBe("retrieveProperties");
+  const spec = body.toolConfig.tools[0].toolSpec,
+    schema = spec.inputSchema.json;
+  expect(spec).not.toHaveProperty("strict");
+  expect(Object.keys(schema).sort()).toEqual([
+    "properties",
+    "required",
+    "type",
+  ]);
+  expect(schema.type).toBe("object");
+  expect([...schema.required].sort()).toEqual(
+    Object.keys(request.approved).sort(),
+  );
+  expect(Object.keys(schema.properties).sort()).toEqual(
+    Object.keys(request.approved).sort(),
+  );
+  for (const [key, value] of Object.entries(request.approved))
+    expect(schema.properties[key]).toEqual({
+      type: key === "limit" ? "integer" : "string",
+      enum: [value],
+    });
+  for (const forbidden of [
+    "$schema",
+    "additionalProperties",
+    "const",
+    "strict",
+  ])
+    expect(JSON.stringify(schema)).not.toContain('"' + forbidden + '"');
+
   expect(body.inferenceConfig.maxTokens).toBe(1000);
   expect(result).toMatchObject({
     finishReason: "tool-calls",

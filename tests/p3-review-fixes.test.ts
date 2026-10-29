@@ -27,7 +27,11 @@ import { runtimeIdentity } from "../packages/hosted-runtime/src/release";
 
 const PRIVATE_MARKER = "synthetic-private-provider-detail-never-return";
 describe("independent P3 provider failure regression", () => {
-  for (const kind of ["native-sdk-error", "ai-sdk-fetch"] as const)
+  for (const kind of [
+    "native-sdk-error",
+    "ai-sdk-fetch",
+    "ai-sdk-validation",
+  ] as const)
     it(`${kind}: deterministic fallback retains one attempt and never exposes provider errors`, async () => {
       const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
       const now = Date.parse("2026-10-27T20:00:00Z"),
@@ -41,7 +45,7 @@ describe("independent P3 provider failure regression", () => {
         wireCalls = 0,
         reads = 0;
       const sdk =
-        kind === "ai-sdk-fetch"
+        kind !== "native-sdk-error"
           ? bedrockTransport("us-east-2", {
               // Ephemeral synthetic signing material prevents all credential-chain/account access. The handler never opens a socket.
               credentialProvider: async () => ({
@@ -53,8 +57,13 @@ describe("independent P3 provider failure regression", () => {
                 return Response.json(
                   { message: PRIVATE_MARKER },
                   {
-                    status: 429,
-                    headers: { "x-amzn-errortype": "ThrottlingException" },
+                    status: kind === "ai-sdk-validation" ? 400 : 429,
+                    headers: {
+                      "x-amzn-errortype":
+                        kind === "ai-sdk-validation"
+                          ? "ValidationException"
+                          : "ThrottlingException",
+                    },
                   },
                 );
               },
@@ -151,25 +160,41 @@ describe("independent P3 provider failure regression", () => {
         );
         expect(providerCalls).toBe(1);
         expect(reads).toBe(1);
-        expect(wireCalls).toBe(kind === "ai-sdk-fetch" ? 1 : 0);
+        expect(wireCalls).toBe(
+          kind === "ai-sdk-fetch" || kind === "ai-sdk-validation" ? 1 : 0,
+        );
         expect(answer.modelAudit).toMatchObject({
           converseCalls: 1,
           unmeasuredCalls: 1,
           reservedMicroUsd: 560,
           measuredMicroUsd: 0,
-          failureCode: "QUERY_TIMEOUT",
+          failureCode:
+            kind === "ai-sdk-validation" ? "INVALID_INPUT" : "RATE_LIMITED",
+          failureDetail:
+            kind === "ai-sdk-validation"
+              ? "provider_request_rejected"
+              : "provider_throttled",
         });
         expect(campaign.audit).toHaveLength(1);
         expect(campaign.audit[0]).toMatchObject({
           status: "provider-failed",
           unmeasuredCalls: 1,
           reservedMicroUsd: 560,
-          failureCode: "QUERY_TIMEOUT",
+          failureCode:
+            kind === "ai-sdk-validation" ? "INVALID_INPUT" : "RATE_LIMITED",
+          failureDetail:
+            kind === "ai-sdk-validation"
+              ? "provider_request_rejected"
+              : "provider_throttled",
         });
         expect(result.body + JSON.stringify(campaign.audit)).not.toContain(
           PRIVATE_MARKER,
         );
-        expect(result.body).not.toContain("ThrottlingException");
+        expect(answer.modelAudit.providerFailure.awsErrorName).toBe(
+          kind === "ai-sdk-validation"
+            ? "ValidationException"
+            : "ThrottlingException",
+        );
         expect(JSON.stringify(warning.mock.calls)).not.toContain(
           PRIVATE_MARKER,
         );

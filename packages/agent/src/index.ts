@@ -1,3 +1,4 @@
+import type { ProviderFailureDiagnostic } from "./provider-failure";
 import type { RoutingArchitecture } from "./architecture";
 import {
   propertyMatchesQuery,
@@ -34,6 +35,7 @@ export interface AgentAnswer {
     measuredMicroUsd: number;
     failureCode?: string;
     failureDetail?: GroundedFailureDetail;
+    providerFailure?: ProviderFailureDiagnostic;
     unmeasuredCalls?: number;
   };
   mode:
