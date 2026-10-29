@@ -134,8 +134,18 @@ function App() {
             </div>
           </div>
         </div>
-        <a href="/api/evidence" target="_blank" rel="noopener noreferrer">
-          Assessment evidence ↗
+        <a
+          className="sidebar-evidence"
+          href="/api/evidence"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Assessment evidence (opens in a new tab)"
+          title="Assessment evidence (opens in a new tab)"
+        >
+          <span className="evidence-icon" aria-hidden="true">
+            ↗
+          </span>
+          <span className="evidence-label">Assessment evidence</span>
         </a>
       </aside>
       <main>

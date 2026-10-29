@@ -100,16 +100,29 @@ test("evidence link stays readable and clickable inside the sidebar across its c
   page,
 }) => {
   const state = await fixture(page);
-  for (const width of [390, 800, 801]) {
+  for (const width of [390, 800, 801, 1440]) {
     await page.setViewportSize({ width, height: 844 });
     const link = page.locator('.sidebar > a[href="/api/evidence"]');
     await expect(link).toBeVisible();
+    await expect(link).toHaveAccessibleName(
+      "Assessment evidence (opens in a new tab)",
+    );
+    await expect(link).toHaveAttribute(
+      "title",
+      "Assessment evidence (opens in a new tab)",
+    );
+    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    if (width <= 800) expect((await link.innerText()).trim()).toBe("↗");
+    else expect(await link.innerText()).toContain("Assessment evidence");
     await link.scrollIntoViewIfNeeded();
     const geometry = await link.evaluate((element) => {
       const sidebar = element.closest(".sidebar")!.getBoundingClientRect();
       const range = document.createRange();
       range.selectNodeContents(element);
-      const text = [...range.getClientRects()];
+      const text = [...range.getClientRects()].filter(
+        (rect) => rect.width > 0 && rect.height > 0,
+      );
       const link = element.getBoundingClientRect();
       const hit = document.elementFromPoint(
         link.x + link.width / 2,
@@ -128,6 +141,8 @@ test("evidence link stays readable and clickable inside the sidebar across its c
       clickable: true,
       horizontalOverflow: false,
     });
+    if (width <= 800)
+      expect((await link.boundingBox())!.height).toBeLessThanOrEqual(52);
     await link.focus();
     await expect(link).toBeFocused();
   }

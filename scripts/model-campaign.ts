@@ -59,7 +59,7 @@ if (
 )
   throw Error("Use model-campaign [--source-closure] [--execute]");
 if (!process.argv.includes("--execute")) {
-  console.log(
+  const plan =
     JSON.stringify(
       {
         mode: "plan",
@@ -72,8 +72,10 @@ if (!process.argv.includes("--execute")) {
       },
       null,
       2,
-    ),
-  );
+    ) + "\n";
+  await new Promise<void>((resolve, reject) => {
+    process.stdout.write(plan, (error) => (error ? reject(error) : resolve()));
+  });
   process.exit(0);
 }
 if (
@@ -110,7 +112,7 @@ const pins = validateReleasePins({
   archiveSha256: get("PRISM_EXPECTED_ARCHIVE_SHA256"),
   publicManifestSha256: APPROVED_PUBLIC_MANIFEST_SHA256,
   assetBucket: get("PRISM_DEPLOY_ASSET_BUCKET"),
-  assetPrefix: "prism-review/crm/",
+  assetPrefix: "assessment/crm/",
   stackName: "PrismCrmAssessmentReview",
 });
 assertPinnedSource(pins, source);
