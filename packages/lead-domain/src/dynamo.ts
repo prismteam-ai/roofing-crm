@@ -18,19 +18,36 @@ import {
 export interface DocumentTransport {
   send(
     command: GetCommand | QueryCommand | TransactWriteCommand | PutCommand,
+    signal?: AbortSignal,
   ): Promise<Record<string, unknown>>;
 }
+export type DispatchGuard = () => void;
 export interface LeadRepository {
-  list(sessionId: string): Lead[] | Promise<Lead[]>;
-  create(input: unknown): Lead | Promise<Lead>;
-  update(id: string, input: unknown): Lead | Promise<Lead>;
+  list(
+    sessionId: string,
+    signal?: AbortSignal,
+    guard?: DispatchGuard,
+  ): Lead[] | Promise<Lead[]>;
+  create(
+    input: unknown,
+    signal?: AbortSignal,
+    guard?: DispatchGuard,
+  ): Lead | Promise<Lead>;
+  update(
+    id: string,
+    input: unknown,
+    signal?: AbortSignal,
+    guard?: DispatchGuard,
+  ): Lead | Promise<Lead>;
 }
 export function documentTransport(
   client: DynamoDBDocumentClient,
 ): DocumentTransport {
   return {
-    send: async (command) =>
-      (await client.send(command as GetCommand)) as Record<string, unknown>,
+    send: async (command, signal) =>
+      (await client.send(command as GetCommand, {
+        abortSignal: signal,
+      })) as Record<string, unknown>,
   };
 }
 const hash = (x: unknown) =>
@@ -47,16 +64,36 @@ export class DynamoLeadStore implements LeadRepository {
     private readonly clock = () => new Date().toISOString(),
     private readonly ttlDays = 14,
   ) {}
+  private send(
+    command: Parameters<DocumentTransport["send"]>[0],
+    signal?: AbortSignal,
+    guard?: DispatchGuard,
+  ) {
+    guard?.();
+    if (signal?.aborted)
+      throw new DomainError(
+        "QUERY_TIMEOUT",
+        "Lead operation deadline exceeded before dispatch",
+      );
+    return this.db.send(command, signal);
+  }
   private key(session: string, sk: string) {
     return { pk: `SESSION#${session}`, sk };
   }
-  private async get(session: string, sk: string) {
-    const result = await this.db.send(
+  private async get(
+    session: string,
+    sk: string,
+    signal?: AbortSignal,
+    guard?: DispatchGuard,
+  ) {
+    const result = await this.send(
       new GetCommand({
         TableName: this.table,
         Key: this.key(session, sk),
         ConsistentRead: true,
       }),
+      signal,
+      guard,
     );
     const item = result.Item as Record<string, unknown> | undefined;
     if (
@@ -67,13 +104,17 @@ export class DynamoLeadStore implements LeadRepository {
       return undefined;
     return item;
   }
-  async list(sessionId: string): Promise<Lead[]> {
+  async list(
+    sessionId: string,
+    signal?: AbortSignal,
+    guard?: DispatchGuard,
+  ): Promise<Lead[]> {
     if (!sessionId || sessionId.length > 100)
       throw new DomainError("INVALID_INPUT", "Session required");
     const rows: Lead[] = [];
     let cursor: Record<string, unknown> | undefined;
     do {
-      const result = await this.db.send(
+      const result = await this.send(
         new QueryCommand({
           TableName: this.table,
           KeyConditionExpression: "pk = :pk AND begins_with(sk, :lead)",
@@ -84,6 +125,8 @@ export class DynamoLeadStore implements LeadRepository {
           ConsistentRead: true,
           ExclusiveStartKey: cursor,
         }),
+        signal,
+        guard,
       );
       for (const item of (result.Items ?? []) as Record<string, unknown>[])
         if (Number(item.expiresAt) > Date.parse(this.clock()) / 1000)
@@ -92,7 +135,11 @@ export class DynamoLeadStore implements LeadRepository {
     } while (cursor);
     return rows.sort((a, b) => b.events[0].at.localeCompare(a.events[0].at));
   }
-  async create(input: unknown): Promise<Lead> {
+  async create(
+    input: unknown,
+    signal?: AbortSignal,
+    guard?: DispatchGuard,
+  ): Promise<Lead> {
     const x = LeadCreateSchema.parse(input);
     const id = `lead-${hash([x.sessionId, x.propertyId, x.snapshotId]).slice(0, 20)}`;
     const leadKey = `LEAD#${id}`,
@@ -100,7 +147,7 @@ export class DynamoLeadStore implements LeadRepository {
     const resolve = async (): Promise<
       { lead: Lead; expiresAt: number } | undefined
     > => {
-      const key = await this.get(x.sessionId, requestKey);
+      const key = await this.get(x.sessionId, requestKey, signal, guard);
       if (
         key &&
         (key.propertyId !== x.propertyId || key.snapshotId !== x.snapshotId)
@@ -109,7 +156,7 @@ export class DynamoLeadStore implements LeadRepository {
           "CONFLICT",
           "Idempotency key already belongs to another selection",
         );
-      const old = await this.get(x.sessionId, leadKey);
+      const old = await this.get(x.sessionId, leadKey, signal, guard);
       return old
         ? { lead: LeadSchema.parse(old.lead), expiresAt: Number(old.expiresAt) }
         : undefined;
@@ -119,7 +166,7 @@ export class DynamoLeadStore implements LeadRepository {
       expiresAt: number;
     }): Promise<Lead> => {
       try {
-        await this.db.send(
+        await this.send(
           new PutCommand({
             TableName: this.table,
             Item: {
@@ -136,6 +183,8 @@ export class DynamoLeadStore implements LeadRepository {
               ":snapshot": x.snapshotId,
             },
           }),
+          signal,
+          guard,
         );
       } catch (error) {
         if (conditional(error))
@@ -161,7 +210,7 @@ export class DynamoLeadStore implements LeadRepository {
       events: [{ kind: "created", at }],
     };
     try {
-      await this.db.send(
+      await this.send(
         new TransactWriteCommand({
           TransactItems: [
             {
@@ -198,6 +247,8 @@ export class DynamoLeadStore implements LeadRepository {
             },
           ],
         }),
+        signal,
+        guard,
       );
       return lead;
     } catch (e) {
@@ -210,12 +261,17 @@ export class DynamoLeadStore implements LeadRepository {
       );
     }
   }
-  async update(id: string, input: unknown): Promise<Lead> {
+  async update(
+    id: string,
+    input: unknown,
+    signal?: AbortSignal,
+    guard?: DispatchGuard,
+  ): Promise<Lead> {
     const x = LeadUpdateSchema.parse({
       ...(input as Record<string, unknown>),
       id,
     });
-    const item = await this.get(x.sessionId, `LEAD#${id}`);
+    const item = await this.get(x.sessionId, `LEAD#${id}`, signal, guard);
     if (!item)
       throw new DomainError(
         "NOT_AUTHORIZED",
@@ -241,7 +297,7 @@ export class DynamoLeadStore implements LeadRepository {
     };
     boundedLead(lead);
     try {
-      await this.db.send(
+      await this.send(
         new PutCommand({
           TableName: this.table,
           Item: { ...item, lead, version: lead.version },
@@ -249,6 +305,8 @@ export class DynamoLeadStore implements LeadRepository {
           ExpressionAttributeNames: { "#v": "version" },
           ExpressionAttributeValues: { ":expected": x.expectedVersion },
         }),
+        signal,
+        guard,
       );
     } catch (e) {
       if (conditional(e))

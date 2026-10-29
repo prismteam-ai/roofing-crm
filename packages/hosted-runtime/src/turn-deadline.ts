@@ -19,12 +19,15 @@ export class TurnDeadline {
   remaining() {
     return Math.max(0, this.end - performance.now());
   }
-  async run<T>(work: () => Promise<T>): Promise<T> {
+  assertActive() {
     if (this.signal.aborted || this.remaining() <= 0)
       throw new DomainError(
         "QUERY_TIMEOUT",
         "Assessment turn deadline exceeded",
       );
+  }
+  async run<T>(work: () => Promise<T>): Promise<T> {
+    this.assertActive();
     let rejectAbort: () => void = () => {};
     const cancelled = new Promise<never>((_, reject) => {
       rejectAbort = () =>
@@ -34,17 +37,15 @@ export class TurnDeadline {
       this.signal.addEventListener("abort", rejectAbort, { once: true });
     });
     try {
-      return await Promise.race([
+      const result = await Promise.race([
         Promise.resolve().then(() => {
-          if (this.signal.aborted)
-            throw new DomainError(
-              "QUERY_TIMEOUT",
-              "Assessment turn deadline exceeded",
-            );
+          this.assertActive();
           return work();
         }),
         cancelled,
       ]);
+      this.assertActive();
+      return result;
     } finally {
       this.signal.removeEventListener("abort", rejectAbort);
     }

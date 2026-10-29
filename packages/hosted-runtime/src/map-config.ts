@@ -1,9 +1,8 @@
+import { hostedSecretValue } from "./read-only-secrets-client";
 import { openStreetMapProvider } from "../../map-domain/src/basemap";
-import {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} from "@aws-sdk/client-secrets-manager";
+import { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { z } from "zod";
+import { DomainError } from "../../contracts/src/index";
 export const LocationConfigSchema = z
   .object({
     apiKey: z.string().min(10).max(2048),
@@ -20,11 +19,15 @@ export function mapConfiguration(
   clock = Date.now,
 ) {
   let cached: { until: number; value: unknown } | undefined;
-  return async () => {
+  return async (signal?: AbortSignal, assertActive?: () => void) => {
+    assertActive?.();
+    if (signal?.aborted)
+      throw new DomainError(
+        "QUERY_TIMEOUT",
+        "Map secret deadline exceeded before dispatch",
+      );
     if (cached && cached.until > clock()) return cached.value;
-    const out = await client.send(
-      new GetSecretValueCommand({ SecretId: secretId }),
-    );
+    const out = await hostedSecretValue(client, secretId, signal, assertActive);
     const root = JSON.parse(out.SecretString ?? "{}");
     if (root.publicRasterMap && root.locationMap)
       throw new Error("Conflicting map configurations rejected");

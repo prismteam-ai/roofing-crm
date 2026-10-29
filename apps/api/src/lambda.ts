@@ -1,5 +1,14 @@
 import { SOURCE_ASSESSMENT_DATE } from "../../../packages/runtime-config/src/source-assessment";
 import { TurnDeadline } from "../../../packages/hosted-runtime/src/turn-deadline";
+import { requestBoundaries } from "../../../packages/hosted-runtime/src/request-boundaries";
+import {
+  hostedSecretValue,
+  createHostedReadOnlySecretsClient,
+} from "../../../packages/hosted-runtime/src/read-only-secrets-client";
+import {
+  setupFailureDiagnostic,
+  type SetupStage,
+} from "../../../packages/hosted-runtime/src/setup-diagnostics";
 import {
   telemetry,
   operationForPath,
@@ -20,10 +29,6 @@ import {
   type QueryInput,
 } from "../../../packages/contracts/src/index";
 import { createHash, randomUUID } from "node:crypto";
-import {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} from "@aws-sdk/client-secrets-manager";
 import {
   REVIEW_REGION,
   MICRO_MODEL,
@@ -143,11 +148,20 @@ export interface HostedRuntime {
   leads: LeadRepository;
   quota: QuotaStore;
   sessions: SessionStore;
-  access: () => Promise<AccessService>;
+  access: (
+    signal?: AbortSignal,
+    assertActive?: () => void,
+  ) => Promise<AccessService>;
   provider?: ConverseTransport;
   campaign?: CampaignStore;
-  price?: () => Promise<VerifiedPrice>;
-  mapConfig?: () => Promise<unknown>;
+  price?: (
+    signal?: AbortSignal,
+    assertActive?: () => void,
+  ) => Promise<VerifiedPrice>;
+  mapConfig?: (
+    signal?: AbortSignal,
+    assertActive?: () => void,
+  ) => Promise<unknown>;
 }
 let runtime: HostedRuntime | undefined;
 function makeRuntime() {
@@ -159,15 +173,18 @@ function makeRuntime() {
   )
     throw new Error("Mixed runtime regions");
   const secretId = required("REVIEW_ACCESS_SECRET_ARN");
-  const secrets = new SecretsManagerClient({ region, maxAttempts: 1 });
+  const secrets = createHostedReadOnlySecretsClient(region);
   const enabledModel =
     process.env.PRISM_ENABLE_MODEL === "true"
       ? required("BEDROCK_MODEL_ID")
       : undefined;
   const price = enabledModel
-    ? verifiedPriceProvider(enabledModel, async () => {
-        const out = await secrets.send(
-          new GetSecretValueCommand({ SecretId: secretId }),
+    ? verifiedPriceProvider(enabledModel, async (signal, assertActive) => {
+        const out = await hostedSecretValue(
+          secrets,
+          secretId,
+          signal,
+          assertActive,
         );
         const root = JSON.parse(out.SecretString ?? "{}");
         return root.modelPrices?.[enabledModel];
@@ -207,16 +224,29 @@ export function createHostedHandler(
     event: HttpEvent,
     budget: TurnDeadline,
   ): Promise<HttpResult> => {
+    let stage: SetupStage = "runtime";
     try {
-      const r = await loadRuntime();
-      const access = await r.access();
+      const r = await budget.run(async () => loadRuntime());
+      stage = "access-secret";
+      const access = await budget.run(() =>
+        r.access(budget.signal, () => budget.assertActive()),
+      );
       const cookie =
         (event.cookies ?? []).join("; ") || event.headers?.cookie || "";
-      const oracle = oracleFactory(cookie);
+      stage = "oracle-client";
+      const rawOracle = await budget.run(async () => oracleFactory(cookie));
+      const bounded = requestBoundaries(budget, rawOracle, r.leads, r.quota);
+      const oracle = bounded.oracle;
+      stage = "application";
       const app = createApp({
         oracle,
-        leads: r.leads,
-        mapConfig: r.mapConfig,
+        leads: bounded.leads,
+        mapConfig: r.mapConfig
+          ? () =>
+              budget.run(() =>
+                r.mapConfig!(budget.signal, () => budget.assertActive()),
+              )
+          : undefined,
         model: r.provider
           ? {
               id: reviewModel(modelId() || MICRO_MODEL, true),
@@ -236,7 +266,9 @@ export function createHostedHandler(
         access: {
           current: async (headers) => {
             const verified = access.verify(readSessionCookie(headers));
-            const stored = await r.sessions.get(verified.id);
+            const stored = await budget.run(() =>
+              r.sessions.get(verified.id, budget.signal),
+            );
             if (
               !stored ||
               stored.expiresAt !== verified.expiresAt ||
@@ -247,7 +279,9 @@ export function createHostedHandler(
           },
           issue: async (code) => {
             const result = access.issue(code);
-            await r.sessions.put(result.session);
+            await budget.run(() =>
+              r.sessions.put(result.session, budget.signal),
+            );
             return {
               session: result.session,
               cookie: sessionCookie(result.token, access.ttl),
@@ -255,12 +289,21 @@ export function createHostedHandler(
           },
           logout: async (headers) => {
             const verified = access.verify(readSessionCookie(headers));
-            await r.sessions.revoke(verified.id);
+            await budget.run(() =>
+              r.sessions.revoke(verified.id, budget.signal),
+            );
             return clearSessionCookie();
           },
         },
         quota: async (subject, category) => {
-          await consumeHostedRequestQuota(r.quota, subject, category, clock());
+          await budget.run(() =>
+            consumeHostedRequestQuota(
+              bounded.quota,
+              subject,
+              category,
+              clock(),
+            ),
+          );
         },
         ...(r.provider
           ? {
@@ -356,8 +399,23 @@ export function createHostedHandler(
                       onDispatch: () => {
                         converseCalls++;
                       },
-                      beforeConverse: async (projection) => {
-                        price = await r.price!();
+                      beforeConverse: async (
+                        projection,
+                        agentSignal,
+                        assertAgentActive,
+                      ) => {
+                        const signal = agentSignal
+                          ? AbortSignal.any([budget.signal, agentSignal])
+                          : budget.signal;
+                        const assertActive = () => {
+                          budget.assertActive();
+                          assertAgentActive?.();
+                        };
+                        assertActive();
+                        price = await budget.run(() =>
+                          r.price!(signal, assertActive),
+                        );
+                        assertActive();
                         if (price.modelId !== model)
                           throw new Error("Model price identity mismatch");
                         const { inputBytes } = projection;
@@ -373,7 +431,7 @@ export function createHostedHandler(
                               nowMs: clock(),
                               reservedMicroUsd: cost,
                             },
-                            budget.signal,
+                            signal,
                           ),
                         );
                         reservedMicroUsd += cost;
@@ -563,8 +621,18 @@ export function createHostedHandler(
             }
           : {}),
       });
-      return await createLambdaHandler(app)(event);
-    } catch {
+      stage = "dispatch";
+      return await budget.run(() => createLambdaHandler(app)(event));
+    } catch (error) {
+      if (budget.signal.aborted) throw error;
+      try {
+        telemetry.logger.warn(
+          "hosted_setup_failed",
+          setupFailureDiagnostic(stage, error),
+        );
+      } catch {
+        /* Logging cannot alter the fixed failure response. */
+      }
       return {
         statusCode: 500,
         headers: {

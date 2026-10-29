@@ -75,10 +75,14 @@ it("accepts the measured21.134s-equivalent cold response through the actual host
       requestContext: { http: { method: "GET" } },
     });
     const checked = expect(task).resolves.toMatchObject({ statusCode: 200 });
-    await vi.advanceTimersByTimeAsync(21134);
+    await vi.advanceTimersByTimeAsync(21133);
+    expect(f.signal()?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
     await checked;
     expect(f.calls()).toBe(1);
-    expect(f.signal()?.aborted).toBe(false);
+    // Successful completion disposes the shared request budget; the signal
+    // remains live during the read and is cancelled only after the200 result.
+    expect(f.signal()?.aborted).toBe(true);
   } finally {
     f.leads.close();
   }

@@ -32,17 +32,26 @@ export const OracleHealthSchema = z.object({
   publicSnapshotId: z.string().optional(),
 });
 export type OracleHealth = z.infer<typeof OracleHealthSchema>;
+export interface OracleReadBudget {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
 export interface OracleReader {
   search(
     input: QueryInput,
-    options?: { signal?: AbortSignal; timeoutMs?: number },
+    options?: OracleReadBudget,
   ): Promise<SearchResponse>;
-  detail(id: string, snapshotId: string): Promise<Property>;
-  health?(): Promise<OracleHealth>;
+  detail(
+    id: string,
+    snapshotId: string,
+    options?: OracleReadBudget,
+  ): Promise<Property>;
+  health?(options?: OracleReadBudget): Promise<OracleHealth>;
   sourceContext?(
     sourceId: string,
     snapshotId: string,
     page?: number,
+    options?: OracleReadBudget,
   ): Promise<SourceContext>;
 }
 export interface OracleUrlPolicy {
@@ -251,6 +260,7 @@ export class OracleClient implements OracleReader {
     sourceId: string,
     snapshotId: string,
     page?: number,
+    budget?: OracleReadBudget,
   ): Promise<SourceContext> {
     const expected = sourceContext(sourceId, page);
     if (!expected)
@@ -266,7 +276,9 @@ export class OracleClient implements OracleReader {
         source: z.record(z.string(), z.unknown()),
       })
       .strict()
-      .parse(await this.request(`/api/source-context?${query}`));
+      .parse(
+        await this.request(`/api/source-context?${query}`, undefined, budget),
+      );
     const canonical = (x: unknown): string =>
       Array.isArray(x)
         ? `[${x.map(canonical).join(",")}]`
@@ -286,8 +298,10 @@ export class OracleClient implements OracleReader {
       );
     return expected;
   }
-  async health(): Promise<OracleHealth> {
-    return OracleHealthSchema.parse(await this.request("/api/health"));
+  async health(budget?: OracleReadBudget): Promise<OracleHealth> {
+    return OracleHealthSchema.parse(
+      await this.request("/api/health", undefined, budget),
+    );
   }
   async search(
     input: QueryInput,
@@ -311,10 +325,16 @@ export class OracleClient implements OracleReader {
       );
     return response;
   }
-  async detail(id: string, snapshotId: string): Promise<Property> {
+  async detail(
+    id: string,
+    snapshotId: string,
+    budget?: OracleReadBudget,
+  ): Promise<Property> {
     const property = PropertySchema.parse(
       await this.request(
         `/api/properties/${encodeURIComponent(id)}?snapshotId=${encodeURIComponent(snapshotId)}`,
+        undefined,
+        budget,
       ),
     );
     if (property.id !== id)

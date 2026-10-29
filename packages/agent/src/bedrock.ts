@@ -70,6 +70,7 @@ export interface BedrockLimits {
       minimizedRowCount: number;
     },
     signal?: AbortSignal,
+    assertActive?: () => void,
   ) => Promise<void>;
   onUsage?: (
     input: {
@@ -275,12 +276,19 @@ export async function answerWithBedrock(
           minimizedRowCount: minimized.length,
         },
         signal,
+        () => {
+          if (remaining() <= 0 || signal.aborted)
+            throw new DomainError(
+              "QUERY_TIMEOUT",
+              "Agent deadline exceeded before reservation",
+            );
+        },
       ),
       remaining(),
       controller,
       signal,
     );
-  if (remaining() <= 0)
+  if (remaining() <= 0 || signal.aborted)
     throw new DomainError(
       "QUERY_TIMEOUT",
       "Agent deadline exceeded before provider call",

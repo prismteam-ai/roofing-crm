@@ -118,9 +118,17 @@ export async function refreshRegionalPrice(
   modelId: string,
   transport: typeof fetch = fetch,
   clock = Date.now,
+  signal?: AbortSignal,
 ): Promise<VerifiedPrice> {
   reviewModel(modelId, true);
+  if (signal?.aborted)
+    throw new DomainError(
+      "QUERY_TIMEOUT",
+      "Price metadata deadline exceeded before dispatch",
+    );
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener("abort", abort, { once: true });
   let timer: ReturnType<typeof setTimeout> | undefined,
     reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   try {
@@ -176,18 +184,25 @@ export async function refreshRegionalPrice(
     return unavailable();
   } finally {
     if (timer) clearTimeout(timer);
+    signal?.removeEventListener("abort", abort);
   }
 }
 /** Fresh stored price or bounded official refresh; no stale-price fallback and no write privilege. */
 export function verifiedPriceProvider(
   modelId: string,
-  stored: () => Promise<unknown>,
+  stored: (signal?: AbortSignal, assertActive?: () => void) => Promise<unknown>,
   transport: typeof fetch = fetch,
   clock = Date.now,
 ) {
   reviewModel(modelId, true);
   let cached: VerifiedPrice | undefined;
-  return async () => {
+  return async (signal?: AbortSignal, assertActive?: () => void) => {
+    assertActive?.();
+    if (signal?.aborted)
+      throw new DomainError(
+        "QUERY_TIMEOUT",
+        "Price deadline exceeded before dispatch",
+      );
     if (cached) {
       try {
         reserveCost(1, cached, clock());
@@ -196,13 +211,19 @@ export function verifiedPriceProvider(
         cached = undefined;
       }
     }
-    const candidate = await stored();
+    const candidate = await stored(signal, assertActive);
+    assertActive?.();
+    if (signal?.aborted)
+      throw new DomainError(
+        "QUERY_TIMEOUT",
+        "Price deadline exceeded after stored read",
+      );
     try {
       if (object(candidate).modelId !== modelId) return unavailable();
       reserveCost(1, candidate as VerifiedPrice, clock());
       cached = candidate as VerifiedPrice;
     } catch {
-      cached = await refreshRegionalPrice(modelId, transport, clock);
+      cached = await refreshRegionalPrice(modelId, transport, clock, signal);
     }
     return cached;
   };

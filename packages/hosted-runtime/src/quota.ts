@@ -1,6 +1,14 @@
 import { createHash } from "node:crypto";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { AccessError } from "./access.ts";
+import { DomainError } from "../../contracts/src/index";
+const active = (signal?: AbortSignal) => {
+  if (signal?.aborted)
+    throw new DomainError(
+      "QUERY_TIMEOUT",
+      "Quota deadline exceeded before dispatch",
+    );
+};
 export interface QuotaInput {
   subject: string;
   category: "read" | "write" | "auth" | "model";
@@ -14,7 +22,7 @@ export interface QuotaResult {
   resetAt: number;
 }
 export interface QuotaStore {
-  consume(input: QuotaInput): Promise<QuotaResult>;
+  consume(input: QuotaInput, signal?: AbortSignal): Promise<QuotaResult>;
 }
 function key(input: QuotaInput) {
   const units = input.units ?? 1;
@@ -40,7 +48,8 @@ export class MemoryQuotaStore implements QuotaStore {
     string,
     { used: number; expiresAt: number }
   >();
-  async consume(input: QuotaInput): Promise<QuotaResult> {
+  async consume(input: QuotaInput, signal?: AbortSignal): Promise<QuotaResult> {
+    active(signal);
     const k = key(input),
       id = `${k.pk}/${k.sk}`;
     for (const [id, s] of this.windows)
@@ -60,7 +69,8 @@ export class DynamoQuotaStore implements QuotaStore {
     private readonly client: Pick<DynamoDBDocumentClient, "send">,
     private readonly tableName: string,
   ) {}
-  async consume(input: QuotaInput): Promise<QuotaResult> {
+  async consume(input: QuotaInput, signal?: AbortSignal): Promise<QuotaResult> {
+    active(signal);
     const k = key(input);
     try {
       const out = await this.client.send(
@@ -78,6 +88,7 @@ export class DynamoQuotaStore implements QuotaStore {
           },
           ReturnValues: "UPDATED_NEW",
         }),
+        { abortSignal: signal },
       );
       return {
         remaining:
