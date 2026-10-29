@@ -57,13 +57,13 @@ export interface AmazonLocationProvider {
 export const LOCATION_ORIGIN = "https://maps.geo.us-east-2.amazonaws.com";
 export const LOCATION_ATTRIBUTION =
   '<a href="https://docs.aws.amazon.com/location/latest/developerguide/data-attribution.html" target="_blank" rel="noreferrer">Amazon Location data attribution</a>';
-/** The captured Standard descriptor uses this versioned sprite path; AWS also documents the unversioned form. */
+/** Rolling AWS descriptor version, bounded to numeric components and known prerelease labels. */
 export function locationResourceClass(
   pathname: string,
 ): "style" | "sprite" | "glyph" | "tile" | undefined {
   if (pathname === "/v2/styles/Standard/descriptor") return "style";
   if (
-    /^\/v2\/styles\/(?:4_1_0-beta_1\/)?Standard\/Light\/Default\/sprites\/sprites(?:@2x)?(?:\.(?:png|json))?$/.test(
+    /^\/v2\/styles\/(?:[0-9]{1,3}_[0-9]{1,3}_[0-9]{1,3}(?:-(?:alpha|beta|rc)_[0-9]{1,3})?\/)?Standard\/Light\/Default\/sprites\/sprites(?:@2x)?(?:\.(?:png|json))?$/.test(
       pathname,
     )
   )
@@ -106,6 +106,9 @@ export function locationRequest(
 } {
   const url = new URL(resource, LOCATION_ORIGIN);
   if (
+    /(?:^|\/)(?:\.|%2e){1,2}(?:\/|$)/i.test(
+      resource.split(/[?#]/, 1)[0] ?? resource,
+    ) ||
     url.origin !== LOCATION_ORIGIN ||
     url.username ||
     url.password ||

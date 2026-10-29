@@ -49,8 +49,23 @@ describe("actual AWS Standard descriptor path projection", () => {
     ])
       expect(() => locationRequest(provider, path)).not.toThrow();
   });
+  it.each(["4_2_0", "4_2_0-rc_1", "5_10_12-beta_99", "6_0_0-alpha_2"])(
+    "admits a bounded future rolling provider version without changing the resource class: %s",
+    (version) => {
+      const path = wire.sprite.replace("4_1_0-beta_1", version) + ".json";
+      expect(locationResourceClass(path)).toBe("sprite");
+      expect(() => locationRequest(provider, path)).not.toThrow();
+    },
+  );
   it.each([
     wire.sprite.replace("4_1_0-beta_1", "unreviewed-version") + ".json",
+    wire.sprite.replace("4_1_0-beta_1", "4_2") + ".json",
+    wire.sprite.replace("4_1_0-beta_1", "4444_2_0") + ".json",
+    wire.sprite.replace("4_1_0-beta_1", "4_2_0-preview_1") + ".json",
+    wire.sprite.replace("4_1_0-beta_1", "4_2_0-rc_1234") + ".json",
+    wire.sprite.replace("4_1_0-beta_1", "4_2_0/../4_1_0-beta_1") + ".json",
+    wire.sprite.replace("4_1_0-beta_1", "4_2_0/%2e%2e/4_1_0-beta_1") + ".json",
+    wire.sprite.replace("4_1_0-beta_1", "4_2_0%2fmalicious") + ".json",
     wire.sprite.replace("Standard", "Hybrid") + ".json",
     wire.sprite.replace("Light", "Dark") + ".json",
     wire.sprite.replace("Default", "Unreviewed") + ".json",
