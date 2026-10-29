@@ -57,6 +57,21 @@ export interface AmazonLocationProvider {
 export const LOCATION_ORIGIN = "https://maps.geo.us-east-2.amazonaws.com";
 export const LOCATION_ATTRIBUTION =
   '<a href="https://docs.aws.amazon.com/location/latest/developerguide/data-attribution.html" target="_blank" rel="noreferrer">Amazon Location data attribution</a>';
+/** The captured Standard descriptor uses this versioned sprite path; AWS also documents the unversioned form. */
+export function locationResourceClass(
+  pathname: string,
+): "style" | "sprite" | "glyph" | "tile" | undefined {
+  if (pathname === "/v2/styles/Standard/descriptor") return "style";
+  if (
+    /^\/v2\/styles\/(?:4_1_0-beta_1\/)?Standard\/Light\/Default\/sprites\/sprites(?:@2x)?(?:\.(?:png|json))?$/.test(
+      pathname,
+    )
+  )
+    return "sprite";
+  if (/^\/v2\/glyphs\/[^?#]+$/.test(pathname)) return "glyph";
+  if (/^\/v2\/tiles\/[^?#]+$/.test(pathname)) return "tile";
+  return undefined;
+}
 export function amazonLocationProvider(
   input: unknown,
   pageOrigin: string,
@@ -95,9 +110,7 @@ export function locationRequest(
     url.username ||
     url.password ||
     url.hash ||
-    !/^\/v2\/(?:styles\/Standard\/(?:descriptor|sprites[^?#]*)|tiles\/[^?#]+|glyphs\/[^?#]+)$/.test(
-      url.pathname,
-    ) ||
+    !locationResourceClass(url.pathname) ||
     [...url.searchParams.keys()].some(
       (key) =>
         !["key", "color-scheme", "political-view", "language"].includes(key),

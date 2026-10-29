@@ -292,7 +292,7 @@ describe("P3 map and release boundaries", () => {
     const p = amazonLocationProvider(config, origin, now);
     for (const url of [
       "/v2/styles/Standard/descriptor",
-      "/v2/styles/Standard/sprites/sprite.json",
+      "/v2/styles/4_1_0-beta_1/Standard/Light/Default/sprites/sprites.json",
       "/v2/tiles/base/12/1/2",
       "/v2/glyphs/font/0-255.pbf",
     ]) {
