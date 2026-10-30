@@ -41,7 +41,7 @@ it("the actual standalone contract checker rejects module, metadata and inventor
     const valid = invoke();
     expect(valid.status, valid.stderr).toBe(0);
     expect(valid.stdout).toContain(
-      '"mode":"standalone-three-module-lock-verified"',
+      '"mode":"standalone-four-module-lock-verified"',
     );
     const source = path.join(target, "src/source-observations.ts"),
       original = await readFile(source);
@@ -51,6 +51,20 @@ it("the actual standalone contract checker rejects module, metadata and inventor
     );
     expect(invoke().status).not.toBe(0);
     await writeFile(source, original);
+    const official = path.join(target, "src/official-parcel-observation.ts");
+    const officialBytes = await readFile(official);
+    await writeFile(
+      official,
+      Buffer.concat([
+        officialBytes,
+        Buffer.from("\n// official module drift\n"),
+      ]),
+    );
+    expect(invoke().status).not.toBe(0);
+    await rm(official);
+    expect(invoke().status).not.toBe(0);
+    await writeFile(official, officialBytes);
+    expect(invoke().status).toBe(0);
     const extra = path.join(target, "src/unpinned-module.ts");
     await writeFile(extra, "export const injected = true;\n");
     expect(invoke().status).not.toBe(0);

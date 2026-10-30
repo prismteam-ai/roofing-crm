@@ -12,6 +12,7 @@ const sourceRoot =
 const targetRoot = path.join(root, "packages/contracts");
 const moduleNames = [
   "index.ts",
+  "official-parcel-observation.ts",
   "query-predicates.ts",
   "source-observations.ts",
 ] as const;
@@ -24,19 +25,19 @@ type Lock = {
   sha256Meaning: string;
   moduleGraphSha256: string;
 };
-/** The three-module lock is canonical; historical single-file manifests cannot override it. */
+/** The four-module lock is canonical; historical single-file manifests cannot override it. */
 async function verify(directory: string) {
   const lock = JSON.parse(
     await readFile(path.join(directory, "contract.lock.json"), "utf8"),
   ) as Lock;
   if (
-    lock.version !== "0.5.0" ||
+    lock.version !== "0.6.0" ||
     !lock.files ||
     Object.keys(lock.files).sort().join(",") !==
       [...moduleNames].sort().join(",") ||
     lock.sha256 !== lock.files["index.ts"]
   )
-    throw new Error("Current canonical three-module contract lock required");
+    throw new Error("Current canonical four-module contract lock required");
   const manifest = JSON.parse(
     await readFile(path.join(directory, "contract_manifest.json"), "utf8"),
   ) as Lock & { entryFile: string };
@@ -122,7 +123,7 @@ if (process.argv.includes("--check")) {
       producerAvailable,
       mode: producerAvailable
         ? "producer-and-consumer-verified"
-        : "standalone-three-module-lock-verified",
+        : "standalone-four-module-lock-verified",
     }),
   );
 } else {
@@ -145,7 +146,7 @@ if (process.argv.includes("--check")) {
     JSON.stringify({
       version: producer.lock.version,
       files: producer.lock.files,
-      mode: "generated-three-module-copy",
+      mode: "generated-four-module-copy",
     }),
   );
 }
