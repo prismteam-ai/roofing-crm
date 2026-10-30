@@ -1,6 +1,6 @@
 # Evaluator guide
 
-Open the [CRM workspace](https://d1rvqgm0k272e6.cloudfront.net) over HTTPS and enter the separately delivered low-privilege review capability. No clone, installation, Docker, local server or AWS account is needed. The capability opens bounded protected evidence and isolated lead workflows; it grants no administration, source acquisition, publication or outreach.
+Open the [CRM workspace](https://d1rvqgm0k272e6.cloudfront.net) over HTTPS and enter the low-privilege evaluator capability from this PR's access section. No clone, installation, Docker, local server, initial private email exchange or AWS account is needed. The capability opens bounded source-backed evidence and isolated lead workflows; it grants no administration, source acquisition, publication or outreach.
 
 ## Five-minute walkthrough
 
@@ -17,11 +17,11 @@ No paid source is required, purchased or needed to reproduce this runtime. Origi
 
 ## Release identity and availability
 
-[Release status](RELEASE_STATUS.json) records the accepted 2026-10-29 runtime and its dated acceptance hash. The final access package supplies a source-independent promotion receipt binding the served frontend and API to final head/tree, package, contract and snapshot. A documentation revision or successful health response alone is not later-release acceptance. Earlier accepted browser/API/MCP/map/model/lead checks are complete evidence for their exact identities, not a permanently pending checklist.
+[Release status](RELEASE_STATUS.json) records dated accepted technical history and its evidence hash. The final access package supplies a source-independent promotion receipt binding the served frontend and API to final head/tree, package, contract and snapshot. A documentation revision or successful health response alone is not later-release acceptance. Earlier accepted browser/API/MCP/map/model/lead checks are complete evidence for their exact identities, not a permanently pending checklist.
 
-The accepted availability check covered at least fourteen days and a finite map expiry of **2026-11-12T08:17:25Z**. This is the last verified dependency expiry, not a promise that a new release has fourteen more days. The final access receipt must state the actual retained-through date and any renewed map expiry, with at least fourteen days after final release or employer acknowledgment, whichever is later. No perpetual availability is promised.
+The approved PR supplies the dated retained-through/dependency limits and remaining model headroom from the latest actual readback. Historical expiry dates are not a fresh fourteen-day promise. Runtime/map expiry, one-hour sessions and capability-until-rotation are separate. No perpetual availability is promised.
 
-Session cookies last **one hour**. The review capability remains usable only until owner rotation/revocation; its lifetime differs from a browser session and from runtime retention. Re-enter the separately supplied capability for a new session when it remains valid. Never send the code, cookies or protected rows in a bug report.
+Official public identities and permitted source observations are visible. Inspect a real address, PIN/KEYPIN or native ID, canonical identity, coordinates, roof-age basis and provenance. Show the optional official parcel/postal observation only when actually admitted; null names and absent contacts remain unavailable. Re-enter the PR capability for a new one-hour session while valid; keep cookies and privileged secrets out of reports.
 
 ## Quotas and recovery
 
@@ -29,10 +29,10 @@ Hosted per-subject limits are 600 reads/hour, 100 writes/hour and 10 authenticat
 
 At the accepted 2026-10-29 snapshot, 77 Converse reservations left 43 cumulative and only 4 that UTC day; validated requests were 110 total / 108 that day. These are dated observations, not current remaining allowance. Rehearsal, evaluator and operator calls share the ledger. The final receipt must include a fresh headroom observation; do not repeatedly submit requests to test a limit.
 
-- **Session expired or access denied:** re-enter the capability once if it remains valid. Revoked/rotated access requires the separately delivered replacement; no AWS credentials are needed.
+- **Session expired or access denied:** re-enter the capability from the current PR once if it remains valid. Revoked/rotated access requires the updated PR access instructions; no AWS credentials are needed.
 - **Quota response:** stop retries. Observe the response's reset information and the applicable UTC/session window. A cumulative cap requires an owner decision, not repeated sign-ins or a reset workaround.
 - **Cold load or transient connection error:** allow the initial load to finish, then use the visible retry once. If DNS/TLS or service errors persist, record the time, route and sanitized status. Do not blindly repeat lead writes or model calls whose outcome is unknown; check lead history first.
 - **Map unavailable:** continue with accessible points, pin controls and the list. Repeated provider failure is a release defect; fallback is not proof of a working live map.
 - **Empty or refused evidence query:** inspect the applied constraints and source coverage. Do not weaken filters silently or infer missing evidence.
 
-The final first-use receipt covers three fresh desktop contexts, one mobile context and a direct API/MCP client. Media recording may be prepared locally; upload, PR creation and official submission are separate unperformed external gates.
+The current final first-use receipt must identify the actual fresh contexts and API/MCP clients exercised for that exact release. Prior context counts are historical evidence, not a current pass. Media recording may be prepared locally; upload, PR creation and official submission are separate unperformed external gates.

@@ -10,6 +10,10 @@ import {
   type QueryInput,
 } from "../packages/contracts/src/index";
 import { queryFromUrl, queryToUrl } from "../packages/map-domain/src/index";
+import {
+  propertyEvidence,
+  isRestrictedProviderCitation,
+} from "../packages/map-domain/src/signals";
 import { ProviderObservations } from "../apps/crm-web/src/ProviderObservations";
 import { RecordedDeedEvidence } from "../apps/crm-web/src/RecordedDeedEvidence";
 import { SourceEvidenceFilters } from "../apps/crm-web/src/SourceEvidenceFilters";
@@ -159,7 +163,7 @@ it("empty source-qualified evidence skips the model; invalid issued-to-open and 
   ).rejects.toThrow("source predicate");
   expect(calls).toBe(0);
 });
-it("all protected source fields are covered by complete masks and retain observation dates and limitations", () => {
+it("restricted provider rows remain separately marked while official deed evidence stays visible", () => {
   const permit = renderToStaticMarkup(
     <ProviderObservations observations={[providerObservation()]} />,
   );
@@ -182,7 +186,7 @@ it("all protected source fields are covered by complete masks and retain observa
   const deed = renderToStaticMarkup(
     <RecordedDeedEvidence observations={[deedObservation()]} />,
   );
-  expect(deed).toContain('data-private-evidence="recorded-deed-index"');
+  expect(deed).toContain('data-source-evidence="recorded-deed-index"');
   expect(deed).toContain("source verified through 2026-10-19");
   expect(deed).toContain("retrospectively qualified");
   expect(deed).toContain("2016-10-19");
@@ -196,4 +200,30 @@ it("all protected source fields are covered by complete masks and retain observa
   );
   expect(filters).toContain('aria-label="Recorded deed gap years"');
   expect(filters).toContain("does not establish uninterrupted ownership");
+});
+
+it("classifies only exact provider citations as restricted and keeps official IDs visible", () => {
+  const row = sourceProperty();
+  const provider = row.permits.flatMap(
+    (permit) => permit.sourceObservations ?? [],
+  )[0]!;
+  const citation = {
+    sourceId: provider.provenance.sourceId,
+    recordId: provider.providerRecordId,
+    digest: provider.provenance.recordDigest,
+  };
+  expect(isRestrictedProviderCitation(row, citation)).toBe(true);
+  expect(
+    isRestrictedProviderCitation(row, {
+      ...citation,
+      recordId: "different-public-record",
+    }),
+  ).toBe(false);
+  expect(
+    isRestrictedProviderCitation(row, { ...citation, digest: "0".repeat(64) }),
+  ).toBe(false);
+  for (const official of propertyEvidence(row).filter(
+    (entry) => entry.sourceId !== citation.sourceId,
+  ))
+    expect(isRestrictedProviderCitation(row, official)).toBe(false);
 });

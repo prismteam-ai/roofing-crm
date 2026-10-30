@@ -1030,6 +1030,12 @@ input[type="number"] {
   font-size: 9px;
   color: #687f5e;
 }
+.official-parcel-observation {
+  overflow-wrap: anywhere;
+}
+.official-parcel-observation dd {
+  margin: 3px 0 10px;
+}
 .permit-line {
   display: flex;
   justify-content: space-between;

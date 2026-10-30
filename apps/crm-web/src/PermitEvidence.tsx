@@ -1,6 +1,9 @@
 import { ProviderObservations } from "./ProviderObservations";
 import type { Permit } from "../../../packages/contracts/src/index";
-import { permitOpenDays } from "../../../packages/map-domain/src/signals";
+import {
+  permitOpenDays,
+  isRestrictedProviderPermit,
+} from "../../../packages/map-domain/src/signals";
 function SourceLink({ url, label }: { url: string; label: string }) {
   try {
     const target = new URL(url);
@@ -37,8 +40,11 @@ export function PermitEvidence({
     rating = p.contractor.ratingEvidence;
   return (
     <div
-      className="permit-detail private-protected-evidence"
-      data-private-evidence="permit-observation"
+      className="permit-detail"
+      data-source-evidence="permit-observation"
+      data-private-evidence={
+        isRestrictedProviderPermit(p) ? "provider-derived-permit" : undefined
+      }
       data-testid="permit-observation"
     >
       <div className="permit-line">

@@ -4,7 +4,7 @@ An Oakland County evidence workspace for map searches, source-backed roof and pe
 
 ## Evaluate
 
-Open the [CRM review workspace](https://d1rvqgm0k272e6.cloudfront.net) with the separately delivered low-privilege review capability. No AWS account, installation or local server is needed. Choose a map center and radius, inspect evidence, save a lead and ask the agent. Start with the [evaluator guide](docs/EVALUATOR_GUIDE.md) for the real example, access limits and recovery steps.
+Open the [CRM review workspace](https://d1rvqgm0k272e6.cloudfront.net) with the low-privilege evaluator capability in the approved PR access section. No AWS account, installation or local server is needed. Choose a map center and radius, inspect evidence, save a lead and ask the agent. Start with the [evaluator guide](docs/EVALUATOR_GUIDE.md) for the real example, access limits and recovery steps.
 
 The completed free-source campaign did not establish a positive current-active or long-open roofing-permit cohort. No paid source is required, purchased or needed to reproduce this runtime. [Known limitations](docs/KNOWN_LIMITATIONS.md) explains this finite source outcome and the narrower claims supported by the available evidence.
 
@@ -33,6 +33,6 @@ pnpm run dev
 
 See [local development](docs/LOCAL_DEVELOPMENT.md) for Oracle startup, tools and verification. Local fixtures are labeled synthetic and do not prove real source coverage.
 
-[Documentation index](docs/README.md) · [Delivered scope](IMPLEMENTATION.md) · [Architecture](docs/ARCHITECTURE.md) · [Coverage and rights](docs/DATA_COVERAGE.md)
+[Documentation index](docs/README.md) · [Delivered scope](IMPLEMENTATION.md) · [Architecture](docs/ARCHITECTURE.md) · [Coverage and rights](docs/DATA_COVERAGE.md) · [Field authority](docs/DATA_FIELD_AUTHORITY_MATRIX.md)
 
 The preserved [original assignment](docs/history/ASSIGNMENT_README.md) controls the employer requirements. This implementation README does not replace it. Local media and PR preparation are separate from video upload, GitHub writes, Ready transition and official submission; those external gates are not claimed here.

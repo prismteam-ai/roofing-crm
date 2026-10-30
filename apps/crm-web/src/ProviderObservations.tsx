@@ -1,5 +1,5 @@
 import type { ProviderPermitObservation } from "../../../packages/contracts/src/index";
-/** All licensed source fields remain inside the complete private evidence mask. */
+/** Provider-restricted rows have a separate capture boundary from official public facts. */
 export function ProviderObservations({
   observations,
   municipalKind,
@@ -14,7 +14,7 @@ export function ProviderObservations({
       className="private-protected-evidence"
       data-private-evidence="provider-permit-observations"
     >
-      <h4>PROVIDER PERMIT OBSERVATIONS · PROTECTED</h4>
+      <h4>PROVIDER PERMIT OBSERVATIONS · RESTRICTED SOURCE</h4>
       {municipalKind === "other" && (
         <p className="caveat">
           Classification disagreement: the municipal record remains other; this

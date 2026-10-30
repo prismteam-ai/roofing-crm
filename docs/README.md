@@ -4,6 +4,8 @@ The frozen [assignment README](history/ASSIGNMENT_README.md) and original requir
 
 - [Architecture](ARCHITECTURE.md)
 - [Data coverage and source rights](DATA_COVERAGE.md)
+- [Field authority and display/publication boundaries](DATA_FIELD_AUTHORITY_MATRIX.md)
+- [Source-specific data and evaluator-access decision](adr/003-source-specific-data-and-evaluator-access.md)
 - [Public reference snapshot](PUBLIC_REFERENCE_PINS.json)
 - [Guidance interpretations](GUIDANCE_AND_LIMITATIONS.md)
 - [Testing and evidence scope](TESTING.md)

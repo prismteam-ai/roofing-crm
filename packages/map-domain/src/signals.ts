@@ -1,4 +1,37 @@
 import type { Property } from "../../contracts/src/index";
+
+/** A provider-only fallback inherits the provider's boundary for all parent fields. */
+export function isRestrictedProviderPermit(
+  permit: Property["permits"][number],
+) {
+  return (
+    !!permit.sourceObservations?.length &&
+    permit.provenance.length > 0 &&
+    permit.provenance.every((citation) =>
+      permit.sourceObservations!.some(
+        (row) =>
+          row.provenance.sourceId === citation.sourceId &&
+          row.providerRecordId === citation.recordId &&
+          row.provenance.recordDigest === citation.digest,
+      ),
+    )
+  );
+}
+
+/** Match the actual restricted observation, never an official ID/name heuristic. */
+export function isRestrictedProviderCitation(
+  property: Property,
+  citation: { sourceId: string; recordId: string; digest: string },
+) {
+  return property.permits.some((permit) =>
+    (permit.sourceObservations ?? []).some(
+      (row) =>
+        row.provenance.sourceId === citation.sourceId &&
+        row.providerRecordId === citation.recordId &&
+        row.provenance.recordDigest === citation.digest,
+    ),
+  );
+}
 export function isExplicitOpenRoofPermit(permit: Property["permits"][number]) {
   return (
     permit.status === "open" &&

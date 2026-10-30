@@ -1,3 +1,5 @@
+> Historical data-boundary interpretation. Categorical official-data protection/masking is superseded by [ADR003](003-source-specific-data-and-evaluator-access.md); architecture and actual source-specific rights remain. Original body follows.
+
 # ADR: current engineering path and data tiers
 
 The assignment's two repositories remain separate modular workspaces with a pinned shared contract. Current team-kit commit `d68d6aac36b51c8ed006218cd43ef4227f3fb753` is a moving reference distinct from the original frozen assignment. Current code uses TypeScript, pinned read-only PR CI, Vercel AI SDK, CDK, `us-east-2`, Powertools, X-Ray, 90-day logs and bounded alerting.

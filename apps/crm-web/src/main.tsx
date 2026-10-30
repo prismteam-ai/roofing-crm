@@ -159,7 +159,7 @@ function App() {
               {synthetic
                 ? "SYNTHETIC DEMO"
                 : health?.dataMode === "protected-real"
-                  ? "PROTECTED REAL EVIDENCE"
+                  ? "REAL EVIDENCE · MIXED SOURCE TERMS"
                   : "REAL PUBLIC EVIDENCE"}
             </span>
             {health?.accessMode === "review-session" && ready && (

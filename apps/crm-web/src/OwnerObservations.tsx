@@ -3,7 +3,7 @@ type ReportedOwnerObservation = NonNullable<
   Property["ownership"]["reportedOwnerObservations"]
 >[number];
 
-/** Private detail evidence only. The surrounding class is the review capture mask. */
+/** Source-reported facts remain visible; publication eligibility is source-specific. */
 export function OwnerObservations({
   observations,
 }: {
@@ -32,8 +32,8 @@ export function OwnerObservations({
       {owners.map((observation, index) => (
         <div
           key={index}
-          className="permit-detail private-source-reported-owner private-protected-evidence"
-          data-private-evidence="source-reported-owner"
+          className="permit-detail source-reported-owner"
+          data-source-evidence="source-reported-owner"
           data-testid="source-reported-owner-observation"
         >
           <p>

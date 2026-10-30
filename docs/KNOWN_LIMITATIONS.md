@@ -15,7 +15,7 @@ No paid source is required, purchased or needed to reproduce the submitted runti
 - Five bounded current-PIN deed-index gap observations and partial sale events do not establish complete title or uninterrupted legal ownership continuity. Predecessor lineage and observation-window qualifications remain visible.
 - Permit-listed applicants/businesses, deterministic matches, contractors and verified state licensees are different roles. Available license observations do not by themselves verify a property's contractor.
 - BBB remains unavailable in approved reusable data; absent ratings are not zero.
-- Raw/provider intake, owner/contact data and operational records are not public IPFS, unrestricted download or screenshot material. Protected views require the low-privilege review session.
+- Official permitted owner/postal/property facts may appear in evaluator UI/media. Source-restricted provider raw material, actual secrets and mutable user state keep their specific boundaries. Bulk public publication needs a field-level candidate and exact-byte Human approval; the historical owner-free profile is not an acquisition/display prohibition.
 
 ## Release and external gates
 
@@ -24,3 +24,5 @@ The accepted dated runtime is identified in [release status](RELEASE_STATUS.json
 Historical public CIDs and independent retrieval do not establish full current Atlas publication, registry/IPNS/on-chain mutation or shared MCP synchronization. These remain separate unperformed external stages. Local media/PR preparation does not perform video upload, GitHub writes, Ready transition, employer messaging or official submission.
 
 AWS resources have finite retention, quota and usage costs. Neither perpetual availability nor zero future charge is promised. The [evaluator guide](EVALUATOR_GUIDE.md) gives dated expiry/quota facts and recovery; the [cost model](COST_MODEL.md) separates measured usage, credits, reserves and forecasts.
+
+The current official owner-field census is finite: NAME1/NAME2 are exposed but null, PHONE/EMAIL absent, and postal values populated. Retained-page counts/timestamps differ from the current query and are not refreshed by a redeploy. No name/contact or complete ownership claim is invented to close the eight retained source-positive gaps. See [coverage](DATA_COVERAGE.md) and [field authority](DATA_FIELD_AUTHORITY_MATRIX.md).

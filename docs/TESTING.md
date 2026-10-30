@@ -17,3 +17,9 @@ A source-independent external receipt must bind final source head/tree, contract
 Separate local correctness, native real-data fidelity, hosted acceptance, concurrent first use, source-positive outcomes, privacy review and independent review. Preserve failed attempts and earlier identities. Local CI parity is not an executed GitHub-hosted Actions run. No finite campaign guarantees future uptime or absence of bugs.
 
 Safe plans validate syntax only. Deployment, rotation and destruction require separate scoped authority; a dry run is never a remote success. The [release checklist](RELEASE_CHECKLIST.md) lists final promotion, media and external submission gates.
+
+## Source-specific official facts and release access
+
+The current release must verify that official owner fields are not categorically banned; null/absent fields stay null/absent; metadata/terms/record digests and field classifications are bound; postal-only observations do not invent a named owner; regional derivation retains its raw basis; and permitted official facts are visible through the actual UI/API/MCP contract. Restricted-source publication and actual secret/log/media controls remain. Verify all sixteen Oracle onboarding stages and a deterministic, unuploaded field-level publication candidate.
+
+Rehearse first use from the proposed PR instructions alone, including the deliberately issued low-privilege application capability, actual release identity, finite quota and retention. Current exact-head CI/native/hosted/media receipts are required after code/data changes. These are acceptance requirements, not claims that this documentation revision ran them. Native Bugbot availability is reported separately; a labeled independent fallback is not a native invocation or official employer score.

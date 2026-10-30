@@ -1,8 +1,12 @@
 import { declaredSynthetic } from "./useCrmController";
 import { type Lead } from "../../../packages/contracts/src/index";
-import { propertyEvidence } from "../../../packages/map-domain/src/signals";
+import {
+  propertyEvidence,
+  isRestrictedProviderCitation,
+} from "../../../packages/map-domain/src/signals";
 import { RecordedDeedEvidence } from "./RecordedDeedEvidence";
 import { OwnerObservations } from "./OwnerObservations";
+import { OfficialParcelObservation } from "./OfficialParcelObservation";
 import { PermitEvidence } from "./PermitEvidence";
 import { ReportContext } from "./ReportContext";
 import "./style.css";
@@ -85,6 +89,9 @@ export function PropertyDrawer({ controller }: { controller: CrmController }) {
         />
       ))}
       <h3 className="section-label">OWNERSHIP & IDENTITY</h3>
+      <OfficialParcelObservation
+        observation={selected.ownership.officialParcelObservation}
+      />
       <RecordedDeedEvidence
         observations={selected.ownership.recordedTransferIndexObservations}
         minimumYears={query.minRecordedDeedGapYears}
@@ -94,9 +101,9 @@ export function PropertyDrawer({ controller }: { controller: CrmController }) {
       />
       <p className="caveat">
         Transfer: {selected.ownership.lastTransferDate ?? "unavailable"} ·
-        historical coverage {selected.ownership.historyCoverage}. Region:{" "}
-        {selected.ownership.ownerRegion.replaceAll("_", " ")}. No owner contacts
-        are displayed.
+        historical coverage {selected.ownership.historyCoverage}. Selected
+        location evidence: {selected.ownership.ownerRegion.replaceAll("_", " ")}
+        . Phone and email are unavailable in the current source observations.
       </p>
       {selected.ownership.events && selected.ownership.events.length > 0 && (
         <>
@@ -145,6 +152,11 @@ export function PropertyDrawer({ controller }: { controller: CrmController }) {
         <div
           className="citation"
           key={`${p.sourceId}:${p.recordId}:${p.digest}`}
+          data-private-evidence={
+            isRestrictedProviderCitation(selected, p)
+              ? "provider-source-citation"
+              : undefined
+          }
         >
           <b>{p.sourceId}</b>
           {p.sourceId.startsWith("official-") &&

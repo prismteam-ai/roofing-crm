@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import {
   CONTRACT_VERSION,
   type QueryInput,
+  type Property,
 } from "../../packages/contracts/src/index";
 import { propertyMatchesQuery } from "../../packages/contracts/src/query-predicates";
 import {
@@ -10,9 +11,9 @@ import {
   SOURCE_SNAPSHOT,
   PRIVATE_PARTY_CANARY,
 } from "../support/source-observations";
-async function fixture(page: Page) {
-  const row = sourceProperty(),
-    queries: QueryInput[] = [],
+import { officialParcelObservation } from "../support/official-parcel-observation";
+async function fixture(page: Page, row: Property = sourceProperty()) {
+  const queries: QueryInput[] = [],
     errors: string[] = [],
     external: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -69,7 +70,7 @@ async function fixture(page: Page) {
   await expect(page.getByTestId("property-row")).toHaveCount(1);
   return { queries, errors, external };
 }
-test("qualified source controls persist independent meanings and protected detail retains verified dates and complete masks", async ({
+test("qualified source controls preserve dates and distinguish provider restrictions from official facts", async ({
   page,
 }) => {
   const state = await fixture(page);
@@ -115,7 +116,10 @@ test("qualified source controls persist independent meanings and protected detai
   await expect(provider).toContainText(
     "not continuous open duration or roof age",
   );
-  const deed = page.locator('[data-private-evidence="recorded-deed-index"]');
+  await expect(
+    page.locator('[data-private-evidence="provider-source-citation"]'),
+  ).toHaveCount(1);
+  const deed = page.locator('[data-source-evidence="recorded-deed-index"]');
   await expect(deed).toContainText("source verified through 2026-10-19");
   await expect(deed).toContainText("retrospectively qualified");
   await expect(deed).toContainText("Prior parcel lineage was not reviewed");
@@ -152,6 +156,54 @@ test("a documented positive deed window and an empty active cohort do not broade
     minRecordedDeedGapYears: 10,
     minOpenDays: 0,
   });
+  expect(state.errors).toEqual([]);
+  expect(state.external).toEqual([]);
+});
+
+test("official parcel identity and raw mailing evidence remain readable on mobile", async ({
+  page,
+}) => {
+  const base = sourceProperty();
+  const postal = "SYNTHETIC-RAW-MAILING-" + "X".repeat(600);
+  const state = await fixture(page, {
+    ...base,
+    ownership: {
+      ...base.ownership,
+      officialParcelObservation: {
+        ...officialParcelObservation,
+        canonicalPropertyId: base.id,
+        postalAddressAsObserved: postal,
+      },
+    },
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByTestId("property-row").first().click();
+  const observation = page.getByRole("region", {
+    name: "Official county parcel observation",
+  });
+  await observation.scrollIntoViewIfNeeded();
+  await expect(observation).toBeVisible();
+  await expect(observation.getByText(postal, { exact: true })).toBeVisible();
+  await expect(observation).toContainText("SYNTHETIC-PIN");
+  await expect(observation).toContainText(
+    "Not observed in the retained record",
+  );
+  await expect(observation).toContainText(
+    "Null or empty in the source observation",
+  );
+  expect(
+    await observation
+      .locator("[data-private-evidence], .private-protected-evidence")
+      .count(),
+  ).toBe(0);
+  const geometry = await observation.evaluate((node) => ({
+    width: node.getBoundingClientRect().width,
+    scroll: node.scrollWidth,
+    pageWidth: document.documentElement.scrollWidth,
+    viewport: window.innerWidth,
+  }));
+  expect(geometry.scroll).toBeLessThanOrEqual(geometry.width + 1);
+  expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewport + 1);
   expect(state.errors).toEqual([]);
   expect(state.external).toEqual([]);
 });

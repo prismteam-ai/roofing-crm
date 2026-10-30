@@ -1,0 +1,14 @@
+# Data authority in the CRM
+
+The CRM consumes Oracle's source-backed contract; ingestion remains outside its assignment. The matching Oracle checkout/approved PR supplies `docs/COUNTY_ONBOARDING_ALIGNMENT.md` and `docs/DATA_FIELD_AUTHORITY_MATRIX.md`. Its source and dataset identities must match the consumer contract. This document records the same consumer boundaries without requiring an unpublished remote branch.
+
+`ORIGINAL_EXPLICIT` requires real property identities, coordinates, available ownership/contact and permit/contractor evidence. `SOURCE_TERMS_OR_LICENSE` determines each source's permitted display/reuse. `CREDENTIAL_OR_SECURITY` protects usable keys, cookies and private mutable state. `REFERENCE_WORKFLOW` governs raw-artifact handling and exact-byte bulk IPFS publication. `OPERATIONAL_CHOICE` covers private storage/authentication/minimized model inputs. Blanket masking of official public facts is `UNSUPPORTED_OVERREACH`.
+
+- Show admitted official addresses, PIN/KEYPIN/source/canonical IDs, coordinates and permitted observations in the UI, API, MCP-linked evidence and walkthrough. No global property-identity mask is required.
+- Preserve null/absent owner fields. The bounded current official census found NAME1/NAME2 exposed but empty; POSTALADDRESS populated; PHONE/EMAIL absent. Metadata/counts do not establish that a new observation was ingested or deployed.
+- An optional official parcel observation carries raw nullable name parts, mailing text as observed, source/native/PIN association, timestamps, metadata/terms/record digests, availability and tied regional derivation. It does not manufacture a named owner, residency, complete title history or contact details.
+- Read provider/municipal/deed/license facts according to their own provenance and rights. ISSUED is not OPEN; issue age is not continuous-open duration; index gaps do not prove complete ownership continuity; license association is not verified job-contractor role; missing BBB is not zero.
+- Keep session-isolated leads/notes, bounded model calls and credential-safe logs. Sending only query-relevant fields to the model does not justify hiding permitted facts from the evaluator.
+- Bulk dataset/publication artifacts and raw restricted-provider captures do not belong in Git. An exact owner-containing publication candidate needs separate Human approval under the Elephant workflow; that gate is not a runtime-display prohibition.
+
+Private S3, authenticated sessions and legacy `protected-real`/`private_` names describe implementation controls, not a universal classification of county data. A reviewed low-privilege capability in the approved PR access section makes the existing runtime self-contained for evaluation, without AWS/admin rights or an initial private email exchange. Literal credentials stay out of source, public preparation packets and media; the operator resolves the authorized PR's private access draft.

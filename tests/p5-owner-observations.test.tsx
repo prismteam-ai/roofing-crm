@@ -32,6 +32,9 @@ it("labels source-reported owners and related report events without turning them
     <OwnerObservations observations={[observation]} />,
   );
   expect(html).toContain("Source-reported Owner:");
+  expect(html).toContain('data-source-evidence="source-reported-owner"');
+  expect(html).not.toContain("data-private-evidence");
+  expect(html).not.toContain("private-protected-evidence");
   expect(html).toContain(observation.reportedName);
   expect(html).toContain("Related permit report event: issued");
   expect(html).toContain("2026-04-07");
@@ -43,9 +46,7 @@ it("labels source-reported owners and related report events without turning them
   expect(html).toContain("synthetic-owner-row");
   expect(html).toContain("Observed 2026-10-28");
   expect(html).toContain("digest aaaaaaaaaaaa");
-  expect(html).toContain(
-    'class="permit-detail private-source-reported-owner private-protected-evidence"',
-  );
+  expect(html).toContain('class="permit-detail source-reported-owner"');
 });
 
 it("keeps applied and issued report dates distinct and never renders unknown-role contacts", () => {
@@ -92,7 +93,7 @@ it("escapes a source-reported name as text rather than executable markup", () =>
 });
 
 it.each(["Owner Name 1", "Owner Name 2"] as const)(
-  "preserves the %s assessment label and null permit event under the complete capture mask",
+  "preserves the %s assessment label and null permit event as visible source evidence",
   (sourceLabel) => {
     const html = renderToStaticMarkup(
       <OwnerObservations
@@ -124,9 +125,7 @@ it.each(["Owner Name 1", "Owner Name 2"] as const)(
     ])
       expect(html).toContain(value);
     expect(html).toContain("not independently verify residency");
-    expect(html).toContain(
-      'class="permit-detail private-source-reported-owner private-protected-evidence"',
-    );
+    expect(html).toContain('class="permit-detail source-reported-owner"');
   },
 );
 

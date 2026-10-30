@@ -12,8 +12,7 @@ export function RecordedDeedEvidence({
   return (
     <section
       aria-label="Recorded deed index observations"
-      className="private-protected-evidence"
-      data-private-evidence="recorded-deed-index"
+      data-source-evidence="recorded-deed-index"
     >
       <h3 className="section-label">
         RECORDED DEED INDEX · BOUNDED CURRENT-PIN OBSERVATION
@@ -65,7 +64,7 @@ export function RecordedDeedEvidence({
             Official county deed index ↗
           </a>
           <small>
-            Protected source {row.reference.sourceId} · evidence digest{" "}
+            Official source {row.reference.sourceId} · evidence digest{" "}
             {row.reference.recordSha256.slice(0, 12)}…
           </small>
           <p className="caveat">{row.limitations.join(" ")}</p>

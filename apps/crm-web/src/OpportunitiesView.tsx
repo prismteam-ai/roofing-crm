@@ -555,7 +555,7 @@ export function OpportunitiesView({
           {synthetic
             ? "Synthetic fixture · separate from real data"
             : health?.dataMode === "protected-real"
-              ? "Protected real evidence · low-confidence building year proxies"
+              ? "Mixed source terms · low-confidence building year proxies"
               : "Official public evidence · coverage limitations apply"}
         </span>
       </div>

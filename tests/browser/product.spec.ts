@@ -90,8 +90,6 @@ async function screenshot(page: Page, name: string) {
     fullPage: false,
     mask: [
       page.locator("[data-private-evidence]"),
-      page.locator(".private-protected-evidence"),
-      page.locator(".private-source-reported-owner"),
       page.locator('input[type="password"]'),
     ],
   });
@@ -400,7 +398,7 @@ test("details distinguish evidence and saved lead survives refresh/status/note e
     detail.getByRole("heading", { name: "SOURCE CITATIONS" }),
   ).toBeVisible();
   await expect(
-    detail.getByText(/No owner contacts are displayed/),
+    detail.getByText(/Phone and email are unavailable/),
   ).toBeVisible();
   await detail.getByRole("button", { name: /Create lead/ }).click();
   await expect(detail.getByText(/Saved as a lead/)).toBeVisible();
