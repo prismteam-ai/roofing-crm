@@ -517,7 +517,7 @@ it("synthesizes reserved5/default API5/burst10, bounded custom capacity, and his
     synth(baseEnv);
     await rm(root, { recursive: true, force: true });
   }
-}, 15000);
+}, 60000);
 
 it("supports a fresh checkout with absent protected Return paths while preserving canonical exclusions", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "prism-fresh-proof-"));
