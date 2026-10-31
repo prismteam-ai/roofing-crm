@@ -247,7 +247,7 @@ function App() {
                 </h2>
                 <span>
                   {health?.accessMode === "review-session"
-                    ? "Session-bound storage"
+                    ? "Workspace-backed storage"
                     : "Local SQLite"}{" "}
                   · refresh-safe
                 </span>
