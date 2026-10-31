@@ -80,7 +80,7 @@ const property = PropertySchema.parse({
   },
   provenance: [source],
 });
-async function fixture(page: Page) {
+async function fixture(page: Page, url = "/") {
   const external: string[] = [],
     errors: string[] = [],
     queries: QueryInput[] = [];
@@ -138,10 +138,87 @@ async function fixture(page: Page) {
     else if (u.pathname.startsWith("/api/properties/")) body = property;
     await route.fulfill({ status: 200, json: body });
   });
-  await page.goto("/");
+  await page.goto(url);
   await expect(page.getByTestId("property-row")).toHaveCount(1);
   return { external, errors, queries };
 }
+test("default desktop shows the map before advanced evidence controls are expanded", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1265, height: 712 });
+  const state = await fixture(page);
+  const advanced = page.getByTestId("advanced-evidence-filters");
+  await expect(advanced).toHaveJSProperty("open", false);
+  await expect(advanced.locator("summary")).toContainText("None active");
+  await expect(
+    page.getByLabel("Provider permit status", { exact: true }),
+  ).toBeHidden();
+  for (const label of [
+    "Search radius",
+    "Roof age",
+    "Permit opportunities",
+    "Permit status",
+    "Minimum open days",
+  ])
+    await expect(page.getByLabel(label, { exact: true })).toBeVisible();
+  const map = await page.getByTestId("property-map").boundingBox();
+  expect(map).not.toBeNull();
+  test.info().annotations.push({
+    type: "default-layout",
+    description: JSON.stringify({
+      viewport: page.viewportSize(),
+      map,
+      visibleMapPixels: Math.min(map!.height, 712 - map!.y),
+    }),
+  });
+  expect(Math.min(map!.height, 712 - map!.y)).toBeGreaterThanOrEqual(100);
+  const row = await page.getByTestId("property-row").boundingBox();
+  expect(row!.y).toBeLessThan(712);
+  if (process.env.PRISM_BROWSER_EVIDENCE_DIR)
+    await page.screenshot({
+      path: `${process.env.PRISM_BROWSER_EVIDENCE_DIR}/p13-default-map-first-screen.png`,
+    });
+  await advanced.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByLabel("Provider permit status", { exact: true }),
+  ).toBeVisible();
+  expect(state.errors).toEqual([]);
+  expect(state.external).toEqual([]);
+});
+test("advanced deep-link constraints open visibly and retain their exact query after reload", async ({
+  page,
+}) => {
+  const state = await fixture(
+    page,
+    "/?providerStatus=ISSUED&deedGapYears=10&requiresBbbRating=1&sort=distance&limit=20",
+  );
+  const advanced = page.getByTestId("advanced-evidence-filters");
+  await expect(advanced).toHaveJSProperty("open", true);
+  await expect(advanced.locator("summary")).toContainText("5 active");
+  await expect(
+    page.getByLabel("Provider permit status", { exact: true }),
+  ).toHaveValue("ISSUED");
+  await expect(
+    page.getByLabel("Require observed BBB rating", { exact: true }),
+  ).toBeChecked();
+  await expect
+    .poll(() => state.queries.at(-1)?.minRecordedDeedGapYears)
+    .toBe(10);
+  await advanced.locator("summary").click();
+  await expect(advanced).toHaveJSProperty("open", false);
+  await expect(advanced.locator("summary")).toContainText("5 active");
+  await page.reload();
+  await expect(advanced).toHaveJSProperty("open", true);
+  await expect(page.getByLabel("Result order", { exact: true })).toHaveValue(
+    "distance",
+  );
+  await expect(page.getByLabel("Page limit", { exact: true })).toHaveValue(
+    "20",
+  );
+  expect(state.errors).toEqual([]);
+  expect(state.external).toEqual([]);
+});
 test("sale-age control persists its own predicate and legacy tenure links stay distinct", async ({
   page,
 }) => {
@@ -149,6 +226,10 @@ test("sale-age control persists its own predicate and legacy tenure links stay d
   await expect(
     page.getByLabel("Filter by ownership duration", { exact: true }),
   ).toHaveCount(0);
+  await page
+    .getByTestId("advanced-evidence-filters")
+    .locator("summary")
+    .click();
   await page
     .getByLabel("Filter by last reported sale age", { exact: true })
     .check();

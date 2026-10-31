@@ -15,6 +15,7 @@ import { FieldMap } from "../../../packages/ui/src/FieldMap";
 import { ConstraintLedger, PlaceResolution } from "./ConstraintLedger";
 import "./style.css";
 import type { CrmController } from "./useCrmController";
+import { useEffect, useState } from "react";
 export function OpportunitiesView({
   controller,
 }: {
@@ -57,6 +58,28 @@ export function OpportunitiesView({
     age,
     knownOpenPermits,
   } = controller;
+  const advancedValues = [
+    query.minConfidence !== "any" ? query.minConfidence : undefined,
+    query.ownerRegion !== "any" ? query.ownerRegion : undefined,
+    query.minReportedSaleAgeYears,
+    query.providerPermitStatus,
+    query.permitActivityClaim,
+    query.minPermitAgeSinceIssueDays,
+    query.minRecordedDeedGapYears,
+    query.requiresContractor || undefined,
+    query.requiresVerifiedLicense || undefined,
+    query.requiresBbbRating || undefined,
+    query.sort,
+    query.limit !== undefined && query.limit !== 50 ? query.limit : undefined,
+  ];
+  const advancedCount = advancedValues.filter(
+    (value) => value !== undefined,
+  ).length;
+  const advancedKey = JSON.stringify(advancedValues);
+  const [advancedOpen, setAdvancedOpen] = useState(advancedCount > 0);
+  useEffect(() => {
+    if (advancedCount > 0) setAdvancedOpen(true);
+  }, [advancedKey, advancedCount]);
   return (
     <>
       <section className="search-toolbar" aria-label="Search filters">
@@ -230,151 +253,172 @@ export function OpportunitiesView({
             onChange={(e) => update({ minOpenDays: Number(e.target.value) })}
           />
         </label>
-        <label>
-          Evidence confidence
-          <select
-            aria-label="Evidence confidence"
-            value={query.minConfidence ?? "any"}
-            onChange={(e) =>
-              update({
-                minConfidence: e.target.value as QueryInput["minConfidence"],
-              })
-            }
-          >
-            <option value="any">All confidence levels</option>
-            <option value="high">High only</option>
-            <option value="medium">Medium or higher</option>
-            <option value="low">Known evidence</option>
-          </select>
-        </label>
-        <label>
-          Owner region
-          <select
-            aria-label="Owner region"
-            value={query.ownerRegion ?? "any"}
-            onChange={(e) =>
-              update({
-                ownerRegion: e.target.value as QueryInput["ownerRegion"],
-              })
-            }
-          >
-            <option value="any">Any evidence state</option>
-            <option value="regional">Mailing state: Michigan</option>
-            <option value="out_of_area">Mailing state: outside Michigan</option>
-            <option value="unknown">Unknown</option>
-          </select>
-        </label>
-        <label className="check-label">
-          <input
-            type="checkbox"
-            aria-label="Filter by last reported sale age"
-            checked={query.minReportedSaleAgeYears !== undefined}
-            onChange={(e) =>
-              update({
-                minReportedSaleAgeYears: e.target.checked ? 10 : undefined,
-              })
-            }
-          />
-          Last reported sale age
-        </label>
-        <label>
-          Reported sale older than (years)
-          <input
-            aria-label="Reported sale older than years"
-            type="number"
-            min="0"
-            max="200"
-            disabled={query.minReportedSaleAgeYears === undefined}
-            value={query.minReportedSaleAgeYears ?? 10}
-            onChange={(e) =>
-              update({
-                minReportedSaleAgeYears: Number(e.target.value),
-              })
-            }
-          />
-        </label>
       </section>
-      <SourceEvidenceFilters query={query} update={update} />
-      <section
-        className="filter-row"
-        aria-label="Evidence requirements and result order"
+      <details
+        className="coverage-note advanced-evidence-filters"
+        data-testid="advanced-evidence-filters"
+        open={advancedOpen}
+        onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
       >
-        {(
-          [
-            ["requiresContractor", "Require verified company identity"],
-            ["requiresVerifiedLicense", "Require official license observation"],
-            ["requiresBbbRating", "Require observed BBB rating"],
-          ] as const
-        ).map(([field, label]) => (
-          <label className="check-label" key={field}>
+        <summary>
+          Advanced evidence filters ·{" "}
+          {advancedCount > 0 ? `${advancedCount} active` : "None active"}
+        </summary>
+        <section
+          className="filter-row"
+          aria-label="Additional evidence filters"
+        >
+          <label>
+            Evidence confidence
+            <select
+              aria-label="Evidence confidence"
+              value={query.minConfidence ?? "any"}
+              onChange={(e) =>
+                update({
+                  minConfidence: e.target.value as QueryInput["minConfidence"],
+                })
+              }
+            >
+              <option value="any">All confidence levels</option>
+              <option value="high">High only</option>
+              <option value="medium">Medium or higher</option>
+              <option value="low">Known evidence</option>
+            </select>
+          </label>
+          <label>
+            Owner region
+            <select
+              aria-label="Owner region"
+              value={query.ownerRegion ?? "any"}
+              onChange={(e) =>
+                update({
+                  ownerRegion: e.target.value as QueryInput["ownerRegion"],
+                })
+              }
+            >
+              <option value="any">Any evidence state</option>
+              <option value="regional">Mailing state: Michigan</option>
+              <option value="out_of_area">
+                Mailing state: outside Michigan
+              </option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </label>
+          <label className="check-label">
             <input
               type="checkbox"
-              aria-label={label}
-              checked={query[field] === true}
+              aria-label="Filter by last reported sale age"
+              checked={query.minReportedSaleAgeYears !== undefined}
               onChange={(e) =>
-                update({ [field]: e.target.checked ? true : undefined })
+                update({
+                  minReportedSaleAgeYears: e.target.checked ? 10 : undefined,
+                })
               }
             />
-            {label}
+            Last reported sale age
           </label>
-        ))}
-        <label>
-          Result order
-          <select
-            aria-label="Result order"
-            value={query.sort ?? "default"}
-            onChange={(e) =>
-              update({
-                sort:
-                  e.target.value === "default"
-                    ? undefined
-                    : (e.target.value as QueryInput["sort"]),
-              })
-            }
-          >
-            <option value="default">Default evidence order</option>
-            <option value="distance">Closest first</option>
-            <option value="roof_age_desc">
-              Oldest recorded roof proxy first
-            </option>
-            {query.permitOpportunityMode && (
-              <option value="permit_issue_age_desc">
-                Oldest issue/status age first
+          <label>
+            Reported sale older than (years)
+            <input
+              aria-label="Reported sale older than years"
+              type="number"
+              min="0"
+              max="200"
+              disabled={query.minReportedSaleAgeYears === undefined}
+              value={query.minReportedSaleAgeYears ?? 10}
+              onChange={(e) =>
+                update({
+                  minReportedSaleAgeYears: Number(e.target.value),
+                })
+              }
+            />
+          </label>
+        </section>
+        <SourceEvidenceFilters query={query} update={update} />
+        <section
+          className="filter-row"
+          aria-label="Evidence requirements and result order"
+        >
+          {(
+            [
+              ["requiresContractor", "Require verified company identity"],
+              [
+                "requiresVerifiedLicense",
+                "Require official license observation",
+              ],
+              ["requiresBbbRating", "Require observed BBB rating"],
+            ] as const
+          ).map(([field, label]) => (
+            <label className="check-label" key={field}>
+              <input
+                type="checkbox"
+                aria-label={label}
+                checked={query[field] === true}
+                onChange={(e) =>
+                  update({ [field]: e.target.checked ? true : undefined })
+                }
+              />
+              {label}
+            </label>
+          ))}
+          <label>
+            Result order
+            <select
+              aria-label="Result order"
+              value={query.sort ?? "default"}
+              onChange={(e) =>
+                update({
+                  sort:
+                    e.target.value === "default"
+                      ? undefined
+                      : (e.target.value as QueryInput["sort"]),
+                })
+              }
+            >
+              <option value="default">Default evidence order</option>
+              <option value="distance">Closest first</option>
+              <option value="roof_age_desc">
+                Oldest recorded roof proxy first
               </option>
-            )}
-            <option value="permit_open_days_desc">
-              Longest observed open duration first
-            </option>
-          </select>
-        </label>
-        <label>
-          Page limit
-          <select
-            aria-label="Page limit"
-            value={query.limit ?? 50}
-            onChange={(e) => update({ limit: Number(e.target.value) })}
-          >
-            {[...new Set([1, 5, 10, 20, 50, query.limit ?? 50])]
-              .sort((a, b) => a - b)
-              .map((n) => (
-                <option key={n} value={n}>
-                  {n} properties
+              {query.permitOpportunityMode && (
+                <option value="permit_issue_age_desc">
+                  Oldest issue/status age first
                 </option>
-              ))}
-          </select>
-        </label>
-      </section>
-      <p className="caveat">
-        Owner region describes recorded mailing state, not verified current
-        residence. An official license observation does not establish active
-        eligibility. A verified company edge is distinct from a reported
-        applicant name.
-      </p>
-      <p className="caveat" data-testid="reported-sale-scope">
-        Last reported sale uses partial observed history, not ownership tenure.
-        Unknown sale dates are excluded when this filter is on; later unobserved
-        sales may exist.
-      </p>
+              )}
+              <option value="permit_open_days_desc">
+                Longest observed open duration first
+              </option>
+            </select>
+          </label>
+          <label>
+            Page limit
+            <select
+              aria-label="Page limit"
+              value={query.limit ?? 50}
+              onChange={(e) => update({ limit: Number(e.target.value) })}
+            >
+              {[...new Set([1, 5, 10, 20, 50, query.limit ?? 50])]
+                .sort((a, b) => a - b)
+                .map((n) => (
+                  <option key={n} value={n}>
+                    {n} properties
+                  </option>
+                ))}
+            </select>
+          </label>
+        </section>
+        <p className="caveat">
+          Owner region describes recorded mailing state, not verified current
+          residence. An official license observation does not establish active
+          eligibility. A verified company edge is distinct from a reported
+          applicant name.
+        </p>
+        <p className="caveat" data-testid="reported-sale-scope">
+          Last reported sale uses partial observed history, not ownership
+          tenure. Unknown sale dates are excluded when this filter is on; later
+          unobserved sales may exist.
+        </p>
+      </details>
       {query.minOwnershipYears !== undefined && (
         <p className="caveat" role="status">
           This older link contains an unsupported ownership-tenure filter. It

@@ -170,6 +170,13 @@ test("accepted place query, fractional radius and ledger survive map application
     .getByRole("button", { name: "Show this search on the map" })
     .click();
   await searched;
+  await expect(page.getByTestId("advanced-evidence-filters")).toHaveJSProperty(
+    "open",
+    true,
+  );
+  await expect(
+    page.getByTestId("advanced-evidence-filters").locator("summary"),
+  ).toContainText("1 active");
   await expect(page.getByLabel("Search radius")).toHaveValue("2.5");
   await expect(page.getByLabel("Page limit")).toHaveValue("17");
   await expect(page).toHaveURL(/place=us-26-125-80700-city/);
@@ -215,6 +222,10 @@ test("mobile controls retain new predicates and unknown status without horizonta
   await page
     .getByLabel("Permit status", { exact: true })
     .selectOption("unknown");
+  await page
+    .getByTestId("advanced-evidence-filters")
+    .locator("summary")
+    .click();
   await page.getByLabel("Require observed BBB rating", { exact: true }).check();
   await page
     .getByLabel("Result order", { exact: true })

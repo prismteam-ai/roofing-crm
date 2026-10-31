@@ -616,6 +616,10 @@ test("reported-sale and owner-region filters persist independently without asser
   page,
 }) => {
   await page
+    .getByTestId("advanced-evidence-filters")
+    .locator("summary")
+    .click();
+  await page
     .getByLabel("Owner region", { exact: true })
     .selectOption("unknown");
   await expect
