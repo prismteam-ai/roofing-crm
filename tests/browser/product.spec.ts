@@ -442,12 +442,14 @@ test("offline assistant grounds a query and refuses unsafe tool requests", async
     radiusMeters: 8046.72,
     permitStatus: "open",
     minOpenDays: 0,
-    minPermitAgeSinceIssueDays: 1827,
+    permitOpportunityMode: "confirmed_open",
+    minPermitObservationAgeYears: 5,
   });
+  expect(observed.query.minPermitAgeSinceIssueDays).toBeUndefined();
   expect(observed.mode).toBe("deterministic-offline");
-  // The original wording is current source-qualified activity plus calendar issue age.
-  // Neither the prepared legacy fixture nor public data has that source observation;
-  // bind its legitimate empty result to a separate typed read instead of inventing one.
+  expect(observed.sourceQualifiedAlternativeSections).toBe(true);
+  // This declared legacy fixture has no native issue dates. Both source-calendar
+  // cohorts must remain empty; neither openedAt nor today's clock can fill them.
   const baselineResponse = await page.request.post("/api/search", {
     data: observed.query,
   });
@@ -461,26 +463,87 @@ test("offline assistant grounds a query and refuses unsafe tool requests", async
   expect(observed.citations).toEqual([]);
   expect(observed.intent?.ledger).toContainEqual(
     expect.objectContaining({
-      typedField: "sourceAssessmentDate",
-      typedValue: "2026-10-28",
+      typedField: "minPermitObservationAgeYears",
+      typedValue: 5,
+      normalizedMeaning: "strict_open_with_verification_alternative",
       material: true,
       classification: "applied",
     }),
   );
+  expect(observed.intent?.ledger).not.toContainEqual(
+    expect.objectContaining({ typedField: "sourceAssessmentDate" }),
+  );
   expect(observed.intent?.accepted).toBe(true);
   expect(observed.intent?.query).toEqual(observed.query);
-  expect(observed.toolTrace).toHaveLength(1);
+  expect(observed.toolTrace).toHaveLength(2);
   expect(observed.toolTrace[0]).toMatchObject({
     tool: "searchRoofingEvidence",
     snapshotId: observed.query.snapshotId,
     resultCount: observed.results.length,
     arguments: observed.query,
   });
-  await expect(answer).toContainText(
-    `Snapshot ${observed.query.snapshotId}; query ${observed.toolTrace[0].queryHash}`,
+  expect(observed.permitSections).toHaveLength(2);
+  const sections = observed.permitSections!;
+  expect(sections[0].query).toEqual(observed.query);
+  expect(sections[1].query).toEqual(
+    JSON.parse(
+      JSON.stringify({
+        ...observed.query,
+        permitOpportunityMode: "status_verification_needed",
+        permitStatus: "any",
+        minOpenDays: 0,
+        sort: "permit_issue_age_desc",
+        cursor: undefined,
+      }),
+    ),
   );
-  await expect(answer).toContainText("at least 1827 days");
-  await answer.getByText(/source citations/).click();
+  const candidateResponse = await page.request.post("/api/search", {
+    data: sections[1].query,
+  });
+  expect(candidateResponse.status()).toBe(200);
+  const candidateBaseline = (await candidateResponse.json()) as SearchResponse;
+  expect(candidateBaseline.total).toBe(0);
+  expect(candidateBaseline.rows).toEqual([]);
+  for (const [index, expected, kind] of [
+    [0, baseline, "confirmed_open"],
+    [1, candidateBaseline, "status_verification_needed"],
+  ] as const) {
+    expect(sections[index]).toMatchObject({
+      kind,
+      queryHash: expected.queryHash,
+      total: expected.total,
+      returnedCount: expected.rows.length,
+      results: expected.rows,
+      citations: [],
+      truncated: expected.truncated,
+      nextCursor: expected.nextCursor,
+    });
+    expect(observed.toolTrace[index]).toMatchObject({
+      tool: "searchRoofingEvidence",
+      arguments: sections[index].query,
+      queryHash: expected.queryHash,
+      snapshotId: expected.snapshotId,
+      resultCount: expected.rows.length,
+      totalMatched: expected.total,
+    });
+  }
+  expect(sections[1].queryHash).not.toBe(sections[0].queryHash);
+  const health = await (await page.request.get("/api/health")).json();
+  expect(health.provider).toBe("deterministic-offline");
+  expect(observed.modelAudit).toBeUndefined();
+  await expect(
+    answer.getByRole("heading", { name: "Confirmed open permits" }),
+  ).toBeVisible();
+  await expect(
+    answer.getByRole("heading", { name: "Status verification needed" }),
+  ).toBeVisible();
+  await expect(answer).toContainText("Confirmed open permits: 0");
+  await expect(answer).toContainText("Status verification needed: 0");
+  await expect(answer).toContainText("not continuous open duration");
+  await expect(answer).not.toContainText("at least 1827 days");
+  await answer
+    .getByText("0 source citations · inspect retrieval trace", { exact: true })
+    .click();
   await expect(answer).toContainText("searchRoofingEvidence");
   await expect(answer).toContainText("no model inference");
   await expect(answer.getByTestId("agent-permit-evidence")).toContainText(
