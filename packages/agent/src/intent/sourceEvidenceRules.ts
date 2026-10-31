@@ -7,6 +7,8 @@ import {
 } from "./source-calendar";
 /** Source-qualified clauses never become a stronger native/open or ownership claim. */
 export function sourceEvidenceRules({
+  text,
+  draft,
   take,
   amount,
   apply,
@@ -14,6 +16,81 @@ export function sourceEvidenceRules({
   options,
 }: RuleContext) {
   const assessmentDate = options.sourceAssessmentDate ?? SOURCE_ASSESSMENT_DATE;
+  take(
+    rx(
+      "\\b(?:(?:status[- ]verification(?:\\s+needed)?|verification)\\s+(?:(?:roofing\\s+)?permit\\s+)?candidates?|(?:roofing\\s+)?permits?\\s+(?:needing|requiring)\\s+(?:status\\s+)?verification)" +
+        "(?:\\s+(?:older\\s+than|over|more\\s+than)\\s+" +
+        numeric +
+        "\\s*years?)?\\b",
+    ),
+    (span, match) => {
+      apply(
+        span,
+        "permitOpportunityMode",
+        "status_verification_needed",
+        "Explicit verification candidates require municipal status confirmation; they are not source-confirmed open permits.",
+      );
+      apply(
+        span,
+        "permitStatus",
+        "any",
+        "The requested verification lane uses the source-qualified candidate predicate rather than an open-status claim.",
+      );
+      apply(
+        span,
+        "minOpenDays",
+        0,
+        "Changing to verification candidates clears inherited continuous-open duration; an explicit duration in this request conflicts instead of being weakened.",
+      );
+      if (match.groups?.n !== undefined)
+        amount(
+          span,
+          "minPermitObservationAgeYears",
+          match.groups.n,
+          0,
+          200,
+          1,
+          true,
+          "Candidate age strictly exceeds this calendar-year threshold at each observation's own source assessment date; this is not continuous open duration.",
+        );
+      const explicitSort =
+        /\b(?:distance|nearest|closest|oldest\s+roofs?|roof\s+age\s+descending|longest[- ]open\s+permits?|permit\s+open\s+days\s+descending)\b/.test(
+          text,
+        );
+      if (!explicitSort) {
+        apply(
+          span,
+          "sort",
+          "permit_issue_age_desc",
+          "Verification candidates default to oldest source issue-age evidence; an explicit supported order is preserved.",
+        );
+      } else if (
+        /\b(?:longest[- ]open\s+permits?|permit\s+open\s+days\s+descending)\b/.test(
+          text,
+        )
+      )
+        note(
+          span,
+          "sort",
+          "conflicting",
+          "verification_open_duration_sort_conflict",
+          "Status-verification candidates do not establish native open duration and cannot be ordered as longest-open permits.",
+        );
+      // Preserve an inherited age threshold for an explicit follow-up, while the
+      // existing compositional rules continue to adjudicate every other clause.
+      if (draft.minPermitObservationAgeYears !== undefined)
+        note(
+          span,
+          "display",
+          "descriptive",
+          "verification_calendar_age_basis",
+          "This calendar age is evidence age, not evidence of uninterrupted open work.",
+          undefined,
+          [],
+          false,
+        );
+    },
+  );
   const calendarBound = (
     span: Parameters<RuleContext["note"]>[0],
     raw: string,
