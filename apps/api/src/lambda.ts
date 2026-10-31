@@ -1,3 +1,4 @@
+import { reportApiFailure } from "../../../packages/hosted-runtime/src/api-errors";
 import { SOURCE_ASSESSMENT_DATE } from "../../../packages/runtime-config/src/source-assessment";
 import { TurnDeadline } from "../../../packages/hosted-runtime/src/turn-deadline";
 import { requestBoundaries } from "../../../packages/hosted-runtime/src/request-boundaries";
@@ -5,10 +6,7 @@ import {
   hostedSecretValue,
   createHostedReadOnlySecretsClient,
 } from "../../../packages/hosted-runtime/src/read-only-secrets-client";
-import {
-  setupFailureDiagnostic,
-  type SetupStage,
-} from "../../../packages/hosted-runtime/src/setup-diagnostics";
+import { type SetupStage } from "../../../packages/hosted-runtime/src/setup-diagnostics";
 import {
   telemetry,
   operationForPath,
@@ -655,23 +653,16 @@ export function createHostedHandler(
       return await budget.run(() => createLambdaHandler(app)(event));
     } catch (error) {
       if (budget.signal.aborted) throw error;
-      try {
-        telemetry.logger.warn(
-          "hosted_setup_failed",
-          setupFailureDiagnostic(stage, error),
-        );
-      } catch {
-        /* Logging cannot alter the fixed failure response. */
-      }
+      const failure = reportApiFailure(error, stage);
       return {
-        statusCode: 500,
+        statusCode: failure.status,
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-store",
         },
         body: JSON.stringify({
-          code: "SNAPSHOT_UNAVAILABLE",
-          message: "Review runtime configuration or dependency unavailable",
+          code: failure.code,
+          message: failure.message,
         }),
       };
     }
@@ -680,16 +671,17 @@ export function createHostedHandler(
     const budget = new TurnDeadline(Math.min(27000, turnBudgetMs));
     try {
       return await budget.run(() => execute(event, budget));
-    } catch {
+    } catch (error) {
+      const failure = reportApiFailure(error, "dispatch");
       return {
-        statusCode: 503,
+        statusCode: failure.status,
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-store",
         },
         body: JSON.stringify({
-          code: "QUERY_TIMEOUT",
-          message: "Assessment request deadline exceeded",
+          code: failure.code,
+          message: failure.message,
         }),
       };
     } finally {

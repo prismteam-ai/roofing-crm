@@ -19,7 +19,7 @@ const statuses: Record<(typeof ErrorCode.options)[number], number> = {
   NOT_AUTHORIZED: 403,
   RATE_LIMITED: 429,
   COST_LIMIT_REACHED: 429,
-  QUERY_TIMEOUT: 504,
+  QUERY_TIMEOUT: 503,
   CONFLICT: 409,
   UNSUPPORTED_TOOL: 400,
 };
@@ -70,7 +70,14 @@ it("preserves every shared contract code through the actual hosted client and ga
       requestContext: { http: { method: "POST" } },
     });
     expect(response.statusCode).toBe(statuses[code]);
-    expect(JSON.parse(response.body)).toEqual({ code, message });
+    expect(JSON.parse(response.body)).toEqual(
+      code === "QUERY_TIMEOUT"
+        ? {
+            code: "DEPENDENCY_UNAVAILABLE",
+            message: "A required service is temporarily unavailable",
+          }
+        : { code, message },
+    );
     expect(f.calls()).toBe(1);
   }
 });
@@ -197,4 +204,26 @@ it("generic loopback consumers use the same contract taxonomy without adding a r
     code: "UNSUPPORTED_TOOL",
   });
   expect(calls).toBe(1);
+});
+
+it("bridges safe Oracle server failures without mutating shared contract codes", async () => {
+  for (const code of ["INTERNAL_ERROR", "DEPENDENCY_UNAVAILABLE"]) {
+    const client = new OracleClient("http://127.0.0.1:4310", async () =>
+      Response.json(
+        { code, message: "PRIVATE-SQL-DO-NOT-ECHO" },
+        { status: code === "INTERNAL_ERROR" ? 500 : 503 },
+      ),
+    );
+    const handler = createLambdaHandler(
+      createApp({ oracle: client, leads: noLeads }),
+    );
+    const result = await handler({
+      rawPath: "/api/search",
+      body: JSON.stringify(query),
+      requestContext: { http: { method: "POST" } },
+    });
+    expect(result.statusCode).toBe(code === "INTERNAL_ERROR" ? 500 : 503);
+    expect(JSON.parse(result.body).code).toBe(code);
+    expect(result.body).not.toContain("PRIVATE-SQL-DO-NOT-ECHO");
+  }
 });

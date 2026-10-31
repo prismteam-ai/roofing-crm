@@ -1,3 +1,7 @@
+import {
+  decodeInputPath,
+  reportApiFailure,
+} from "../../../packages/hosted-runtime/src/api-errors";
 import type { RoutingArchitecture } from "../../../packages/agent/src/architecture";
 import { IntentRejection } from "../../../packages/agent/src/intent/types";
 import { assessmentEvidence } from "../../../packages/hosted-runtime/src/assessment-evidence";
@@ -14,7 +18,6 @@ import {
   BUILD_IDENTITY,
   type BuildIdentity,
 } from "../../../packages/runtime-config/src/index";
-import { AccessError } from "../../../packages/hosted-runtime/src/access";
 import {
   answerQuestion,
   interpretPrompt,
@@ -236,7 +239,7 @@ export function createApp(deps: AppDependencies) {
         return response(
           200,
           await deps.oracle.detail(
-            decodeURIComponent(url.pathname.split("/").pop() ?? ""),
+            decodeInputPath(url.pathname.split("/").pop() ?? ""),
             snapshot,
           ),
         );
@@ -259,7 +262,7 @@ export function createApp(deps: AppDependencies) {
       }
       if (req.method === "PATCH" && url.pathname.startsWith("/api/leads/")) {
         const raw = object(),
-          id = decodeURIComponent(url.pathname.split("/").pop() ?? "");
+          id = decodeInputPath(url.pathname.split("/").pop() ?? "");
         const input = LeadUpdateSchema.parse({
           ...raw,
           id,
@@ -292,42 +295,20 @@ export function createApp(deps: AppDependencies) {
         message: "Route not found",
       });
     } catch (error) {
-      if (error instanceof AccessError)
-        return response(error.status, {
-          code: error.status === 429 ? "RATE_LIMITED" : "NOT_AUTHORIZED",
-          message: error.message,
-        });
+      const failure = reportApiFailure(error);
       const domain = error instanceof DomainError;
-      return response(
-        domain
-          ? error.code === "CONFLICT"
-            ? 409
-            : error.code === "NOT_AUTHORIZED"
-              ? 403
-              : error.code === "RATE_LIMITED" ||
-                  error.code === "COST_LIMIT_REACHED"
-                ? 429
-                : error.code === "QUERY_TIMEOUT"
-                  ? 504
-                  : 400
-          : 400,
-        {
-          ...(req.path.split("?")[0] === "/api/agent" &&
-          !agentInvoked &&
-          (domain
-            ? ["UNSUPPORTED_TOOL", "INVALID_INPUT"].includes(error.code)
-            : (error as Error).name === "ZodError")
-            ? { mode: "refused-before-model" }
-            : {}),
-          ...(error instanceof IntentRejection ? { intent: error.intent } : {}),
-          code: domain ? error.code : "INVALID_INPUT",
-          message: domain
-            ? error.message
-            : (error as Error).name === "ZodError"
-              ? "Invalid request fields"
-              : "Request could not be completed. Check the configured Oracle service.",
-        },
-      );
+      return response(failure.status, {
+        ...(req.path.split("?")[0] === "/api/agent" &&
+        !agentInvoked &&
+        (domain
+          ? ["UNSUPPORTED_TOOL", "INVALID_INPUT"].includes(error.code)
+          : failure.status === 400)
+          ? { mode: "refused-before-model" }
+          : {}),
+        ...(error instanceof IntentRejection ? { intent: error.intent } : {}),
+        code: failure.code,
+        message: failure.message,
+      });
     }
   };
 }

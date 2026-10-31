@@ -75,7 +75,7 @@ for (const stage of ["access", "detail"] as const) {
     await vi.advanceTimersByTimeAsync(10);
     expect(await task).toMatchObject({
       statusCode: 503,
-      body: expect.stringContaining("QUERY_TIMEOUT"),
+      body: expect.stringContaining("DEPENDENCY_UNAVAILABLE"),
     });
     await vi.advanceTimersByTimeAsync(30);
     expect(writes).toBe(0);

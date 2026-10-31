@@ -97,8 +97,9 @@ for (const stage of ["runtime", "access-secret", "oracle-client"] as const) {
       },
     );
     const result = await handler({ rawPath: "/api/health" });
-    expect(result.statusCode).toBe(500);
-    expect(warn).toHaveBeenCalledWith("hosted_setup_failed", {
+    expect(result.statusCode).toBe(503);
+    expect(warn).toHaveBeenCalledWith("api_request_failed", {
+      classification: "DEPENDENCY_UNAVAILABLE",
       stage,
       errorName: "ServiceUnavailableException",
       networkCode: "ETIMEDOUT",

@@ -247,6 +247,18 @@ export class OracleClient implements OracleReader {
       const parsed = ErrorCode.safeParse(
         Object.hasOwn(record, "code") ? record.code : undefined,
       );
+      // Safe server codes are API-local; keep the shared public query contract unchanged.
+      if (
+        !parsed.success &&
+        response.status >= 500 &&
+        ["INTERNAL_ERROR", "DEPENDENCY_UNAVAILABLE"].includes(
+          record.code as string,
+        )
+      )
+        throw Object.assign(new Error("Oracle service failed"), {
+          name:
+            response.status === 503 ? "ServiceUnavailableException" : "Error",
+        });
       throw new DomainError(
         parsed.success ? parsed.data : "INVALID_INPUT",
         Object.hasOwn(record, "message") && typeof record.message === "string"
