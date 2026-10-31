@@ -1,3 +1,8 @@
+import { SourceCitationList } from "./SourceCitationList";
+import { PermitOpportunityControls } from "./PermitOpportunityControls";
+import { PermitOpportunitySummary } from "./PermitOpportunitySummary";
+import { AgentPermitSections } from "./AgentPermitSections";
+import { officialPlaceResolver } from "../../../packages/places/src/index";
 import { SourceEvidenceFilters } from "./SourceEvidenceFilters";
 import { type QueryInput } from "../../../packages/contracts/src/index";
 import {
@@ -18,6 +23,8 @@ export function OpportunitiesView({
   const {
     query,
     setQuery,
+    queryUrlError,
+    clearInvalidUrlFilters,
     health,
     result,
     loading,
@@ -42,6 +49,8 @@ export function OpportunitiesView({
     synthetic,
     update,
     choose,
+    choosePlace,
+    applyPermitSection,
     pin,
     useGps,
     ask,
@@ -60,6 +69,26 @@ export function OpportunitiesView({
             </span>
           </div>
         </div>
+        <label>
+          Search area
+          <select
+            aria-label="Search area"
+            value={query.placeId ?? ""}
+            onChange={(e) => {
+              if (e.target.value) choosePlace(e.target.value);
+              else update({ placeId: undefined, placeIndexDigest: undefined });
+            }}
+          >
+            <option value="">Map pin / GPS</option>
+            {officialPlaceResolver.places
+              .filter((place) => place.resolutionEligible)
+              .map((place) => (
+                <option key={place.placeId} value={place.placeId}>
+                  {place.name} · {place.type}
+                </option>
+              ))}
+          </select>
+        </label>
         <label>
           Search radius
           <select
@@ -111,6 +140,18 @@ export function OpportunitiesView({
           Reset
         </button>
       </section>
+      {queryUrlError && (
+        <div
+          className="error-banner"
+          role="alert"
+          data-testid="invalid-query-url"
+        >
+          {queryUrlError}{" "}
+          <button onClick={clearInvalidUrlFilters}>
+            Clear invalid URL filters
+          </button>
+        </div>
+      )}
       {result?.placeResolution && (
         <PlaceResolution place={result.placeResolution} />
       )}
@@ -120,6 +161,7 @@ export function OpportunitiesView({
           {gps}
         </p>
       )}
+      <PermitOpportunityControls query={query} update={update} />
       <section className="filter-row">
         <div className="filter-group">
           <label className="check-label">
@@ -158,6 +200,12 @@ export function OpportunitiesView({
             onChange={(e) =>
               update({
                 permitStatus: e.target.value as QueryInput["permitStatus"],
+                permitOpportunityMode: undefined,
+                minPermitObservationAgeYears: undefined,
+                sort:
+                  query.sort === "permit_issue_age_desc"
+                    ? undefined
+                    : query.sort,
               })
             }
           >
@@ -171,6 +219,10 @@ export function OpportunitiesView({
           Minimum open days
           <input
             aria-label="Minimum open days"
+            disabled={
+              query.permitOpportunityMode !== undefined &&
+              query.permitOpportunityMode !== "confirmed_open"
+            }
             type="number"
             min="0"
             max="50000"
@@ -285,6 +337,11 @@ export function OpportunitiesView({
             <option value="roof_age_desc">
               Oldest recorded roof proxy first
             </option>
+            {query.permitOpportunityMode && (
+              <option value="permit_issue_age_desc">
+                Oldest issue/status age first
+              </option>
+            )}
             <option value="permit_open_days_desc">
               Longest observed open duration first
             </option>
@@ -388,13 +445,27 @@ export function OpportunitiesView({
         <section className="property-list" aria-label="Matching properties">
           <div className="list-header">
             <span>
-              {loading
-                ? "Updating search…"
-                : `${result?.rows.length ?? 0} properties displayed`}
+              {queryUrlError
+                ? "Search paused: invalid link filters"
+                : loading
+                  ? "Updating search…"
+                  : `${result?.rows.length ?? 0} properties displayed`}
             </span>
-            <span>Distance ↑</span>
+            <span>
+              {query.sort === "permit_issue_age_desc" ||
+              (query.sort === undefined &&
+                query.permitOpportunityMode === "status_verification_needed")
+                ? "Issue/status age ↓"
+                : query.sort === "permit_open_days_desc" ||
+                    (query.sort === undefined &&
+                      query.permitOpportunityMode === "confirmed_open")
+                  ? "Open duration ↓"
+                  : query.sort === "roof_age_desc"
+                    ? "Roof age ↓"
+                    : "Distance ↑"}
+            </span>
           </div>
-          {!loading && !result?.rows.length && !error ? (
+          {!queryUrlError && !loading && !result?.rows.length && !error ? (
             <div className="empty-state">
               <span>⌖</span>
               <h3>No matches in this search</h3>
@@ -409,6 +480,9 @@ export function OpportunitiesView({
                     roofMinAgeYears: undefined,
                     permitStatus: "any",
                     minOpenDays: 0,
+                    permitOpportunityMode: undefined,
+                    minPermitObservationAgeYears: undefined,
+                    sort: undefined,
                   })
                 }
               >
@@ -444,6 +518,7 @@ export function OpportunitiesView({
                     </strong>
                   </div>
                 </div>
+                <PermitOpportunitySummary property={p} query={query} />
                 <div className="card-footer">
                   <span className={`confidence ${p.roof.confidence}`}>
                     {p.roof.confidence === "unknown"
@@ -523,13 +598,23 @@ export function OpportunitiesView({
             aria-live="polite"
           >
             <p>{answer.answer}</p>
+            <AgentPermitSections
+              answer={answer}
+              choose={choose}
+              apply={applyPermitSection}
+            />
             <p className="caveat" data-testid="agent-permit-evidence">
               Permit counts describe acquired records. Zero matches do not prove
               permit absence; unacquired evidence is unknown.
             </p>
             <div className="agent-result-links">
               {answer.results.slice(0, 6).map((p) => (
-                <button key={p.id} onClick={() => choose(p)}>
+                <button
+                  key={p.id}
+                  onClick={() =>
+                    choose(p, answer.query.snapshotId, answer.query)
+                  }
+                >
                   {p.address} · known open permits{" "}
                   {knownOpenPermits(p) ?? "Unknown"} ↗
                 </button>
@@ -540,9 +625,10 @@ export function OpportunitiesView({
                 {answer.citations.length} source citations · inspect retrieval
                 trace
               </summary>
-              <code>
-                {answer.citations.join(" · ") || "No matching source records"}
-              </code>
+              <SourceCitationList
+                properties={answer.results}
+                citations={answer.citations}
+              />
               <pre>{JSON.stringify(answer.toolTrace, null, 2)}</pre>
             </details>
             <p className="caveat">{answer.caveats.join(" ")}</p>

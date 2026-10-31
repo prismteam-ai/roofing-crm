@@ -22,7 +22,11 @@ export const SOURCE_CLOSURE_CORPUS = [
     id: "source-04",
     prompt: "Show open roofing permits older than five years",
     expected: "accepted",
-    query: { permitStatus: "open", minPermitAgeSinceIssueDays: 1827 },
+    query: {
+      permitStatus: "open",
+      permitOpportunityMode: "confirmed_open",
+      minPermitObservationAgeYears: 5,
+    },
   },
   {
     id: "source-05",

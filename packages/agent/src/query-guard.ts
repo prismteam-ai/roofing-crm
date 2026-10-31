@@ -53,6 +53,11 @@ export function boundedToolArguments(input: unknown, expected: QueryInput) {
     (fixed.minPermitAgeSinceIssueDays !== undefined &&
       (given.minPermitAgeSinceIssueDays ?? -1) <
         fixed.minPermitAgeSinceIssueDays) ||
+    (fixed.permitOpportunityMode !== undefined &&
+      given.permitOpportunityMode !== fixed.permitOpportunityMode) ||
+    (fixed.minPermitObservationAgeYears !== undefined &&
+      (given.minPermitObservationAgeYears ?? -1) <
+        fixed.minPermitObservationAgeYears) ||
     (fixed.minRecordedDeedGapYears !== undefined &&
       (given.minRecordedDeedGapYears ?? -1) < fixed.minRecordedDeedGapYears) ||
     (fixed.minReportedSaleAgeYears !== undefined &&

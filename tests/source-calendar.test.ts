@@ -65,16 +65,15 @@ it("preserves the original activity-and-issue-age request separately from explic
   expect(plan.query).toMatchObject({
     permitStatus: "open",
     minOpenDays: 0,
-    minPermitAgeSinceIssueDays: 1827,
+    permitOpportunityMode: "confirmed_open",
+    minPermitObservationAgeYears: 5,
   });
-  expect(plan.ledger).toContainEqual(
-    expect.objectContaining({
-      material: true,
-      classification: "applied",
-      typedField: "sourceAssessmentDate",
-      typedValue: SOURCE_ASSESSMENT_DATE,
-    }),
-  );
+  expect(plan.query?.minPermitAgeSinceIssueDays).toBeUndefined();
+  expect(
+    plan.ledger.some(
+      (row) => row.typedField === "sourceAssessmentDate" && row.material,
+    ),
+  ).toBe(false);
   const continuous = interpretIntent(
     "Show continuously open permits for more than five years",
     base,
@@ -88,9 +87,11 @@ it("preserves the original activity-and-issue-age request separately from explic
   const leap = interpretIntent("Show open permits older than one year", base, {
     sourceAssessmentDate: "2024-02-29",
   });
-  expect(leap.query?.minPermitAgeSinceIssueDays).toBe(367);
+  expect(leap.query?.minPermitObservationAgeYears).toBe(1);
   expect(
-    interpretIntent(prompt, base, { sourceAssessmentDate: "invalid" }).accepted,
+    interpretIntent("Show open permits older than 1826 days", base, {
+      sourceAssessmentDate: "invalid",
+    }).accepted,
   ).toBe(false);
 });
 it("accepts a source-qualified provider-active roof candidate without inventing continuous native history", async () => {
@@ -153,7 +154,7 @@ for (const mismatchRead of [1, 2])
             return approvedModelResponse(request);
           },
         },
-        prompt,
+        "Show open roofing permits older than 1826 days",
         base,
         {
           modelId: "synthetic",
@@ -175,8 +176,8 @@ it("a later caller clock does not move the pinned source calendar basis", () => 
   try {
     vi.setSystemTime(new Date("2040-06-01T00:00:00Z"));
     expect(
-      interpretIntent(prompt, base).query?.minPermitAgeSinceIssueDays,
-    ).toBe(1827);
+      interpretIntent(prompt, base).query?.minPermitObservationAgeYears,
+    ).toBe(5);
   } finally {
     vi.useRealTimers();
   }

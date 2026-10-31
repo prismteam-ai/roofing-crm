@@ -52,12 +52,20 @@ export interface CampaignAudit {
   failureCode?: string;
   failureDetail?: GroundedFailureDetail;
   providerFailure?: ProviderFailureDiagnostic;
-  status?: "provider-failed" | "evidence-empty";
+  status?: "provider-failed" | "retrieval-failed" | "evidence-empty";
   evidence?: {
     queryHash: string[];
     snapshotId: string;
     propertyIds: string[];
     citations: string[];
+    permitSections?: {
+      kind: "confirmed_open" | "status_verification_needed";
+      queryHash: string;
+      total: number;
+      returnedCount: number;
+      propertyIds: string[];
+      citations: string[];
+    }[];
   };
 }
 export interface QualityGate {

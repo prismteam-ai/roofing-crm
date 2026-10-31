@@ -1,4 +1,5 @@
 import { QuerySchema, type QueryInput } from "../../contracts/src/index";
+import { officialPlaceResolver } from "../../places/src/index";
 export const OAKLAND_CENTER = { lat: 42.66, lng: -83.29 };
 export const METERS_PER_MILE = 1609.344;
 export function milesToMeters(miles: number): number {
@@ -22,6 +23,12 @@ export function queryFromUrl(
     limit: Number(p.get("limit") ?? 50),
     includeUnknown: p.get("unknownRoof") === "1",
   };
+  if (p.has("permitMode"))
+    base.permitOpportunityMode = p.get(
+      "permitMode",
+    ) as QueryInput["permitOpportunityMode"];
+  if (p.has("permitAgeYears"))
+    base.minPermitObservationAgeYears = Number(p.get("permitAgeYears"));
   if (p.has("age")) base.roofMinAgeYears = Number(p.get("age"));
   if (p.has("owner"))
     base.ownerRegion = p.get("owner") as QueryInput["ownerRegion"];
@@ -50,6 +57,16 @@ export function queryFromUrl(
   ] as const)
     if (p.has(field)) base[field] = p.get(field) === "1";
   const parsed = QuerySchema.safeParse(base);
+  if (
+    !parsed.success &&
+    (p.has("permitMode") ||
+      p.has("permitAgeYears") ||
+      p.get("sort") === "permit_issue_age_desc")
+  ) {
+    throw new Error(
+      "The permit filters in this link are invalid. No search was run. Check the mode and a calendar age from 0 to 200, or clear the invalid filters.",
+    );
+  }
   return parsed.success
     ? parsed.data
     : QuerySchema.parse({
@@ -70,6 +87,10 @@ export function queryToUrl(query: QueryInput): string {
     limit: String(query.limit ?? 50),
     unknownRoof: query.includeUnknown ? "1" : "0",
   });
+  if (query.permitOpportunityMode)
+    p.set("permitMode", query.permitOpportunityMode);
+  if (query.minPermitObservationAgeYears !== undefined)
+    p.set("permitAgeYears", String(query.minPermitObservationAgeYears));
   if (query.roofMinAgeYears !== undefined)
     p.set("age", String(query.roofMinAgeYears));
   if (query.ownerRegion && query.ownerRegion !== "any")
@@ -110,4 +131,19 @@ export function updateQueryContext(
     ...(moved ? { placeId: undefined, placeIndexDigest: undefined } : {}),
     cursor: undefined,
   };
+}
+
+/** Municipality selection uses the same admitted official geometry as the agent. */
+export function queryForPlace(query: QueryInput, placeId: string): QueryInput {
+  const place = officialPlaceResolver.get(placeId);
+  if (!place?.resolutionEligible)
+    throw new Error("Choose an eligible official Oakland County municipality");
+  const next = { ...query };
+  delete next.cursor;
+  return QuerySchema.parse({
+    ...next,
+    ...place.center,
+    placeId: place.placeId,
+    placeIndexDigest: place.indexDigest,
+  });
 }

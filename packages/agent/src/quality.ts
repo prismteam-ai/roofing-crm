@@ -10,7 +10,12 @@ import {
   type SearchResponse,
 } from "../../contracts/src/index";
 import { propertyEvidence } from "../../map-domain/src/signals";
-import type { AgentAnswer } from "./index";
+import {
+  answerFromEvidence,
+  verificationAlternativeQuery,
+  withPermitAlternativeSections,
+  type AgentAnswer,
+} from "./index";
 import {
   boundedIntent,
   ROUTING_ARCHITECTURE,
@@ -138,6 +143,12 @@ const semantic = (input: QueryInput) => {
     ownerRegion: q.ownerRegion ?? "any",
     minOwnershipYears: q.minOwnershipYears ?? null,
     minReportedSaleAgeYears: q.minReportedSaleAgeYears ?? null,
+    permitOpportunityMode: q.permitOpportunityMode ?? null,
+    minPermitObservationAgeYears: q.minPermitObservationAgeYears ?? null,
+    providerPermitStatus: q.providerPermitStatus ?? null,
+    permitActivityClaim: q.permitActivityClaim ?? null,
+    minPermitAgeSinceIssueDays: q.minPermitAgeSinceIssueDays ?? null,
+    minRecordedDeedGapYears: q.minRecordedDeedGapYears ?? null,
     placeId: q.placeId ?? null,
     placeIndexDigest: q.placeIndexDigest ?? null,
     requiresContractor: q.requiresContractor ?? false,
@@ -153,6 +164,7 @@ export function assessAnswer(
   query: QueryInput,
   answer: AgentAnswer,
   reference?: SearchResponse,
+  candidateReference?: SearchResponse,
 ): QualityOutcome {
   const q = QuerySchema.parse(answer.query),
     citations = new Set(answer.citations),
@@ -233,6 +245,49 @@ export function assessAnswer(
           ].sort(),
         ));
   const plan = IntentPlanSchema.safeParse(answer.intent);
+  let alternativesValid =
+    !answer.sourceQualifiedAlternativeSections &&
+    answer.permitSections === undefined;
+  if (
+    answer.sourceQualifiedAlternativeSections &&
+    reference &&
+    candidateReference &&
+    plan.success
+  ) {
+    try {
+      const candidateQuery = verificationAlternativeQuery(plan.data);
+      if (candidateQuery) {
+        const expectedAlternatives = withPermitAlternativeSections(
+          answerFromEvidence(reference, q),
+          reference,
+          candidateReference,
+          candidateQuery,
+        );
+        alternativesValid =
+          answer.mode === "deterministic-offline" &&
+          JSON.stringify(answer.permitSections) ===
+            JSON.stringify(expectedAlternatives.permitSections) &&
+          JSON.stringify(answer.toolTrace[1]) ===
+            JSON.stringify(expectedAlternatives.toolTrace[1]) &&
+          (!answer.modelAudit ||
+            [
+              "converseCalls",
+              "inputTokens",
+              "outputTokens",
+              "reservedMicroUsd",
+              "measuredMicroUsd",
+              "unmeasuredCalls",
+            ].every(
+              (key) =>
+                answer.modelAudit?.[
+                  key as keyof NonNullable<AgentAnswer["modelAudit"]>
+                ] === 0,
+            ));
+      }
+    } catch {
+      alternativesValid = false;
+    }
+  }
   const intentMatches = Boolean(
     plan.success &&
     plan.data.accepted &&
@@ -244,7 +299,9 @@ export function assessAnswer(
   );
   const grounded =
     intentMatches &&
-    answer.toolTrace.length === 1 &&
+    answer.toolTrace.length ===
+      (answer.sourceQualifiedAlternativeSections ? 2 : 1) &&
+    alternativesValid &&
     answer.toolTrace[0].snapshotId === query.snapshotId &&
     answer.toolTrace[0].resultCount === rows.length &&
     digest(semantic(q)) === digest(semantic(expected)) &&

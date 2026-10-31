@@ -1,3 +1,4 @@
+import { PermitOpportunitySummary } from "./PermitOpportunitySummary";
 import { declaredSynthetic } from "./useCrmController";
 import { type Lead } from "../../../packages/contracts/src/index";
 import {
@@ -16,6 +17,7 @@ export function PropertyDrawer({ controller }: { controller: CrmController }) {
     query,
     ready,
     selectedSnapshot,
+    selectedQuery,
     selected,
     note,
     leadMutationBusy,
@@ -80,6 +82,11 @@ export function PropertyDrawer({ controller }: { controller: CrmController }) {
             ? "Declared synthetic fixture records."
             : "Counts cover acquired roofing records only; missing coverage remains unknown."}
       </p>
+      <PermitOpportunitySummary
+        property={selected}
+        query={selectedQuery ?? query}
+        detailed
+      />
       {selected.permits.map((p) => (
         <PermitEvidence
           key={p.id}

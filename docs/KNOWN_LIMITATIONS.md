@@ -4,9 +4,13 @@ The CRM is a source-backed evidence workspace, not a guarantee of complete count
 
 ## Final free-source disposition
 
-The completed finite lawful free-source campaign did not establish a qualified positive **current-active or long-open roofing-permit cohort**. This remains a material functional limitation; it is not proof that no such Oakland permit exists. Native `ISSUED` is not `OPEN`. An old issue date or missing final date cannot establish active status or uninterrupted open duration. Historical recent Troy observations remain issued-only.
+The product supports strict source-confirmed open filtering and a separate [status-verification workflow](PERMIT_OPPORTUNITIES.md) using real older roofing observations. The as-of 2026-10-28 full admitted census found 4,487 candidate permits/4,227 properties; two lack mapped points. These are not five-mile counts or confirmed-open records.
+
+The completed finite lawful free-source campaign did not establish a qualified positive **current-active or long-open roofing-permit cohort**. This remains a material functional limitation; it is not proof that no such Oakland permit exists. Native `ISSUED` is not `OPEN`. An old issue date or missing final date cannot establish active status or uninterrupted open duration. Municipal Troy candidate records retain unavailable native status as `reportedStatus:null` with `issued_only` basis, rather than a fabricated `ISSUED` label. Other sources may report `ISSUED` literally without establishing OPEN.
 
 No paid source is required, purchased or needed to reproduce the submitted runtime. Paid full history remains unsearched and unknown; it is not a prerequisite in the original assignment. Acquisition is closed for release assembly, and no new subscription, source search or synthetic positive is used to conceal this gap.
+
+The original 114-row trace, 62 null / 52 false historical flags and eight source-positive gaps remain unchanged. A positive follow-up cohort does not close the missing confirmed-open or ownership-history outcomes.
 
 ## Claim strength and coverage
 

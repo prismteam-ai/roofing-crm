@@ -106,6 +106,51 @@ export function sourceEvidenceRules({
         "\\s*(?<unit>years?|days?)\\b",
     ),
     (span, match) => {
+      if (/^year/.test(match.groups!.unit)) {
+        const years = cardinal(match.groups!.n);
+        if (
+          years === undefined ||
+          !Number.isSafeInteger(years) ||
+          years < 0 ||
+          years > 200
+        ) {
+          note(
+            span,
+            "minPermitObservationAgeYears",
+            "unsupported",
+            "invalid_permit_calendar_years",
+            "Permit observation age requires a bounded nonnegative integer calendar-year threshold.",
+          );
+          return;
+        }
+        apply(
+          span,
+          "permitStatus",
+          "open",
+          "The primary retrieval remains strict source-confirmed open; ISSUED alone is not open.",
+        );
+        apply(
+          span,
+          "permitOpportunityMode",
+          "confirmed_open",
+          "Run the source-confirmed open roofing-permit query first.",
+        );
+        apply(
+          span,
+          "minPermitObservationAgeYears",
+          years,
+          "Strict calendar age uses each qualifying observation's own issue/filed/status date and source assessment anchor, not continuous open duration.",
+        );
+        note(
+          span,
+          "minPermitObservationAgeYears",
+          "applied",
+          "strict_open_with_verification_alternative",
+          "Only an actual complete strict zero may produce a separately labeled status-verification query at the same calendar threshold; those records are not confirmed open.",
+          years,
+        );
+        return;
+      }
       calendarBound(
         span,
         match.groups!.n,

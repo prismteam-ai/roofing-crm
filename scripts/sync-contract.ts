@@ -31,7 +31,7 @@ async function verify(directory: string) {
     await readFile(path.join(directory, "contract.lock.json"), "utf8"),
   ) as Lock;
   if (
-    lock.version !== "0.6.0" ||
+    lock.version !== "0.7.0" ||
     !lock.files ||
     Object.keys(lock.files).sort().join(",") !==
       [...moduleNames].sort().join(",") ||

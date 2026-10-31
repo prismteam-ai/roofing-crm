@@ -3,6 +3,7 @@
 The frozen [assignment README](history/ASSIGNMENT_README.md) and original requirement rows control product scope. Current pinned team-kit guidance governs the engineering choices where compatible. The [evaluator guide](EVALUATOR_GUIDE.md) is the shortest path to the live workspace. The dated accepted runtime and any later promotion are bound by [release status](RELEASE_STATUS.json) and the external release receipt, not by the checkout alone.
 
 - [Architecture](ARCHITECTURE.md)
+- [Permit opportunities: lifecycle and verification](PERMIT_OPPORTUNITIES.md)
 - [Data coverage and source rights](DATA_COVERAGE.md)
 - [Field authority and display/publication boundaries](DATA_FIELD_AUTHORITY_MATRIX.md)
 - [Source-specific data and evaluator-access decision](adr/003-source-specific-data-and-evaluator-access.md)

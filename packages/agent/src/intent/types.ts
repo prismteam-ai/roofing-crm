@@ -28,6 +28,8 @@ export const ConstraintField = z.enum([
   "providerPermitStatus",
   "permitActivityClaim",
   "minPermitAgeSinceIssueDays",
+  "permitOpportunityMode",
+  "minPermitObservationAgeYears",
   "minRecordedDeedGapYears",
   "sourceAssessmentDate",
   "includeUnknown",

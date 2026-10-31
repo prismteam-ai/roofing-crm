@@ -35,7 +35,8 @@ const accepted: Omit<NlCorpusCase, "id" | "expected">[] = [
     query: {
       placeId: "us-26-125-80700-city",
       permitStatus: "open",
-      minPermitAgeSinceIssueDays: 1827,
+      permitOpportunityMode: "confirmed_open",
+      minPermitObservationAgeYears: 5,
       radiusMeters: 8046.72,
     },
     classes: ["original-crm", "place", "calendar-issue-age"],
@@ -112,7 +113,11 @@ const accepted: Omit<NlCorpusCase, "id" | "expected">[] = [
   },
   {
     prompt: "Show open permits older than five years",
-    query: { permitStatus: "open", minPermitAgeSinceIssueDays: 1827 },
+    query: {
+      permitStatus: "open",
+      permitOpportunityMode: "confirmed_open",
+      minPermitObservationAgeYears: 5,
+    },
     classes: ["duration"],
   },
   {
@@ -240,7 +245,8 @@ const accepted: Omit<NlCorpusCase, "id" | "expected">[] = [
       radiusMeters: 16093.44,
       roofMinAgeYears: 15,
       permitStatus: "open",
-      minPermitAgeSinceIssueDays: 1827,
+      permitOpportunityMode: "confirmed_open",
+      minPermitObservationAgeYears: 5,
       limit: 10,
     },
     classes: ["mixed"],

@@ -17,7 +17,6 @@ export { alertHandler } from "../../../packages/hosted-runtime/src/alerts";
 import { providerFailureDiagnostic } from "../../../packages/agent/src/provider-failure";
 import { groundedFailureDetail } from "../../../packages/agent/src/failure-detail";
 import {
-  answerQuestion,
   answerFromEvidence,
   requireIntent,
   withIntent,
@@ -334,9 +333,14 @@ export function createHostedHandler(
                   reservedMicroUsd = 0,
                   measuredMicroUsd = 0,
                   measuredCalls = 0;
-                let reads = 0,
-                  cached:
-                    { data: SearchResponse; query: QueryInput } | undefined;
+                let reads = 0;
+                const primaryQueryDigest = createHash("sha256")
+                  .update(JSON.stringify(intent.query))
+                  .digest("hex");
+                const cachedByQuery = new Map<
+                  string,
+                  { data: SearchResponse; query: QueryInput }
+                >();
                 const boundedOracle: OracleReader = {
                   detail: (id, snapshot) => oracle.detail(id, snapshot),
                   health: oracle.health ? () => oracle.health!() : undefined,
@@ -356,7 +360,15 @@ export function createHostedHandler(
                         "Evidence boundary mismatch",
                       );
                     assertEvidencePredicates(data, q);
-                    cached = { data, query: q };
+                    cachedByQuery.set(
+                      createHash("sha256")
+                        .update(JSON.stringify(q))
+                        .digest("hex"),
+                      {
+                        data: structuredClone(data),
+                        query: structuredClone(q),
+                      },
+                    );
                     return data;
                   },
                 };
@@ -497,7 +509,8 @@ export function createHostedHandler(
                         inputTokens,
                         outputTokens,
                         totalTokens: inputTokens + outputTokens,
-                        ...(result.mode === "evidence-empty"
+                        ...(result.mode === "evidence-empty" ||
+                        result.sourceQualifiedAlternativeSections
                           ? {
                               reservedMicroUsd: 0,
                               measuredMicroUsd: 0,
@@ -511,6 +524,22 @@ export function createHostedHandler(
                           snapshotId: query.snapshotId,
                           propertyIds: result.results.map((x) => x.id),
                           citations: result.citations,
+                          ...(result.permitSections
+                            ? {
+                                permitSections: result.permitSections.map(
+                                  (section) => ({
+                                    kind: section.kind,
+                                    queryHash: section.queryHash,
+                                    total: section.total,
+                                    returnedCount: section.returnedCount,
+                                    propertyIds: section.results.map(
+                                      (row) => row.id,
+                                    ),
+                                    citations: section.citations,
+                                  }),
+                                ),
+                              }
+                            : {}),
                         },
                       },
                       budget.signal,
@@ -574,27 +603,28 @@ export function createHostedHandler(
                         failureCode: error.code,
                         failureDetail: groundedFailureDetail(error),
                         ...(providerFailure ? { providerFailure } : {}),
-                        status: "provider-failed",
+                        status:
+                          converseCalls > 0
+                            ? "provider-failed"
+                            : "retrieval-failed",
                       },
                       budget.signal,
                     ),
                   );
-                  const fallback = cached
-                    ? answerFromEvidence(
-                        cached.data,
-                        cached.query,
-                        "deterministic-fallback",
-                      )
-                    : reads === 0
-                      ? await answerQuestion(boundedOracle, prompt, query)
-                      : (() => {
-                          throw error;
-                        })();
+                  const cached = cachedByQuery.get(primaryQueryDigest);
+                  if (!cached) throw error;
+                  const fallback = answerFromEvidence(
+                    cached.data,
+                    cached.query,
+                    "deterministic-fallback",
+                  );
                   return {
                     ...withIntent(fallback, intent),
                     mode: "deterministic-fallback",
                     caveats: [
-                      "Live model could not produce a valid bounded answer; this answer used deterministic evidence. No provider facts were used. Failed attempts retain reserved allowance; unmeasured usage is not claimed as zero spend.",
+                      converseCalls > 0
+                        ? "Live model could not produce a valid bounded answer; this answer used deterministic evidence. No provider facts were used. Failed attempts retain reserved allowance; unmeasured usage is not claimed as zero spend."
+                        : "The bounded retrieval did not complete. This fallback retains only the strict primary evidence; alternatives were not promoted and no model call was dispatched.",
                       ...fallback.caveats,
                     ],
                     modelAudit: {

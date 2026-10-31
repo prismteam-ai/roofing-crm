@@ -16,6 +16,8 @@ import {
   assertEvidencePredicates,
   assertIntentSourceAssessment,
   boundedEvidenceQuery,
+  verificationAlternativeQuery,
+  withPermitAlternativeSections,
   type AgentAnswer,
 } from "./index";
 import {
@@ -158,7 +160,7 @@ export async function answerWithBedrock(
     ? AbortSignal.any([controller.signal, limits.requestSignal])
     : controller.signal;
   let reads = 0;
-  async function retrieve() {
+  async function retrieve(requestedQuery = query) {
     if (++reads > MAX_ORACLE_READS)
       throw new DomainError("COST_LIMIT_REACHED", "Read budget exhausted");
     if (remaining() <= 0 || signal.aborted)
@@ -168,7 +170,7 @@ export async function answerWithBedrock(
       );
     const data = SearchResponseSchema.parse(
       await deadline(
-        reader.search(structuredClone(query), {
+        reader.search(structuredClone(requestedQuery), {
           signal,
           timeoutMs: Math.max(1, Math.floor(remaining())),
         }),
@@ -178,8 +180,8 @@ export async function answerWithBedrock(
       ),
     );
     if (
-      data.snapshotId !== query.snapshotId ||
-      data.rows.length > query.limit ||
+      data.snapshotId !== requestedQuery.snapshotId ||
+      data.rows.length > requestedQuery.limit ||
       data.rows.length > maxRows ||
       data.total < data.rows.length
     )
@@ -187,8 +189,8 @@ export async function answerWithBedrock(
         "SNAPSHOT_UNAVAILABLE",
         "Evidence did not satisfy snapshot/result limits",
       );
-    assertEvidencePredicates(data, query);
-    assertIntentSourceAssessment(data, intent);
+    assertEvidencePredicates(data, requestedQuery);
+    if (requestedQuery === query) assertIntentSourceAssessment(data, intent);
     return data;
   }
   const preflight = await retrieve();
@@ -219,6 +221,21 @@ export async function answerWithBedrock(
       retrievalReads: reads,
       constraintDigest,
     };
+    const candidateQuery = verificationAlternativeQuery(intent);
+    if (candidateQuery) {
+      const candidates = await retrieve(
+        Object.freeze(QuerySchema.parse(candidateQuery)),
+      );
+      return withIntent(
+        withPermitAlternativeSections(
+          empty,
+          preflight,
+          candidates,
+          candidateQuery,
+        ),
+        intent,
+      );
+    }
     return withIntent(empty, intent);
   }
   const approved: ApprovedRetrieval = {

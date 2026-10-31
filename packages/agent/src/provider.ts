@@ -9,7 +9,11 @@ export interface ApprovedRetrieval {
   queryDigest: string;
   constraintDigest: string;
   limit: number;
-  sort: "distance" | "roof_age_desc" | "permit_open_days_desc";
+  sort:
+    | "distance"
+    | "roof_age_desc"
+    | "permit_open_days_desc"
+    | "permit_issue_age_desc";
 }
 
 /** Every parameter is a server-approved literal, never an unconstrained model query. */

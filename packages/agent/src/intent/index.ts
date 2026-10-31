@@ -145,6 +145,8 @@ export function interpretIntent(
     "providerPermitStatus",
     "permitActivityClaim",
     "minPermitAgeSinceIssueDays",
+    "permitOpportunityMode",
+    "minPermitObservationAgeYears",
     "minRecordedDeedGapYears",
   ] as const) {
     const value = base.data[field];

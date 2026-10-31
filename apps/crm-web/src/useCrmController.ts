@@ -22,6 +22,7 @@ import {
   queryFromUrl,
   queryToUrl,
   updateQueryContext,
+  queryForPlace,
 } from "../../../packages/map-domain/src/index";
 import { isExplicitOpenRoofPermit } from "../../../packages/map-domain/src/signals";
 import {
@@ -90,10 +91,20 @@ const knownOpenPermits = (property: Property): number | null =>
     ? null
     : property.permits.filter(isExplicitOpenRoofPermit).length;
 
+function readLocationQuery(snapshotId?: string) {
+  try {
+    return { query: queryFromUrl(location.search, snapshotId), error: "" };
+  } catch (error) {
+    return {
+      query: queryFromUrl("", snapshotId),
+      error: (error as Error).message,
+    };
+  }
+}
 export function useCrmController() {
-  const [query, setQuery] = useState<QueryInput>(() =>
-    queryFromUrl(location.search),
-  );
+  const [initialUrl] = useState(() => readLocationQuery());
+  const [query, setQuery] = useState<QueryInput>(initialUrl.query);
+  const [queryUrlError, setQueryUrlError] = useState(initialUrl.error);
   const [health, setHealth] = useState<
     | (OracleHealth & {
         accessMode?: string;
@@ -111,6 +122,7 @@ export function useCrmController() {
   const [error, setError] = useState("");
   const [selectedSnapshot, setSelectedSnapshot] = useState("");
   const [selected, setSelected] = useState<Property | null>(null);
+  const [selectedQuery, setSelectedQuery] = useState<QueryInput | null>(null);
   const [placing, setPlacing] = useState(false);
   const [gps, setGps] = useState("");
   const [mapProvider, setMapProvider] =
@@ -152,6 +164,7 @@ export function useCrmController() {
     detailGeneration.current++;
     setSelected(null);
     setSelectedSnapshot("");
+    setSelectedQuery(null);
   };
   const endSession = () => {
     apiSessionGeneration++;
@@ -250,7 +263,9 @@ export function useCrmController() {
         epoch !== sessionGeneration.current
       )
         return;
-      setQuery(queryFromUrl(location.search, status.snapshotId));
+      const url = readLocationQuery(status.snapshotId);
+      setQuery(url.query);
+      setQueryUrlError(url.error);
       beginSession(id);
     } catch (error) {
       if (
@@ -289,7 +304,9 @@ export function useCrmController() {
       )
         return;
       setAccessCode("");
-      setQuery(queryFromUrl(location.search, health?.snapshotId));
+      const url = readLocationQuery(health?.snapshotId);
+      setQuery(url.query);
+      setQueryUrlError(url.error);
       beginSession(current.session.id);
     } catch (error) {
       if (
@@ -366,6 +383,10 @@ export function useCrmController() {
     setAgentError("");
     setLoading(true);
     setError("");
+    if (queryUrlError) {
+      setLoading(false);
+      return;
+    }
     history.replaceState(null, "", queryToUrl(query));
     const timer = setTimeout(() => {
       void api<unknown>("/api/search", {
@@ -386,18 +407,45 @@ export function useCrmController() {
         });
     }, 120);
     return () => clearTimeout(timer);
-  }, [query, ready]);
+  }, [query, ready, queryUrlError]);
+  const clearInvalidUrlFilters = () => {
+    if (!activeSession.current) return;
+    seq.current++;
+    closeDetail();
+    setQueryUrlError("");
+    setQuery(queryFromUrl("", health?.snapshotId));
+  };
   const update = (fields: Partial<QueryInput>) => {
     if (!activeSession.current) return;
     seq.current++;
     closeDetail();
     setQuery((q) => updateQueryContext(q, fields));
   };
-  const choose = (p: Property, snapshotId = query.snapshotId) => {
+  const choosePlace = (placeId: string) => {
+    if (!activeSession.current) return;
+    seq.current++;
+    closeDetail();
+    setQuery((previous) => queryForPlace(previous, placeId));
+    setPlacing(false);
+    setGps("Search center uses the selected official municipality.");
+  };
+  const applyPermitSection = (sectionQuery: QueryInput) => {
+    if (!activeSession.current) return;
+    seq.current++;
+    closeDetail();
+    setAppliedIntent(null);
+    setQuery(sectionQuery);
+  };
+  const choose = (
+    p: Property,
+    snapshotId = query.snapshotId,
+    detailQuery: QueryInput = query,
+  ) => {
     if (!activeSession.current) return;
     detailGeneration.current++;
     setSelectedSnapshot(snapshotId);
     setSelected(p);
+    setSelectedQuery(detailQuery);
     setStatus("");
     changeNote("");
   };
@@ -531,10 +579,11 @@ export function useCrmController() {
     }
   };
   const ask = async () => {
+    const epoch = sessionGeneration.current;
+    if (!sameSession(epoch) || queryUrlError || loading || !result || agentBusy)
+      return;
     const generation = seq.current,
-      epoch = sessionGeneration.current,
       current = ++agentGeneration.current;
-    if (!sameSession(epoch)) return;
     setAgentBusy(true);
     setAnswer(null);
     setRejectedIntent(null);
@@ -594,7 +643,7 @@ export function useCrmController() {
         throw new Error(
           "Property detail identity does not match the saved lead",
         );
-      choose(property, lead.snapshotId);
+      choose(property, lead.snapshotId, queryFromUrl("", lead.snapshotId));
     } catch (error) {
       if (
         sameSession(epoch) &&
@@ -629,6 +678,8 @@ export function useCrmController() {
   return {
     query,
     setQuery,
+    queryUrlError,
+    clearInvalidUrlFilters,
     health,
     setHealth,
     ready,
@@ -647,6 +698,7 @@ export function useCrmController() {
     setError,
     selectedSnapshot,
     setSelectedSnapshot,
+    selectedQuery,
     selected,
     setSelected,
     placing,
@@ -707,6 +759,8 @@ export function useCrmController() {
     refreshLeads,
     applyConfirmedLead,
     update,
+    choosePlace,
+    applyPermitSection,
     choose,
     pin,
     useGps,

@@ -4,6 +4,7 @@ import {
   propertyMatchesQuery,
   permitMatchesQuery,
   compareQueryRows,
+  qualifyingPermitSignals,
 } from "../../contracts/src/query-predicates";
 import { resolveQueryPlace } from "../../places/src/index";
 import { requireIntent } from "./intent";
@@ -14,12 +15,28 @@ import { tool } from "ai";
 import {
   DomainError,
   QuerySchema,
+  SearchResponseSchema,
   type QueryInput,
   type SearchResponse,
 } from "../../contracts/src/index";
 import type { OracleReader } from "../../oracle-client/src/index";
+export interface PermitAnswerSection {
+  kind: "confirmed_open" | "status_verification_needed";
+  label: string;
+  query: QueryInput;
+  queryHash: string;
+  total: number;
+  returnedCount: number;
+  truncated: boolean;
+  nextCursor: string | null;
+  results: SearchResponse["rows"];
+  citations: string[];
+  caveats: string[];
+}
 export interface AgentAnswer {
   intent?: IntentPlan;
+  sourceQualifiedAlternativeSections?: true;
+  permitSections?: PermitAnswerSection[];
   modelAudit?: {
     modelId: string;
     region: "us-east-2";
@@ -115,7 +132,182 @@ export async function answerQuestion(
   const intent = requireIntent(prompt, base, options);
   const data = await reader.search(intent.query);
   assertIntentSourceAssessment(data, intent);
-  return withIntent(answerFromEvidence(data, intent.query), intent);
+  const answer = answerFromEvidence(data, intent.query);
+  const candidateQuery = verificationAlternativeQuery(intent);
+  if (candidateQuery && data.rows.length === 0) assertCompleteStrictZero(data);
+  if (data.total === 0 && candidateQuery) {
+    assertCompleteStrictZero(data);
+    const candidates = SearchResponseSchema.parse(
+      await reader.search(candidateQuery),
+    );
+    return withIntent(
+      withPermitAlternativeSections(answer, data, candidates, candidateQuery),
+      intent,
+    );
+  }
+  return withIntent(answer, intent);
+}
+/** Alternatives are server-derived only for the explicit calendar-age open request. */
+export function verificationAlternativeQuery(
+  intent: IntentPlan,
+): QueryInput | undefined {
+  const query = intent.query;
+  if (
+    !query ||
+    query.permitOpportunityMode !== "confirmed_open" ||
+    query.minPermitObservationAgeYears === undefined ||
+    (query.minOpenDays ?? 0) > 0 ||
+    intent.ledger.some(
+      (entry) =>
+        entry.origin === "prompt" &&
+        entry.material &&
+        entry.classification === "applied" &&
+        entry.typedField === "minOpenDays",
+    ) ||
+    !intent.ledger.some(
+      (entry) =>
+        entry.origin === "prompt" &&
+        entry.material &&
+        entry.classification === "applied" &&
+        entry.normalizedMeaning === "strict_open_with_verification_alternative",
+    )
+  )
+    return undefined;
+  const explicitSort = intent.ledger.some(
+    (entry) =>
+      entry.origin === "prompt" &&
+      entry.material &&
+      entry.classification === "applied" &&
+      entry.typedField === "sort",
+  );
+  if (explicitSort && query.sort === "permit_open_days_desc") return undefined;
+  return QuerySchema.parse({
+    ...query,
+    permitOpportunityMode: "status_verification_needed",
+    permitStatus: "any",
+    minOpenDays: 0,
+    sort: explicitSort ? query.sort : "permit_issue_age_desc",
+    cursor: undefined,
+  });
+}
+export function assertCompleteStrictZero(data: SearchResponse): void {
+  if (
+    data.total !== 0 ||
+    data.rows.length !== 0 ||
+    data.truncated ||
+    data.nextCursor
+  )
+    throw new DomainError(
+      "SNAPSHOT_UNAVAILABLE",
+      "Verification alternatives require a complete strict zero-match response",
+    );
+}
+function permitSection(
+  data: SearchResponse,
+  query: QueryInput,
+  kind: PermitAnswerSection["kind"],
+): PermitAnswerSection {
+  assertEvidencePredicates(data, query);
+  if (
+    data.total < data.rows.length ||
+    data.rows.length > (query.limit ?? 50) ||
+    (!query.cursor &&
+      data.rows.length !== Math.min(data.total, query.limit ?? 50))
+  )
+    throw new DomainError(
+      "SNAPSHOT_UNAVAILABLE",
+      "Permit section did not retain its complete bounded page/count",
+    );
+  const signals = data.rows.flatMap((row) =>
+    qualifyingPermitSignals(row, query),
+  );
+  return {
+    kind,
+    label:
+      kind === "confirmed_open"
+        ? "Confirmed open permits"
+        : "Status verification needed",
+    query,
+    queryHash: data.queryHash,
+    total: data.total,
+    returnedCount: data.rows.length,
+    truncated: data.truncated,
+    nextCursor: data.nextCursor,
+    results: data.rows,
+    citations: [
+      ...new Set(
+        signals.map(
+          (signal) =>
+            `${signal.provenance.sourceId}:${signal.provenance.recordId}`,
+        ),
+      ),
+    ],
+    caveats: [
+      ...new Set([
+        ...data.limitations,
+        ...signals.flatMap((signal) => signal.limitations),
+        ...(kind === "status_verification_needed"
+          ? [
+              "These are not confirmed open permits; they are older permit records whose current lifecycle status requires municipal verification.",
+              "Age since issue/filed/status uses the same observation's source assessment date, not continuous open duration. A listed party is not a verified contractor without explicit evidence.",
+            ]
+          : []),
+      ]),
+    ],
+  };
+}
+/** Primary evidence stays strict; the second query and its rows are never substituted. */
+export function withPermitAlternativeSections(
+  answer: AgentAnswer,
+  strict: SearchResponse,
+  candidates: SearchResponse,
+  candidateQuery: QueryInput,
+): AgentAnswer {
+  assertCompleteStrictZero(strict);
+  const allowedSort =
+    candidateQuery.sort === "permit_issue_age_desc" ||
+    (candidateQuery.sort === answer.query.sort &&
+      candidateQuery.sort !== "permit_open_days_desc");
+  const expected = QuerySchema.parse({
+    ...answer.query,
+    permitOpportunityMode: "status_verification_needed",
+    permitStatus: "any",
+    minOpenDays: 0,
+    sort: candidateQuery.sort,
+    cursor: undefined,
+  });
+  if (
+    answer.query.permitOpportunityMode !== "confirmed_open" ||
+    answer.query.minPermitObservationAgeYears === undefined ||
+    (answer.query.minOpenDays ?? 0) > 0 ||
+    !allowedSort ||
+    JSON.stringify(QuerySchema.parse(candidateQuery)) !==
+      JSON.stringify(expected)
+  )
+    throw new DomainError(
+      "INVALID_INPUT",
+      "Verification query crossed the strict source/geography/age boundary",
+    );
+  assertEvidencePredicates(strict, answer.query);
+  const confirmed = permitSection(strict, answer.query, "confirmed_open");
+  const verification = permitSection(
+    candidates,
+    candidateQuery,
+    "status_verification_needed",
+  );
+  const candidateAnswer = answerFromEvidence(candidates, candidateQuery);
+  return {
+    ...answer,
+    mode: "deterministic-offline",
+    sourceQualifiedAlternativeSections: true,
+    permitSections: [confirmed, verification],
+    answer: `Confirmed open permits: 0. Status verification needed: ${verification.total} matching properties; this page contains ${verification.returnedCount}. These are not confirmed open permits; their current lifecycle status requires municipal verification.`,
+    caveats: [
+      ...answer.caveats,
+      "The separate verification query is deterministic server evidence; no model call was made for these alternatives.",
+    ],
+    toolTrace: [...answer.toolTrace, candidateAnswer.toolTrace[0]],
+  };
 }
 /** One typed plan is attached to every success, empty result and deterministic fallback. */
 export function withIntent(
@@ -270,7 +462,7 @@ export function answerFromEvidence(
       "Building year is a low-confidence roof proxy, not a roof installation or replacement date. Issued alone is not open; duration requires explicit open status and a date.",
       "No contractor identity, license or rating is inferred from a reported name. Missing acquired permits do not prove no permit exists.",
     ],
-    answer: `I found ${data.total} matching ${data.total === 1 ? "property" : "properties"} within ${query.radiusMeters / 1609.344} miles. ${query.roofMinAgeYears !== undefined ? `Roof-age threshold: ${query.roofMinAgeYears} years. ` : ""}${query.permitStatus === "open" ? `Source-qualified open/currently active permit observations${query.minOpenDays ? ` with independently documented native open interval of at least ${query.minOpenDays} days` : ""}. ` : query.permitStatus === "closed" ? "Closed permits. " : query.permitStatus === "unknown" ? "Acquired permit status unknown. " : ""}${query.minReportedSaleAgeYears !== undefined ? `Last reported sale observed more than ${query.minReportedSaleAgeYears} years ago; this is partial observed history, not uninterrupted ownership tenure. ` : ""}${query.providerPermitStatus !== undefined ? `Provider-normalized permit status: ${query.providerPermitStatus}; native status is independently qualified. ` : ""}${query.permitActivityClaim !== undefined ? `Activity evidence: ${query.permitActivityClaim.replaceAll("_", " ")}. ` : ""}${query.minPermitAgeSinceIssueDays !== undefined ? `Age since issue at least ${query.minPermitAgeSinceIssueDays} days at the source assessment date; not continuous open duration. ` : ""}${query.minRecordedDeedGapYears !== undefined ? `No observed recorded deed for more than ${query.minRecordedDeedGapYears} years within each documented current-PIN index window through its verified date; this does not establish legal ownership continuity. ` : ""}This bounded page contains ${rows.length} records. Snapshot ${data.snapshotId}; query ${data.queryHash}. Review each source and confidence before qualifying a lead.`,
+    answer: `I found ${data.total} matching ${data.total === 1 ? "property" : "properties"} within ${query.radiusMeters / 1609.344} miles. ${query.roofMinAgeYears !== undefined ? `Roof-age threshold: ${query.roofMinAgeYears} years. ` : ""}${query.permitStatus === "open" ? `Source-qualified open/currently active permit observations${query.minOpenDays ? ` with independently documented native open interval of at least ${query.minOpenDays} days` : ""}. ` : query.permitStatus === "closed" ? "Closed permits. " : query.permitStatus === "unknown" ? "Acquired permit status unknown. " : ""}${query.minPermitObservationAgeYears !== undefined ? `Permit observation age strictly exceeds ${query.minPermitObservationAgeYears} source-calendar years at its own assessment date; not continuous open duration. ` : ""}${query.minReportedSaleAgeYears !== undefined ? `Last reported sale observed more than ${query.minReportedSaleAgeYears} years ago; this is partial observed history, not uninterrupted ownership tenure. ` : ""}${query.providerPermitStatus !== undefined ? `Provider-normalized permit status: ${query.providerPermitStatus}; native status is independently qualified. ` : ""}${query.permitActivityClaim !== undefined ? `Activity evidence: ${query.permitActivityClaim.replaceAll("_", " ")}. ` : ""}${query.minPermitAgeSinceIssueDays !== undefined ? `Age since issue at least ${query.minPermitAgeSinceIssueDays} days at the source assessment date; not continuous open duration. ` : ""}${query.minRecordedDeedGapYears !== undefined ? `No observed recorded deed for more than ${query.minRecordedDeedGapYears} years within each documented current-PIN index window through its verified date; this does not establish legal ownership continuity. ` : ""}This bounded page contains ${rows.length} records. Snapshot ${data.snapshotId}; query ${data.queryHash}. Review each source and confidence before qualifying a lead.`,
     toolTrace: [
       {
         tool: "searchRoofingEvidence",

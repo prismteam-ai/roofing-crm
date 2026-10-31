@@ -6,11 +6,13 @@ An Oakland County evidence workspace for map searches, source-backed roof and pe
 
 Open the [CRM review workspace](https://d1rvqgm0k272e6.cloudfront.net) with the low-privilege evaluator capability in the approved PR access section. No AWS account, installation or local server is needed. Choose a map center and radius, inspect evidence, save a lead and ask the agent. Start with the [evaluator guide](docs/EVALUATOR_GUIDE.md) for the real example, access limits and recovery steps.
 
+Keep **No permit filter** for the Novi aged-roof search. For permit opportunities, use Troy and compare **Confirmed open / active** with the separate **Status verification needed** five-year preset; inspect the observation and apply the explicitly labeled query to the map. Real older permit records support municipal follow-up without being called open or long-open. [Permit opportunities](docs/PERMIT_OPPORTUNITIES.md) documents the workflow and shared 0.7.0 API/MCP fields.
+
 The completed free-source campaign did not establish a positive current-active or long-open roofing-permit cohort. No paid source is required, purchased or needed to reproduce this runtime. [Known limitations](docs/KNOWN_LIMITATIONS.md) explains this finite source outcome and the narrower claims supported by the available evidence.
 
 ## Implementation and verification
 
-React/MapLibre → API Gateway/Node 24 Lambda → a pinned Oracle read API plus DynamoDB sessions, lead history and quota ledgers. A Vercel AI SDK/Zod tool requests an immutable server-approved retrieval. Deterministic server code supplies facts and citations. Each accepted nonempty turn has at most two bounded read-only Oracle queries and one model attempt; empty and refused queries skip the model.
+React/MapLibre → API Gateway/Node 24 Lambda → a pinned Oracle read API plus DynamoDB sessions, lead history and quota ledgers. A Vercel AI SDK/Zod tool requests an immutable server-approved retrieval. Deterministic server code supplies facts and citations. A nonempty strict retrieval permits at most two bounded read-only Oracle queries and one model attempt. A strict-empty permit request can return a separate verification section using two reads and no model call; refused or evidence-empty requests also skip inference.
 
 The review environment uses the existing stacks in `us-east-2`, standard CDK deployment, private S3 with CloudFront OAC, Powertools, active X-Ray, 90-day logs and bounded alarm notification. Previous runtime resources remain retained for rollback. Availability, session expiry and map expiry are separate finite limits described in the evaluator guide.
 
