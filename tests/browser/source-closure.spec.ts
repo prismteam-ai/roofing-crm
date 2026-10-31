@@ -75,6 +75,10 @@ test("qualified source controls preserve dates and distinguish provider restrict
 }) => {
   const state = await fixture(page);
   await page
+    .getByTestId("advanced-evidence-filters")
+    .locator("summary")
+    .click();
+  await page
     .getByLabel("Provider permit status", { exact: true })
     .selectOption("ISSUED");
   await page
@@ -136,6 +140,10 @@ test("a documented positive deed window and an empty active cohort do not broade
   page,
 }) => {
   const state = await fixture(page);
+  await page
+    .getByTestId("advanced-evidence-filters")
+    .locator("summary")
+    .click();
   await page
     .getByLabel("Filter by recorded deed index gap", { exact: true })
     .check();
