@@ -624,7 +624,7 @@ export function createHostedHandler(
                     caveats: [
                       converseCalls > 0
                         ? "Live model could not produce a valid bounded answer; this answer used deterministic evidence. No provider facts were used. Failed attempts retain reserved allowance; unmeasured usage is not claimed as zero spend."
-                        : "The bounded retrieval did not complete. This fallback retains only the strict primary evidence; alternatives were not promoted and no model call was dispatched.",
+                        : "Model assistance was unavailable for this response. This deterministic fallback uses only the validated strict primary evidence; alternatives were not promoted and no model call was dispatched.",
                       ...fallback.caveats,
                     ],
                     modelAudit: {

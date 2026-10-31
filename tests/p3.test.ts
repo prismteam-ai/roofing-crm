@@ -530,7 +530,12 @@ describe("P4 exact hosted campaign boundary", () => {
       body = JSON.parse(result.body);
     expect(result.statusCode).toBe(200);
     expect(body.mode).toBe("deterministic-fallback");
-    expect(body.caveats[0]).toContain("deterministic");
+    expect(body.caveats[0]).toContain("deterministic fallback");
+    expect(body.caveats[0]).toContain("validated strict primary evidence");
+    expect(body.caveats[0]).not.toContain("retrieval did not complete");
+    expect(body.caveats[0]).toContain("no model call was dispatched");
+    expect(body.permitSections).toBeUndefined();
+    expect(body.sourceQualifiedAlternativeSections).toBeUndefined();
     expect(body.modelAudit.converseCalls).toBe(0);
     expect(body.citations).toEqual(["synthetic:SYN-HOSTED"]);
     expect(reservations).toEqual(["request", "converse"]);

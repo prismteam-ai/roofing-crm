@@ -176,9 +176,12 @@ describe("bounded offline agent", () => {
     );
     expect(q).toMatchObject({
       permitStatus: "open",
-      minPermitAgeSinceIssueDays: 1827,
+      permitOpportunityMode: "confirmed_open",
+      minPermitObservationAgeYears: 5,
+      minOpenDays: 0,
       radiusMeters: 8046.72,
     });
+    expect(q.minPermitAgeSinceIssueDays).toBeUndefined();
     expect(q.roofMinAgeYears).toBeUndefined();
     expect(
       interpretPrompt("Show roofs older than 15 years", base).roofMinAgeYears,

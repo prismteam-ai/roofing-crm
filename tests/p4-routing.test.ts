@@ -72,6 +72,10 @@ const property = PropertySchema.parse({
     {
       id: "SYN-PERMIT-1",
       status: "open",
+      statusBasis: "explicit_open",
+      reportedStatus: "OPEN",
+      issuedAt: "2010-01-01",
+      statusObservedAt: source.observedAt,
       kind: "roof_repair",
       openedAt: "2010-01-01",
       closedAt: null,
@@ -362,7 +366,7 @@ describe("P4 identity and evidence guards", () => {
       lng: -83.29,
       radiusMeters: 8046.72,
     };
-    for (const [prompt, days, status, issueDays] of [
+    for (const [prompt, days, status, calendarYears] of [
       [
         "Show roofing permits for properties with last reported sale older than ten years",
         0,
@@ -379,7 +383,7 @@ describe("P4 identity and evidence guards", () => {
         "Show open roofing permits older than five years and last reported sale older than ten years",
         0,
         "open",
-        1827,
+        5,
       ],
       [
         "Show open roofing permits that have been open for more than five years and last reported sale older than ten years",
@@ -426,11 +430,65 @@ describe("P4 identity and evidence guards", () => {
           permitStatus: status,
           minReportedSaleAgeYears: 10,
         });
-        expect(q.minPermitAgeSinceIssueDays).toBe(issueDays);
+        expect(q.minPermitAgeSinceIssueDays).toBeUndefined();
+        expect(q.minPermitObservationAgeYears).toBe(calendarYears);
+        expect(q.permitOpportunityMode).toBe(
+          calendarYears === undefined ? undefined : "confirmed_open",
+        );
         expect(q.minOwnershipYears).toBeUndefined();
       }
       expect(modelInputs).toHaveLength(1);
       expect(reads).toHaveLength(3);
+      if (calendarYears === 5)
+        expect(routed.results[0].permits[0]).toMatchObject({
+          issuedAt: "2010-01-01",
+          statusObservedAt: source.observedAt,
+          statusBasis: "explicit_open",
+          reportedStatus: "OPEN",
+        });
+    }
+  });
+  it("never substitutes an old open-interval start for a missing or recent native issue date", async () => {
+    const base = {
+      snapshotId: "synthetic",
+      lat: 42.66,
+      lng: -83.29,
+      radiusMeters: 8046.72,
+    };
+    const prompt =
+      "Show open roofing permits older than five years and last reported sale older than ten years";
+    for (const issuedAt of [null, "2025-01-01"]) {
+      let reads = 0,
+        calls = 0;
+      const reader = {
+        search: async (q: QueryInput) => {
+          reads++;
+          const result = evidence(q);
+          return SearchResponseSchema.parse({
+            ...result,
+            rows: result.rows.map((row) => ({
+              ...row,
+              permits: row.permits.map((permit) => ({ ...permit, issuedAt })),
+            })),
+          });
+        },
+        detail: async () => property,
+      };
+      const provider: ConverseTransport = {
+        converse: async () => {
+          calls++;
+          throw new Error("No model call for source-ineligible evidence");
+        },
+      };
+      await expect(
+        answerWithBedrock(reader, provider, prompt, base, {
+          modelId: MICRO_MODEL,
+        }),
+      ).rejects.toMatchObject({ code: "SNAPSHOT_UNAVAILABLE" });
+      await expect(answerQuestion(reader, prompt, base)).rejects.toMatchObject({
+        code: "SNAPSHOT_UNAVAILABLE",
+      });
+      expect({ reads, calls }).toEqual({ reads: 2, calls: 0 });
     }
   });
   it("refuses a separate unsupported tenure clause even when a valid reported-sale clause is present", async () => {
