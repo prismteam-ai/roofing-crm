@@ -1,3 +1,8 @@
+import {
+  storedLead,
+  type AuditedLead as Lead,
+  type LeadMutationContext,
+} from "./audit";
 import { boundedLead } from "./limits";
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
@@ -7,8 +12,6 @@ import {
   DomainError,
   LeadCreateSchema,
   LeadUpdateSchema,
-  LeadSchema,
-  type Lead,
 } from "../../contracts/src/index";
 type Row = {
   id: string;
@@ -21,7 +24,7 @@ type Row = {
   events: string;
 };
 function decode(row: Row): Lead {
-  return LeadSchema.parse({
+  return storedLead({
     id: row.id,
     sessionId: row.session_id,
     propertyId: row.property_id,
@@ -67,7 +70,12 @@ export class LeadStore {
       throw error;
     }
   }
-  create(input: unknown): Lead {
+  create(
+    input: unknown,
+    _signal?: AbortSignal,
+    _guard?: () => void,
+    context?: LeadMutationContext,
+  ): Lead {
     const x = LeadCreateSchema.parse(input);
     return this.atomic(() => {
       const byKey = this.db
@@ -110,7 +118,15 @@ export class LeadStore {
         snapshotId: x.snapshotId,
         status: "new",
         version: 1,
-        events: [{ kind: "created", at: this.clock() }],
+        events: [
+          {
+            kind: "created",
+            at: this.clock(),
+            ...(context?.actorSessionId
+              ? { actorSessionId: context.actorSessionId }
+              : {}),
+          },
+        ],
       };
       this.db
         .prepare("INSERT INTO leads VALUES (?,?,?,?,?,?,?,?)")
@@ -130,7 +146,13 @@ export class LeadStore {
       return lead;
     });
   }
-  update(id: string, input: unknown): Lead {
+  update(
+    id: string,
+    input: unknown,
+    _signal?: AbortSignal,
+    _guard?: () => void,
+    context?: LeadMutationContext,
+  ): Lead {
     const x = LeadUpdateSchema.parse({
       ...(input as Record<string, unknown>),
       id,
@@ -157,6 +179,9 @@ export class LeadStore {
         {
           kind: x.status ? `status:${x.status}` : "note",
           at: this.clock(),
+          ...(context?.actorSessionId
+            ? { actorSessionId: context.actorSessionId }
+            : {}),
           ...(x.note?.trim() ? { note: x.note.trim() } : {}),
         },
       ],

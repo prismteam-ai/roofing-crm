@@ -4,9 +4,9 @@ Official public property identities and permitted source facts are evaluator evi
 
 ## Access, sessions and secrets
 
-Keep the existing dedicated low-privilege capability and bounded sessions. The approved PR supplies the capability, live URLs, current limits and recovery instructions directly; a private email exchange or AWS account is not needed for first use. Prepared source/public PR drafts contain an explicit placeholder until the operator resolves the authorized private draft. Sharing the assessment-only capability intentionally does not grant administration, acquisition, publication, outreach or another user's leads.
+Keep the existing dedicated low-privilege capability and bounded sessions. The approved PR supplies the capability, live URLs, current limits and recovery instructions directly; a private email exchange or AWS account is not needed for first use. Prepared source/public PR drafts contain an explicit placeholder until the operator resolves the authorized private draft. Sharing the assessment-only capability intentionally does not grant administration, acquisition, publication, outreach or another workspace's leads.
 
-Signing keys, live cookies/tokens, AWS/API/model/provider keys and connection strings never enter source, logs, media or public artifacts. CRM leads/notes remain mutable own-session records. Authentication, session expiry/replay/isolation and finite quota checks remain security requirements; they do not hide permitted public facts. Never promise that a new session or deployment resets shared counters.
+Signing keys, live cookies/tokens, AWS/API/model/provider keys and connection strings never enter source, logs, media or public artifacts. Lead records are scoped to the signed CRM workspace and persist across authenticated sessions. Session IDs remain responsible for authentication, revocation, and actor attribution; they do not own the workspace’s durable lead records. Authentication, session expiry/replay and finite quota checks remain security requirements; they do not hide permitted public facts. Never promise that a new session or deployment resets shared counters.
 
 ## Rights and publication
 

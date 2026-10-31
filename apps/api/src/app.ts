@@ -1,7 +1,9 @@
+import type { AuditedLead } from "../../../packages/lead-domain/src/audit";
 import {
   decodeInputPath,
   reportApiFailure,
 } from "../../../packages/hosted-runtime/src/api-errors";
+import { AccessError } from "../../../packages/hosted-runtime/src/access";
 import type { RoutingArchitecture } from "../../../packages/agent/src/architecture";
 import { IntentRejection } from "../../../packages/agent/src/intent/types";
 import { assessmentEvidence } from "../../../packages/hosted-runtime/src/assessment-evidence";
@@ -187,12 +189,23 @@ export function createApp(deps: AppDependencies) {
               "NOT_AUTHORIZED",
               "Session namespace does not match the signed review session",
             );
-          return verified.id;
+          if (
+            typeof verified.workspaceId !== "string" ||
+            !verified.workspaceId ||
+            verified.workspaceId.length > 100
+          )
+            throw new AccessError(403, "Signed workspace is required");
+          return verified.workspaceId;
         }
         if (typeof supplied !== "string" || !supplied || supplied.length > 100)
           throw new DomainError("INVALID_INPUT", "Local session is required");
         return supplied;
       };
+      // The legacy wire field binds replies to the active authenticated session.
+      // Durable ownership is the verified workspace passed to the repository only.
+      const replyLead = (lead: AuditedLead): AuditedLead =>
+        verified ? { ...lead, sessionId: verified.id } : lead;
+      const actor = verified ? { actorSessionId: verified.id } : undefined;
       const subject = verified?.id ?? "local";
       await deps.quota?.(
         subject,
@@ -247,9 +260,11 @@ export function createApp(deps: AppDependencies) {
       if (req.method === "GET" && url.pathname === "/api/leads")
         return response(
           200,
-          await deps.leads.list(
-            scoped(url.searchParams.get("sessionId") ?? undefined),
-          ),
+          (
+            await deps.leads.list(
+              scoped(url.searchParams.get("sessionId") ?? undefined),
+            )
+          ).map(replyLead),
         );
       if (req.method === "POST" && url.pathname === "/api/leads") {
         const raw = object();
@@ -258,7 +273,12 @@ export function createApp(deps: AppDependencies) {
           sessionId: scoped(raw.sessionId),
         });
         await deps.oracle.detail(input.propertyId, input.snapshotId);
-        return response(200, await deps.leads.create(input));
+        return response(
+          200,
+          replyLead(
+            await deps.leads.create(input, undefined, undefined, actor),
+          ),
+        );
       }
       if (req.method === "PATCH" && url.pathname.startsWith("/api/leads/")) {
         const raw = object(),
@@ -268,7 +288,12 @@ export function createApp(deps: AppDependencies) {
           id,
           sessionId: scoped(raw.sessionId),
         });
-        return response(200, await deps.leads.update(id, input));
+        return response(
+          200,
+          replyLead(
+            await deps.leads.update(id, input, undefined, undefined, actor),
+          ),
+        );
       }
       if (req.method === "POST" && url.pathname === "/api/agent") {
         const input = object();

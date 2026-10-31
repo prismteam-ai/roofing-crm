@@ -1,4 +1,5 @@
-import { DomainError, type Lead } from "../../contracts/src/index";
+import { DomainError } from "../../contracts/src/index";
+import type { AuditedLead as Lead } from "./audit";
 /** Stay below DynamoDB's item limit; reject before persistence without truncating audit history. */
 export function boundedLead(lead: Lead): Lead {
   if (Buffer.byteLength(JSON.stringify(lead)) > 300000)

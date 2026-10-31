@@ -1,6 +1,6 @@
 # Delivered CRM and release evidence
 
-The CRM consumes Oracle's source-backed contract for county map/GPS/pin/radius search, roof-age and permit filters, property detail, own-session lead history and grounded agent retrieval. It does not gather county/provider data. The [original assignment](docs/history/ASSIGNMENT_README.md) remains controlling.
+The CRM consumes Oracle's source-backed contract for county map/GPS/pin/radius search, roof-age and permit filters, property detail, workspace-scoped lead history that persists across authenticated sessions and grounded agent retrieval. It does not gather county/provider data. The [original assignment](docs/history/ASSIGNMENT_README.md) remains controlling.
 
 Official permitted addresses, parcel/native/canonical identities, coordinates and observations are visible product facts. Nullable official parcel name parts and observed postal text retain provenance/terms/availability and regional-derivation basis; no contact, named legal owner or complete tenure is fabricated. [Field authority](docs/DATA_FIELD_AUTHORITY_MATRIX.md), [coverage](docs/DATA_COVERAGE.md) and [ADR003](docs/adr/003-source-specific-data-and-evaluator-access.md) distinguish actual availability/admission from private storage, authenticated access and irreversible publication.
 

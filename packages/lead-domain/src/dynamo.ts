@@ -1,3 +1,8 @@
+import {
+  storedLead,
+  type AuditedLead as Lead,
+  type LeadMutationContext,
+} from "./audit";
 import { boundedLead } from "./limits";
 import { createHash } from "node:crypto";
 import {
@@ -11,8 +16,6 @@ import {
   DomainError,
   LeadCreateSchema,
   LeadUpdateSchema,
-  LeadSchema,
-  type Lead,
 } from "../../contracts/src/index";
 /** This narrow transport is also implemented by the deterministic transactional test double. */
 export interface DocumentTransport {
@@ -32,12 +35,14 @@ export interface LeadRepository {
     input: unknown,
     signal?: AbortSignal,
     guard?: DispatchGuard,
+    context?: LeadMutationContext,
   ): Lead | Promise<Lead>;
   update(
     id: string,
     input: unknown,
     signal?: AbortSignal,
     guard?: DispatchGuard,
+    context?: LeadMutationContext,
   ): Lead | Promise<Lead>;
 }
 export function documentTransport(
@@ -78,7 +83,7 @@ export class DynamoLeadStore implements LeadRepository {
     return this.db.send(command, signal);
   }
   private key(session: string, sk: string) {
-    return { pk: `SESSION#${session}`, sk };
+    return { pk: `WORKSPACE#${session}`, sk };
   }
   private async get(
     session: string,
@@ -119,7 +124,7 @@ export class DynamoLeadStore implements LeadRepository {
           TableName: this.table,
           KeyConditionExpression: "pk = :pk AND begins_with(sk, :lead)",
           ExpressionAttributeValues: {
-            ":pk": `SESSION#${sessionId}`,
+            ":pk": `WORKSPACE#${sessionId}`,
             ":lead": "LEAD#",
           },
           ConsistentRead: true,
@@ -130,7 +135,7 @@ export class DynamoLeadStore implements LeadRepository {
       );
       for (const item of (result.Items ?? []) as Record<string, unknown>[])
         if (Number(item.expiresAt) > Date.parse(this.clock()) / 1000)
-          rows.push(LeadSchema.parse(item.lead));
+          rows.push(storedLead(item.lead));
       cursor = result.LastEvaluatedKey as Record<string, unknown> | undefined;
     } while (cursor);
     return rows.sort((a, b) => b.events[0].at.localeCompare(a.events[0].at));
@@ -139,6 +144,7 @@ export class DynamoLeadStore implements LeadRepository {
     input: unknown,
     signal?: AbortSignal,
     guard?: DispatchGuard,
+    context?: LeadMutationContext,
   ): Promise<Lead> {
     const x = LeadCreateSchema.parse(input);
     const id = `lead-${hash([x.sessionId, x.propertyId, x.snapshotId]).slice(0, 20)}`;
@@ -158,7 +164,7 @@ export class DynamoLeadStore implements LeadRepository {
         );
       const old = await this.get(x.sessionId, leadKey, signal, guard);
       return old
-        ? { lead: LeadSchema.parse(old.lead), expiresAt: Number(old.expiresAt) }
+        ? { lead: storedLead(old.lead), expiresAt: Number(old.expiresAt) }
         : undefined;
     };
     const bindAlias = async (old: {
@@ -207,7 +213,15 @@ export class DynamoLeadStore implements LeadRepository {
       snapshotId: x.snapshotId,
       status: "new",
       version: 1,
-      events: [{ kind: "created", at }],
+      events: [
+        {
+          kind: "created",
+          at,
+          ...(context?.actorSessionId
+            ? { actorSessionId: context.actorSessionId }
+            : {}),
+        },
+      ],
     };
     try {
       await this.send(
@@ -266,6 +280,7 @@ export class DynamoLeadStore implements LeadRepository {
     input: unknown,
     signal?: AbortSignal,
     guard?: DispatchGuard,
+    context?: LeadMutationContext,
   ): Promise<Lead> {
     const x = LeadUpdateSchema.parse({
       ...(input as Record<string, unknown>),
@@ -275,9 +290,9 @@ export class DynamoLeadStore implements LeadRepository {
     if (!item)
       throw new DomainError(
         "NOT_AUTHORIZED",
-        "Lead is not available in this session",
+        "Lead is not available in this workspace",
       );
-    const old = LeadSchema.parse(item.lead);
+    const old = storedLead(item.lead);
     if (old.version !== x.expectedVersion)
       throw new DomainError("CONFLICT", "Lead changed. Reload before saving.");
     if (x.status === undefined && !x.note?.trim())
@@ -291,6 +306,9 @@ export class DynamoLeadStore implements LeadRepository {
         {
           kind: x.status ? `status:${x.status}` : "note",
           at: this.clock(),
+          ...(context?.actorSessionId
+            ? { actorSessionId: context.actorSessionId }
+            : {}),
           ...(x.note?.trim() ? { note: x.note.trim() } : {}),
         },
       ],

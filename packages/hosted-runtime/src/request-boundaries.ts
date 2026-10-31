@@ -40,13 +40,24 @@ export function requestBoundaries(
       budget.run(async () =>
         leads.list(session, budget.signal, () => budget.assertActive()),
       ),
-    create: (input) =>
+    create: (input, _signal, _guard, context) =>
       budget.run(async () =>
-        leads.create(input, budget.signal, () => budget.assertActive()),
+        leads.create(
+          input,
+          budget.signal,
+          () => budget.assertActive(),
+          context,
+        ),
       ),
-    update: (id, input) =>
+    update: (id, input, _signal, _guard, context) =>
       budget.run(async () =>
-        leads.update(id, input, budget.signal, () => budget.assertActive()),
+        leads.update(
+          id,
+          input,
+          budget.signal,
+          () => budget.assertActive(),
+          context,
+        ),
       ),
   };
   const boundedQuota: QuotaStore = {
