@@ -113,7 +113,7 @@ it("keeps the actual aggregate27s handler cap even when a25s upstream response f
     });
     const checked = expect(task).resolves.toMatchObject({
       statusCode: 503,
-      body: expect.stringContaining("QUERY_TIMEOUT"),
+      body: expect.stringContaining("DEPENDENCY_UNAVAILABLE"),
     });
     await vi.advanceTimersByTimeAsync(27000);
     await checked;
