@@ -36,11 +36,16 @@ const property = {
   provenance: [source],
   distanceMeters: 0,
 };
-for (const fail of [false, true])
-  test(`Amazon Location ${fail ? "failure retains accessible offline points" : "mock style loads with exact origin-only referrer"}`, async ({
+for (const scenario of ["normal", "fatal", "retry", "loading"] as const)
+  test(`Amazon Location ${scenario}: load state, bounded recovery and exact origin-only referrer`, async ({
     context,
     page,
   }) => {
+    const fail = scenario === "fatal";
+    let releaseDescriptor: (() => void) | undefined;
+    const descriptorHold = new Promise<void>((resolve) => {
+      releaseDescriptor = resolve;
+    });
     const requested: { path: string; referer: string | undefined }[] = [],
       external: string[] = [],
       errors: string[] = [];
@@ -53,8 +58,17 @@ for (const fail of [false, true])
           referer: route.request().headers().referer,
         });
         expect(u.searchParams.has("key")).toBe(true);
+        if (scenario === "loading") await descriptorHold;
         if (fail)
-          return route.fulfill({ status: 503, body: "Synthetic map outage" });
+          return route.fulfill({
+            status: 403,
+            body: "Synthetic descriptor denied",
+          });
+        if (scenario === "retry" && requested.length === 1)
+          return route.fulfill({
+            status: 503,
+            body: "Synthetic transient descriptor outage",
+          });
         return route.fulfill({
           contentType: "application/json",
           body: JSON.stringify({
@@ -141,6 +155,17 @@ for (const fail of [false, true])
     await page.goto(`${origin}/?private-query-value=must-not-leak`);
     await expect(page.getByTestId("property-row")).toHaveCount(1);
     await expect.poll(() => requested.length).toBeGreaterThan(0);
+    if (scenario === "loading") {
+      await expect(page.getByTestId("property-map")).toHaveAttribute(
+        "data-map-renderer",
+        "loading",
+      );
+      await expect(
+        page.getByText("Loading geographic map…", { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByLabel("Accessible map fallback")).toHaveCount(0);
+      releaseDescriptor!();
+    }
     await expect(page.getByTestId("property-map")).toHaveAttribute(
       "data-map-renderer",
       fail ? "fallback" : "maplibre",
@@ -165,6 +190,7 @@ for (const fail of [false, true])
     ).toBeVisible();
     if (fail)
       await expect(page.getByLabel("Accessible map fallback")).toBeVisible();
+    if (scenario === "retry") expect(requested.length).toBe(2);
     await page.getByTestId("property-row").click();
     await expect(page.getByTestId("property-detail")).toContainText(
       "Building year proxy",

@@ -36,11 +36,14 @@ const property = {
   provenance: [source],
   distanceMeters: 0,
 };
-for (const fail of [false, true])
-  test(`OpenStreetMap ${fail ? "failure retains accessible offline points" : "mock style loads with exact origin-only referrer"}`, async ({
+for (const scenario of ["normal", "outage", "recoverable"] as const)
+  test(`OpenStreetMap ${scenario}: geographic rendering and accessible outage handling`, async ({
     context,
     page,
   }) => {
+    const fail = scenario === "outage";
+    let failNextTile = false,
+      transientFailures = 0;
     const requested: { path: string; referer: string | undefined }[] = [],
       external: string[] = [],
       errors: string[] = [];
@@ -53,8 +56,13 @@ for (const fail of [false, true])
           referer: route.request().headers().referer,
         });
         expect(u.search).toBe("");
-        if (fail)
-          return route.fulfill({ status: 503, body: "Synthetic map outage" });
+        if (fail || failNextTile) {
+          if (failNextTile) {
+            failNextTile = false;
+            transientFailures++;
+          }
+          return route.fulfill({ status: 503, body: "Synthetic tile outage" });
+        }
         return route.fulfill({
           contentType: "image/png",
           body: Buffer.from(
@@ -140,7 +148,27 @@ for (const fail of [false, true])
     await expect(page.getByTestId("property-map")).toHaveAttribute(
       "data-map-renderer",
       fail ? "fallback" : "maplibre",
+      { timeout: 25_000 },
     );
+    if (scenario === "recoverable") {
+      failNextTile = true;
+      await page.getByRole("button", { name: "Zoom in", exact: true }).click();
+      await expect.poll(() => transientFailures).toBe(1);
+      await expect(page.getByTestId("property-map")).toHaveAttribute(
+        "data-map-warning",
+        "partial-resources",
+      );
+      await expect(page.getByTestId("property-map")).toHaveAttribute(
+        "data-map-renderer",
+        "maplibre",
+      );
+      await expect(page.getByLabel("Accessible map fallback")).toHaveCount(0);
+      await expect(
+        page.getByText(
+          "Some map details could not load. You can continue using the map.",
+        ),
+      ).toBeVisible();
+    }
     await expect(
       page.getByText("OpenStreetMap · Standard", { exact: true }),
     ).toBeVisible();

@@ -16,6 +16,11 @@ import {
   validateBasemap,
   type BasemapProvider,
 } from "../../map-domain/src/basemap";
+import {
+  mapFailureDisposition,
+  INITIAL_MAP_LOAD_TIMEOUT_MS,
+  INITIAL_MAP_RETRY_DELAY_MS,
+} from "../../map-domain/src/map-failure";
 maplibregl.setWorkerUrl(mapWorkerUrl);
 function radiusFeature(lat: number, lng: number, meters: number) {
   return {
@@ -68,18 +73,135 @@ export function FieldMap({
   const markers = useRef<Marker[]>([]);
   const pinRef = useRef(onPin);
   const placeRef = useRef(placing);
-  const [ready, setReady] = useState(false);
-  const [fallback, setFallback] = useState(false);
+  const [status, setStatus] = useState<"loading" | "ready" | "fatal">(
+    "loading",
+  );
+  const [warning, setWarning] = useState(false);
+  const ready = status === "ready";
+  const outsideMercator = Math.abs(query.lat) > 85;
+  const fallback = status === "fatal" || outsideMercator;
   pinRef.current = onPin;
   placeRef.current = placing;
   useEffect(() => {
     if (!container.current) return;
     let mounted = true,
-      basemapFailed = false;
-    setReady(false);
-    setFallback(false);
+      failed = false,
+      reachedReady = false;
+    let initialRender = false,
+      loadedTile = false,
+      retries = 0,
+      retryPending = false;
+    let instance: LibreMap | undefined;
+    let loadTimer: ReturnType<typeof setTimeout> | undefined;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    setStatus("loading");
+    setWarning(false);
+    const clearTimers = () => {
+      clearTimeout(loadTimer);
+      clearTimeout(retryTimer);
+    };
+    const removeMap = () => {
+      markers.current.forEach((x) => x.remove());
+      markers.current = [];
+      if (instance) {
+        const owned = instance;
+        instance = undefined;
+        if (map.current === owned) map.current = null;
+        owned.remove();
+      }
+    };
+    const fail = () => {
+      if (!mounted || failed) return;
+      failed = true;
+      clearTimers();
+      setStatus("fatal");
+      removeMap();
+    };
+    if (outsideMercator) {
+      setStatus("fatal");
+      return;
+    }
+    const initialStyle: string | maplibregl.StyleSpecification =
+      basemap && approvedProvider.kind === "amazon-location"
+        ? `${LOCATION_ORIGIN}/v2/styles/Standard/descriptor`
+        : basemap && approvedProvider.kind === "raster"
+          ? {
+              version: 8,
+              sources: {
+                provider: {
+                  type: "raster",
+                  tiles: [approvedProvider.template],
+                  tileSize: 256,
+                  maxzoom: approvedProvider.maxZoom,
+                  attribution: approvedProvider.attribution,
+                },
+              },
+              layers: [
+                {
+                  id: "paper",
+                  type: "background",
+                  paint: { "background-color": "#e6ebe4" },
+                },
+                { id: "provider", type: "raster", source: "provider" },
+              ],
+            }
+          : {
+              version: 8,
+              sources: {},
+              layers: [
+                {
+                  id: "paper",
+                  type: "background",
+                  paint: { "background-color": "#e6ebe4" },
+                },
+              ],
+            };
+    const armTimeout = () => {
+      clearTimeout(loadTimer);
+      loadTimer = setTimeout(retryInitial, INITIAL_MAP_LOAD_TIMEOUT_MS);
+    };
+    const retryInitial = () => {
+      if (!mounted || failed || reachedReady || retryPending || !instance)
+        return;
+      if (retries >= 1) return fail();
+      retryPending = true;
+      clearTimers();
+      retryTimer = setTimeout(() => {
+        if (!mounted || failed || reachedReady || !instance) return;
+        retryPending = false;
+        retries++;
+        initialRender = false;
+        loadedTile = false;
+        try {
+          instance.setStyle(initialStyle, { diff: false });
+          armTimeout();
+        } catch {
+          fail();
+        }
+      }, INITIAL_MAP_RETRY_DELAY_MS);
+    };
+    const markReady = () => {
+      if (
+        !mounted ||
+        failed ||
+        !instance ||
+        !initialRender ||
+        !instance.isStyleLoaded()
+      )
+        return;
+      const sources = Object.values(instance.getStyle().sources);
+      const expectsTiles = sources.some((source) =>
+        ["raster", "raster-dem", "vector"].includes(source.type),
+      );
+      // MapLibre can finish an initial render after every requested tile errored.
+      // Do not advertise that blank first render as a working geographic map.
+      if (expectsTiles && !loadedTile) return;
+      reachedReady = true;
+      clearTimers();
+      setStatus("ready");
+    };
     try {
-      const instance = new maplibregl.Map({
+      instance = new maplibregl.Map({
         container: container.current,
         center: [query.lng, query.lat],
         zoom: 11,
@@ -88,41 +210,7 @@ export function FieldMap({
           approvedProvider.kind === "amazon-location"
             ? (resource) => locationRequest(approvedProvider, resource)
             : undefined,
-        style:
-          basemap && approvedProvider.kind === "amazon-location"
-            ? `${LOCATION_ORIGIN}/v2/styles/Standard/descriptor`
-            : basemap && approvedProvider.kind === "raster"
-              ? {
-                  version: 8,
-                  sources: {
-                    provider: {
-                      type: "raster",
-                      tiles: [approvedProvider.template],
-                      tileSize: 256,
-                      maxzoom: approvedProvider.maxZoom,
-                      attribution: approvedProvider.attribution,
-                    },
-                  },
-                  layers: [
-                    {
-                      id: "paper",
-                      type: "background",
-                      paint: { "background-color": "#e6ebe4" },
-                    },
-                    { id: "provider", type: "raster", source: "provider" },
-                  ],
-                }
-              : {
-                  version: 8,
-                  sources: {},
-                  layers: [
-                    {
-                      id: "paper",
-                      type: "background",
-                      paint: { "background-color": "#e6ebe4" },
-                    },
-                  ],
-                },
+        style: initialStyle,
       });
       map.current = instance;
       if (approvedProvider.kind !== "offline")
@@ -136,41 +224,44 @@ export function FieldMap({
         new maplibregl.NavigationControl({ showCompass: false }),
         "bottom-right",
       );
-      instance.on("load", () => {
-        if (mounted) setReady(true);
-      });
-      instance.on("click", (e) => {
-        if (placeRef.current) pinRef.current(e.lngLat.lat, e.lngLat.lng);
-      });
-      instance.on("error", () => {
-        if (mounted) {
-          setFallback(true);
-          if (approvedProvider.kind !== "offline" && !basemapFailed) {
-            basemapFailed = true;
-            instance.setStyle({
-              version: 8,
-              sources: {},
-              layers: [
-                {
-                  id: "paper",
-                  type: "background",
-                  paint: { "background-color": "#e6ebe4" },
-                },
-              ],
-            });
-          }
+      const rendered = () => {
+        initialRender = true;
+        markReady();
+      };
+      instance.on("load", rendered);
+      instance.on("idle", rendered);
+      instance.on("sourcedata", (event) => {
+        const tile = event.tile as { state?: string } | undefined;
+        if (event.sourceId !== "radius" && tile?.state === "loaded") {
+          loadedTile = true;
+          markReady();
         }
       });
+      instance.on("click", (e) => {
+        if (reachedReady && placeRef.current)
+          pinRef.current(e.lngLat.lat, e.lngLat.lng);
+      });
+      instance.on("error", (event) => {
+        if (!mounted || failed) return;
+        const disposition = mapFailureDisposition(
+          event,
+          reachedReady,
+          typeof initialStyle === "string" ? initialStyle : undefined,
+        );
+        if (disposition === "fatal") fail();
+        else if (disposition === "retry-initial") retryInitial();
+        else setWarning(true);
+      });
+      armTimeout();
     } catch {
-      setFallback(true);
+      fail();
     }
     return () => {
       mounted = false;
-      markers.current.forEach((x) => x.remove());
-      map.current?.remove();
-      map.current = null;
+      clearTimers();
+      removeMap();
     };
-  }, [provider, basemap]);
+  }, [provider, basemap, outsideMercator]);
   useEffect(() => {
     const m = map.current;
     if (!m || !ready || !m.isStyleLoaded() || Math.abs(query.lat) > 85) return;
@@ -282,13 +373,9 @@ export function FieldMap({
       className={`field-map ${placing ? "placing" : ""}`}
       role="region"
       data-testid="property-map"
-      data-map-renderer={
-        fallback || Math.abs(query.lat) > 85
-          ? "fallback"
-          : ready
-            ? "maplibre"
-            : "loading"
-      }
+      data-map-renderer={fallback ? "fallback" : ready ? "maplibre" : "loading"}
+      data-map-warning={warning && ready ? "partial-resources" : undefined}
+      aria-busy={!fallback && !ready}
       data-property-ids={JSON.stringify(
         rows
           .filter((p) => p.coordinates)
@@ -297,7 +384,7 @@ export function FieldMap({
       )}
       aria-label="Map and search area"
     >
-      <div ref={container} className="map-canvas" />
+      <div ref={container} className="map-canvas" hidden={fallback} />
       <div className="map-topline">
         <span className="map-label">OAKLAND COUNTY, MI</span>
         <span className="map-label muted">
@@ -313,7 +400,18 @@ export function FieldMap({
         </span>
       </div>
 
-      {(fallback || !ready || Math.abs(query.lat) > 85) && (
+      {!fallback && !ready && (
+        <div className="map-loading" role="status">
+          <strong>Loading geographic map…</strong>
+          <span>Your search results remain available beside the map.</span>
+        </div>
+      )}
+      {ready && warning && (
+        <div className="map-warning" role="status">
+          Some map details could not load. You can continue using the map.
+        </div>
+      )}
+      {fallback && (
         <div
           className="fallback-map"
           aria-label="Accessible map fallback"
@@ -388,7 +486,9 @@ export function FieldMap({
       </div>
       {placing && (
         <div className="pin-instruction" role="status">
-          Click the map to move your search pin.
+          {ready || fallback
+            ? "Click the map to move your search pin."
+            : "The map is loading before you can place your pin."}
         </div>
       )}
     </div>
