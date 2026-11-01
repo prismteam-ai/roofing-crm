@@ -1,0 +1,44 @@
+import { runtimeIdentity } from "../packages/hosted-runtime/src/release.ts";
+import { CONTRACT_VERSION } from "../packages/contracts/src/index.ts";
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  REVIEW_REGION,
+  REVIEW_STAGE,
+  reviewRegion,
+  type BuildIdentity,
+} from "../packages/runtime-config/src/index.ts";
+export function buildIdentity(): BuildIdentity {
+  const git = (...args: string[]) =>
+    execFileSync("git", args, { encoding: "utf8" }).trim();
+  const region = reviewRegion(process.env.PRISM_REGION ?? REVIEW_REGION),
+    stage = process.env.PRISM_STAGE ?? "local";
+  if (![REVIEW_STAGE, "local"].includes(stage))
+    throw new Error("Unexpected review stage");
+  const source = {
+    head: git("rev-parse", "HEAD"),
+    tree: git("rev-parse", "HEAD^{tree}"),
+    dirty: Boolean(git("status", "--porcelain")),
+  };
+  const identity = runtimeIdentity(
+    "crm",
+    source,
+    {
+      version: CONTRACT_VERSION,
+      sha256: createHash("sha256")
+        .update(readFileSync("packages/contracts/src/index.ts"))
+        .digest("hex"),
+    },
+    stage as "local" | typeof REVIEW_STAGE,
+    region,
+  );
+  for (const [key, actual] of [
+    ["PRISM_BUILD_HEAD", identity.head],
+    ["PRISM_BUILD_TREE", identity.tree],
+    ["PRISM_BUILD_ID", identity.buildId],
+  ])
+    if (process.env[key] && process.env[key] !== actual)
+      throw new Error("Build identity changed after Turbo input pinning");
+  return identity;
+}

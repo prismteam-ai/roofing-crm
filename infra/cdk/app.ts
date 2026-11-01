@@ -1,0 +1,395 @@
+import { assessmentObservability } from "./observability";
+import path from "node:path";
+import { deploymentConcurrency } from "../../packages/hosted-runtime/src/deployment-concurrency";
+import {
+  App,
+  Stack,
+  Tags,
+  CfnOutput,
+  RemovalPolicy,
+  CfnParameter,
+  Duration,
+  DefaultStackSynthesizer,
+  Fn,
+} from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { Table, AttributeType, BillingMode } from "aws-cdk-lib/aws-dynamodb";
+import { Bucket, BlockPublicAccess } from "aws-cdk-lib/aws-s3";
+import {
+  Function as LambdaFunction,
+  Runtime,
+  Code,
+  Tracing,
+} from "aws-cdk-lib/aws-lambda";
+import { HttpApi, HttpMethod, CfnStage } from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import {
+  Distribution,
+  ViewerProtocolPolicy,
+  ResponseHeadersPolicy,
+  CachePolicy,
+  AllowedMethods,
+  OriginRequestPolicy,
+  Function as EdgeFunction,
+  FunctionCode,
+  FunctionEventType,
+} from "aws-cdk-lib/aws-cloudfront";
+import { S3BucketOrigin, HttpOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
+import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+
+import {
+  Alarm,
+  Metric,
+  ComparisonOperator,
+  TreatMissingData,
+} from "aws-cdk-lib/aws-cloudwatch";
+import {
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+  ManagedPolicy,
+} from "aws-cdk-lib/aws-iam";
+import { validatedRegion } from "../../packages/hosted-runtime/src/release";
+import {
+  MICRO_MODEL,
+  LITE_MODEL,
+} from "../../packages/runtime-config/src/index";
+/** Neutral review stack. Synthesis is local; deployment uses standard CDK assets and bootstrap roles. */
+class CrmCandidateStack extends Stack {
+  constructor(
+    scope: Construct,
+    id: string,
+    concurrency: Awaited<ReturnType<typeof deploymentConcurrency>>,
+  ) {
+    super(scope, id, {
+      env: {
+        account:
+          process.env.PRISM_EXPECTED_ACCOUNT_ID ??
+          process.env.CDK_DEFAULT_ACCOUNT,
+        region: validatedRegion(process.env.PRISM_REGION ?? "us-east-2", [
+          process.env.AWS_REGION,
+          process.env.AWS_DEFAULT_REGION,
+        ]),
+      },
+      synthesizer: new DefaultStackSynthesizer({ qualifier: "prismrvw" }),
+    });
+    const stage = "review";
+    this.templateOptions.metadata = {
+      PrismConcurrency: Object.fromEntries(
+        Object.entries(concurrency.metadata).map(([key, value]) => [
+          key,
+          value ?? "none",
+        ]),
+      ),
+    };
+    const removal = RemovalPolicy.RETAIN;
+    for (const [key, value] of Object.entries({
+      project_name: "prism-assessment",
+      repository: "roofing-crm",
+      service: "prism-crm-review",
+      environment: "review",
+      purpose: "candidate-assessment",
+    }))
+      Tags.of(this).add(key, value);
+    const archiveHash = new CfnParameter(this, "LambdaArchiveDigestPin", {
+      type: "String",
+      allowedPattern: "[a-f0-9]{64}",
+      description: "Measured exact clean-release zip SHA256",
+    });
+    const releaseBuildId = new CfnParameter(this, "ReleaseBuildPin", {
+      type: "String",
+      allowedPattern: "[a-f0-9]{64}",
+    });
+    releaseBuildId.overrideLogicalId("ReleaseBuildId");
+    archiveHash.overrideLogicalId("LambdaArchiveSha256");
+    const oracle = new CfnParameter(this, "OracleApiOrigin", {
+      type: "String",
+      allowedPattern: "https://[A-Za-z0-9.-]+",
+      description: "Exact approved HTTPS Oracle origin; no path or credentials",
+    });
+    const secret = new CfnParameter(this, "ReviewAccessSecretArn", {
+      type: "String",
+      noEcho: true,
+      allowedPattern:
+        "arn:aws:secretsmanager:us-east-2:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+",
+      description: "Existing secret ARN reference only; shared with Oracle",
+    });
+    const model = new CfnParameter(this, "BedrockModelId", {
+      type: "String",
+      default: MICRO_MODEL,
+      allowedValues: [MICRO_MODEL, LITE_MODEL],
+      description:
+        "US Nova inference profile; Lite additionally requires persisted measured Micro failures",
+    });
+    const enabled = new CfnParameter(this, "EnableModel", {
+      type: "String",
+      default: "false",
+      allowedValues: ["true", "false"],
+    });
+    const mapEnabled = new CfnParameter(this, "EnableMap", {
+      type: "String",
+      default: "false",
+      allowedValues: ["true", "false"],
+    });
+    const promptRevision = new CfnParameter(this, "ModelPromptRevision", {
+      type: "String",
+      default: "base",
+      allowedValues: ["base", "repair-1"],
+    });
+
+    const table = (name: string) =>
+      new Table(this, name, {
+        partitionKey: { name: "pk", type: AttributeType.STRING },
+        sortKey: { name: "sk", type: AttributeType.STRING },
+        billingMode: BillingMode.PAY_PER_REQUEST,
+        timeToLiveAttribute: "expiresAt",
+        removalPolicy: removal,
+        pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      });
+    const sharedTableArn = new CfnParameter(
+      this,
+      "SharedSessionQuotaTableArn",
+      {
+        type: "String",
+        allowedPattern:
+          "arn:aws:dynamodb:us-east-2:[0-9]{12}:table/[A-Za-z0-9_.-]+",
+        description: "Oracle-owned shared evaluator session/quota table ARN",
+      },
+    );
+    const leads = table("Leads"),
+      quota = Table.fromTableArn(
+        this,
+        "SharedSessionQuota",
+        sharedTableArn.valueAsString,
+      );
+    const assets = new Bucket(this, "FrontendAssets", {
+      bucketName: `${this.stackName.toLowerCase()}-frontend-${this.account}-${this.region}`,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      removalPolicy: removal,
+      autoDeleteObjects: false,
+    });
+    const logs = new LogGroup(this, "ApiLogs", {
+      retention: RetentionDays.THREE_MONTHS,
+      removalPolicy: removal,
+    });
+    const apiRole = new Role(this, "ApiRole", {
+      roleName: `${this.stackName}-ApiRole`,
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName(
+          "service-role/AWSLambdaBasicExecutionRole",
+        ),
+      ],
+    });
+    const fn = new LambdaFunction(this, "CrmHandler", {
+      role: apiRole,
+      runtime: Runtime.NODEJS_24_X,
+      handler: "index.handler",
+      code: Code.fromAsset(
+        path.resolve(
+          process.env.PRISM_LAMBDA_ARCHIVE_PATH ?? "build/crm-lambda.zip",
+        ),
+      ),
+      tracing: Tracing.ACTIVE,
+      timeout: Duration.seconds(29),
+      ...(concurrency.policy.reservedConcurrentExecutions === null
+        ? {}
+        : {
+            reservedConcurrentExecutions:
+              concurrency.policy.reservedConcurrentExecutions,
+          }),
+      memorySize: 512,
+      logGroup: logs,
+      environment: {
+        POWERTOOLS_SERVICE_NAME: "prism-crm-review",
+        POWERTOOLS_METRICS_NAMESPACE: "PrismAssessment",
+        POWERTOOLS_LOGGER_LOG_EVENT: "false",
+        POWERTOOLS_TRACER_CAPTURE_RESPONSE: "false",
+        POWERTOOLS_TRACER_CAPTURE_ERROR: "false",
+        LEADS_TABLE_NAME: leads.tableName,
+        PRISM_LAMBDA_ARCHIVE_SHA256: archiveHash.valueAsString,
+        PRISM_FRONTEND_ASSET_MANIFEST_SHA256:
+          process.env.PRISM_FRONTEND_ASSET_MANIFEST_SHA256 ?? "unbuilt-local",
+        QUOTA_TABLE_NAME: quota.tableName,
+        REVIEW_ACCESS_SECRET_ARN: secret.valueAsString,
+        ORACLE_API_URL: oracle.valueAsString,
+        ORACLE_APPROVED_ORIGINS: oracle.valueAsString,
+        BEDROCK_MODEL_ID: model.valueAsString,
+        PRISM_ENABLE_MODEL: enabled.valueAsString,
+        PRISM_ENABLE_MAP: mapEnabled.valueAsString,
+        PRISM_MODEL_PROMPT_REVISION: promptRevision.valueAsString,
+        PRISM_REGION: "us-east-2",
+        PRISM_STAGE: stage,
+      },
+    });
+    leads.grantReadWriteData(fn);
+    quota.grantReadWriteData(fn);
+    fn.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["secretsmanager:GetSecretValue"],
+        resources: [secret.valueAsString],
+      }),
+    );
+    fn.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["bedrock:InvokeModel"],
+        resources: [
+          Fn.join("", [
+            "arn:aws:bedrock:us-east-2:",
+            this.account,
+            ":inference-profile/",
+            model.valueAsString,
+          ]),
+          ...["us-east-1", "us-east-2", "us-west-2"].map((region) =>
+            Fn.join("", [
+              "arn:aws:bedrock:",
+              region,
+              "::foundation-model/",
+              Fn.select(1, Fn.split("us.", model.valueAsString)),
+            ]),
+          ),
+        ],
+      }),
+    );
+    const api = new HttpApi(this, "CrmApi");
+    const apiStage = api.defaultStage!.node.defaultChild as CfnStage;
+    apiStage.defaultRouteSettings = {
+      throttlingRateLimit: concurrency.policy.apiRatePerSecond,
+      throttlingBurstLimit: concurrency.policy.apiBurst,
+    };
+    api.addRoutes({
+      path: "/api/{proxy+}",
+      methods: [HttpMethod.ANY],
+      integration: new HttpLambdaIntegration("CrmIntegration", fn),
+    });
+    const rewrite = new EdgeFunction(this, "SpaIndex", {
+      code: FunctionCode.fromInline(
+        'function handler(event) { var r=event.request; if(r.uri.indexOf(".") === -1 && r.uri.indexOf("/api/") !== 0) r.uri="/index.html"; return r; }',
+      ),
+    });
+    const security = new ResponseHeadersPolicy(this, "SecurityHeaders", {
+      securityHeadersBehavior: {
+        contentTypeOptions: { override: true },
+        frameOptions: { frameOption: "DENY" as never, override: true },
+        referrerPolicy: {
+          referrerPolicy: "strict-origin-when-cross-origin" as never,
+          override: true,
+        },
+        strictTransportSecurity: {
+          accessControlMaxAge: Duration.days(365),
+          includeSubdomains: true,
+          override: true,
+        },
+        contentSecurityPolicy: {
+          contentSecurityPolicy:
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.geo.us-east-2.amazonaws.com https://tile.openstreetmap.org; connect-src 'self' https://maps.geo.us-east-2.amazonaws.com https://tile.openstreetmap.org; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+          override: true,
+        },
+      },
+    });
+    const distribution = new Distribution(this, "Frontend", {
+      defaultRootObject: "index.html",
+      defaultBehavior: {
+        origin: S3BucketOrigin.withOriginAccessControl(assets),
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        responseHeadersPolicy: security,
+        functionAssociations: [
+          { function: rewrite, eventType: FunctionEventType.VIEWER_REQUEST },
+        ],
+      },
+      additionalBehaviors: {
+        "/api/*": {
+          origin: new HttpOrigin(
+            `${api.apiId}.execute-api.${this.region}.${this.urlSuffix}`,
+          ),
+          viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
+          allowedMethods: AllowedMethods.ALLOW_ALL,
+          cachePolicy: CachePolicy.CACHING_DISABLED,
+          originRequestPolicy:
+            OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+          responseHeadersPolicy: security,
+        },
+      },
+    });
+    const apiErrors = new Alarm(this, "ApiErrors", {
+      metric: fn.metricErrors({ period: Duration.minutes(5) }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: TreatMissingData.NOT_BREACHING,
+    });
+    const criticalErrors = new Alarm(this, "CriticalRequestErrors", {
+      metric: new Metric({
+        namespace: "PrismAssessment",
+        metricName: "RequestError",
+        dimensionsMap: { service: "prism-crm-review" },
+        period: Duration.minutes(5),
+        statistic: "Sum",
+      }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: TreatMissingData.NOT_BREACHING,
+    });
+    assessmentObservability({
+      stack: this,
+      api: fn,
+      code: Code.fromAsset(
+        path.resolve(
+          process.env.PRISM_LAMBDA_ARCHIVE_PATH ?? "build/crm-lambda.zip",
+        ),
+      ),
+      alarms: [apiErrors, criticalErrors],
+      pagerDutyEnabled: process.env.PRISM_PAGERDUTY_ENABLED === "1",
+      reservedMode: concurrency.policy.reservedConcurrentExecutions !== null,
+    });
+    for (const [name, value] of Object.entries({
+      ConcurrencyMode: concurrency.policy.mode,
+      FunctionReservedConcurrency:
+        concurrency.policy.reservedConcurrentExecutions === null
+          ? "none"
+          : String(concurrency.policy.reservedConcurrentExecutions),
+      ExistingAccountConcurrency:
+        concurrency.policy.existingAccountConcurrency === null
+          ? "not-used"
+          : "10",
+      ConcurrencyProofSha256: concurrency.metadata.proofSha256,
+      FunctionMemoryMiB: "512",
+      ApiRatePerSecond: String(concurrency.policy.apiRatePerSecond),
+      ApiBurst: String(concurrency.policy.apiBurst),
+      RuntimeFunctionName: fn.functionName,
+      HttpApiId: api.apiId,
+      HttpApiStageName: "$default",
+    }))
+      new CfnOutput(this, name, { value });
+    new CfnOutput(this, "ProviderDomain", {
+      value: distribution.distributionDomainName,
+    });
+    new CfnOutput(this, "AssetBucket", { value: assets.bucketName });
+    new CfnOutput(this, "ReleaseBuildId", {
+      value: releaseBuildId.valueAsString,
+    });
+    new CfnOutput(this, "LambdaArchiveSha256", {
+      value: archiveHash.valueAsString,
+    });
+    new CfnOutput(this, "Region", { value: "us-east-2" });
+    new CfnOutput(this, "Stage", { value: stage });
+    new CfnOutput(this, "ApiOrigin", { value: api.apiEndpoint });
+    new CfnOutput(this, "FrontendDistributionId", {
+      value: distribution.distributionId,
+    });
+    new CfnOutput(this, "LeadTableName", { value: leads.tableName });
+  }
+}
+const app = new App({ outdir: "cdk.out" });
+const concurrency = await deploymentConcurrency(
+  process.env,
+  [process.cwd(), path.resolve(process.cwd(), "../..", "return")],
+  {
+    mode: app.node.tryGetContext("concurrencyMode"),
+    quota: app.node.tryGetContext("existingAccountConcurrency"),
+  },
+);
+new CrmCandidateStack(app, "PrismCrmAssessmentReview", concurrency);
+app.synth();

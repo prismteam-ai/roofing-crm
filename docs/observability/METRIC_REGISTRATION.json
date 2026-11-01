@@ -1,0 +1,111 @@
+{
+  "version": "assessment-metric-registration-spec-v1",
+  "status": "EXTERNAL_ORGANIZATION_DEPENDENCY_BLOCKED",
+  "appliedToInternalLexicon": false,
+  "appliedToInternalMainDashboard": false,
+  "namespace": "PrismAssessment",
+  "services": ["prism-crm-review", "prism-crm-alerts"],
+  "dimensionPolicy": "Fixed service dimension only; bounded operation labels remain in logs/traces. Powertools ColdStart adds its documented fixed function_name dimension.",
+  "metrics": [
+    {
+      "name": "RequestCount",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "RequestLatency",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "QueryResultCount",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "QueryLatency",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "RequestError",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "AuthFailure",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "RateLimitFailure",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "SnapshotUnavailable",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "SnapshotValidated",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "SourceCoverageProperties",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "SourceCoverageAddresses",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "AgentRequest",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "AgentRefusal",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "AgentProviderFailure",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "AgentModelInvocation",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "AgentTypedRetrieval",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "LeadMutation",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "LeadConflict",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": true
+    },
+    {
+      "name": "ColdStart",
+      "internalRegistrationRequired": true,
+      "candidateDashboard": false
+    }
+  ],
+  "targetRepositories": [
+    "https://github.com/Spring-Oaks-Capital-LLC/lexicon",
+    "https://github.com/Spring-Oaks-Capital-LLC/main-dashboard"
+  ],
+  "remoteMutations": 0
+}

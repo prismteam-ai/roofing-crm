@@ -1,0 +1,120 @@
+{
+  "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+  "context": "Verbatim historical snapshots. Relative links and commands belong to the pinned original repository, not the current runtime.",
+  "documents": [
+    {
+      "originalPath": "IMPLEMENTATION.md",
+      "archivedPath": "docs/history/p5/IMPLEMENTATION.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "b46bf118527594d2778960a4ce4f331870c0b9a376cb20e62d4edc0eeaa0baea"
+    },
+    {
+      "originalPath": "QUICKSTART.md",
+      "archivedPath": "docs/history/p5/QUICKSTART.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "004512dc42bcce515409f2adc584d43ab7f4c56d9c75f330b6ad791b85d3cf1d"
+    },
+    {
+      "originalPath": "README.md",
+      "archivedPath": "docs/history/p5/README.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "7bd6f86916baad7d1bdc1700ee42a4ee98196f3bfcd7e9217b9a1d5af51b7bd5"
+    },
+    {
+      "originalPath": "docs/ARCHITECTURE.md",
+      "archivedPath": "docs/history/p5/docs/ARCHITECTURE.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "7d104945a7da5a166117a57360c8c92ff2c52dbd1e4b426cee8b3b3357cecc67"
+    },
+    {
+      "originalPath": "docs/DATA_COVERAGE.md",
+      "archivedPath": "docs/history/p5/docs/DATA_COVERAGE.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "1b8420f2d3982dea008914177e8e911c92e6d48a99c9aedb5e9904ba22c155a1"
+    },
+    {
+      "originalPath": "docs/DEPLOYMENT.md",
+      "archivedPath": "docs/history/p5/docs/DEPLOYMENT.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "9fadc5dc76de3b1ad869b91c779ceafd913835dbe9ab126010c6ed0f63f97c45"
+    },
+    {
+      "originalPath": "docs/EVALUATOR_GUIDE.md",
+      "archivedPath": "docs/history/p5/docs/EVALUATOR_GUIDE.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "e6a0f3a5a0a0fffe361e05ee3c1875dc8981f01dd330a7dfc0cd1098ba91f651"
+    },
+    {
+      "originalPath": "docs/GROUNDED_SELECTION_V2.md",
+      "archivedPath": "docs/history/p5/docs/GROUNDED_SELECTION_V2.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "ae4bccadf63d0b693c1ae7a81c7898730537c61aa4d41faf692493510b489697"
+    },
+    {
+      "originalPath": "docs/KNOWN_LIMITATIONS.md",
+      "archivedPath": "docs/history/p5/docs/KNOWN_LIMITATIONS.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "a4b1efe66084f3086fc9f6df917f650353f113de78af8768f3bb237bfc5d31fd"
+    },
+    {
+      "originalPath": "docs/LOCAL_DEVELOPMENT.md",
+      "archivedPath": "docs/history/p5/docs/LOCAL_DEVELOPMENT.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "285828886b543623136f01cf57949b3fc6bc1f51cff09c07fbda65bbc46674c8"
+    },
+    {
+      "originalPath": "docs/P2_CRM_RUNTIME.md",
+      "archivedPath": "docs/history/p5/docs/P2_CRM_RUNTIME.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "4fb19582f45e0547298ab06bf2d1f372c94ccd8fa70158607b073e461f1f97a5"
+    },
+    {
+      "originalPath": "docs/P3_STAGING.md",
+      "archivedPath": "docs/history/p5/docs/P3_STAGING.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "70beb13bfe776b641e6758981c2a638d7021794da45680bc507ab0764e708120"
+    },
+    {
+      "originalPath": "docs/P5_NL_INTENT_AND_LIMITATIONS.md",
+      "archivedPath": "docs/history/p5/docs/P5_NL_INTENT_AND_LIMITATIONS.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "10a9ba205f2bf8897fbbaabd000946857a224eaf4cde4c2b8c10bff369ce6229"
+    },
+    {
+      "originalPath": "docs/README.md",
+      "archivedPath": "docs/history/p5/docs/README.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "293a2ce09e989d60887b1f94b6be218505f056f97b44194885d417f23380d513"
+    },
+    {
+      "originalPath": "docs/RELEASE_CHECKLIST.md",
+      "archivedPath": "docs/history/p5/docs/RELEASE_CHECKLIST.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "c9fffe9dbd0414e33f09e951cb315b64cc05a6e40b3e17549cf866d5030a15a1"
+    },
+    {
+      "originalPath": "docs/SECURITY_PRIVACY.md",
+      "archivedPath": "docs/history/p5/docs/SECURITY_PRIVACY.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "5f687ec72611dd24079ad071593680eace83f07db874876764e66cbf795fc000"
+    },
+    {
+      "originalPath": "docs/architecture/BOUNDARY.md",
+      "archivedPath": "docs/history/p5/docs/architecture/BOUNDARY.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "640e13e79e6a2956abf8ff263055649990eec64bc0716fe1615da3e7fe83f166"
+    },
+    {
+      "originalPath": "docs/architecture/CRM_LOCAL_IMPLEMENTATION.md",
+      "archivedPath": "docs/history/p5/docs/architecture/CRM_LOCAL_IMPLEMENTATION.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "994e935406a9b8d0dffb059eb0ce5828a64371180f237624ed3dc3690e9a88d0"
+    },
+    {
+      "originalPath": "docs/architecture/P4_AGENT_ROUTING.md",
+      "archivedPath": "docs/history/p5/docs/architecture/P4_AGENT_ROUTING.md",
+      "base": "d94013150c7ec09f7b3e9d2614afee088fa5a21a",
+      "sha256": "e7e3937ccfeca41a25e7a5e7c9c758b46c30b40778b82fb2406a266d1209c273"
+    }
+  ]
+}

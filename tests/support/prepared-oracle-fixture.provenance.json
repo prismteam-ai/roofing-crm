@@ -1,0 +1,12 @@
+{
+  "sourceApplication": "accepted candidate-controlled Oracle source",
+  "sourceHead": "e3a7f869eb6bca40db8fc22ad0e25874aa3aab60",
+  "sourcePath": "packages/test-support/src/fixtures.ts",
+  "sourceSha256": "8612ebbe47d918a8383cafee01c7f3b9b46e77181f41987bfedb8de8790bd0ad",
+  "changes": [
+    "Prepended explicit synthetic-only purpose",
+    "Adapted import path for CRM test folder"
+  ],
+  "realSourceOrProviderRows": 0,
+  "productionRuntimeImported": false
+}

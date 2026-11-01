@@ -1,0 +1,7 @@
+{
+  "name": "@prism/crm-hosted-runtime",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/access.ts"
+}
