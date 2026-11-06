@@ -1,7 +1,9 @@
 const FILES = {
   leads: "https://ipfs.filebase.io/ipfs/bafybeidafqokwa2xgpnsxps4pty72gidlimxbfwe4ehzajodpeg24prw4i",
-  permits: "https://ipfs.filebase.io/ipfs/bafybeie2u7r6nwb3hpk4rijjcg7bjtjsouamob6kbvwdul7fdd2l5jg76a",
+  permits: "https://ipfs.filebase.io/ipfs/bafybeigusdsrma6mhxhopk2aiyonw3q22et44rk674lald6qjldr5mdylq",
+  tiles: GATEWAY + TILE_INDEX_CID,
 };
+const PAGE = 200;
 const CITIES = {
   wilmington: [39.739072, -75.539787],
   newark: [39.683723, -75.749657],
@@ -20,7 +22,10 @@ const BASIS = {
   latest_roof_permit: "from last roof permit",
 };
 const BBB_NOTE = "BBB not loaded: bbb.org/robots.txt disallows category pages";
-const state = { leads: [], permits: [], map: null, layer: null, pin: null, view: "roofs", rows: [], selected: null };
+const state = {
+  leads: [], byParcel: new Map(), map: null, layer: null, pin: null, view: "roofs", rows: [], selected: null,
+  limit: PAGE, ready: false, runId: 0,
+};
 
 function miles(lat1, lon1, lat2, lon2) {
   const r = 3958.7613;
@@ -43,13 +48,24 @@ function saved() {
 function toggleSaved(lead) {
   const rest = saved().filter((item) => item.prclid !== lead.prclid);
   const isSaved = rest.length !== saved().length;
-  const next = isSaved ? rest : [{ prclid: lead.prclid, address: lead.address, city: lead.city, saved_at: new Date().toISOString() }, ...rest];
+  const { distance_miles: _distance, ...copy } = lead;
+  const next = isSaved ? rest : [{ ...copy, saved_at: new Date().toISOString() }, ...rest];
   localStorage.setItem("roofing-leads", JSON.stringify(next.slice(0, 200)));
   return !isSaved;
 }
 
+function findLead(prclid) {
+  return state.rows.find((item) => item.prclid === prclid)
+    || state.leads.find((item) => item.prclid === prclid)
+    || saved().find((item) => item.prclid === prclid);
+}
+
 function permitsFor(prclid) {
-  return state.permits.filter((permit) => permit.prclid === prclid).sort((a, b) => (b.days_open || 0) - (a.days_open || 0));
+  return state.byParcel.get(prclid) || [];
+}
+
+function openPermitsFor(prclid) {
+  return permitsFor(prclid).filter((permit) => permit.permit_status === "open");
 }
 
 function filters() {
@@ -61,20 +77,18 @@ function filters() {
   };
 }
 
-function withDistance(lat, lon) {
-  return state.leads.map((lead) => ({ ...lead, distance_miles: miles(lat, lon, lead.lat, lead.lon) }));
+function withDistance(leads, lat, lon) {
+  return leads.map((lead) => ({ ...lead, distance_miles: miles(lat, lon, lead.lat, lead.lon) }));
 }
 
-function rowsFor(view, { lat, lon, radius, minAge }) {
-  const all = withDistance(lat, lon);
+function rowsFor(view, { lat, lon, radius, minAge }, leads = state.leads) {
   if (view === "saved") {
-    const ids = new Set(saved().map((item) => item.prclid));
-    return all.filter((lead) => ids.has(lead.prclid)).sort((a, b) => a.distance_miles - b.distance_miles);
+    return withDistance(saved().filter((lead) => lead.lat != null), lat, lon).sort((a, b) => a.distance_miles - b.distance_miles);
   }
-  const near = all.filter((lead) => lead.distance_miles <= radius);
+  const near = withDistance(leads, lat, lon).filter((lead) => lead.distance_miles <= radius);
   if (view === "permits") {
     return near.filter((lead) => lead.open_permit_count > 0)
-      .sort((a, b) => (a.oldest_open_days || 0) - (b.oldest_open_days || 0));
+      .sort((a, b) => (a.newest_open_days ?? Infinity) - (b.newest_open_days ?? Infinity));
   }
   return near.filter((lead) => lead.roof_age_years != null && lead.roof_age_years >= minAge)
     .sort((a, b) => a.distance_miles - b.distance_miles);
@@ -89,16 +103,22 @@ function ageCell(lead) {
   return `<span class="age${lead.roof_age_years >= 30 ? " old" : ""}">${lead.roof_age_years}</span><span class="sub">${BASIS[lead.roof_age_basis] || ""}</span>`;
 }
 
+function span(days) {
+  if (days == null) return "";
+  const y = years(days);
+  return y >= 1 ? `${y} yr` : `${days} days`;
+}
+
 function openCell(lead) {
   if (!lead.open_permit_count) return `<span class="none">None open</span>`;
-  const days = lead.oldest_open_days;
-  const y = years(days);
-  const age = days == null ? "" : y >= 1 ? `${y} yr` : `${days} days`;
-  return `<span class="since">${lead.open_permit_count} open${age ? ` · oldest ${age}` : ""}</span>`;
+  const newest = span(lead.newest_open_days);
+  const oldest = span(lead.oldest_open_days);
+  const detail = lead.open_permit_count > 1 && oldest !== newest ? `newest ${newest} · oldest ${oldest}` : newest ? `issued ${newest} ago` : "";
+  return `<span class="since">${lead.open_permit_count} open</span>${detail ? `<span class="sub">${detail}</span>` : ""}`;
 }
 
 function contractorCell(lead) {
-  const named = permitsFor(lead.prclid).find((permit) => permit.contractor_name);
+  const named = openPermitsFor(lead.prclid).find((permit) => permit.contractor_name);
   if (named) return `<span class="who">${escapeHtml(named.contractor_name)}</span><span class="sub">On the open permit</span>`;
   if (lead.last_roof_contractor_name) {
     const year = String(lead.last_roof_contractor_issued_at || "").slice(0, 4);
@@ -137,11 +157,14 @@ function draw(rows, lat, lon, radius) {
 
 function render() {
   const rows = state.rows;
-  const shown = rows.length;
+  const shown = Math.min(rows.length, state.limit);
   const savedIds = new Set(saved().map((item) => item.prclid));
   document.getElementById("view-title").textContent = VIEWS[state.view];
   document.getElementById("count").textContent = rows.length
-    ? `${rows.length.toLocaleString()} properties${state.view === "permits" ? ", most recently issued first" : state.view === "roofs" ? ", closest first" : ""}`
+    ? `${rows.length.toLocaleString()} properties${state.view === "permits" ? ", most recently issued first" : state.view === "roofs" ? ", closest first" : ""}${shown < rows.length ? ` · showing ${shown.toLocaleString()}` : ""}`
+    : "";
+  const more = shown < rows.length
+    ? `<button type="button" class="btn tonal more" data-more>Show ${Math.min(PAGE, rows.length - shown).toLocaleString()} more</button>`
     : "";
   document.getElementById("results").innerHTML = rows.length
     ? `<table><thead><tr><th>Property</th><th>Roof age</th><th>Open permits</th><th>Contractor</th><th>BBB</th><th></th></tr></thead>
@@ -152,7 +175,7 @@ function render() {
         <td>${contractorCell(lead)}</td>
         <td><span class="none" title="${BBB_NOTE}">Not loaded</span></td>
         <td><button type="button" class="save${savedIds.has(lead.prclid) ? " done" : ""}" data-save="${lead.prclid}">${savedIds.has(lead.prclid) ? "Saved" : "Save lead"}</button></td>
-      </tr>`).join("")}</tbody></table>`
+      </tr>`).join("")}</tbody></table>${more}`
     : `<p class="empty">${state.view === "saved" ? "Save a property from any view to keep it here." : "No properties match. Try a larger radius or a lower roof age."}</p>`;
 }
 
@@ -163,20 +186,61 @@ function updateCounts() {
   document.getElementById("n-saved").textContent = saved().length.toLocaleString();
 }
 
-function run() {
+function setStatus(text) {
+  document.getElementById("status").textContent = text;
+}
+
+async function run() {
   const current = filters();
   document.getElementById("age-filter").setAttribute("aria-disabled", String(state.view !== "roofs"));
+  if (![current.lat, current.lon, current.radius].every(Number.isFinite) || current.radius <= 0) {
+    setStatus("Enter a latitude, longitude, and a radius above 0.");
+    return;
+  }
+  const id = ++state.runId;
+  state.limit = PAGE;
+  if (state.view !== "saved") {
+    document.getElementById("results").classList.add("busy");
+    setStatus(`Loading parcels within ${current.radius} miles…`);
+    try {
+      const area = await loadArea(current.lat, current.lon, current.radius, (done, total) => {
+        if (id === state.runId) setStatus(`Loading map tiles ${done} of ${total}…`);
+      });
+      if (id !== state.runId) return;
+      state.leads = area.leads;
+      state.byParcel = area.byParcel;
+    } catch (error) {
+      if (id === state.runId) setStatus(`Published data did not load (${error.message}).`);
+      document.getElementById("results").classList.remove("busy");
+      return;
+    }
+    document.getElementById("results").classList.remove("busy");
+  } else {
+    await loadTileIndex();
+    const keys = [...new Set(saved().filter((lead) => lead.lat != null).flatMap((lead) => tilesNear(lead.lat, lead.lon, 0)))];
+    for (const tile of await Promise.all(keys.map(loadTile))) {
+      for (const permit of tile.permits) {
+        const list = state.byParcel.get(permit.prclid) || [];
+        if (!list.some((item) => item.apno === permit.apno)) list.push(permit);
+        state.byParcel.set(permit.prclid, list);
+      }
+    }
+    if (id !== state.runId) return;
+  }
   state.rows = rowsFor(state.view, current);
   draw(state.rows, current.lat, current.lon, current.radius);
   render();
   updateCounts();
+  const totals = tileTotals();
+  setStatus(`${state.leads.length.toLocaleString()} parcels loaded near this point · ${totals.parcels.toLocaleString()} county parcels published on IPFS`);
 }
 
 function openDrawer(prclid) {
-  const lead = state.rows.find((item) => item.prclid === prclid) || state.leads.find((item) => item.prclid === prclid);
+  const lead = findLead(prclid);
   if (!lead) return;
   state.selected = prclid;
-  const permits = permitsFor(prclid).filter((permit) => permit.permit_status === "open" || permit.days_open != null);
+  const permits = openPermitsFor(prclid);
+  const roofHistory = permitsFor(prclid).filter((permit) => permit.permit_status !== "open" && permit.is_roof);
   const isSaved = saved().some((item) => item.prclid === prclid);
   const reason = lead.open_permit_count
     ? `${lead.open_permit_count} open permit${lead.open_permit_count === 1 ? "" : "s"}`
@@ -195,10 +259,16 @@ function openDrawer(prclid) {
     </dl></section>
     <section><h3>Open permits</h3>${permits.length ? permits.map((permit) => `<div class="permit">
       <strong>Permit ${escapeHtml(permit.apno)}</strong> <span class="since">Open ${permit.days_open?.toLocaleString() ?? "?"} days</span>
-      <p>Issued ${escapeHtml((permit.issued_at || "").slice(0, 10))}${permit.aptype ? ` · ${escapeHtml(permit.aptype)}` : ""}</p>
+      <p>Issued ${escapeHtml(permit.issued_on || "date not published")}${permit.aptype ? ` · ${escapeHtml(permit.aptype)}` : ""}${permit.is_roof ? " · roof work" : ""}</p>
       <p>${escapeHtml(permit.comments || "No description")}</p>
       <p>Contractor: ${permit.contractor_name ? `<span class="who">${escapeHtml(permit.contractor_name)}</span>` : "not printed on this permit"}</p>
-    </div>`).join("") : `<p class="muted">No open roof permit on this parcel.</p>`}</section>
+    </div>`).join("") : `<p class="muted">No open permit on this parcel.</p>`}</section>
+    <section><h3>Past roof permits</h3>${roofHistory.length ? roofHistory.map((permit) => `<div class="permit">
+      <strong>Permit ${escapeHtml(permit.apno)}</strong> <span class="sub">${escapeHtml(permit.permit_status || "")}</span>
+      <p>Issued ${escapeHtml(permit.issued_on || "date not published")}${permit.aptype ? ` · ${escapeHtml(permit.aptype)}` : ""}</p>
+      <p>${escapeHtml(permit.comments || "No description")}</p>
+      <p>Contractor: ${permit.contractor_name ? `<span class="who">${escapeHtml(permit.contractor_name)}</span>` : "not printed on this permit"}</p>
+    </div>`).join("") : `<p class="muted">No closed roof permit on this parcel.</p>`}</section>
     <section><h3>Contractor and BBB</h3><dl class="facts">
       <dt>Last roof contractor</dt><dd>${lead.last_roof_contractor_name ? `${escapeHtml(lead.last_roof_contractor_name)} <span class="sub">Closed or new-construction roof permit${lead.last_roof_contractor_issued_at ? ` · ${escapeHtml(String(lead.last_roof_contractor_issued_at).slice(0, 10))}` : ""}. Not the open-permit contractor.</span>` : "None printed on a closed roof permit"}</dd>
       <dt>Latest county permit</dt><dd>${lead.contractor_name ? `${escapeHtml(lead.contractor_name)} <span class="sub">Any permit type, not only roofing</span>` : "None printed"}</dd>
@@ -212,6 +282,7 @@ function openDrawer(prclid) {
       <dt>Coordinates</dt><dd>${lead.lat.toFixed(5)}, ${lead.lon.toFixed(5)}</dd>
       <dt>Lead file</dt><dd><a href="${FILES.leads}" target="_blank" rel="noopener">IPFS CID</a></dd>
       <dt>Permit file</dt><dd><a href="${FILES.permits}" target="_blank" rel="noopener">IPFS CID</a></dd>
+      <dt>Map tiles</dt><dd><a href="${FILES.tiles}" target="_blank" rel="noopener">IPFS CID</a></dd>
     </dl></section>`;
   document.getElementById("drawer").classList.add("open");
   render();
@@ -226,12 +297,18 @@ function closeDrawer() {
 document.addEventListener("click", (event) => {
   const save = event.target.closest("[data-save]");
   if (save) {
-    const lead = state.leads.find((item) => item.prclid === save.dataset.save);
+    const lead = findLead(save.dataset.save);
+    if (!lead) return;
     toggleSaved(lead);
     if (state.view === "saved") state.rows = rowsFor("saved", filters());
     render();
     updateCounts();
     if (document.getElementById("drawer").classList.contains("open")) openDrawer(state.selected || lead.prclid);
+    return;
+  }
+  if (event.target.closest("[data-more]")) {
+    state.limit += PAGE;
+    render();
     return;
   }
   if (event.target.closest("[data-close]")) return closeDrawer();
@@ -297,16 +374,17 @@ const CITATIONS = [
   "The county open-permit layer has no contractor field. A name on an open permit appears only when that layer prints one. Last roof contractor is the name on the latest closed or new-construction roof permit. It is not the open-permit contractor.",
 ];
 
-function retrieve(question) {
+async function retrieve(question) {
   const text = question.toLowerCase();
   const city = Object.keys(CITIES).find((name) => text.includes(name)) || "wilmington";
   const [lat, lon] = CITIES[city];
   const radius = Number((text.match(/(\d+(?:\.\d+)?)\s*mile/) || [0, 5])[1]);
   const age = Number((text.match(/older than\s+(\d+)/) || text.match(/(\d+)\s*years/) || [0, 15])[1]);
   const openOnly = text.includes("permit") || text.includes("contractor");
-  const leads = rowsFor(openOnly ? "permits" : "roofs", { lat, lon, radius, minAge: age });
+  const area = await loadArea(lat, lon, radius);
+  const leads = rowsFor(openOnly ? "permits" : "roofs", { lat, lon, radius, minAge: age }, area.leads);
   const rows = leads.slice(0, 8).map((lead) => {
-    const permit = permitsFor(lead.prclid)[0];
+    const permit = (area.byParcel.get(lead.prclid) || []).find((item) => item.permit_status === "open");
     return {
       source: "published-lead",
       prclid: lead.prclid,
@@ -315,10 +393,12 @@ function retrieve(question) {
       distance_miles: Number(lead.distance_miles.toFixed(2)),
       roof_age_years: lead.roof_age_years,
       roof_age_basis: lead.roof_age_basis,
+      open_permit_count: lead.open_permit_count,
       open_roof_permit_count: lead.open_roof_permit_count,
-      oldest_open_roof_days: lead.oldest_open_roof_days,
+      newest_open_days: lead.newest_open_days,
+      oldest_open_days: lead.oldest_open_days,
       permit: permit
-        ? { apno: permit.apno, days_open: permit.days_open, contractor_name: permit.contractor_name, aptype: permit.aptype, comments: permit.comments }
+        ? { apno: permit.apno, issued_on: permit.issued_on, days_open: permit.days_open, is_roof: permit.is_roof, contractor_name: permit.contractor_name, aptype: permit.aptype, comments: permit.comments }
         : null,
       last_roof_contractor_name: lead.last_roof_contractor_name,
       last_roof_contractor_basis: lead.last_roof_contractor_name ? "closed or new-construction roof permit, not the open permit" : null,
@@ -375,11 +455,19 @@ document.addEventListener("keydown", (event) => {
 document.getElementById("ask-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const question = document.getElementById("question").value.trim();
-  if (!question || !state.leads.length) return;
-  const retrieved = retrieve(question);
+  if (!question) return;
   const box = document.getElementById("answer");
   const send = document.querySelector("#ask-form .send");
   send.disabled = true;
+  box.innerHTML = `<div class="response thinking"><span class="spark"></span><div><p class="response-body">Loading published parcels for this question…</p></div></div>`;
+  let retrieved;
+  try {
+    retrieved = await retrieve(question);
+  } catch (error) {
+    box.innerHTML = `<div class="response"><span class="spark"></span><div><p class="response-body">Published data did not load (${escapeHtml(error.message)}).</p></div></div>`;
+    send.disabled = false;
+    return;
+  }
   box.innerHTML = `<div class="response thinking"><span class="spark"></span><div><p class="response-body">Reading ${retrieved.matchCount} matching parcels within ${retrieved.radius} miles of ${retrieved.city}…</p></div></div>`;
   try {
     const response = await fetch("/api/ask", {
@@ -402,17 +490,7 @@ document.getElementById("ask-form").addEventListener("submit", async (event) => 
   }
 });
 
-Promise.all([
-  fetch(FILES.leads).then((response) => response.json()),
-  fetch(FILES.permits).then((response) => response.json()),
-]).then(([leads, permits]) => {
-  state.leads = leads;
-  state.permits = permits;
-  document.getElementById("status").textContent = `${leads.length.toLocaleString()} parcels · ${permits.length.toLocaleString()} permits · published on IPFS`;
-  run();
-}).catch(() => {
-  document.getElementById("status").textContent = "The Oracle dataset URL did not load.";
-});
+run();
 
 const appsButton = document.querySelector(".apps-button");
 const appsMenu = document.getElementById("apps-menu");
