@@ -83,12 +83,15 @@ function withDistance(leads, lat, lon) {
 
 function rowsFor(view, { lat, lon, radius, minAge }, leads = state.leads) {
   if (view === "saved") {
-    return withDistance(saved().filter((lead) => lead.lat != null), lat, lon).sort((a, b) => a.distance_miles - b.distance_miles);
+    return saved().map((lead) => (lead.lat == null
+      ? { ...lead, distance_miles: Infinity }
+      : { ...lead, distance_miles: miles(lat, lon, lead.lat, lead.lon) }))
+      .sort((a, b) => a.distance_miles - b.distance_miles);
   }
   const near = withDistance(leads, lat, lon).filter((lead) => lead.distance_miles <= radius);
   if (view === "permits") {
-    return near.filter((lead) => lead.open_permit_count > 0)
-      .sort((a, b) => (a.newest_open_days ?? Infinity) - (b.newest_open_days ?? Infinity));
+    return near.filter((lead) => lead.open_permit_count > 0 && (!state.roofOnly || lead.open_roof_permit_count > 0))
+      .sort((a, b) => (b.oldest_open_days ?? -Infinity) - (a.oldest_open_days ?? -Infinity));
   }
   return near.filter((lead) => lead.roof_age_years != null && lead.roof_age_years >= minAge)
     .sort((a, b) => a.distance_miles - b.distance_miles);
@@ -127,6 +130,10 @@ function contractorCell(lead) {
   return `<span class="none">${lead.open_roof_permit_count ? "Not printed on permit" : "None on a closed roof permit"}</span>`;
 }
 
+function distanceLabel(lead) {
+  return Number.isFinite(lead.distance_miles) ? `${lead.distance_miles.toFixed(2)} mi` : "location not stored";
+}
+
 function draw(rows, lat, lon, radius) {
   if (!state.map) {
     state.map = L.map("map").setView([lat, lon], 11);
@@ -143,12 +150,16 @@ function draw(rows, lat, lon, radius) {
   if (state.layer) state.layer.remove();
   state.layer = L.layerGroup().addTo(state.map);
   if (state.view !== "saved") {
-    L.circle([lat, lon], { radius: radius * 1609.344, color: "#0b57d0", weight: 1, fillColor: "#d3e3fd", fillOpacity: 0.25 }).addTo(state.layer);
+    const circle = L.circle([lat, lon], { radius: radius * 1609.344, color: "#0b57d0", weight: 1, fillColor: "#d3e3fd", fillOpacity: 0.25 }).addTo(state.layer);
     L.marker([lat, lon]).addTo(state.layer);
+    state.map.fitBounds(circle.getBounds(), { padding: [24, 24], maxZoom: 14 });
+  } else if (rows.some((lead) => lead.lat != null)) {
+    state.map.fitBounds(L.latLngBounds(rows.filter((lead) => lead.lat != null).map((lead) => [lead.lat, lead.lon])), { padding: [24, 24], maxZoom: 14 });
   }
-  rows.slice(0, 200).forEach((lead) => {
+  const canvas = L.canvas({ padding: 0.5 });
+  rows.filter((lead) => lead.lat != null).forEach((lead) => {
     const color = lead.open_roof_permit_count ? "#d96570" : "#9b72cb";
-    L.circleMarker([lead.lat, lead.lon], { radius: 5, color, weight: 1, fillOpacity: 0.85 })
+    L.circleMarker([lead.lat, lead.lon], { renderer: canvas, radius: 5, color, weight: 1, fillOpacity: 0.85 })
       .bindTooltip(`${lead.address.replace(/\s+/g, " ")}, ${lead.city}`)
       .on("click", () => openDrawer(lead.prclid))
       .addTo(state.layer);
@@ -161,7 +172,7 @@ function render() {
   const savedIds = new Set(saved().map((item) => item.prclid));
   document.getElementById("view-title").textContent = VIEWS[state.view];
   document.getElementById("count").textContent = rows.length
-    ? `${rows.length.toLocaleString()} properties${state.view === "permits" ? ", most recently issued first" : state.view === "roofs" ? ", closest first" : ""}${shown < rows.length ? ` · showing ${shown.toLocaleString()}` : ""}`
+    ? `${rows.length.toLocaleString()} ${state.view === "permits" ? (state.roofOnly ? "open roof permits" : "open permits") : "properties"}${state.view === "permits" ? ", longest open first" : state.view === "roofs" ? ", closest first" : ""}${shown < rows.length ? ` · showing ${shown.toLocaleString()}` : ""}`
     : "";
   const more = shown < rows.length
     ? `<button type="button" class="btn tonal more" data-more>Show ${Math.min(PAGE, rows.length - shown).toLocaleString()} more</button>`
@@ -169,7 +180,7 @@ function render() {
   document.getElementById("results").innerHTML = rows.length
     ? `<table><thead><tr><th>Property</th><th>Roof age</th><th>Open permits</th><th>Contractor</th><th>BBB</th><th></th></tr></thead>
       <tbody>${rows.slice(0, shown).map((lead) => `<tr data-prclid="${lead.prclid}"${state.selected === lead.prclid ? ' class="selected"' : ""}>
-        <td><span class="addr">${escapeHtml(lead.address.replace(/\s+/g, " "))}</span><span class="sub">${escapeHtml(lead.city)} · ${lead.distance_miles.toFixed(2)} mi</span></td>
+        <td><span class="addr">${escapeHtml(lead.address.replace(/\s+/g, " "))}</span><span class="sub">${escapeHtml(lead.city)} · ${distanceLabel(lead)}</span></td>
         <td>${ageCell(lead)}</td>
         <td>${openCell(lead)}</td>
         <td>${contractorCell(lead)}</td>
@@ -199,6 +210,8 @@ async function run() {
   }
   const id = ++state.runId;
   state.limit = PAGE;
+  state.roofOnly = document.getElementById("roof-only").checked;
+  document.getElementById("roof-only-filter").hidden = state.view !== "permits";
   if (state.view !== "saved") {
     document.getElementById("results").classList.add("busy");
     setStatus(`Loading parcels within ${current.radius} miles…`);
@@ -279,7 +292,7 @@ function openDrawer(prclid) {
     </dl></section>
     <section><h3>Source</h3><dl class="facts">
       <dt>Parcel</dt><dd>${escapeHtml(lead.prclid)}</dd>
-      <dt>Coordinates</dt><dd>${lead.lat.toFixed(5)}, ${lead.lon.toFixed(5)}</dd>
+      <dt>Coordinates</dt><dd>${lead.lat != null ? `${lead.lat.toFixed(5)}, ${lead.lon.toFixed(5)}` : "Not stored on this lead (saved before coordinates were kept)"}</dd>
       <dt>Lead file</dt><dd><a href="${FILES.leads}" target="_blank" rel="noopener">IPFS CID</a></dd>
       <dt>Permit file</dt><dd><a href="${FILES.permits}" target="_blank" rel="noopener">IPFS CID</a></dd>
       <dt>Map tiles</dt><dd><a href="${FILES.tiles}" target="_blank" rel="noopener">IPFS CID</a></dd>
@@ -330,6 +343,8 @@ document.querySelectorAll("[data-density]").forEach((button) => {
     document.querySelectorAll("[data-density]").forEach((item) => item.classList.toggle("active", item === button));
   });
 });
+
+document.getElementById("roof-only").addEventListener("change", () => run());
 
 document.getElementById("search-form").addEventListener("submit", (event) => {
   event.preventDefault();
