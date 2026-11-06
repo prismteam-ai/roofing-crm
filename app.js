@@ -1,6 +1,6 @@
 const FILES = {
-  leads: "https://ipfs.filebase.io/ipfs/bafybeihkejjprhb44k2432wohtkyveuslwpbc6yh7yrzooipeyil4wyqyy",
-  permits: "https://ipfs.filebase.io/ipfs/bafybeih5jfqg6a4llcjvjzxpdzd2pkev6afvfxpfgl6o2hh22qk474ibt4",
+  leads: "https://ipfs.filebase.io/ipfs/bafybeidafqokwa2xgpnsxps4pty72gidlimxbfwe4ehzajodpeg24prw4i",
+  permits: "https://ipfs.filebase.io/ipfs/bafybeie2u7r6nwb3hpk4rijjcg7bjtjsouamob6kbvwdul7fdd2l5jg76a",
 };
 const CITIES = {
   wilmington: [39.739072, -75.539787],
@@ -12,7 +12,7 @@ const CITIES = {
 };
 const VIEWS = {
   roofs: "Roofs 15+",
-  permits: "Open roof permits",
+  permits: "Open permits",
   saved: "Saved leads",
 };
 const BASIS = {
@@ -73,8 +73,8 @@ function rowsFor(view, { lat, lon, radius, minAge }) {
   }
   const near = all.filter((lead) => lead.distance_miles <= radius);
   if (view === "permits") {
-    return near.filter((lead) => lead.open_roof_permit_count > 0)
-      .sort((a, b) => (b.oldest_open_roof_days || 0) - (a.oldest_open_roof_days || 0));
+    return near.filter((lead) => lead.open_permit_count > 0)
+      .sort((a, b) => (a.oldest_open_days || 0) - (b.oldest_open_days || 0));
   }
   return near.filter((lead) => lead.roof_age_years != null && lead.roof_age_years >= minAge)
     .sort((a, b) => a.distance_miles - b.distance_miles);
@@ -90,9 +90,11 @@ function ageCell(lead) {
 }
 
 function openCell(lead) {
-  if (!lead.open_roof_permit_count) return `<span class="none">None open</span>`;
-  const y = years(lead.oldest_open_roof_days);
-  return `<span class="since">Open ${y >= 1 ? `${y} yr` : `${lead.oldest_open_roof_days} days`}</span>`;
+  if (!lead.open_permit_count) return `<span class="none">None open</span>`;
+  const days = lead.oldest_open_days;
+  const y = years(days);
+  const age = days == null ? "" : y >= 1 ? `${y} yr` : `${days} days`;
+  return `<span class="since">${lead.open_permit_count} open${age ? ` · oldest ${age}` : ""}</span>`;
 }
 
 function contractorCell(lead) {
@@ -135,15 +137,15 @@ function draw(rows, lat, lon, radius) {
 
 function render() {
   const rows = state.rows;
-  const shown = Math.min(rows.length, 60);
+  const shown = rows.length;
   const savedIds = new Set(saved().map((item) => item.prclid));
   document.getElementById("view-title").textContent = VIEWS[state.view];
   document.getElementById("count").textContent = rows.length
-    ? `${rows.length.toLocaleString()} properties · showing ${shown}${state.view === "permits" ? ", longest open first" : state.view === "roofs" ? ", closest first" : ""}`
+    ? `${rows.length.toLocaleString()} properties${state.view === "permits" ? ", most recently issued first" : state.view === "roofs" ? ", closest first" : ""}`
     : "";
   document.getElementById("results").innerHTML = rows.length
-    ? `<table><thead><tr><th>Property</th><th>Roof age</th><th>Open roof permit</th><th>Contractor</th><th>BBB</th><th></th></tr></thead>
-      <tbody>${rows.slice(0, 60).map((lead) => `<tr data-prclid="${lead.prclid}"${state.selected === lead.prclid ? ' class="selected"' : ""}>
+    ? `<table><thead><tr><th>Property</th><th>Roof age</th><th>Open permits</th><th>Contractor</th><th>BBB</th><th></th></tr></thead>
+      <tbody>${rows.slice(0, shown).map((lead) => `<tr data-prclid="${lead.prclid}"${state.selected === lead.prclid ? ' class="selected"' : ""}>
         <td><span class="addr">${escapeHtml(lead.address.replace(/\s+/g, " "))}</span><span class="sub">${escapeHtml(lead.city)} · ${lead.distance_miles.toFixed(2)} mi</span></td>
         <td>${ageCell(lead)}</td>
         <td>${openCell(lead)}</td>
@@ -174,10 +176,10 @@ function openDrawer(prclid) {
   const lead = state.rows.find((item) => item.prclid === prclid) || state.leads.find((item) => item.prclid === prclid);
   if (!lead) return;
   state.selected = prclid;
-  const permits = permitsFor(prclid);
+  const permits = permitsFor(prclid).filter((permit) => permit.permit_status === "open" || permit.days_open != null);
   const isSaved = saved().some((item) => item.prclid === prclid);
-  const reason = lead.open_roof_permit_count
-    ? `Roof permit open ${years(lead.oldest_open_roof_days)} years`
+  const reason = lead.open_permit_count
+    ? `${lead.open_permit_count} open permit${lead.open_permit_count === 1 ? "" : "s"}`
     : lead.roof_age_years != null ? `Roof about ${lead.roof_age_years} years old` : "No roof signal";
   document.getElementById("drawer").innerHTML = `
     <div class="drawer-top"><button type="button" class="close" data-close aria-label="Close">×</button></div>
@@ -191,7 +193,7 @@ function openDrawer(prclid) {
       <dt>Year built</dt><dd>${lead.year_built ?? "Not in county data"}</dd>
       <dt>Open roof permits</dt><dd>${lead.open_roof_permit_count || 0}</dd>
     </dl></section>
-    <section><h3>Open roof permits</h3>${permits.length ? permits.map((permit) => `<div class="permit">
+    <section><h3>Open permits</h3>${permits.length ? permits.map((permit) => `<div class="permit">
       <strong>Permit ${escapeHtml(permit.apno)}</strong> <span class="since">Open ${permit.days_open?.toLocaleString() ?? "?"} days</span>
       <p>Issued ${escapeHtml((permit.issued_at || "").slice(0, 10))}${permit.aptype ? ` · ${escapeHtml(permit.aptype)}` : ""}</p>
       <p>${escapeHtml(permit.comments || "No description")}</p>
@@ -406,7 +408,7 @@ Promise.all([
 ]).then(([leads, permits]) => {
   state.leads = leads;
   state.permits = permits;
-  document.getElementById("status").textContent = `${leads.length.toLocaleString()} parcels · ${permits.length} open roof permits · published on IPFS`;
+  document.getElementById("status").textContent = `${leads.length.toLocaleString()} parcels · ${permits.length.toLocaleString()} permits · published on IPFS`;
   run();
 }).catch(() => {
   document.getElementById("status").textContent = "The Oracle dataset URL did not load.";
