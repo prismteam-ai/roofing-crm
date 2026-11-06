@@ -101,6 +101,30 @@ document.getElementById("use-pin").addEventListener("click", () => {
   document.getElementById("lon").value = state.pin[1].toFixed(6);
   runSearch();
 });
+document.getElementById("use-gps").addEventListener("click", () => {
+  const status = document.getElementById("gps-status");
+  if (!navigator.geolocation) {
+    status.textContent = "This browser does not provide a location.";
+    return;
+  }
+  status.textContent = "Requesting your location.";
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      document.getElementById("lat").value = latitude.toFixed(6);
+      document.getElementById("lon").value = longitude.toFixed(6);
+      status.textContent = `Centered on your location (${latitude.toFixed(4)}, ${longitude.toFixed(4)}).`;
+      runSearch();
+    },
+    (error) => {
+      status.textContent = error.code === 1
+        ? "Location permission was denied. Use the map pin or type coordinates."
+        : "Your location could not be read. Use the map pin or type coordinates.";
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+  );
+});
+
 document.getElementById("ask-form").addEventListener("submit", (event) => {
   event.preventDefault();
   const text = document.getElementById("question").value.toLowerCase();

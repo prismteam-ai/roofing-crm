@@ -12,6 +12,7 @@ input, textarea { padding: 0.35rem; border: 1px solid #17211b; background: white
 button { border: 1px solid #17211b; background: #17211b; color: white; padding: 0.4rem 0.65rem; }
 button:disabled { background: #c9d2ca; color: #526056; border-color: #c9d2ca; }
 #map { height: 420px; margin: 0.6rem 0; }
+#gps-status { font-size: 0.8rem; color: #526056; margin: 0.3rem 0; }
 table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 th, td { text-align: left; padding: 0.3rem; border-bottom: 1px solid #d5e0d6; vertical-align: top; }
 .note, .lead { background: white; border: 1px solid #d5e0d6; padding: 0.6rem; margin-bottom: 0.4rem; }
