@@ -535,7 +535,7 @@ async function retrieve(question) {
     radius,
     matchCount: leads.length,
     evidence: [
-      { source: "retrieval", city, radius_miles: radius, open_only: openOnly, min_roof_age: openOnly ? null : age, match_count: leads.length },
+      { source: "retrieval", city, radius_miles: radius, open_only: openOnly, min_roof_age: openOnly ? null : age, match_count: leads.length, shown_count: rows.length },
       ...rows,
       ...CITATIONS.map((text) => ({ source: "citation", text })),
     ],
