@@ -81,7 +81,14 @@ function withDistance(leads, lat, lon) {
   return leads.map((lead) => ({ ...lead, distance_miles: miles(lat, lon, lead.lat, lead.lon) }));
 }
 
-function rowsFor(view, { lat, lon, radius, minAge, roofOnly = state.roofOnly }, leads = state.leads) {
+function oldestOpenRoofDays(prclid, byParcel) {
+  const days = (byParcel.get(prclid) || [])
+    .filter((permit) => permit.permit_status === "open" && permit.is_roof)
+    .map((permit) => permit.days_open ?? -Infinity);
+  return days.length ? Math.max(...days) : -Infinity;
+}
+
+function rowsFor(view, { lat, lon, radius, minAge, roofOnly = state.roofOnly }, leads = state.leads, byParcel = state.byParcel) {
   if (view === "saved") {
     return saved().map((lead) => (lead.lat == null
       ? { ...lead, distance_miles: Infinity, legacy: true }
@@ -90,8 +97,11 @@ function rowsFor(view, { lat, lon, radius, minAge, roofOnly = state.roofOnly }, 
   }
   const near = withDistance(leads, lat, lon).filter((lead) => lead.distance_miles <= radius);
   if (view === "permits") {
+    const key = roofOnly
+      ? (lead) => oldestOpenRoofDays(lead.prclid, byParcel)
+      : (lead) => lead.oldest_open_days ?? -Infinity;
     return near.filter((lead) => lead.open_permit_count > 0 && (!roofOnly || lead.open_roof_permit_count > 0))
-      .sort((a, b) => (b.oldest_open_days ?? -Infinity) - (a.oldest_open_days ?? -Infinity));
+      .sort((a, b) => key(b) - key(a));
   }
   return near.filter((lead) => lead.roof_age_years != null && lead.roof_age_years >= minAge)
     .sort((a, b) => a.distance_miles - b.distance_miles);
@@ -399,7 +409,7 @@ async function retrieve(question) {
   const openOnly = text.includes("permit") || text.includes("contractor");
   const area = await loadArea(lat, lon, radius);
   const roofOnly = text.includes("roof");
-  const leads = rowsFor(openOnly ? "permits" : "roofs", { lat, lon, radius, minAge: age, roofOnly }, area.leads);
+  const leads = rowsFor(openOnly ? "permits" : "roofs", { lat, lon, radius, minAge: age, roofOnly }, area.leads, area.byParcel);
   const rows = leads.slice(0, 8).map((lead) => {
     const open = (area.byParcel.get(lead.prclid) || []).filter((item) => item.permit_status === "open");
     const permit = open.find((item) => item.is_roof) || open[0];
