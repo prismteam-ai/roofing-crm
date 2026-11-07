@@ -1,6 +1,6 @@
 const FILES = {
-  leads: "https://ipfs.filebase.io/ipfs/bafybeidafqokwa2xgpnsxps4pty72gidlimxbfwe4ehzajodpeg24prw4i",
-  permits: "https://ipfs.filebase.io/ipfs/bafybeidbqpmxt4h7mg4wdgyzipjnkllollx63gfhtta7utmn7wwurs2wmu",
+  leads: "https://ipfs.filebase.io/ipfs/bafybeihw5g56twmdqkk2c2brwnseo3tlvdepkvheewle6kuhjdm7jaos6i",
+  permits: "https://ipfs.filebase.io/ipfs/bafybeifoqcp3xzsslb6w2p2woklnr5tv5axsp2jgploqvlgpunrzxvpwqa",
   tiles: GATEWAY + TILE_INDEX_CID,
 };
 const PAGE = 200;
@@ -131,12 +131,28 @@ function openCell(lead) {
   return `<span class="since">${lead.open_permit_count} open</span>${detail ? `<span class="sub">${detail}</span>` : ""}`;
 }
 
+const LICENSE_LABEL = {
+  "RESIDENT CONTRACTOR": "Delaware resident contractor",
+  "NON-RESIDENT CONTRACTOR": "non-resident contractor",
+  "CONSTRUCTION MANAGER": "construction manager",
+};
+
+function licenseSub(category, validTo, status) {
+  if (!status) return `<span class="sub">No name match on Delaware contractor licenses</span>`;
+  const label = LICENSE_LABEL[category] || "contractor license";
+  return `<span class="sub">Licensed name match · ${label}${validTo ? ` · valid to ${escapeHtml(String(validTo).slice(0, 10))}` : ""}</span>`;
+}
+
+function permitLicenseLine(permit) {
+  return licenseSub(permit.license_category, permit.license_valid_to, permit.license_status);
+}
+
 function contractorCell(lead) {
   const named = openPermitsFor(lead.prclid).find((permit) => permit.contractor_name);
-  if (named) return `<span class="who">${escapeHtml(named.contractor_name)}</span><span class="sub">On the open permit</span>`;
+  if (named) return `<span class="who">${escapeHtml(named.contractor_name)}</span><span class="sub">On the open permit</span>${permitLicenseLine(named)}`;
   if (lead.last_roof_contractor_name) {
     const year = String(lead.last_roof_contractor_issued_at || "").slice(0, 4);
-    return `<span class="who">${escapeHtml(lead.last_roof_contractor_name)}</span><span class="sub">Last closed roof permit${year ? ` · ${year}` : ""}</span>`;
+    return `<span class="who">${escapeHtml(lead.last_roof_contractor_name)}</span><span class="sub">Last closed roof permit${year ? ` · ${year}` : ""}</span>${licenseSub(lead.last_roof_license_category, lead.last_roof_license_valid_to, lead.last_roof_license_status)}`;
   }
   return `<span class="none">${lead.open_roof_permit_count ? "Not printed on permit" : "None on a closed roof permit"}</span>`;
 }
@@ -334,16 +350,16 @@ function openDrawer(prclid) {
       <strong>Permit ${escapeHtml(permit.apno)}</strong> <span class="since">Open ${permit.days_open?.toLocaleString() ?? "?"} days</span>
       <p>Issued ${escapeHtml(permit.issued_on || "date not published")}${permit.aptype ? ` · ${escapeHtml(permit.aptype)}` : ""}${permit.is_roof ? " · roof work" : ""}</p>
       <p>${escapeHtml(permit.comments || "No description")}</p>
-      <p>Contractor: ${permit.contractor_name ? `<span class="who">${escapeHtml(permit.contractor_name)}</span>` : "not printed on this permit"}</p>
+      <p>Contractor: ${permit.contractor_name ? `<span class="who">${escapeHtml(permit.contractor_name)}</span>${permitLicenseLine(permit)}` : "not printed on this permit"}</p>
     </div>`).join("") : `<p class="muted">No open permit on this parcel.</p>`}</section>
     <section><h3>Past roof permits</h3>${roofHistory.length ? roofHistory.map((permit) => `<div class="permit">
       <strong>Permit ${escapeHtml(permit.apno)}</strong> <span class="sub">${escapeHtml(permit.permit_status || "")}</span>
       <p>Issued ${escapeHtml(permit.issued_on || "date not published")}${permit.aptype ? ` · ${escapeHtml(permit.aptype)}` : ""}</p>
       <p>${escapeHtml(permit.comments || "No description")}</p>
-      <p>Contractor: ${permit.contractor_name ? `<span class="who">${escapeHtml(permit.contractor_name)}</span>` : "not printed on this permit"}</p>
+      <p>Contractor: ${permit.contractor_name ? `<span class="who">${escapeHtml(permit.contractor_name)}</span>${permitLicenseLine(permit)}` : "not printed on this permit"}</p>
     </div>`).join("") : `<p class="muted">No closed roof permit on this parcel.</p>`}</section>
     <section><h3>Contractor and BBB</h3><dl class="facts">
-      <dt>Last roof contractor</dt><dd>${lead.last_roof_contractor_name ? `${escapeHtml(lead.last_roof_contractor_name)} <span class="sub">Closed or new-construction roof permit${lead.last_roof_contractor_issued_at ? ` · ${escapeHtml(String(lead.last_roof_contractor_issued_at).slice(0, 10))}` : ""}. Not the open-permit contractor.</span>` : "None printed on a closed roof permit"}</dd>
+      <dt>Last roof contractor</dt><dd>${lead.last_roof_contractor_name ? `${escapeHtml(lead.last_roof_contractor_name)} <span class="sub">Closed or new-construction roof permit${lead.last_roof_contractor_issued_at ? ` · ${escapeHtml(String(lead.last_roof_contractor_issued_at).slice(0, 10))}` : ""}. Not the open-permit contractor.</span>${licenseSub(lead.last_roof_license_category, lead.last_roof_license_valid_to, lead.last_roof_license_status)}` : "None printed on a closed roof permit"}</dd>
       <dt>Latest county permit</dt><dd>${lead.contractor_name ? `${escapeHtml(lead.contractor_name)} <span class="sub">Any permit type, not only roofing</span>` : "None printed"}</dd>
       <dt>BBB rating</dt><dd>${BBB_NOTE}</dd>
     </dl></section>
@@ -455,9 +471,28 @@ document.getElementById("use-gps").addEventListener("click", () => {
 
 const CITATIONS = [
   "BBB ratings were not submitted. https://www.bbb.org/robots.txt disallows /*? and /business-reviews/*, so no BBB harvest was submitted.",
-  "Delaware contractor business licenses were read through SODA dataset 5zy2-grhr. Electrical, plumbing, and HVACR licenses were read through SODA dataset pjnv-eaih. The lexicon manifest has no license class, so those rows are not matched to a permit name.",
+  "Contractor license fields are a name match to the Delaware business contractor licenses (SODA dataset 5zy2-grhr). A match means a licensed name exists. It does not confirm the permit contractor is that licensee. Electrical, plumbing, and HVACR trade licenses (pjnv-eaih) are issued to people, so they are not matched. HOMEOWNER PERMIT is not matched.",
   "The county open-permit layer prints a contractor on only a few rows. A name on an open permit appears only when that layer prints one. Last roof contractor is the name on the latest closed or new-construction roof permit. It is not the open-permit contractor.",
 ];
+
+function leadFacts(lead, permit) {
+  const facts = [];
+  if (lead.roof_age_years != null) {
+    facts.push(`roof about ${lead.roof_age_years} years old, from ${lead.roof_age_basis === "structure.year_built" ? "year built" : "the latest roof permit"}`);
+  } else {
+    facts.push("roof age unknown");
+  }
+  if (permit) {
+    facts.push(`${permit.is_roof ? "roof" : permit.aptype || "other"} permit open ${Number(permit.days_open ?? 0).toLocaleString()} days`);
+    if (permit.contractor_name) {
+      facts.push(`contractor on that permit ${permit.contractor_name}, ${permit.license_status ? `Delaware license name match, valid to ${String(permit.license_valid_to).slice(0, 10)}` : "no Delaware license name match"}`);
+    }
+  }
+  if (lead.last_roof_contractor_name) {
+    facts.push(`last roof contractor ${lead.last_roof_contractor_name}, ${lead.last_roof_license_status ? `Delaware license name match, valid to ${String(lead.last_roof_license_valid_to).slice(0, 10)}` : "no Delaware license name match"}`);
+  }
+  return facts;
+}
 
 async function retrieve(question) {
   const text = question.toLowerCase();
@@ -485,10 +520,14 @@ async function retrieve(question) {
       newest_open_days: lead.newest_open_days,
       oldest_open_days: lead.oldest_open_days,
       permit: permit
-        ? { apno: permit.apno, issued_on: permit.issued_on, days_open: permit.days_open, is_roof: permit.is_roof, contractor_name: permit.contractor_name, aptype: permit.aptype, comments: permit.comments }
+        ? { apno: permit.apno, issued_on: permit.issued_on, days_open: permit.days_open, is_roof: permit.is_roof, contractor_name: permit.contractor_name, aptype: permit.aptype, comments: permit.comments, license_category: permit.license_category, license_status: permit.license_status, license_valid_to: permit.license_valid_to }
         : null,
       last_roof_contractor_name: lead.last_roof_contractor_name,
       last_roof_contractor_basis: lead.last_roof_contractor_name ? "closed or new-construction roof permit, not the open permit" : null,
+      last_roof_license_category: lead.last_roof_license_category,
+      last_roof_license_status: lead.last_roof_license_status,
+      last_roof_license_valid_to: lead.last_roof_license_valid_to,
+      facts: leadFacts(lead, permit),
     };
   });
   return {
