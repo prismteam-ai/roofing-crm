@@ -1,6 +1,6 @@
 const FILES = {
-  leads: "https://ipfs.filebase.io/ipfs/bafybeihw5g56twmdqkk2c2brwnseo3tlvdepkvheewle6kuhjdm7jaos6i",
-  permits: "https://ipfs.filebase.io/ipfs/bafybeifoqcp3xzsslb6w2p2woklnr5tv5axsp2jgploqvlgpunrzxvpwqa",
+  leads: "https://ipfs.filebase.io/ipfs/bafybeicaw253lomfu7vlicblcyv7umm77qzuq6rfuc32cans3jfmauxgti",
+  permits: "https://ipfs.filebase.io/ipfs/bafybeibk56xh4ufveqnrpzbyd34mvcojafs2kvwv7773bkggh72xswvd2m",
   tiles: GATEWAY + TILE_INDEX_CID,
 };
 const PAGE = 200;
@@ -20,6 +20,7 @@ const VIEWS = {
 const BASIS = {
   "structure.year_built": "from year built",
   latest_roof_permit: "from last roof permit",
+  latest_closed_roof_permit: "from last closed roof permit",
 };
 const BBB_NOTE = "BBB not loaded: bbb.org/robots.txt disallows category pages";
 const state = {
@@ -475,14 +476,32 @@ const CITATIONS = [
   "The county open-permit layer prints a contractor on only a few rows. A name on an open permit appears only when that layer prints one. Last roof contractor is the name on the latest closed or new-construction roof permit. It is not the open-permit contractor.",
 ];
 
-function leadFacts(lead, permit) {
-  const facts = [];
-  if (lead.roof_age_years != null) {
-    const age = lead.roof_age_years === 0 ? "less than a year old" : `about ${lead.roof_age_years} years old`;
-    facts.push(`roof ${age}, from ${lead.roof_age_basis === "structure.year_built" ? "year built" : "the latest roof permit"}`);
-  } else {
-    facts.push("roof age unknown");
+function ageWords(years) {
+  return years === 0 ? "less than a year old" : `about ${years} years old`;
+}
+
+function openedWords(permit) {
+  const years = Math.floor(Number(permit.days_open ?? 0) / 365.25);
+  return years === 0 ? "this year" : `${years} years ago`;
+}
+
+function roofAgeFact(lead, permit) {
+  const closed = lead.roof_age_basis === "latest_closed_roof_permit" || lead.roof_age_basis === "structure.year_built";
+  if (closed && lead.roof_age_years != null) {
+    const from = lead.roof_age_basis === "structure.year_built" ? "year built" : "the latest closed roof permit";
+    return `roof ${ageWords(lead.roof_age_years)}, from ${from}`;
   }
+  if (permit?.is_roof) {
+    return `roof permit opened ${openedWords(permit)}; roof age is not known from year built or a closed roof permit`;
+  }
+  if (lead.roof_age_years != null) {
+    return `roof ${ageWords(lead.roof_age_years)}, from the latest closed roof permit`;
+  }
+  return "roof age unknown";
+}
+
+function leadFacts(lead, permit) {
+  const facts = [roofAgeFact(lead, permit)];
   if (permit) {
     facts.push(`${permit.is_roof ? "roof" : permit.aptype || "other"} permit open ${Number(permit.days_open ?? 0).toLocaleString()} days`);
     facts.push(permit.contractor_name
@@ -495,6 +514,26 @@ function leadFacts(lead, permit) {
   return facts;
 }
 
+function asksForNamedContractor(text) {
+  return /name a contractor|names a contractor|who is the|listed contractor/.test(text);
+}
+
+function propertyLines(rows) {
+  return rows.map((row) => `- ${String(row.address).replace(/\s+/g, " ")}, ${row.city}: ${row.facts.join("; ")} (parcel ${row.prclid})`).join("\n");
+}
+
+function composeAnswer(modelText, matchCount, rows) {
+  const intro = String(modelText || "")
+    .split("\n")
+    .filter((line) => {
+      const trimmed = line.trim();
+      return trimmed && !trimmed.startsWith("-") && !/^showing\b/i.test(trimmed);
+    })
+    .join(" ")
+    .trim();
+  return `${intro}\nShowing ${rows.length} of ${Number(matchCount).toLocaleString()} matched parcels.\n${propertyLines(rows)}`;
+}
+
 async function retrieve(question) {
   const text = question.toLowerCase();
   const city = Object.keys(CITIES).find((name) => text.includes(name)) || "wilmington";
@@ -504,7 +543,16 @@ async function retrieve(question) {
   const openOnly = text.includes("permit") || text.includes("contractor");
   const area = await loadArea(lat, lon, radius);
   const roofOnly = text.includes("roof");
-  const leads = rowsFor(openOnly ? "permits" : "roofs", { lat, lon, radius, minAge: age, roofOnly }, area.leads, area.byParcel);
+  const named = asksForNamedContractor(text);
+  let leads = rowsFor(openOnly ? "permits" : "roofs", { lat, lon, radius, minAge: age, roofOnly }, area.leads, area.byParcel);
+  const population = leads.length;
+  if (named) {
+    leads = leads.filter((lead) => {
+      const open = (area.byParcel.get(lead.prclid) || []).filter((item) => item.permit_status === "open");
+      const permit = roofOnly ? open.find((item) => item.is_roof) : (open.find((item) => item.is_roof) || open[0]);
+      return Boolean(permit?.contractor_name);
+    });
+  }
   const rows = leads.slice(0, 8).map((lead) => {
     const open = (area.byParcel.get(lead.prclid) || []).filter((item) => item.permit_status === "open");
     const permit = open.find((item) => item.is_roof) || open[0];
@@ -534,9 +582,10 @@ async function retrieve(question) {
   return {
     city,
     radius,
-    matchCount: leads.length,
+    rows,
+    matchCount: population,
     evidence: [
-      { source: "retrieval", city, radius_miles: radius, open_only: openOnly, min_roof_age: openOnly ? null : age, match_count: leads.length, shown_count: rows.length },
+      { source: "retrieval", city, radius_miles: radius, open_only: openOnly, min_roof_age: openOnly ? null : age, match_count: population, shown_count: rows.length, named_contractor_only: named },
       ...rows.map((row) => ({ source: row.source, prclid: row.prclid, address: row.address, city: row.city, distance_miles: row.distance_miles, facts: row.facts.join("; ") })),
       ...CITATIONS.map((text) => ({ source: "citation", text })),
     ],
@@ -605,8 +654,8 @@ document.getElementById("ask-form").addEventListener("submit", async (event) => 
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "The model request failed.");
     box.innerHTML = `<div class="response"><span class="spark"></span><div>
-      <p class="response-body">${escapeHtml(payload.answer).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p>
-      <p class="response-meta">${retrieved.matchCount} published parcels matched within ${retrieved.radius} miles of ${retrieved.city}; the model read the first ${Math.min(8, retrieved.matchCount)} · ${escapeHtml(payload.model)}</p>
+      <p class="response-body">${escapeHtml(composeAnswer(payload.answer, retrieved.matchCount, retrieved.rows)).replace(/\n/g, "<br>")}</p>
+      <p class="response-meta">${retrieved.matchCount} published parcels matched within ${retrieved.radius} miles of ${retrieved.city}; the page lists ${retrieved.rows.length} · ${escapeHtml(payload.model)}</p>
       ${sourcesHtml(retrieved)}</div></div>`;
   } catch (error) {
     box.innerHTML = `<div class="response"><span class="spark"></span><div>
