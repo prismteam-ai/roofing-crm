@@ -536,7 +536,7 @@ async function retrieve(question) {
     matchCount: leads.length,
     evidence: [
       { source: "retrieval", city, radius_miles: radius, open_only: openOnly, min_roof_age: openOnly ? null : age, match_count: leads.length, shown_count: rows.length },
-      ...rows,
+      ...rows.map((row) => ({ source: row.source, prclid: row.prclid, address: row.address, city: row.city, distance_miles: row.distance_miles, facts: row.facts })),
       ...CITATIONS.map((text) => ({ source: "citation", text })),
     ],
   };
