@@ -1,6 +1,6 @@
 const FILES = {
   leads: "https://ipfs.filebase.io/ipfs/bafybeidafqokwa2xgpnsxps4pty72gidlimxbfwe4ehzajodpeg24prw4i",
-  permits: "https://ipfs.filebase.io/ipfs/bafybeigusdsrma6mhxhopk2aiyonw3q22et44rk674lald6qjldr5mdylq",
+  permits: "https://ipfs.filebase.io/ipfs/bafybeidbqpmxt4h7mg4wdgyzipjnkllollx63gfhtta7utmn7wwurs2wmu",
   tiles: GATEWAY + TILE_INDEX_CID,
 };
 const PAGE = 200;
@@ -81,16 +81,16 @@ function withDistance(leads, lat, lon) {
   return leads.map((lead) => ({ ...lead, distance_miles: miles(lat, lon, lead.lat, lead.lon) }));
 }
 
-function rowsFor(view, { lat, lon, radius, minAge }, leads = state.leads) {
+function rowsFor(view, { lat, lon, radius, minAge, roofOnly = state.roofOnly }, leads = state.leads) {
   if (view === "saved") {
     return saved().map((lead) => (lead.lat == null
-      ? { ...lead, distance_miles: Infinity }
+      ? { ...lead, distance_miles: Infinity, legacy: true }
       : { ...lead, distance_miles: miles(lat, lon, lead.lat, lead.lon) }))
       .sort((a, b) => a.distance_miles - b.distance_miles);
   }
   const near = withDistance(leads, lat, lon).filter((lead) => lead.distance_miles <= radius);
   if (view === "permits") {
-    return near.filter((lead) => lead.open_permit_count > 0 && (!state.roofOnly || lead.open_roof_permit_count > 0))
+    return near.filter((lead) => lead.open_permit_count > 0 && (!roofOnly || lead.open_roof_permit_count > 0))
       .sort((a, b) => (b.oldest_open_days ?? -Infinity) - (a.oldest_open_days ?? -Infinity));
   }
   return near.filter((lead) => lead.roof_age_years != null && lead.roof_age_years >= minAge)
@@ -102,6 +102,7 @@ function years(days) {
 }
 
 function ageCell(lead) {
+  if (lead.legacy) return `<span class="none">Saved before details were kept</span>`;
   if (lead.roof_age_years == null) return `<span class="none">Unknown</span>`;
   return `<span class="age${lead.roof_age_years >= 30 ? " old" : ""}">${lead.roof_age_years}</span><span class="sub">${BASIS[lead.roof_age_basis] || ""}</span>`;
 }
@@ -386,7 +387,7 @@ document.getElementById("use-gps").addEventListener("click", () => {
 const CITATIONS = [
   "BBB ratings were not submitted. https://www.bbb.org/robots.txt disallows /*? and /business-reviews/*, so no BBB harvest was submitted.",
   "Delaware contractor business licenses were read through SODA dataset 5zy2-grhr. Electrical, plumbing, and HVACR licenses were read through SODA dataset pjnv-eaih. The lexicon manifest has no license class, so those rows are not matched to a permit name.",
-  "The county open-permit layer has no contractor field. A name on an open permit appears only when that layer prints one. Last roof contractor is the name on the latest closed or new-construction roof permit. It is not the open-permit contractor.",
+  "The county open-permit layer prints a contractor on only a few rows. A name on an open permit appears only when that layer prints one. Last roof contractor is the name on the latest closed or new-construction roof permit. It is not the open-permit contractor.",
 ];
 
 async function retrieve(question) {
@@ -397,9 +398,11 @@ async function retrieve(question) {
   const age = Number((text.match(/older than\s+(\d+)/) || text.match(/(\d+)\s*years/) || [0, 15])[1]);
   const openOnly = text.includes("permit") || text.includes("contractor");
   const area = await loadArea(lat, lon, radius);
-  const leads = rowsFor(openOnly ? "permits" : "roofs", { lat, lon, radius, minAge: age }, area.leads);
+  const roofOnly = text.includes("roof");
+  const leads = rowsFor(openOnly ? "permits" : "roofs", { lat, lon, radius, minAge: age, roofOnly }, area.leads);
   const rows = leads.slice(0, 8).map((lead) => {
-    const permit = (area.byParcel.get(lead.prclid) || []).find((item) => item.permit_status === "open");
+    const open = (area.byParcel.get(lead.prclid) || []).filter((item) => item.permit_status === "open");
+    const permit = open.find((item) => item.is_roof) || open[0];
     return {
       source: "published-lead",
       prclid: lead.prclid,
