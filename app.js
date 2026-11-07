@@ -484,9 +484,9 @@ function leadFacts(lead, permit) {
   }
   if (permit) {
     facts.push(`${permit.is_roof ? "roof" : permit.aptype || "other"} permit open ${Number(permit.days_open ?? 0).toLocaleString()} days`);
-    if (permit.contractor_name) {
-      facts.push(`contractor on that permit ${permit.contractor_name}, ${permit.license_status ? `Delaware license name match, valid to ${String(permit.license_valid_to).slice(0, 10)}` : "no Delaware license name match"}`);
-    }
+    facts.push(permit.contractor_name
+      ? `contractor on that permit ${permit.contractor_name}, ${permit.license_status ? `Delaware license name match, valid to ${String(permit.license_valid_to).slice(0, 10)}` : "no Delaware license name match"}`
+      : "no contractor printed on that permit");
   }
   if (lead.last_roof_contractor_name) {
     facts.push(`last roof contractor ${lead.last_roof_contractor_name}, ${lead.last_roof_license_status ? `Delaware license name match, valid to ${String(lead.last_roof_license_valid_to).slice(0, 10)}` : "no Delaware license name match"}`);
