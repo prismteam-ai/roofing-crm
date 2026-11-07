@@ -24,7 +24,7 @@ const BASIS = {
 const BBB_NOTE = "BBB not loaded: bbb.org/robots.txt disallows category pages";
 const state = {
   leads: [], byParcel: new Map(), map: null, layer: null, pin: null, view: "roofs", rows: [], selected: null,
-  limit: PAGE, ready: false, runId: 0,
+  limit: PAGE, ready: false, runId: 0, sort: { key: null, dir: -1 },
 };
 
 function miles(lat1, lon1, lat2, lon2) {
@@ -177,19 +177,67 @@ function draw(rows, lat, lon, radius) {
   });
 }
 
+function contractorName(lead) {
+  const named = openPermitsFor(lead.prclid).find((permit) => permit.contractor_name);
+  return named?.contractor_name || lead.last_roof_contractor_name || "";
+}
+
+function compareValues(a, b, dir) {
+  const empty = (value) => value == null || value === "" || (typeof value === "number" && !Number.isFinite(value));
+  if (empty(a) && empty(b)) return 0;
+  if (empty(a)) return 1;
+  if (empty(b)) return -1;
+  const diff = typeof a === "number" && typeof b === "number"
+    ? a - b
+    : String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+  return diff * dir;
+}
+
+function sortedRows(rows) {
+  const { key, dir } = state.sort;
+  if (!key) return rows;
+  const value = {
+    property: (lead) => lead.address,
+    age: (lead) => lead.roof_age_years,
+    open: (lead) => (state.roofOnly ? oldestOpenRoofDays(lead.prclid, state.byParcel) : lead.oldest_open_days),
+    contractor: contractorName,
+  }[key];
+  return [...rows].sort((a, b) => compareValues(value(a), value(b), dir));
+}
+
+function orderPhrase() {
+  if (!state.sort.key) {
+    if (state.view === "permits") return ", longest open first";
+    if (state.view === "roofs") return ", closest first";
+    return "";
+  }
+  const text = state.sort.key === "property" || state.sort.key === "contractor";
+  const way = text
+    ? (state.sort.dir < 0 ? "Z to A" : "A to Z")
+    : (state.sort.dir < 0 ? "high to low" : "low to high");
+  const label = { property: "address", age: "roof age", open: "days open", contractor: "contractor" }[state.sort.key];
+  return `, by ${label}, ${way}`;
+}
+
+function sortHeader(label, key) {
+  const on = state.sort.key === key;
+  const mark = on ? (state.sort.dir < 0 ? " ↓" : " ↑") : "";
+  return `<th><button type="button" class="sort${on ? " on" : ""}" data-sort="${key}" aria-sort="${on ? (state.sort.dir < 0 ? "descending" : "ascending") : "none"}">${label}${mark}</button></th>`;
+}
+
 function render() {
-  const rows = state.rows;
+  const rows = sortedRows(state.rows);
   const shown = Math.min(rows.length, state.limit);
   const savedIds = new Set(saved().map((item) => item.prclid));
   document.getElementById("view-title").textContent = VIEWS[state.view];
   document.getElementById("count").textContent = rows.length
-    ? `${rows.length.toLocaleString()} ${state.view === "permits" ? (state.roofOnly ? "open roof permits" : "open permits") : "properties"}${state.view === "permits" ? ", longest open first" : state.view === "roofs" ? ", closest first" : ""}${shown < rows.length ? ` · showing ${shown.toLocaleString()}` : ""}`
+    ? `${rows.length.toLocaleString()} ${state.view === "permits" ? (state.roofOnly ? "open roof permits" : "open permits") : "properties"}${orderPhrase()}${shown < rows.length ? ` · showing ${shown.toLocaleString()}` : ""}`
     : "";
   const more = shown < rows.length
     ? `<button type="button" class="btn tonal more" data-more>Show ${Math.min(PAGE, rows.length - shown).toLocaleString()} more</button>`
     : "";
   document.getElementById("results").innerHTML = rows.length
-    ? `<table><thead><tr><th>Property</th><th>Roof age</th><th>Open permits</th><th>Contractor</th><th>BBB</th><th></th></tr></thead>
+    ? `<table><thead><tr>${sortHeader("Property", "property")}${sortHeader("Roof age", "age")}${sortHeader("Open permits", "open")}${sortHeader("Contractor", "contractor")}<th>BBB</th><th></th></tr></thead>
       <tbody>${rows.slice(0, shown).map((lead) => `<tr data-prclid="${lead.prclid}"${state.selected === lead.prclid ? ' class="selected"' : ""}>
         <td><span class="addr">${escapeHtml(lead.address.replace(/\s+/g, " "))}</span><span class="sub">${escapeHtml(lead.city)} · ${distanceLabel(lead)}</span></td>
         <td>${ageCell(lead)}</td>
@@ -213,6 +261,7 @@ function setStatus(text) {
 }
 
 async function run() {
+  state.sort = { key: null, dir: -1 };
   const current = filters();
   document.getElementById("age-filter").setAttribute("aria-disabled", String(state.view !== "roofs"));
   if (![current.lat, current.lon, current.radius].every(Number.isFinite) || current.radius <= 0) {
@@ -319,6 +368,16 @@ function closeDrawer() {
 }
 
 document.addEventListener("click", (event) => {
+  const sort = event.target.closest("[data-sort]");
+  if (sort) {
+    const key = sort.dataset.sort;
+    const descFirst = key === "age" || key === "open";
+    state.sort = state.sort.key === key
+      ? { key, dir: state.sort.dir * -1 }
+      : { key, dir: descFirst ? -1 : 1 };
+    render();
+    return;
+  }
   const save = event.target.closest("[data-save]");
   if (save) {
     const lead = findLead(save.dataset.save);
