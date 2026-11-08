@@ -1,0 +1,18 @@
+{
+  "name": "newcastle-roofing-crm",
+  "private": true,
+  "type": "module",
+  "description": "Roofing CRM static pages and the Ask function.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test ask.test.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.0",
+    "ai": "^5.0.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^5.0.0",
+    "typescript": "^5.6.0"
+  }
+}

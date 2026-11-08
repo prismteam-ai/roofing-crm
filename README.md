@@ -1,5 +1,9 @@
 # Roofing CRM & Lead Identification UI
 
+Hosted CRM: https://roofing-crm-newcastle-adamkalamchi-3665s-projects.vercel.app
+
+The map reads the New Castle County lead set published by the Oracle pipeline. Outreach, scheduling, and invoices are disabled placeholders. Saved leads stay in the browser.
+
 ## Context
 
 Roofing companies need a practical CRM for finding and qualifying residential and commercial roofing leads in their service area. The immediate requirement is a map-based CRM that helps sales teams explore local properties, surface roofs that are aging or have stalled open permits, and turn those signals into actionable outreach opportunities.
