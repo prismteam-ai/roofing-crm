@@ -4,6 +4,8 @@ const FILES = {
   tiles: GATEWAY + TILE_INDEX_CID,
 };
 const PAGE = 200;
+// Ask writes one line per property, so the answer lists up to this many matches.
+const ASK_LINES = 50;
 const CITIES = {
   wilmington: [39.739072, -75.539787],
   newark: [39.683723, -75.749657],
@@ -556,7 +558,7 @@ async function retrieve(question) {
       return Boolean(permit?.contractor_name);
     });
   }
-  const rows = leads.slice(0, 8).map((lead) => {
+  const rows = leads.slice(0, ASK_LINES).map((lead) => {
     const open = (area.byParcel.get(lead.prclid) || []).filter((item) => item.permit_status === "open");
     const permit = open.find((item) => item.is_roof) || open[0];
     return {
