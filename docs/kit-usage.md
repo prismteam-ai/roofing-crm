@@ -67,3 +67,7 @@ from IPFS/Elephant directly, only through the pipeline MCP.
 - Review UI for traces (`ReviewStore` exists, no endpoint/panel).
 - `queryDataset` is only meaningful against the real pipeline MCP.
 - Offline agent parsing is heuristic; the LLM path has only been exercised with a mock model in CI.
+
+## AWS CDK stack (synthesized, not deployed)
+
+`infra/cdk` holds the kit-shaped deployment (`apply-engineering-guidelines`: CDK as the only IaC tool, `us-east-2`; `metagross`: tRPC router on Lambda behind an API Gateway HTTP API, web on Amplify): `lib/api-stack.ts` defines the Lambda (`apps/api/src/lambda.ts`, Hono wrapped with `hono/aws-lambda`), HTTP API, Amplify app, versioned S3 bucket and a dead-letter queue with a CloudWatch alarm. CI runs its assertion test and `cdk synth`. It was **not deployed**: the live runtime for this assessment is the Docker container on a VM behind Caddy, which costs nothing extra; `cdk deploy` would need an AWS account and a GitHub token in Secrets Manager.

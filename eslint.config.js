@@ -13,6 +13,7 @@ export default tseslint.config(
       '**/playwright-report/**',
       '**/test-results/**',
       'data/**',
+      '**/cdk.out/**',
     ],
   },
   js.configs.recommended,

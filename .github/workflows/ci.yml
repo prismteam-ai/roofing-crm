@@ -5,7 +5,7 @@ on:
   pull_request:
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
           path: apps/web/test-results
           retention-days: 7
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -47,3 +47,19 @@ jobs:
           for i in $(seq 1 20); do curl -fsS localhost:8080/health && break || sleep 1; done
           curl -fsS localhost:8080/build.json
           docker rm -f crm
+  cdk-synth:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @roofing/infra-cdk test
+      - name: cdk synth (not deployed; kit-shaped AWS stack)
+        run: pnpm --filter @roofing/infra-cdk synth

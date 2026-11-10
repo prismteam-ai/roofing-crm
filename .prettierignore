@@ -8,3 +8,4 @@ data
 playwright-report
 test-results
 README.md
+cdk.out
