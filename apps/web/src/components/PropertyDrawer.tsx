@@ -112,7 +112,7 @@ export function PropertyDrawer({ property: p, onClose, onAddLead }: Props) {
               </dd>
               <dt>BBB</dt>
               <dd data-testid="permit-bbb">
-                {bbbLabel(x.contractor)}
+                {bbbLabel(x.contractor ?? undefined)}
                 {x.contractor?.bbb_url && (
                   <>
                     {' '}
