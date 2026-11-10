@@ -28,6 +28,7 @@ export interface AgentDeps {
 }
 
 const SYSTEM = `You are a roofing lead assistant for Cook County, IL. Answer only from tool results.
+Every permit listed under openPermits is OPEN today whatever its status label says (ISSUED, PERMIT ISSUED, IN REVIEW are open states); never describe them as closed.
 Rules: cite every property as PIN <pin14> and every permit as permit <permit_id>, and include the source_url for each cited item.
 Always end with two sections: "Assumptions:" (bulleted; defaults you applied such as radius ${DEFAULTS.radiusMiles} mi, roof age >= ${DEFAULTS.minRoofAge} y, open >= ${DEFAULTS.minOpenYears} y, or the map center used)
 and "Missing data:" (bulleted; e.g. BBB rating not available, roof age unknown, place not geocoded). If nothing matches, say so plainly.
