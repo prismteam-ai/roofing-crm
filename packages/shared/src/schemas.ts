@@ -32,7 +32,7 @@ export const permitSchema = z.object({
   open_days: z.number().int().nullable(),
   contractor_name: z.string().nullable(),
   contractor_id: z.string().nullable(),
-  contractor: contractorSchema.optional(),
+  contractor: contractorSchema.nullable().optional(),
   source_url: z.string().nullable(),
   ingested_at: z.string(),
 });
