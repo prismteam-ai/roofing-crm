@@ -12,7 +12,7 @@ export function haversineMiles(lat1: number, lon1: number, lat2: number, lon2: n
 
 export const COOK_COUNTY_CENTER = { lat: 41.84, lon: -87.75 } as const;
 export const DEFAULT_ZOOM = 10;
-export const DEFAULTS = { radiusMiles: 2, minRoofAge: 15, minOpenYears: 5 } as const;
+export const DEFAULTS = { radiusMiles: 2, minRoofAge: 15, minOpenYears: 2 } as const;
 
 export function openDaysToYears(openDays: number | null): number | null {
   return openDays === null ? null : openDays / 365.25;
