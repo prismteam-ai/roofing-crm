@@ -6,12 +6,12 @@
 
 ## Runtime and access
 
-| Item        | Value                                                                                                                                                        |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CRM         | https://roofing-crm.108-142-177-43.nip.io                                                                                                                    |
-| Credentials | none                                                                                                                                                         |
-| Data        | consumed live from the pipeline's MCP (`findProperties`, `getProperty`, `getDatasetInfo`), dataset run `<RUN_ID>`, root CID `<ROOT_CID>` shown in the footer |
-| Build       | `/build.json`; CI: <CI_RUN_URL>                                                                                                                              |
+| Item        | Value                                                                                                                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CRM         | https://roofing-crm.108-142-177-43.nip.io                                                                                                                                                                             |
+| Credentials | none                                                                                                                                                                                                                  |
+| Data        | consumed live from the pipeline's MCP (`findProperties`, `getProperty`, `getDatasetInfo`), dataset run `20261110T221716Z`, root CID `bafybeifhz5scgrouns27paizph5zpnlxhovr6vcm6skecu67msh4ffjlaq` shown in the footer |
+| Build       | `/build.json`; CI: https://github.com/vsterian/roofing-crm/actions/runs/42923040441                                                                                                                                   |
 
 ## What was built
 
@@ -42,10 +42,10 @@
 
 ## Known limitations
 
-- BBB: <BBB_STATUS>.
+- BBB: 21 contractors have archived A+ profiles, labelled stale with capture dates; 129 are unavailable after the robots check was blocked. Others are unknown, never presented as current ratings.
 - Open duration counts from permit issue date (sources carry no completion date).
 - Outbound messaging is not implemented (out of scope); the sections are shown disabled.
 
 ## Self-assessment
 
-Slowking self-run: `docs/slowking-self-assessment.md` (<SCORE>).
+Slowking self-run: `docs/slowking-self-assessment-2026-11-11-r1.md` (79/100 provisional, PR and demo gates pending).
