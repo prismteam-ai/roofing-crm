@@ -60,6 +60,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build
       - run: pnpm --filter @roofing/infra-cdk test
       - name: cdk synth (not deployed; kit-shaped AWS stack)
         run: pnpm --filter @roofing/infra-cdk synth
