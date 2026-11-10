@@ -119,7 +119,7 @@ export function SearchPanel({ center, onCenter, filters, onFilters, loading }: P
           onChange={(e) => set({ longOpenOnly: e.target.checked })}
           data-testid="long-open-toggle"
         />
-        Long-open only (≥
+        Long-open only (open ≥
         <input
           type="number"
           className="inline"

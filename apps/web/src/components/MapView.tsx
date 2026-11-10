@@ -136,8 +136,8 @@ export function MapView({
         e.className = 'prop-marker';
         e.dataset.testid = 'property-marker';
         e.dataset.pin = p.pin14;
-        e.title = p.address;
-        e.setAttribute('aria-label', `Property ${p.address}`);
+        e.title = p.address ?? p.pin14;
+        e.setAttribute('aria-label', `Property ${p.address ?? p.pin14}`);
         mk = new maplibregl.Marker({ element: e, anchor: 'center' })
           .setLngLat([p.lon, p.lat])
           .addTo(m);

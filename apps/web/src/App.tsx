@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DEFAULTS, type Property, type SearchResult } from '@roofing/shared';
+import { DEFAULTS, rankProperties, type Property, type SearchResult } from '@roofing/shared';
 import { api } from './api.js';
 import { ChatPanel } from './components/ChatPanel.js';
 import { Footer, type DatasetMeta } from './components/Footer.js';
@@ -71,7 +71,9 @@ export function App() {
         if (!cancelled) setResult(r);
       })
       .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (cancelled) return;
+        setResult(null); // never show stale rows next to an error
+        setError(e instanceof Error ? e.message : String(e));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -94,7 +96,7 @@ export function App() {
     try {
       await api.leads.create.mutate({
         pin14: p.pin14,
-        address: `${p.address}, ${p.city ?? ''} ${p.zip ?? ''}`.trim(),
+        address: `${p.address ?? 'address unknown'}, ${p.city ?? ''} ${p.zip ?? ''}`.trim(),
         lat: p.lat,
         lon: p.lon,
         roofAgeYears: p.roof_age_years,
@@ -111,7 +113,11 @@ export function App() {
     }
   };
 
-  const properties = result?.properties ?? [];
+  // permit toggle on: longest-open permit first (the MCP already ranks this way; re-sort so the
+  // list order never depends on the dataset client)
+  const properties = filters.openPermitsOnly
+    ? rankProperties(result?.properties ?? [])
+    : (result?.properties ?? []);
 
   return (
     <div className="app">
@@ -129,6 +135,7 @@ export function App() {
               />
               <ResultsList
                 properties={properties}
+                totalInRadius={result?.total_in_radius ?? null}
                 minRoofAge={filters.minRoofAge}
                 selected={selected?.pin14 ?? null}
                 onSelect={setSelected}
@@ -158,6 +165,7 @@ export function App() {
         <Footer
           meta={meta}
           resultCount={result ? properties.length : null}
+          totalInRadius={result?.total_in_radius ?? null}
           source={result?.source ?? null}
           leadCount={leadCount}
         />

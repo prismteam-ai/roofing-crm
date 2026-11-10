@@ -36,17 +36,23 @@ Env (see `.env.example`): `OPENAI_API_KEY` (agent + embeddings; empty = offline 
 `DatasetClient` (`apps/api/src/dataset/client.ts`) is the only seam to the dataset. Both
 implementations return the same Zod-validated shapes. The pipeline MCP implements exactly:
 
-| tool             | input                                                                                 | output                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `findProperties` | `{lat, lon, radiusMiles, minRoofAge?, openRoofingPermitsOnly?, minOpenDays?, limit?}` | `{properties: [property + permits[+contractor]], source: {runId, rootCid, syncedAt}}` |
-| `getProperty`    | `{pin14}`                                                                             | `{property \| null, source}`                                                          |
-| `queryDataset`   | `{sql, limit}` (read-only)                                                            | `{columns, rows, truncated}`                                                          |
-| `getDatasetInfo` | `{}`                                                                                  | `{runId, rootCid, counts, limitations}`                                               |
+| tool             | input                                                                                 | output                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `findProperties` | `{lat, lon, radiusMiles, minRoofAge?, openRoofingPermitsOnly?, minOpenDays?, limit?}` | `{properties: [property + permits[+contractor]], total_in_radius, source: {runId, rootCid, syncedAt}}` |
+| `getProperty`    | `{pin14}`                                                                             | `{property \| null, source}`                                                                           |
+| `queryDataset`   | `{sql, limit}` (read-only)                                                            | `{columns, rows, truncated}`                                                                           |
+| `getDatasetInfo` | `{}`                                                                                  | `{runId, rootCid, counts, limitations}`                                                                |
 
 `findProperties` semantics (mirrored by the fixture client): within radius (haversine); default
 filter = roof age >= `minRoofAge` **or** open roofing permit; `openRoofingPermitsOnly` restricts to
 properties with an open roofing permit whose longest open duration >= `minOpenDays`. Results are
-ranked by longest open roofing permit (days desc), then roof age desc.
+ranked by longest open roofing permit (days desc), then roof age desc. `total_in_radius` counts every
+property in the radius before filters/limit; the UI shows "Showing N of M in radius" (limit 300).
+
+The Zod contracts are tolerant of the pipeline: `z.object` strips unknown columns (pin10, geohash6,
+distance_miles, run_id, ...), `is_out_of_area`/`address` are nullable, `roof_age_basis` includes
+`new_construction_permit`, `bbb_state` includes `stale`. `fixtures/dataset/live-sample.json` holds
+rows captured from the live MCP and is parsed in `apps/api/src/dataset/mcp.test.ts`.
 
 The MCP client retries with backoff/jitter (`withRetry`), bounds concurrency (p-limit 4) and
 reconnects on failure. Results are validated with the same Zod schemas on receipt.

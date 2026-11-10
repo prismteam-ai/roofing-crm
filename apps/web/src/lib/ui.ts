@@ -16,15 +16,22 @@ export const fmtRoofAge = (
 ): string =>
   p.roof_age_years === null
     ? 'unknown'
-    : `${p.roof_age_years.toFixed(1)} y (${p.roof_age_basis === 'reroof_permit' ? 'last re-roof permit' : 'year built'}, ${p.roof_age_confidence ?? 'unknown'} confidence)`;
+    : `${p.roof_age_years.toFixed(1)} y (${BASIS_LABEL[p.roof_age_basis ?? 'year_built']}, ${p.roof_age_confidence ?? 'unknown'} confidence)`;
+
+const BASIS_LABEL: Record<NonNullable<Property['roof_age_basis']>, string> = {
+  reroof_permit: 'last re-roof permit',
+  new_construction_permit: 'new-construction permit',
+  year_built: 'year built',
+};
 
 export const bbbLabel = (
   c: { bbb_rating: string | null; bbb_state: string } | undefined,
 ): string => {
-  if (!c) return 'BBB: not available';
-  if (c.bbb_state === 'confirmed_present' && c.bbb_rating) return `BBB: ${c.bbb_rating}`;
+  if (!c) return 'BBB: not available (no contractor match)';
+  if (c.bbb_rating)
+    return `BBB: ${c.bbb_rating}${c.bbb_state === 'stale' ? ' (archived copy)' : ''}`;
   if (c.bbb_state === 'confirmed_empty') return 'BBB: no rating on file';
-  return 'BBB: not available';
+  return 'BBB: not available (no public source)';
 };
 
 export const EXAMPLE_PROMPTS = [

@@ -51,7 +51,7 @@ export async function retrieveEvidence(
     if (!p) continue;
     seen.set(pin, {
       pin14: p.pin14,
-      address: `${p.address}, ${p.city ?? ''} ${p.zip ?? ''}`.trim(),
+      address: `${p.address ?? 'address unknown'}, ${p.city ?? ''} ${p.zip ?? ''}`.trim(),
       roofAgeYears: p.roof_age_years,
       roofAgeBasis: p.roof_age_basis,
       openPermits: p.permits

@@ -38,6 +38,8 @@ describe('agent offline mode', () => {
       context: { lat: 41.885, lon: -87.7845, radiusMiles: 2 },
     });
     expect(out.assumptions.join(' ')).toMatch(/map center/);
+    expect(out.assumptions.join(' ')).toMatch(/used 2 mi \(current map radius\)/);
+    expect(out.answer).toMatch(/within 2 mi/);
     expect(out.answer).toMatch(/roofs >= 20 y/);
   });
   it('asks for a location when none is available', async () => {

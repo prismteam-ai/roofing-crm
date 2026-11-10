@@ -9,6 +9,7 @@ import { markerColor } from '../lib/ui.js';
 
 interface Props {
   properties: Property[];
+  totalInRadius: number | null;
   minRoofAge: number;
   selected: string | null;
   onSelect: (p: Property) => void;
@@ -19,6 +20,7 @@ interface Props {
 
 export function ResultsList({
   properties,
+  totalInRadius,
   minRoofAge,
   selected,
   onSelect,
@@ -36,7 +38,14 @@ export function ResultsList({
       </h2>
       {error && (
         <p className="error" data-testid="search-error">
-          {error}
+          Search failed: {error}
+        </p>
+      )}
+      {center && !error && totalInRadius !== null && (
+        <p className="muted" data-testid="results-total">
+          Showing {properties.length.toLocaleString('en-US')} of{' '}
+          {totalInRadius.toLocaleString('en-US')} in radius
+          {totalInRadius > properties.length && ' · narrow the radius or filters to see more'}
         </p>
       )}
       {!center && <p className="muted">Drop a pin to list roofs in range.</p>}
@@ -65,7 +74,7 @@ export function ResultsList({
                 />
                 <span className="result-main">
                   <span className="addr">
-                    {p.address}, {p.city}
+                    {p.address ?? 'address unknown'}, {p.city}
                   </span>
                   <span className="sub">
                     PIN {p.pin14} · roof{' '}

@@ -8,11 +8,12 @@ export type DatasetMeta = DatasetInfo & {
 interface Props {
   meta: DatasetMeta | null;
   resultCount: number | null;
+  totalInRadius: number | null;
   source: DatasetSource | null;
   leadCount: number | null;
 }
 
-export function Footer({ meta, resultCount, source, leadCount }: Props) {
+export function Footer({ meta, resultCount, totalInRadius, source, leadCount }: Props) {
   const runId = source?.runId ?? meta?.runId ?? 'loading…';
   const rootCid = source?.rootCid ?? meta?.rootCid ?? null;
   return (
@@ -28,7 +29,13 @@ export function Footer({ meta, resultCount, source, leadCount }: Props) {
               .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v.toLocaleString('en-US')}`)
               .join(' · ')
           : 'counts: …'}
-        {resultCount !== null && <> · in radius: {resultCount}</>}
+        {resultCount !== null && (
+          <>
+            {' '}
+            · showing {resultCount.toLocaleString('en-US')}
+            {totalInRadius !== null && <> of {totalInRadius.toLocaleString('en-US')} in radius</>}
+          </>
+        )}
         {leadCount !== null && <> · leads: {leadCount}</>}
       </span>
       <span data-testid="footer-build">

@@ -135,6 +135,9 @@ export function createAgent(deps: AgentDeps) {
   async function askOffline(input: AgentAsk, traceId: string): Promise<AgentAnswer> {
     const parsed = parseQuestion(input.question);
     const d = applyDefaults(parsed);
+    // no place in the question: the UI's current pin + radius are the default context
+    if (!parsed.place && parsed.radiusMiles === null && input.context?.radiusMiles)
+      d.radiusMiles = input.context.radiusMiles;
     const assumptions: string[] = [];
     const missing: string[] = [
       'Answer generated in offline mode (no OPENAI_API_KEY): templated from retrieval, not an LLM.',
@@ -161,7 +164,9 @@ export function createAgent(deps: AgentDeps) {
       };
     }
     if (parsed.radiusMiles === null)
-      assumptions.push(`Radius not given; used ${d.radiusMiles} mi.`);
+      assumptions.push(
+        `Radius not given; used ${d.radiusMiles} mi${!parsed.place && input.context?.radiusMiles ? ' (current map radius)' : ''}.`,
+      );
     if (parsed.openPermits && parsed.minOpenYears === null)
       assumptions.push(`Open duration not given; used >= ${d.minOpenYears} years.`);
     if (!parsed.openPermits && parsed.minRoofAge === null)
@@ -293,7 +298,7 @@ export function createAgent(deps: AgentDeps) {
       }),
     };
     const ctx = input.context
-      ? `Current map center: lat ${input.context.lat}, lon ${input.context.lon}${input.context.radiusMiles ? `, radius ${input.context.radiusMiles} mi` : ''}.`
+      ? `Current map center: lat ${input.context.lat}, lon ${input.context.lon}${input.context.radiusMiles ? `, radius ${input.context.radiusMiles} mi` : ''}. If the question names no place, use this center and radius as the default context.`
       : 'No map center provided.';
     const result = await generateText({
       model: llm,

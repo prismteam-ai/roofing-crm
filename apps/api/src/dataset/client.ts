@@ -29,7 +29,8 @@ export const queryDatasetInput = z.object({
 });
 export const queryDatasetOutput = z.object({
   columns: z.array(z.string()),
-  rows: z.array(z.array(z.unknown())),
+  // pipeline emits one record per row; older contract was positional arrays
+  rows: z.array(z.union([z.array(z.unknown()), z.record(z.string(), z.unknown())])),
   truncated: z.boolean().default(false),
 });
 

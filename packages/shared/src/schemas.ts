@@ -9,7 +9,8 @@ export const contractorSchema = z.object({
   ever_disciplined: z.boolean().nullable(),
   bbb_rating: z.string().nullable(),
   bbb_url: z.string().nullable(),
-  bbb_state: z.enum(['confirmed_present', 'confirmed_empty', 'unavailable', 'unknown']),
+  /** `stale` = rating read from an archived copy of the BBB profile. */
+  bbb_state: z.enum(['confirmed_present', 'confirmed_empty', 'unavailable', 'unknown', 'stale']),
   source_url: z.string().nullable(),
   ingested_at: z.string(),
 });
@@ -38,9 +39,12 @@ export const permitSchema = z.object({
 });
 export type Permit = z.infer<typeof permitSchema>;
 
+// Pipeline rows carry extra columns (pin10, geohash6, distance_miles, run_id, ...); z.object strips
+// them, so additive pipeline changes never break parsing. lat/lon stay required: findProperties only
+// returns rows inside a radius, which needs coordinates.
 export const propertySchema = z.object({
   pin14: z.string(),
-  address: z.string(),
+  address: z.string().nullable(),
   city: z.string().nullable(),
   zip: z.string().nullable(),
   lat: z.number(),
@@ -54,11 +58,11 @@ export const propertySchema = z.object({
   mail_city: z.string().nullable(),
   mail_state: z.string().nullable(),
   mail_zip: z.string().nullable(),
-  is_out_of_area: z.boolean(),
+  is_out_of_area: z.boolean().nullable(),
   last_sale_date: z.string().nullable(),
   last_sale_price: z.number().nullable(),
   roof_age_years: z.number().nullable(),
-  roof_age_basis: z.enum(['reroof_permit', 'year_built']).nullable(),
+  roof_age_basis: z.enum(['reroof_permit', 'new_construction_permit', 'year_built']).nullable(),
   roof_age_confidence: z.enum(['high', 'medium', 'low']).nullable(),
   source_url: z.string().nullable(),
   ingested_at: z.string(),
@@ -86,6 +90,8 @@ export type SearchInput = z.infer<typeof searchInputSchema>;
 
 export const searchResultSchema = z.object({
   properties: z.array(propertySchema),
+  /** Matches in the radius before `limit` was applied (pipeline MCP; fixture client mirrors it). */
+  total_in_radius: z.number().int().optional(),
   source: datasetSourceSchema,
 });
 export type SearchResult = z.infer<typeof searchResultSchema>;

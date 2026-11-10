@@ -35,6 +35,8 @@ test.describe('README demo walk', () => {
     await expect(count).not.toHaveText('–');
     const before = Number(await count.textContent());
     expect(before).toBeGreaterThan(0);
+    await expect(page.getByTestId('results-total')).toContainText(/Showing \d+ of \d+ in radius/);
+    await expect(page.getByTestId('footer-counts')).toContainText(/showing \d+ of \d+ in radius/);
 
     // radius slider 2 -> 5 miles widens the list
     await page.getByTestId('radius-slider').fill('5');
@@ -54,6 +56,8 @@ test.describe('README demo walk', () => {
     await expect(page.getByTestId('search-loading')).toBeHidden();
     await expect(page.getByTestId('result-item').first()).toContainText('open permit');
     const openCount = Number(await count.textContent());
+    await expect(page.getByTestId('search-panel')).toContainText('open ≥');
+    await expect(page.getByTestId('min-open-years')).toHaveValue('2');
     await page.getByTestId('long-open-toggle').check();
     await expect(page.getByTestId('search-loading')).toBeHidden();
     await expect.poll(async () => Number(await count.textContent())).toBeLessThanOrEqual(openCount);
@@ -74,6 +78,7 @@ test.describe('README demo walk', () => {
     await expect(page.getByTestId('permit-status').first()).toContainText('open');
     await expect(page.getByTestId('permit-contractor').first()).toBeVisible();
     await expect(page.getByTestId('permit-bbb').first()).toContainText('BBB:');
+    await expect(page.getByTestId('permit-license').first()).toContainText('license');
     await expect(page.getByTestId('permit-source-link').first()).toHaveAttribute(
       'href',
       /^https:\/\//,

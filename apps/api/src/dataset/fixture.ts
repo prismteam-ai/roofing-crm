@@ -58,7 +58,15 @@ export class FixtureDatasetClient implements DatasetClient {
     };
   }
   async findProperties(input: FindPropertiesInput) {
-    return { properties: filterProperties(this.data.properties, input), source: this.source };
+    // pipeline semantics: total_in_radius counts every property in the radius, before filters/limit
+    const total_in_radius = this.data.properties.filter(
+      (p) => haversineMiles(input.lat, input.lon, p.lat, p.lon) <= input.radiusMiles,
+    ).length;
+    return {
+      properties: filterProperties(this.data.properties, input),
+      total_in_radius,
+      source: this.source,
+    };
   }
   async getProperty(pin14: string) {
     return {

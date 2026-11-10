@@ -13,7 +13,7 @@ export function PropertyDrawer({ property: p, onClose, onAddLead }: Props) {
   return (
     <aside className="drawer" data-testid="property-drawer" aria-label="Property details">
       <header>
-        <h2>{p.address}</h2>
+        <h2>{p.address ?? 'address unknown'}</h2>
         <button type="button" onClick={onClose} aria-label="Close" data-testid="drawer-close">
           ×
         </button>
@@ -106,19 +106,29 @@ export function PropertyDrawer({ property: p, onClose, onAddLead }: Props) {
               <dt>Contractor</dt>
               <dd data-testid="permit-contractor">
                 {x.contractor_name ?? 'not listed'}
-                {x.contractor?.license_number &&
-                  ` · license ${x.contractor.license_number} (${x.contractor.license_status ?? 'status unknown'})`}
+                {x.contractor && (
+                  <span data-testid="permit-license">
+                    {' '}
+                    · license {x.contractor.license_number ?? 'number unknown'} (
+                    {x.contractor.license_status ?? 'status unknown'})
+                  </span>
+                )}
                 {x.contractor?.ever_disciplined && <span className="badge warn">disciplined</span>}
               </dd>
               <dt>BBB</dt>
               <dd data-testid="permit-bbb">
                 {bbbLabel(x.contractor ?? undefined)}
-                {x.contractor?.bbb_url && (
+                {x.contractor?.bbb_rating && x.contractor.bbb_url && (
                   <>
                     {' '}
                     ·{' '}
-                    <a href={x.contractor.bbb_url} target="_blank" rel="noreferrer">
-                      profile
+                    <a
+                      href={x.contractor.bbb_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-testid="permit-bbb-link"
+                    >
+                      BBB profile
                     </a>
                   </>
                 )}
