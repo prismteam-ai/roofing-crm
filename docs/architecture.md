@@ -48,6 +48,10 @@ filter = roof age >= `minRoofAge` **or** open roofing permit; `openRoofingPermit
 properties with an open roofing permit whose longest open duration >= `minOpenDays`. Results are
 ranked by longest open roofing permit (days desc), then roof age desc. `total_in_radius` counts every
 property in the radius before filters/limit; the UI shows "Showing N of M in radius" (limit 300).
+The API over-fetches 500 rows (the MCP returns nearest-first) and re-ranks them by lead value before
+capping (`rankForLeads` in `apps/api/src/routers/search.ts`): permit toggle off = roof age desc, ties
+by distance; toggle on = longest-open permit, then roof age. Ceiling: in dense areas the 500 nearest
+rows still cluster near the centre; narrow the radius or filters to spread further.
 
 The Zod contracts are tolerant of the pipeline: `z.object` strips unknown columns (pin10, geohash6,
 distance_miles, run_id, ...), `is_out_of_area`/`address` are nullable, `roof_age_basis` includes
