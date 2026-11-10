@@ -11,7 +11,7 @@ services:
     environment:
       PORT: 8080
     volumes:
-      - ./data:/app/data
+      - crm-data:/app/data
     restart: unless-stopped
     healthcheck:
       test:
@@ -25,3 +25,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  # Named volume: initialized with the image's /app/data ownership (user node), unlike a bind mount.
+  crm-data:
