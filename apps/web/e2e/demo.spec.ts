@@ -146,6 +146,10 @@ test.describe('README demo walk', () => {
     await expect(page.getByTestId('lead-item')).toHaveCount(0);
     await page.getByTestId('lead-filter-status').selectOption('');
     await expect(page.getByTestId('lead-item')).toHaveCount(1);
+    page.once('dialog', (dialog) => void dialog.dismiss());
+    await page.getByTestId('lead-delete').first().click();
+    await expect(page.getByTestId('lead-item')).toHaveCount(1);
+    page.once('dialog', (dialog) => void dialog.accept());
     await page.getByTestId('lead-delete').first().click();
     await expect(page.getByTestId('lead-item')).toHaveCount(0);
   });
@@ -217,4 +221,28 @@ test.describe('README demo walk', () => {
     await expect(page.getByTestId('search-loading')).toBeHidden();
     await expect(page.getByTestId('results-count')).not.toHaveText('–');
   });
+});
+
+test('mobile places the map between search controls and candidate list', async ({ page }) => {
+  test.skip((page.viewportSize()?.width ?? 1440) > 768, 'mobile layout only');
+  await page.goto('/');
+  const controls = await page.locator('.search-controls').boundingBox();
+  const map = await page.locator('.map-wrap').boundingBox();
+  const list = await page.locator('.candidates-panel').boundingBox();
+  expect(controls).not.toBeNull();
+  expect(map).not.toBeNull();
+  expect(list).not.toBeNull();
+  expect(map!.y).toBeGreaterThanOrEqual(controls!.y + controls!.height - 1);
+  expect(list!.y).toBeGreaterThanOrEqual(map!.y + map!.height - 1);
+});
+
+test('desktop property drawer leaves the agent accessible', async ({ page }) => {
+  test.skip((page.viewportSize()?.width ?? 1440) <= 1100, 'three-column desktop layout only');
+  await page.goto('/');
+  await expect(page.getByTestId('search-loading')).toBeHidden();
+  await page.getByTestId('result-item').first().click();
+  await expect(page.getByTestId('property-drawer')).toBeVisible();
+  await page.getByTestId('chat-input').click();
+  await expect(page.getByTestId('property-drawer')).toBeHidden();
+  await expect(page.getByTestId('chat-input')).toBeFocused();
 });

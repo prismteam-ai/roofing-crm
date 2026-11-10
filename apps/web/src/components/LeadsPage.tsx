@@ -53,6 +53,8 @@ export function LeadsPage({ center, onCount }: Props) {
     await load();
   };
   const remove = async (id: string) => {
+    const lead = leads.find((l) => l.id === id);
+    if (!window.confirm(`Delete lead for ${lead?.address ?? 'this property'}?`)) return;
     await api.leads.delete.mutate({ id });
     await load();
   };

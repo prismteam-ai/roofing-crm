@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { FakeEmbeddingService, JsonlTraceSink, OpenAIEmbeddingService } from '@roofing/rag';
+import {
+  CachedEmbeddingService,
+  FakeEmbeddingService,
+  JsonlTraceSink,
+  OpenAIEmbeddingService,
+} from '@roofing/rag';
 import { createAgent } from './agent/agent.js';
 import { createNominatimGeocoder } from './agent/geocode.js';
 import { createApp } from './app.js';
@@ -17,7 +22,9 @@ export function bootstrap() {
   const geocode = createNominatimGeocoder();
   const agent = createAgent({
     dataset,
-    embedder: llmKey ? new OpenAIEmbeddingService(llmKey) : new FakeEmbeddingService(),
+    embedder: new CachedEmbeddingService(
+      llmKey ? new OpenAIEmbeddingService(llmKey) : new FakeEmbeddingService(),
+    ),
     traceSink: new JsonlTraceSink(env.TRACE_DIR),
     geocode,
     openaiApiKey: llmKey,

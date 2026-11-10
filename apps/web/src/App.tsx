@@ -153,7 +153,7 @@ export function App() {
         </header>
         {page === 'map' ? (
           <div className="map-layout">
-            <section className="panel left">
+            <section className="panel search-controls">
               <SearchPanel
                 center={center}
                 isDefaultCenter={isDefaultCenter}
@@ -162,6 +162,8 @@ export function App() {
                 onFilters={setFilters}
                 loading={loading}
               />
+            </section>
+            <section className="panel candidates-panel">
               <ResultsList
                 properties={properties}
                 totalInRadius={result?.total_in_radius ?? null}
@@ -184,7 +186,7 @@ export function App() {
                 selected={selected?.pin14 ?? null}
               />
             </section>
-            <section className="panel right">
+            <section className="panel right" onFocusCapture={() => setSelected(null)}>
               <ChatPanel center={center} radiusMiles={filters.radiusMiles} />
             </section>
           </div>

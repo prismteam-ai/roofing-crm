@@ -115,3 +115,9 @@ question, no secrets (authorization headers redacted).
 - No BBB live lookups; the UI shows the rating the dataset carries or "BBB: not available".
 - Workspace id is a sandbox, not authentication.
 - Single container, SQLite file in a volume: fine for a demo VM, not horizontally scalable.
+
+## Runtime refinements from the first hosted evaluation
+
+The embedding service uses a process-local LRU cache capped at 2,000 vectors. Keys include the provider model and exact document text: unchanged area evidence can be reused across questions, while changed content or model is embedded again. Failed/incomplete provider responses are not cached. The cache is lost on restart, retains no disk copy, and returns vector copies to protect later retrieval from caller mutation.
+
+At widths up to 768 px the order is search controls, map, candidates, then chat. At desktop widths the property drawer leaves the chat column exposed; focusing chat closes the drawer. Long permit identifiers wrap, and deleting a lead requires confirmation.
