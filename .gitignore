@@ -3,6 +3,7 @@
 !.env.example
 node_modules
 data/
+!apps/web/src/data/
 *.duckdb
 *.duckdb.wal
 *.parquet

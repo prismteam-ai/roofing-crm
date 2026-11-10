@@ -9,3 +9,4 @@ playwright-report
 test-results
 README.md
 cdk.out
+apps/web/src/data/*.json

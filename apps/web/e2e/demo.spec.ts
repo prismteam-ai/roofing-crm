@@ -24,7 +24,38 @@ test.describe('README demo walk', () => {
     await expect(page.getByTestId('footer-counts')).toContainText('property: 300');
     await expect(page.getByTestId('footer-counts')).toContainText('permit: 350');
     await expect(page.getByTestId('footer-build')).toContainText('agent: offline');
-    await expect(page.getByTestId('results-count')).toHaveText('–');
+    await expect(page.getByTestId('topbar-run')).toHaveText('run_2026-11-01T00-00-00Z_fixture');
+    await expect(page.getByTestId('topbar-root-cid')).toHaveText('pending');
+    // default centre: results and markers without any interaction
+    await expect(page.getByTestId('default-centre-note')).toBeVisible();
+    await expect(page.getByTestId('search-loading')).toBeHidden();
+    await expect(page.getByTestId('results-count')).not.toHaveText('–');
+    await expect(page.getByTestId('property-marker').first()).toBeAttached();
+    await expect(page.getByTestId('center-readout')).toContainText('42.04510, -87.68770');
+  });
+
+  test('centres on a place from the select, free text, and filters by confidence', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.getByTestId('place-select').selectOption('Oak Park');
+    await expect(page.getByTestId('default-centre-note')).toBeHidden();
+    await expect(page.getByTestId('center-readout')).toContainText('41.88500, -87.78450');
+    await page.getByTestId('place-input').fill('Skokie');
+    await page.getByTestId('place-go').click();
+    await expect(page.getByTestId('place-message')).toContainText('Centred on Skokie');
+    await expect(page.getByTestId('center-readout')).toContainText('42.03240, -87.74160');
+    await page.getByTestId('place-input').fill('nowhere-xyz');
+    await page.getByTestId('place-go').click();
+    await expect(page.getByTestId('place-message')).toContainText('No match');
+
+    await dropPin(page);
+    const count = page.getByTestId('results-count');
+    const all = Number(await count.textContent());
+    await page.getByTestId('confidence-select').selectOption('high');
+    await expect.poll(async () => Number(await count.textContent())).toBeLessThan(all);
+    await page.getByTestId('confidence-select').selectOption('low');
+    await expect(count).toHaveText(String(all));
   });
 
   test('drop a pin, set radius, roofs > 15y, open permits, drawer, add lead', async ({ page }) => {

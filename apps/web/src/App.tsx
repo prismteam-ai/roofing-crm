@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { DEFAULTS, rankProperties, type Property, type SearchResult } from '@roofing/shared';
+import {
+  CONFIDENCE_RANK,
+  DEFAULT_CENTER,
+  DEFAULTS,
+  rankProperties,
+  type Property,
+  type SearchResult,
+} from '@roofing/shared';
 import { api } from './api.js';
 import { ChatPanel } from './components/ChatPanel.js';
 import { Footer, type DatasetMeta } from './components/Footer.js';
@@ -15,13 +22,20 @@ export type Center = { lat: number; lon: number };
 
 export function App() {
   const [page, setPage] = useState(hashPage(location.hash));
-  const [center, setCenter] = useState<Center | null>(null);
+  // first load: default centre so markers appear immediately; any user pin replaces it
+  const [center, setCenterState] = useState<Center | null>(DEFAULT_CENTER);
+  const [isDefaultCenter, setIsDefaultCenter] = useState(true);
+  const setCenter = (c: Center) => {
+    setIsDefaultCenter(false);
+    setCenterState(c);
+  };
   const [filters, setFilters] = useState<Filters>({
     radiusMiles: DEFAULTS.radiusMiles,
     minRoofAge: DEFAULTS.minRoofAge,
     openPermitsOnly: false,
     longOpenOnly: false,
     minOpenYears: DEFAULTS.minOpenYears,
+    minConfidence: 'low',
   });
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -115,19 +129,33 @@ export function App() {
 
   // permit toggle on: longest-open permit first (the MCP already ranks this way; re-sort so the
   // list order never depends on the dataset client)
-  const properties = filters.openPermitsOnly
-    ? rankProperties(result?.properties ?? [])
-    : (result?.properties ?? []);
+  // client-side: drop rows whose roof-age confidence is below the selected floor ('low' = keep all)
+  const confident = (result?.properties ?? []).filter(
+    (p) =>
+      filters.minConfidence === 'low' ||
+      (p.roof_age_confidence !== null &&
+        CONFIDENCE_RANK[p.roof_age_confidence] >= CONFIDENCE_RANK[filters.minConfidence]),
+  );
+  const properties = filters.openPermitsOnly ? rankProperties(confident) : confident;
 
   return (
     <div className="app">
       <Sidebar page={page} leadCount={leadCount} />
       <main className="main">
+        <header className="topbar" data-testid="topbar">
+          <span>
+            Dataset run <code data-testid="topbar-run">{meta?.runId ?? '…'}</code>
+          </span>
+          <span>
+            root CID <code data-testid="topbar-root-cid">{meta?.rootCid ?? 'pending'}</code>
+          </span>
+        </header>
         {page === 'map' ? (
           <div className="map-layout">
             <section className="panel left">
               <SearchPanel
                 center={center}
+                isDefaultCenter={isDefaultCenter}
                 onCenter={setCenter}
                 filters={filters}
                 onFilters={setFilters}

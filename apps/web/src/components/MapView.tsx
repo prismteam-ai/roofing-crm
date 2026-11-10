@@ -3,6 +3,7 @@ import maplibregl, { type GeoJSONSource } from 'maplibre-gl';
 import { COOK_COUNTY_CENTER, DEFAULT_ZOOM, type Property } from '@roofing/shared';
 import type { Center } from '../App.js';
 import { markerColor } from '../lib/ui.js';
+import cookCounty from '../data/cook-county.json';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
@@ -64,6 +65,14 @@ export function MapView({
       onPinRef.current({ lat: +e.lngLat.lat.toFixed(6), lon: +e.lngLat.lng.toFixed(6) }),
     );
     m.on('load', () => {
+      // Cook County boundary (US Census TIGERweb, simplified at build time; see src/data)
+      m.addSource('cook-county', { type: 'geojson', data: cookCounty as GeoJSON.GeoJSON });
+      m.addLayer({
+        id: 'cook-county-line',
+        type: 'line',
+        source: 'cook-county',
+        paint: { 'line-color': '#1f2937', 'line-width': 2, 'line-dasharray': [3, 2] },
+      });
       m.addSource('radius', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       m.addLayer({
         id: 'radius-fill',
@@ -176,6 +185,9 @@ export function MapView({
         </span>
         <span>
           <i style={{ background: '#6b7280' }} /> other match
+        </span>
+        <span>
+          <i className="line" /> Cook County boundary
         </span>
       </div>
     </div>

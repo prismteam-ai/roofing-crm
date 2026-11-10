@@ -652,3 +652,28 @@ dd {
     grid-template-columns: 100px 1fr;
   }
 }
+
+.topbar {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--muted, #555);
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+.topbar code {
+  font-size: 11px;
+}
+.search-panel select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.legend i.line {
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed #1f2937;
+  background: none;
+}

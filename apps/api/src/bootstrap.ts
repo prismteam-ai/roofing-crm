@@ -14,11 +14,12 @@ export function bootstrap() {
   const dataset = createDatasetClient(env);
   const leads = new LeadsRepo(env.LEADS_DB_PATH);
   const llmKey = env.AGENT_MODE === 'offline' ? undefined : env.OPENAI_API_KEY;
+  const geocode = createNominatimGeocoder();
   const agent = createAgent({
     dataset,
     embedder: llmKey ? new OpenAIEmbeddingService(llmKey) : new FakeEmbeddingService(),
     traceSink: new JsonlTraceSink(env.TRACE_DIR),
-    geocode: createNominatimGeocoder(),
+    geocode,
     openaiApiKey: llmKey,
   });
 
@@ -32,6 +33,9 @@ export function bootstrap() {
       return { commit: process.env.GIT_COMMIT ?? 'dev', builtAt: new Date().toISOString() };
     }
   }
-  const app = createApp({ dataset, leads, agent, build: readBuild() }, { webDist: env.WEB_DIST });
+  const app = createApp(
+    { dataset, leads, agent, geocode, build: readBuild() },
+    { webDist: env.WEB_DIST },
+  );
   return { app, env, dataset, agent };
 }

@@ -86,7 +86,14 @@ hashed fake embedding offline) and ranked by cosine. Every answer is traced to
 ## Web
 
 No router/state library: hash routes (`#/`, `#/leads`), React state, tRPC vanilla client. Map is
-MapLibre GL with OpenFreeMap "liberty" vector tiles (no key). Markers are coloured by lead signal
+MapLibre GL with OpenFreeMap "liberty" vector tiles (no key). First load searches a default centre
+(Evanston, 2 mi) so markers appear immediately; a note says so until the user drops a pin, picks one
+of the 12 hardcoded Cook County places (`PLACES` in `packages/shared`) or geocodes free text / a ZIP
+through `meta.geocode` (offline gazetteer first, then Nominatim). "Lowest roof-age confidence" is a
+client-side filter on `roof_age_confidence`. The Cook County boundary is a dashed line layer from
+`apps/web/src/data/cook-county.json` (US Census TIGERweb State_County layer, GEOID 17031, fetched
+2026-11-11 and Douglas-Peucker simplified to ~5 KB). The top bar shows the dataset run id and root CID
+("pending" until the pipeline reports one). Markers are coloured by lead signal
 (red = open roofing permit, orange = roof over threshold, grey = other match). The footer always
 shows dataset run id, root CID, record counts, in-radius count, lead count, agent mode and build
 commit. Disabled sidebar sections are real disabled buttons with a `title`/tooltip.

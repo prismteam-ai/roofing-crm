@@ -16,7 +16,13 @@ const agent = createAgent({
   traceSink: new InMemoryTraceSink(),
   geocode: gazetteerGeocoder,
 });
-const app = createApp({ dataset, leads, agent, build: { commit: 'test', builtAt: 'now' } });
+const app = createApp({
+  dataset,
+  leads,
+  agent,
+  geocode: gazetteerGeocoder,
+  build: { commit: 'test', builtAt: 'now' },
+});
 afterAll(() => leads.close());
 
 const client = (workspaceId?: string) =>
@@ -45,6 +51,10 @@ describe('http endpoints', () => {
 
 describe('tRPC routers', () => {
   const c = client('ws-test');
+  it('meta.geocode resolves gazetteer places and returns null for unknown', async () => {
+    expect(await c.meta.geocode.query({ query: 'Skokie' })).toMatchObject({ lat: 42.0324 });
+    expect(await c.meta.geocode.query({ query: 'nowhere-xyz' })).toBeNull();
+  });
   it('search.properties returns ranked rows and source', async () => {
     const r = await c.search.properties.query({
       lat: 41.8781,

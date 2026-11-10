@@ -1,5 +1,6 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import type { Agent } from './agent/agent.js';
+import type { Geocoder } from './agent/geocode.js';
 import type { DatasetClient } from './dataset/client.js';
 import type { LeadsRepo } from './leads/repo.js';
 
@@ -7,6 +8,7 @@ export interface Deps {
   dataset: DatasetClient;
   leads: LeadsRepo;
   agent: Agent;
+  geocode: Geocoder;
   build: { commit: string; builtAt: string };
 }
 
