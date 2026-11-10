@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AgentAnswer } from '@roofing/shared';
 import { api } from '../api.js';
 import type { Center } from '../App.js';
-import { EXAMPLE_PROMPTS } from '../lib/ui.js';
+import { agentRetrySeconds, EXAMPLE_PROMPTS } from '../lib/ui.js';
 
 interface Turn {
   question: string;
@@ -14,10 +14,18 @@ export function ChatPanel({ center, radiusMiles }: { center: Center | null; radi
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [retryUntil, setRetryUntil] = useState(0);
+  const [now, setNow] = useState(Date.now);
+  const retrySeconds = Math.max(0, Math.ceil((retryUntil - now) / 1000));
+  useEffect(() => {
+    if (retryUntil <= Date.now()) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [retryUntil]);
 
   const ask = async (question: string) => {
     const q = question.trim();
-    if (!q || busy) return;
+    if (!q || busy || retrySeconds > 0) return;
     setInput('');
     setBusy(true);
     setTurns((t) => [...t, { question: q }]);
@@ -28,6 +36,12 @@ export function ChatPanel({ center, radiusMiles }: { center: Center | null; radi
       });
       setTurns((t) => t.map((x, i) => (i === t.length - 1 ? { ...x, answer } : x)));
     } catch (e) {
+      const delay = agentRetrySeconds(e);
+      if (delay) {
+        const now = Date.now();
+        setNow(now);
+        setRetryUntil(now + delay * 1000);
+      }
       setTurns((t) =>
         t.map((x, i) =>
           i === t.length - 1 ? { ...x, error: e instanceof Error ? e.message : String(e) } : x,
@@ -51,6 +65,7 @@ export function ChatPanel({ center, radiusMiles }: { center: Center | null; radi
             key={p}
             type="button"
             className="chip"
+            disabled={busy || retrySeconds > 0}
             onClick={() => void ask(p)}
             data-testid="example-prompt"
           >
@@ -94,6 +109,14 @@ export function ChatPanel({ center, radiusMiles }: { center: Center | null; radi
             {t.error && (
               <div className="error" data-testid="chat-error">
                 {t.error}
+                <button
+                  type="button"
+                  disabled={busy || retrySeconds > 0}
+                  onClick={() => void ask(t.question)}
+                  data-testid="chat-retry"
+                >
+                  {retrySeconds > 0 ? `Retry in ${retrySeconds}s` : 'Retry question'}
+                </button>
               </div>
             )}
             {!t.answer && !t.error && <div className="muted">Thinking…</div>}
@@ -114,7 +137,11 @@ export function ChatPanel({ center, radiusMiles }: { center: Center | null; radi
           data-testid="chat-input"
           aria-label="Question"
         />
-        <button type="submit" disabled={busy || !input.trim()} data-testid="chat-send">
+        <button
+          type="submit"
+          disabled={busy || retrySeconds > 0 || !input.trim()}
+          data-testid="chat-send"
+        >
           Ask
         </button>
       </form>

@@ -246,3 +246,45 @@ test('desktop property drawer leaves the agent accessible', async ({ page }) => 
   await expect(page.getByTestId('property-drawer')).toBeHidden();
   await expect(page.getByTestId('chat-input')).toBeFocused();
 });
+
+test('agent429 explains the wait and retries the same question after cooldown', async ({
+  page,
+}) => {
+  let failOnce = true;
+  await page.route('**/trpc/agent.ask*', async (route) => {
+    if (!failOnce) return route.continue();
+    failOnce = false;
+    await route.fulfill({
+      status: 429,
+      contentType: 'application/json',
+      headers: { 'retry-after': '1' },
+      body: JSON.stringify([
+        {
+          error: {
+            message: 'The agent is busy. Retry in1 second.',
+            code: -32029,
+            data: {
+              code: 'TOO_MANY_REQUESTS',
+              httpStatus: 429,
+              path: 'agent.ask',
+              retryAfterSeconds: 1,
+            },
+          },
+        },
+      ]),
+    });
+  });
+  await page.goto('/');
+  await page.getByTestId('chat-input').fill('roofs older than20 years near Oak Park');
+  await page.getByTestId('chat-send').click();
+  await expect(page.getByTestId('chat-error')).toContainText('The agent is busy');
+  const retry = page.getByTestId('chat-retry');
+  await expect(retry).toBeDisabled();
+  await expect(retry).toBeEnabled({ timeout: 5000 });
+  await retry.click();
+  await expect(page.getByTestId('chat-answer')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId('chat-question')).toHaveText([
+    'roofs older than20 years near Oak Park',
+    'roofs older than20 years near Oak Park',
+  ]);
+});

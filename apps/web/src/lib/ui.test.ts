@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Property } from '@roofing/shared';
 import { bbbLabel } from '@roofing/shared';
 import {
+  agentRetrySeconds,
   fmtMoney,
   fmtRoofAge,
   hashPage,
@@ -65,4 +66,17 @@ describe('ui helpers', () => {
     expect(hashPage('#/leads')).toBe('leads');
     expect(hashPage('')).toBe('map');
   });
+});
+
+it('reads finite positive agent retry timing without trusting arbitrary errors', () => {
+  expect(agentRetrySeconds({ data: { retryAfterSeconds: 4.2 } })).toBe(5);
+  for (const value of [
+    null,
+    'error',
+    {},
+    { data: null },
+    { data: { retryAfterSeconds: Infinity } },
+    { data: { retryAfterSeconds: -1 } },
+  ])
+    expect(agentRetrySeconds(value)).toBe(0);
 });

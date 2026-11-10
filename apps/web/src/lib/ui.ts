@@ -41,3 +41,14 @@ export const publishedSuffix = (m: { runId: string; publishedRunId?: string } | 
 
 export const hashPage = (hash: string): 'map' | 'leads' =>
   hash.startsWith('#/leads') ? 'leads' : 'map';
+
+/** tRPC sends structured retry timing for admission failures; other errors remain retryable. */
+export function agentRetrySeconds(error: unknown): number {
+  if (!error || typeof error !== 'object' || !('data' in error)) return 0;
+  const data = error.data;
+  if (!data || typeof data !== 'object' || !('retryAfterSeconds' in data)) return 0;
+  const seconds = data.retryAfterSeconds;
+  return typeof seconds === 'number' && Number.isFinite(seconds) && seconds > 0
+    ? Math.ceil(seconds)
+    : 0;
+}

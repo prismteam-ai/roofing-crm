@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { MockLanguageModelV2 } from 'ai/test';
 import { FakeEmbeddingService, InMemoryTraceSink } from '@roofing/rag';
 import { FixtureDatasetClient } from '../dataset/fixture.js';
-import { createAgent } from './agent.js';
+import type { Property } from '@roofing/shared';
+import { AGENT_LIMITS } from './limits.js';
+import { areaStats, createAgent } from './agent.js';
 import { gazetteerGeocoder } from './geocode.js';
 
 const dataset = new FixtureDatasetClient();
@@ -62,7 +64,8 @@ describe('agent llm mode (mock model)', () => {
     ).properties[0]!.pin14;
     let call = 0;
     const model = new MockLanguageModelV2({
-      doGenerate: async () => {
+      doGenerate: async (options) => {
+        expect(options.maxOutputTokens).toBe(AGENT_LIMITS.outputTokensPerStep);
         call++;
         const usage = { inputTokens: 1, outputTokens: 1, totalTokens: 2 };
         if (call === 1)
@@ -122,4 +125,72 @@ describe('agent llm mode (mock model)', () => {
       'find_properties',
     ]);
   });
+});
+
+it('counts only open roofing properties at the labelled five-year threshold', () => {
+  const p = (days: number | null, open = true, roofing = true) =>
+    ({
+      roof_age_years: null,
+      permits: [{ is_roofing: roofing, status_is_open: open, open_days: days }],
+    }) as Property;
+  expect(
+    areaStats([p(731), p(1826), p(1827), p(3000, false), p(3000, true, false), p(null)]),
+  ).toMatchObject({ openRoofingPermits: 4, openOver5y: 1 });
+});
+
+it('bounds actual tool execution even if the model emits too many parallel calls', async () => {
+  const d = deps();
+  const geocode = vi.fn(gazetteerGeocoder);
+  let calls = 0;
+  const model = new MockLanguageModelV2({
+    doGenerate: async () => {
+      calls++;
+      return {
+        content:
+          calls === 1
+            ? Array.from({ length: AGENT_LIMITS.toolCalls + 1 }, (_, i) => ({
+                type: 'tool-call' as const,
+                toolCallId: `g${i}`,
+                toolName: 'geocode_place',
+                input: JSON.stringify({ query: 'Evanston' }),
+              }))
+            : [{ type: 'text' as const, text: 'Narrow your request.' }],
+        finishReason: calls === 1 ? ('tool-calls' as const) : ('stop' as const),
+        usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        warnings: [],
+      };
+    },
+  });
+  const answer = await createAgent({ ...d, model, geocode }).ask({ question: 'Evanston' });
+  expect(answer.answer).toBe('Narrow your request.');
+  expect(geocode).toHaveBeenCalledTimes(AGENT_LIMITS.toolCalls);
+  expect(calls).toBe(2);
+});
+
+it('reserves the last model step for a final answer instead of another tool loop', async () => {
+  let calls = 0;
+  const model = new MockLanguageModelV2({
+    doGenerate: async (options) => {
+      calls++;
+      const final = options.toolChoice?.type === 'none';
+      return {
+        content: final
+          ? [{ type: 'text' as const, text: 'Final bounded answer.' }]
+          : [
+              {
+                type: 'tool-call' as const,
+                toolCallId: `step${calls}`,
+                toolName: 'geocode_place',
+                input: JSON.stringify({ query: 'Evanston' }),
+              },
+            ],
+        finishReason: final ? ('stop' as const) : ('tool-calls' as const),
+        usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        warnings: [],
+      };
+    },
+  });
+  const out = await createAgent({ ...deps(), model }).ask({ question: 'Evanston' });
+  expect(calls).toBe(AGENT_LIMITS.steps);
+  expect(out.answer).toBe('Final bounded answer.');
 });

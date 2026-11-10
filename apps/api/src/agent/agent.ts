@@ -13,6 +13,7 @@ import {
 import type { DatasetClient } from '../dataset/client.js';
 import { logger } from '../logger.js';
 import type { Geocoder } from './geocode.js';
+import { AGENT_LIMITS, budgetEmbeddings, budgetToolResult } from './limits.js';
 import { applyDefaults, parseQuestion } from './parse.js';
 import { retrieveEvidence, type Evidence } from './retrieval.js';
 
@@ -48,7 +49,7 @@ const findInput = z.object({
     .number()
     .optional()
     .describe('permit must have been open at least this many years'),
-  limit: z.number().int().min(1).max(50).default(10),
+  limit: z.number().int().min(1).max(10).default(10),
 });
 
 function sections(evidence: Evidence[]): AgentAnswer['citations'] {
@@ -72,6 +73,31 @@ function parseBullets(text: string, heading: RegExp): string[] {
     .filter(Boolean);
 }
 
+export function areaStats(properties: Property[]) {
+  const open = properties.filter((p) => p.permits.some((x) => x.is_roofing && x.status_is_open));
+  const longOpen = properties.filter((p) =>
+    p.permits.some((x) => x.is_roofing && x.status_is_open && (x.open_days ?? 0) >= 5 * 365.25),
+  );
+  const ages = properties.map((p) => p.roof_age_years).filter((a): a is number => a !== null);
+  const contractors = new Map<string, number>();
+  for (const p of properties)
+    for (const x of p.permits)
+      if (x.is_roofing && x.contractor_name)
+        contractors.set(x.contractor_name, (contractors.get(x.contractor_name) ?? 0) + 1);
+  return {
+    properties: properties.length,
+    roofsOver15y: properties.filter((p) => (p.roof_age_years ?? 0) >= DEFAULTS.minRoofAge).length,
+    openRoofingPermits: open.length,
+    openOver5y: longOpen.length,
+    roofAgeKnown: ages.length,
+    avgRoofAge: ages.length ? +(ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1) : null,
+    topContractors: [...contractors.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, permits]) => ({ name, permits })),
+  };
+}
+
 export function createAgent(deps: AgentDeps) {
   const model =
     deps.model ??
@@ -79,7 +105,11 @@ export function createAgent(deps: AgentDeps) {
       ? createOpenAI({ apiKey: deps.openaiApiKey })(deps.modelId ?? 'gpt-4.1-mini')
       : undefined);
 
-  async function fetchArea(input: z.infer<typeof findInput>, question: string) {
+  async function fetchArea(
+    input: z.infer<typeof findInput>,
+    question: string,
+    embedder = deps.embedder,
+  ) {
     const res = await deps.dataset.findProperties({
       lat: input.lat,
       lon: input.lon,
@@ -90,7 +120,7 @@ export function createAgent(deps: AgentDeps) {
         input.minOpenYears === undefined ? undefined : Math.round(input.minOpenYears * 365.25),
       limit: 300,
     });
-    const retrieved = await retrieveEvidence(question, res.properties, deps.embedder, {
+    const retrieved = await retrieveEvidence(question, res.properties, embedder, {
       k: input.limit,
       minRoofAge: input.minRoofAge,
       openOnly: input.openPermitsOnly,
@@ -102,34 +132,6 @@ export function createAgent(deps: AgentDeps) {
       matched: res.properties.length,
       properties: res.properties,
       source: res.source,
-    };
-  }
-
-  function areaStats(properties: Property[]) {
-    const open = properties.filter((p) => p.permits.some((x) => x.is_roofing && x.status_is_open));
-    const longOpen = properties.filter((p) =>
-      p.permits.some(
-        (x) =>
-          x.is_roofing && x.status_is_open && (x.open_days ?? 0) >= DEFAULTS.minOpenYears * 365.25,
-      ),
-    );
-    const ages = properties.map((p) => p.roof_age_years).filter((a): a is number => a !== null);
-    const contractors = new Map<string, number>();
-    for (const p of properties)
-      for (const x of p.permits)
-        if (x.is_roofing && x.contractor_name)
-          contractors.set(x.contractor_name, (contractors.get(x.contractor_name) ?? 0) + 1);
-    return {
-      properties: properties.length,
-      roofsOver15y: properties.filter((p) => (p.roof_age_years ?? 0) >= DEFAULTS.minRoofAge).length,
-      openRoofingPermits: open.length,
-      openOver5y: longOpen.length,
-      roofAgeKnown: ages.length,
-      avgRoofAge: ages.length ? +(ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1) : null,
-      topContractors: [...contractors.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([name, permits]) => ({ name, permits })),
     };
   }
 
@@ -216,7 +218,7 @@ export function createAgent(deps: AgentDeps) {
         .join('; ');
       return `${i + 1}. PIN ${e.pin14} — ${e.address}; roof age ${e.roofAgeYears ?? 'unknown'}${e.roofAgeBasis ? ` (${e.roofAgeBasis})` : ''}${permits ? `; ${permits}` : ''}. Source: ${e.sourceUrl ?? 'n/a'}`;
     });
-    const head = `${area.matched} propert${area.matched === 1 ? 'y' : 'ies'} match within ${d.radiusMiles} mi (${parsed.openPermits ? `open roofing permits >= ${d.minOpenYears} y` : `roofs >= ${d.minRoofAge} y old or open roofing permits`}). Area: ${stats.openRoofingPermits} with open roofing permits, ${stats.openOver5y} open >= 5 y, ${stats.roofsOver15y} roofs >= 15 y. Dataset run ${area.source.runId}.`;
+    const head = `${area.matched} propert${area.matched === 1 ? 'y' : 'ies'} match within ${d.radiusMiles} mi (${parsed.openPermits ? `open roofing permits >= ${d.minOpenYears} y` : `roofs >= ${d.minRoofAge} y old or open roofing permits`}). Area sample (${stats.properties} returned properties): ${stats.openRoofingPermits} with open roofing permits, ${stats.openOver5y} open >= 5 y, ${stats.roofsOver15y} roofs >= 15 y. Dataset run ${area.source.runId}.`;
     const answer = [
       head,
       '',
@@ -237,11 +239,18 @@ export function createAgent(deps: AgentDeps) {
     llm: LanguageModel,
   ): Promise<AgentAnswer> {
     const collected: Evidence[] = [];
+    const embedder = budgetEmbeddings(deps.embedder);
+    let toolCalls = 0;
+    const consumeTool = () => {
+      if (++toolCalls > AGENT_LIMITS.toolCalls)
+        throw new Error('Question exceeded the tool budget; narrow the request.');
+    };
     const tools = {
       geocode_place: tool({
         description: 'Geocode a place name (city, neighbourhood, address) in the US to lat/lon.',
         inputSchema: z.object({ query: z.string() }),
         execute: async ({ query }) => {
+          consumeTool();
           const r = await deps.geocode(query);
           await deps.traceSink.write({
             traceId,
@@ -249,7 +258,7 @@ export function createAgent(deps: AgentDeps) {
             stage: 'tool',
             data: { tool: 'geocode_place', query, found: !!r },
           });
-          return r ?? { error: `No result for "${query}"` };
+          return budgetToolResult(r ?? { error: `No result for "${query}"` });
         },
       }),
       find_properties: tool({
@@ -257,7 +266,8 @@ export function createAgent(deps: AgentDeps) {
           'Find roofing lead candidates around a point: old roofs and/or open roofing permits. Returns cited evidence rows.',
         inputSchema: findInput,
         execute: async (args) => {
-          const area = await fetchArea(args, input.question);
+          consumeTool();
+          const area = await fetchArea(args, input.question, embedder);
           collected.push(...area.evidence);
           await deps.traceSink.write({
             traceId,
@@ -270,11 +280,11 @@ export function createAgent(deps: AgentDeps) {
               returned: area.evidence.length,
             },
           });
-          return {
+          return budgetToolResult({
             matched: area.matched,
             source: area.source,
             evidence: area.evidence.map(({ score: _s, ...e }) => e),
-          };
+          });
         },
       }),
       summarize_area: tool({
@@ -286,6 +296,7 @@ export function createAgent(deps: AgentDeps) {
           radiusMiles: z.number().min(0.1).max(50).default(DEFAULTS.radiusMiles),
         }),
         execute: async (args) => {
+          consumeTool();
           const res = await deps.dataset.findProperties({ ...args, limit: 500 });
           const stats = areaStats(res.properties);
           await deps.traceSink.write({
@@ -294,7 +305,12 @@ export function createAgent(deps: AgentDeps) {
             stage: 'tool',
             data: { tool: 'summarize_area', args, stats },
           });
-          return { ...stats, source: res.source };
+          return budgetToolResult({
+            ...stats,
+            scope:
+              'Counts describe the returned sample (at most 500 properties), not the entire area.',
+            source: res.source,
+          });
         },
       }),
     };
@@ -306,7 +322,13 @@ export function createAgent(deps: AgentDeps) {
       system: SYSTEM,
       prompt: `${ctx}\n\nQuestion: ${input.question}`,
       tools,
-      stopWhen: stepCountIs(6),
+      stopWhen: stepCountIs(AGENT_LIMITS.steps),
+      prepareStep: ({ stepNumber }) => ({
+        toolChoice: stepNumber >= AGENT_LIMITS.steps - 1 ? 'none' : 'auto',
+      }),
+      maxOutputTokens: AGENT_LIMITS.outputTokensPerStep,
+      maxRetries: 0,
+      abortSignal: AbortSignal.timeout(AGENT_LIMITS.modelTimeoutMs),
     });
     const text = result.text.trim();
     const citations = sections(
