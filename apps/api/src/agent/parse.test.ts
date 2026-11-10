@@ -28,7 +28,7 @@ describe('parseQuestion', () => {
     expect(applyDefaults(p)).toEqual({ radiusMiles: 2, minOpenYears: undefined, minRoofAge: 15 });
     expect(applyDefaults(parseQuestion('permits in Chicago'))).toEqual({
       radiusMiles: 2,
-      minOpenYears: 5,
+      minOpenYears: 2,
       minRoofAge: undefined,
     });
   });
