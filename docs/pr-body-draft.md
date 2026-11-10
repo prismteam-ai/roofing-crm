@@ -1,8 +1,8 @@
 # Roofing CRM & lead identification — Cook County, IL (map, leads, RAG agent)
 
 **Live runtime:** https://roofing-crm.108-142-177-43.nip.io (public, no credentials; each browser gets its own lead workspace)
-**Demo video:** <RELEASE_VIDEO_URL>
-**Companion PR (data pipeline):** <PIPELINE_PR_URL>
+**Demo video:** Pending final checks; no video recorded yet.
+**Companion PR (data pipeline):** Pending creation of the companion draft.
 
 ## Runtime and access
 
