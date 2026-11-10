@@ -181,6 +181,18 @@ test.describe('README demo walk', () => {
     await expect(page.getByTestId('chat-answer')).toHaveCount(2, { timeout: 20_000 });
   });
 
+  test('never scrolls horizontally, including with the drawer open', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('search-loading')).toBeHidden();
+    await expect(page.getByTestId('result-item').first()).toBeVisible();
+    const noOverflow = () =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+    expect(await noOverflow()).toBe(true);
+    await page.getByTestId('result-item').first().click();
+    await expect(page.getByTestId('property-drawer')).toBeVisible();
+    expect(await noOverflow()).toBe(true);
+  });
+
   test('shows disabled future sections with coming-soon tooltips', async ({ page }) => {
     await page.goto('/');
     for (const id of [

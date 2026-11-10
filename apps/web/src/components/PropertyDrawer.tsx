@@ -1,5 +1,6 @@
 import { formatOpenDuration, type Property } from '@roofing/shared';
-import { bbbLabel, fmtDate, fmtMoney, fmtRoofAge } from '../lib/ui.js';
+import { bbbLabel } from '@roofing/shared';
+import { fmtDate, fmtMoney, fmtRoofAge } from '../lib/ui.js';
 
 interface Props {
   property: Property;
@@ -117,7 +118,7 @@ export function PropertyDrawer({ property: p, onClose, onAddLead }: Props) {
               </dd>
               <dt>BBB</dt>
               <dd data-testid="permit-bbb">
-                {bbbLabel(x.contractor ?? undefined)}
+                {bbbLabel(x.contractor)}
                 {x.contractor?.bbb_rating && x.contractor.bbb_url && (
                   <>
                     {' '}

@@ -9,14 +9,14 @@ import {
 } from '@roofing/shared';
 import { api } from './api.js';
 import { ChatPanel } from './components/ChatPanel.js';
-import { Footer, type DatasetMeta } from './components/Footer.js';
+import { Cid, Footer, type DatasetMeta } from './components/Footer.js';
 import { LeadsPage } from './components/LeadsPage.js';
 import { MapView } from './components/MapView.js';
 import { PropertyDrawer } from './components/PropertyDrawer.js';
 import { ResultsList } from './components/ResultsList.js';
 import { SearchPanel, type Filters } from './components/SearchPanel.js';
 import { Sidebar } from './components/Sidebar.js';
-import { hashPage } from './lib/ui.js';
+import { hashPage, publishedSuffix } from './lib/ui.js';
 
 export type Center = { lat: number; lon: number };
 
@@ -147,7 +147,8 @@ export function App() {
             Dataset run <code data-testid="topbar-run">{meta?.runId ?? '…'}</code>
           </span>
           <span>
-            root CID <code data-testid="topbar-root-cid">{meta?.rootCid ?? 'pending'}</code>
+            root CID <Cid cid={meta?.rootCid ?? 'pending'} testId="topbar-root-cid" />
+            {publishedSuffix(meta)}
           </span>
         </header>
         {page === 'map' ? (

@@ -24,21 +24,20 @@ const BASIS_LABEL: Record<NonNullable<Property['roof_age_basis']>, string> = {
   year_built: 'year built',
 };
 
-export const bbbLabel = (
-  c: { bbb_rating: string | null; bbb_state: string } | undefined,
-): string => {
-  if (!c) return 'BBB: not available (no contractor match)';
-  if (c.bbb_rating)
-    return `BBB: ${c.bbb_rating}${c.bbb_state === 'stale' ? ' (archived copy)' : ''}`;
-  if (c.bbb_state === 'confirmed_empty') return 'BBB: no rating on file';
-  return 'BBB: not available (no public source)';
-};
-
 export const EXAMPLE_PROMPTS = [
   'Show me open roofing permits older than five years within five miles of Evanston',
   'Which roofs older than 20 years are within 2 miles of Oak Park?',
   'Summarize roofing opportunities around the current pin',
+  'Which open roofing permits within 2 miles of 2428 W Hutchinson St, Chicago list a contractor with a BBB rating?',
 ];
+
+/** `bafy…isce` for narrow screens; short values pass through. */
+export const shortCid = (cid: string): string =>
+  cid.length > 16 ? `${cid.slice(0, 4)}…${cid.slice(-4)}` : cid;
+
+/** "run <runId> (published run <publishedRunId>)" suffix when the served run is not the published one. */
+export const publishedSuffix = (m: { runId: string; publishedRunId?: string } | null): string =>
+  m?.publishedRunId && m.publishedRunId !== m.runId ? ` (published run ${m.publishedRunId})` : '';
 
 export const hashPage = (hash: string): 'map' | 'leads' =>
   hash.startsWith('#/leads') ? 'leads' : 'map';

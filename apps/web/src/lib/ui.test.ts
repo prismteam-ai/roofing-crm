@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { Property } from '@roofing/shared';
-import { bbbLabel, fmtMoney, fmtRoofAge, hashPage, markerColor, MARKER_COLORS } from './ui.js';
+import { bbbLabel } from '@roofing/shared';
+import {
+  fmtMoney,
+  fmtRoofAge,
+  hashPage,
+  markerColor,
+  MARKER_COLORS,
+  publishedSuffix,
+  shortCid,
+} from './ui.js';
 
 const base = {
   roof_age_years: 20,
@@ -23,19 +32,33 @@ describe('ui helpers', () => {
       fmtRoofAge({ roof_age_years: null, roof_age_basis: null, roof_age_confidence: null }),
     ).toBe('unknown');
   });
+  const T = '2026-11-01T03:12:44Z';
   it('labels BBB honestly', () => {
     expect(bbbLabel(undefined)).toBe('BBB: not available (no contractor match)');
-    expect(bbbLabel({ bbb_rating: 'A+', bbb_state: 'confirmed_present' })).toBe('BBB: A+');
-    expect(bbbLabel({ bbb_rating: null, bbb_state: 'confirmed_empty' })).toBe(
+    expect(bbbLabel({ bbb_rating: 'A+', bbb_state: 'confirmed_present', ingested_at: T })).toBe(
+      'BBB: A+',
+    );
+    expect(bbbLabel({ bbb_rating: null, bbb_state: 'confirmed_empty', ingested_at: T })).toBe(
       'BBB: no rating on file',
     );
-    expect(bbbLabel({ bbb_rating: null, bbb_state: 'unavailable' })).toBe(
+    expect(bbbLabel({ bbb_rating: null, bbb_state: 'unavailable', ingested_at: T })).toBe(
       'BBB: not available (no public source)',
     );
-    expect(bbbLabel({ bbb_rating: null, bbb_state: 'unknown' })).toBe(
-      'BBB: not available (no public source)',
+    expect(bbbLabel({ bbb_rating: null, bbb_state: 'unknown', ingested_at: T })).toBe(
+      'BBB: unknown (not checked)',
     );
-    expect(bbbLabel({ bbb_rating: 'B', bbb_state: 'stale' })).toBe('BBB: B (archived copy)');
+    expect(bbbLabel({ bbb_rating: 'B', bbb_state: 'stale', ingested_at: T })).toBe(
+      'BBB: B (archived copy, 2026-11-01)',
+    );
+  });
+
+  it('truncates long CIDs and flags a different published run', () => {
+    const cid = 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi';
+    expect(shortCid(cid)).toBe('bafy…bzdi');
+    expect(shortCid('pending')).toBe('pending');
+    expect(publishedSuffix({ runId: 'r1', publishedRunId: 'r1' })).toBe('');
+    expect(publishedSuffix({ runId: 'r1', publishedRunId: 'r0' })).toBe(' (published run r0)');
+    expect(publishedSuffix(null)).toBe('');
   });
   it('formats money and routes by hash', () => {
     expect(fmtMoney(250000)).toBe('$250,000');

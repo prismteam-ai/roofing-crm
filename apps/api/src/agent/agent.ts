@@ -30,6 +30,7 @@ export interface AgentDeps {
 const SYSTEM = `You are a roofing lead assistant for Cook County, IL. Answer only from tool results.
 Every permit listed under openPermits is OPEN today whatever its status label says (ISSUED, PERMIT ISSUED, IN REVIEW are open states); never describe them as closed.
 Rules: cite every property as PIN <pin14> and every permit as permit <permit_id>, and include the source_url for each cited item.
+Report a contractor's BBB standing with the permit's bbb field verbatim ("BBB: A+", "BBB: A+ (archived copy, <date>)", "BBB: not available (<reason>)", "BBB: unknown (not checked)"); never invent or upgrade a rating.
 Always end with two sections: "Assumptions:" (bulleted; defaults you applied such as radius ${DEFAULTS.radiusMiles} mi, roof age >= ${DEFAULTS.minRoofAge} y, open >= ${DEFAULTS.minOpenYears} y, or the map center used)
 and "Missing data:" (bulleted; e.g. BBB rating not available, roof age unknown, place not geocoded). If nothing matches, say so plainly.
 Workflow: geocode_place when the user names a place (otherwise use the provided map center), then find_properties, optionally summarize_area. Keep answers under 250 words.`;
@@ -210,7 +211,7 @@ export function createAgent(deps: AgentDeps) {
       const permits = e.openPermits
         .map(
           (x) =>
-            `permit ${x.permitId} (${x.status ?? 'status unknown'}, open ${formatOpenDuration(x.openDays)}, contractor ${x.contractor ?? 'unknown'}, BBB ${x.bbbRating ?? 'not available'}) ${x.sourceUrl ?? ''}`,
+            `permit ${x.permitId} (${x.status ?? 'status unknown'}, open ${formatOpenDuration(x.openDays)}, contractor ${x.contractor ?? 'unknown'}, ${x.bbb}) ${x.sourceUrl ?? ''}`,
         )
         .join('; ');
       return `${i + 1}. PIN ${e.pin14} — ${e.address}; roof age ${e.roofAgeYears ?? 'unknown'}${e.roofAgeBasis ? ` (${e.roofAgeBasis})` : ''}${permits ? `; ${permits}` : ''}. Source: ${e.sourceUrl ?? 'n/a'}`;

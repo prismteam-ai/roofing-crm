@@ -536,6 +536,8 @@ dd {
   align-items: center;
 }
 .footer code {
+  overflow-wrap: anywhere;
+  word-break: break-all;
   background: #eef0f3;
   padding: 0 4px;
   border-radius: 3px;
@@ -577,6 +579,12 @@ dd {
   }
 }
 @media (max-width: 768px) {
+  .cid-full {
+    display: none;
+  }
+  .cid-short {
+    display: inline;
+  }
   html,
   body,
   #root {
@@ -665,6 +673,11 @@ dd {
 }
 .topbar code {
   font-size: 11px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+.cid-short {
+  display: none;
 }
 .search-panel select {
   display: block;

@@ -4,7 +4,7 @@ import {
   type EmbeddingService,
   type RetrievalHit,
 } from '@roofing/rag';
-import type { Property } from '@roofing/shared';
+import { bbbLabel, type Property } from '@roofing/shared';
 
 /** Compact, citable row handed to the model / the templated answer. */
 export interface Evidence {
@@ -18,6 +18,8 @@ export interface Evidence {
     openDays: number | null;
     contractor: string | null;
     bbbRating: string | null;
+    /** Display wording, e.g. "BBB: A+ (archived copy, 2026-11-01)". */
+    bbb: string;
     sourceUrl: string | null;
   }[];
   sourceUrl: string | null;
@@ -62,6 +64,7 @@ export async function retrieveEvidence(
           openDays: x.open_days,
           contractor: x.contractor_name,
           bbbRating: x.contractor?.bbb_rating ?? null,
+          bbb: bbbLabel(x.contractor),
           sourceUrl: x.source_url,
         })),
       sourceUrl: p.source_url,

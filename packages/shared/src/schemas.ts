@@ -72,6 +72,8 @@ export type Property = z.infer<typeof propertySchema>;
 
 export const datasetSourceSchema = z.object({
   runId: z.string(),
+  /** Run the pipeline published as current when it differs from the run served. */
+  publishedRunId: z.string().optional(),
   rootCid: z.string().nullable(),
   syncedAt: z.string().nullable(),
 });
@@ -98,6 +100,7 @@ export type SearchResult = z.infer<typeof searchResultSchema>;
 
 export const datasetInfoSchema = z.object({
   runId: z.string(),
+  publishedRunId: z.string().optional(),
   rootCid: z.string().nullable(),
   counts: z.record(z.string(), z.number()),
   limitations: z.array(z.string()),
