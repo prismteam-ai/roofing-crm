@@ -5,7 +5,7 @@ This suite runs against the public deployment, with real pipeline MCP data, isol
 ## Run
 
 ```sh
-EXPECTED_SHA=<reviewed-deployed-sha> HOSTED_RUN=<unique-evidence-id> node scripts/run-hosted-e2e.mjs
+EXPECTED_SHA=<reviewed-deployed-sha> HOSTED_RUN=<unique-evidence-id> node scripts/run-hosted-e2e.js
 ```
 
 Nine configured projects: Chromium, Firefox and WebKit at widths390,768,1440. The runner is serial to avoid turning a walkthrough into a load test. Reports, per-case source/build/network evidence, screenshots and failure traces are under `apps/web/test-results/hosted/<run>/` and `apps/web/playwright-report/hosted/<run>/`. Each invocation gets its own directory; retain failed/interrupted results and append retests.
