@@ -9,8 +9,7 @@ async function ready(page: Page) {
 async function setPin(page: Page, lat = '42.0451', lon = '-87.6877') {
   await page.getByTestId('center-lat').fill(lat);
   await page.getByTestId('center-lon').fill(lon);
-  await page.getByTestId('center-apply').click();
-  await ready(page);
+  await filtersResponse(page, () => page.getByTestId('center-apply').click());
   await expect(page.getByTestId('center-readout')).toContainText(Number(lat).toFixed(5));
 }
 async function filtersResponse(page: Page, action: () => Promise<unknown>) {
@@ -83,7 +82,9 @@ test('C02-C04 C06: place dropdown, ZIP keyboard submit, pin, all filters and tru
     roofs.properties.every((p: { roof_age_years: number }) => p.roof_age_years >= 150),
   ).toBeTruthy();
   for (const confidence of ['medium', 'high', 'low'])
-    await page.getByTestId('confidence-select').selectOption(confidence);
+    await filtersResponse(page, () =>
+      page.getByTestId('confidence-select').selectOption(confidence),
+    );
   await filtersResponse(page, () => page.getByTestId('roof-age-input').fill('15'));
   await filtersResponse(page, () => page.getByTestId('open-permits-toggle').check());
   await expect(page.getByTestId('long-open-toggle')).toBeEnabled();
@@ -173,8 +174,7 @@ test('C05 C07-C10 X01: open permit to lead, every status/filter, notes persisten
 }, info) => {
   await page.goto('/');
   await ready(page);
-  await page.getByTestId('radius-slider').fill('5');
-  await ready(page);
+  await filtersResponse(page, () => page.getByTestId('radius-slider').fill('5'));
   await filtersResponse(page, () => page.getByTestId('open-permits-toggle').check());
   const first = page.getByTestId('result-item').first();
   await first.click();
@@ -192,12 +192,21 @@ test('C05 C07-C10 X01: open permit to lead, every status/filter, notes persisten
     .getByTestId('lead-status')
     .locator('option')
     .evaluateAll((nodes) => nodes.map((n) => (n as HTMLOptionElement).value))) {
+    if ((await page.getByTestId('lead-status').inputValue()) === status) continue;
+    const saved = page.waitForResponse((r) => r.url().includes('leads.update'));
     await page.getByTestId('lead-status').selectOption(status);
+    expect((await saved).ok()).toBeTruthy();
     await expect(page.getByTestId('lead-status')).toHaveValue(status);
   }
-  await page.getByTestId('lead-status').selectOption('contacted');
+  if ((await page.getByTestId('lead-status').inputValue()) !== 'contacted') {
+    const statusSaved = page.waitForResponse((r) => r.url().includes('leads.update'));
+    await page.getByTestId('lead-status').selectOption('contacted');
+    expect((await statusSaved).ok()).toBeTruthy();
+  }
   await page.getByTestId('lead-notes').fill(`Hosted matrix ${info.project.name}`);
+  const notesSaved = page.waitForResponse((r) => r.url().includes('leads.update'));
   await page.getByTestId('lead-notes').press('Tab');
+  expect((await notesSaved).ok()).toBeTruthy();
   await page.reload();
   await expect(page.getByTestId('lead-notes')).toHaveValue(`Hosted matrix ${info.project.name}`);
   await expect(page.getByTestId('lead-status')).toHaveValue('contacted');
