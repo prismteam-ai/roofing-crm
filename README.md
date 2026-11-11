@@ -1,5 +1,15 @@
 # Roofing CRM & Lead Identification UI
 
+## Submission
+
+- **Live runtime:** https://roofing-crm.108-142-177-43.nip.io (public, no login; each browser gets its own lead workspace)
+- **Demo video:** [roofing-crm-demo.mp4](https://github.com/vsterian/roofing-crm/releases/download/demo-video-2026-11-11/roofing-crm-demo.mp4) (1:44, narration only)
+- **Companion PR (data pipeline):** <PIPELINE_PR_URL>
+- **Run locally:** `pnpm install && pnpm dev` (API on :8080, web on :5173; fixture dataset and offline agent unless a pipeline MCP and model key are configured), or `docker compose up --build`. See `docs/architecture.md`.
+- **Evidence:** `docs/pr-body-draft.md` (runtime, data source, limitations), `docs/e2e-testing-matrix.md`, `docs/kit-usage.md`, `docs/agent-controls.md`, and the Slowking reports `docs/slowking-self-assessment-2026-11-11-r*.md`.
+
+---
+
 ## Context
 
 Roofing companies need a practical CRM for finding and qualifying residential and commercial roofing leads in their service area. The immediate requirement is a map-based CRM that helps sales teams explore local properties, surface roofs that are aging or have stalled open permits, and turn those signals into actionable outreach opportunities.

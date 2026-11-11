@@ -1,8 +1,8 @@
 # Roofing CRM & lead identification — Cook County, IL (map, leads, RAG agent)
 
 **Live runtime:** https://roofing-crm.108-142-177-43.nip.io (public, no credentials; each browser gets its own lead workspace)
-**Demo video:** Pending final checks; no video recorded yet.
-**Companion PR (data pipeline):** Pending creation of the companion draft.
+**Demo video:** https://github.com/vsterian/roofing-crm/releases/download/demo-video-2026-11-11/roofing-crm-demo.mp4 (1:44, narration only; captions in `roofing-crm-demo.srt`; recorded against build `338ad05`; loading pauses are shortened and labelled on screen)
+**Companion PR (data pipeline):** <PIPELINE_PR_URL>
 
 ## Runtime and access
 
@@ -11,7 +11,7 @@
 | CRM         | https://roofing-crm.108-142-177-43.nip.io                                                                                                                                                                             |
 | Credentials | none                                                                                                                                                                                                                  |
 | Data        | consumed live from the pipeline's MCP (`findProperties`, `getProperty`, `getDatasetInfo`), dataset run `20261110T221716Z`, root CID `bafybeifhz5scgrouns27paizph5zpnlxhovr6vcm6skecu67msh4ffjlaq` shown in the footer |
-| Build       | `/build.json`; CI for `834837e`: https://github.com/vsterian/roofing-crm/actions/runs/42930578254                                                                                                                     |
+| Build       | `/build.json` reports the deployed `338ad05`; later commits on this branch change tests and docs only. CI for the branch head: https://github.com/vsterian/roofing-crm/actions/runs/42939103500                       |
 
 ## What was built
 
@@ -42,10 +42,13 @@
 
 ## Known limitations
 
-- BBB: 21 contractors have archived A+ profiles, labelled stale with capture dates; 129 are unavailable after the robots check was blocked. Others are unknown, never presented as current ratings.
-- Open duration counts from permit issue date (sources carry no completion date).
+- BBB: 21 contractors have archived A+ profiles, labelled stale with **capture date unknown** (the UI shows the contractor ingestion date separately); 129 are unavailable after the robots check was blocked. Others are unknown, never presented as current ratings.
+- Open duration counts from permit issue date (sources carry no completion date). An open permit is not proof that work is unfinished today.
+- Roof age is often a year-built proxy (low confidence), shown as such.
+- The public demo has no login. Leads are per browser workspace, not tenant authentication. The agent has bounded demo limits (`docs/agent-controls.md`), not a billing limit.
+- Verification: unit tests, build, lint and CI pass. Hosted Playwright passed 9/9 on Chromium 1440, including the canonical demo journey. A broader nine-variant run had failures that were test-harness issues (see `docs/hosted-matrix-repairs-2026-11-11.md`); targeted retests pass, but a complete clean re-run of the whole matrix is not yet recorded.
 - Outbound messaging is not implemented (out of scope); the sections are shown disabled.
 
 ## Self-assessment
 
-Slowking self-run: `docs/slowking-self-assessment-2026-11-11-r2.md` (70/100 provisional, strict actual-gates result 0/100 pending PR and demo).
+Slowking round 3: `docs/slowking-self-assessment-2026-11-11-r3.md`. It reported strict 0/100 (no PR or demo existed then), issued no numeric quality score, and listed six findings. The status/label, BBB-date, RAG-count and save-feedback findings are fixed in this PR; the source-link finding is fixed in the pipeline PR. Round 2 (older build) gave 70/100 provisional. A fresh evaluation against this PR and video follows.
