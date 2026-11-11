@@ -11,7 +11,7 @@
 | CRM         | https://roofing-crm.108-142-177-43.nip.io                                                                                                                                                                             |
 | Credentials | none                                                                                                                                                                                                                  |
 | Data        | consumed live from the pipeline's MCP (`findProperties`, `getProperty`, `getDatasetInfo`), dataset run `20261110T221716Z`, root CID `bafybeifhz5scgrouns27paizph5zpnlxhovr6vcm6skecu67msh4ffjlaq` shown in the footer |
-| Build       | `/build.json`; CI: https://github.com/vsterian/roofing-crm/actions/runs/42923040441                                                                                                                                   |
+| Build       | `/build.json`; CI for `834837e`: https://github.com/vsterian/roofing-crm/actions/runs/42930578254                                                                                                                     |
 
 ## What was built
 

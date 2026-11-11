@@ -288,3 +288,60 @@ test('agent429 explains the wait and retries the same question after cooldown', 
     'roofs older than20 years near Oak Park',
   ]);
 });
+
+test('rejected lead notes stay unsaved and retry persists the bounded draft', async ({
+  page,
+  context,
+}) => {
+  await page.goto('/');
+  await dropPin(page);
+  await page.getByTestId('result-item').first().click();
+  await page.getByTestId('add-lead').click();
+  await expect(page.getByTestId('toast')).toContainText('Lead saved');
+  await page.getByTestId('drawer-close').click();
+  await page.getByTestId('nav-leads').click();
+  const notes = page.getByTestId('lead-notes');
+  await notes.fill('Previously saved');
+  const saved = page.waitForResponse((r) => r.url().includes('leads.update') && r.ok());
+  await notes.blur();
+  await saved;
+
+  let rejected = false;
+  await page.route('**/trpc/leads.update*', async (route) => {
+    if (rejected) return route.continue();
+    rejected = true;
+    await route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          error: {
+            message: 'Save rejected for regression test',
+            code: -32600,
+            data: { code: 'BAD_REQUEST', httpStatus: 400, path: 'leads.update' },
+          },
+        },
+      ]),
+    });
+  });
+  const draft = 'x'.repeat(4000);
+  await notes.fill(draft);
+  await notes.blur();
+  await expect(page.getByTestId('lead-mutation-error')).toContainText('Save failed');
+  await expect(notes).toHaveValue(draft);
+  await expect(page.getByTestId('lead-notes-state')).toContainText('Unsaved');
+
+  const persisted = await context.newPage();
+  await persisted.goto('/#/leads');
+  await expect(persisted.getByTestId('lead-notes')).toHaveValue('Previously saved');
+  await persisted.close();
+
+  await page.getByRole('button', { name: 'Retry save' }).click();
+  await expect(page.getByTestId('lead-notes-state')).toHaveText('Saved');
+  await expect(page.getByTestId('lead-mutation-error')).toBeHidden();
+  await page.reload();
+  await expect(page.getByTestId('lead-notes')).toHaveValue(draft);
+  await notes.press('End');
+  await notes.press('x');
+  await expect(notes).toHaveValue(draft);
+});

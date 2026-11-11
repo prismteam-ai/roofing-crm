@@ -132,6 +132,8 @@ export const leadSchema = z.object({
 });
 export type Lead = z.infer<typeof leadSchema>;
 
+export const LEAD_NOTES_MAX_LENGTH = 4000;
+
 export const leadCreateSchema = leadSchema
   .pick({ pin14: true, address: true, lat: true, lon: true })
   .extend({
@@ -140,14 +142,14 @@ export const leadCreateSchema = leadSchema
     permitStatus: z.string().nullable().default(null),
     permitIsOpen: z.boolean().default(false),
     openDays: z.number().int().nullable().default(null),
-    notes: z.string().max(4000).default(''),
+    notes: z.string().max(LEAD_NOTES_MAX_LENGTH).default(''),
   });
 export type LeadCreate = z.infer<typeof leadCreateSchema>;
 
 export const leadUpdateSchema = z.object({
   id: z.string(),
   status: leadStatusSchema.optional(),
-  notes: z.string().max(4000).optional(),
+  notes: z.string().max(LEAD_NOTES_MAX_LENGTH).optional(),
 });
 
 export const leadFilterSchema = z.object({

@@ -31,7 +31,8 @@ export interface AgentDeps {
 const SYSTEM = `You are a roofing lead assistant for Cook County, IL. Answer only from tool results.
 Every permit listed under openPermits is OPEN today whatever its status label says (ISSUED, PERMIT ISSUED, IN REVIEW are open states); never describe them as closed.
 Rules: cite every property as PIN <pin14> and every permit as permit <permit_id>, and include the source_url for each cited item.
-Report a contractor's BBB standing with the permit's bbb field verbatim ("BBB: A+", "BBB: A+ (archived copy, <date>)", "BBB: not available (<reason>)", "BBB: unknown (not checked)"); never invent or upgrade a rating.
+Report a contractor's BBB standing with the permit's bbb field verbatim; never invent or upgrade a rating or treat contractor ingestion as the archive capture date.
+Distinguish matched (total matches, or null if unknown), sampled (properties retrieved), and returned (evidence rows). Evidence and area statistics cover only the returned sample, not all matches. Never present an unknown total as an exact count.
 Always end with two sections: "Assumptions:" (bulleted; defaults you applied such as radius ${DEFAULTS.radiusMiles} mi, roof age >= ${DEFAULTS.minRoofAge} y, open >= ${DEFAULTS.minOpenYears} y, or the map center used)
 and "Missing data:" (bulleted; e.g. BBB rating not available, roof age unknown, place not geocoded). If nothing matches, say so plainly.
 Workflow: geocode_place when the user names a place (otherwise use the provided map center), then find_properties, optionally summarize_area. Keep answers under 250 words.`;
@@ -129,7 +130,8 @@ export function createAgent(deps: AgentDeps) {
     });
     return {
       ...retrieved,
-      matched: res.properties.length,
+      matched: res.total_in_radius ?? null,
+      sampled: res.properties.length,
       properties: res.properties,
       source: res.source,
     };
@@ -198,6 +200,7 @@ export function createAgent(deps: AgentDeps) {
         center,
         filters: d,
         matched: area.matched,
+        sampled: area.sampled,
         indexed: area.indexed,
         hits: area.hits.length,
       },
@@ -218,7 +221,11 @@ export function createAgent(deps: AgentDeps) {
         .join('; ');
       return `${i + 1}. PIN ${e.pin14} — ${e.address}; roof age ${e.roofAgeYears ?? 'unknown'}${e.roofAgeBasis ? ` (${e.roofAgeBasis})` : ''}${permits ? `; ${permits}` : ''}. Source: ${e.sourceUrl ?? 'n/a'}`;
     });
-    const head = `${area.matched} propert${area.matched === 1 ? 'y' : 'ies'} match within ${d.radiusMiles} mi (${parsed.openPermits ? `open roofing permits >= ${d.minOpenYears} y` : `roofs >= ${d.minRoofAge} y old or open roofing permits`}). Area sample (${stats.properties} returned properties): ${stats.openRoofingPermits} with open roofing permits, ${stats.openOver5y} open >= 5 y, ${stats.roofsOver15y} roofs >= 15 y. Dataset run ${area.source.runId}.`;
+    const matches =
+      area.matched === null
+        ? 'Total matches unknown'
+        : `${area.matched} propert${area.matched === 1 ? 'y' : 'ies'} match`;
+    const head = `${matches} within ${d.radiusMiles} mi (${parsed.openPermits ? `open roofing permits >= ${d.minOpenYears} y` : `roofs >= ${d.minRoofAge} y old or open roofing permits`}). Area sample (${stats.properties} returned properties): ${stats.openRoofingPermits} with open roofing permits, ${stats.openOver5y} open >= 5 y, ${stats.roofsOver15y} roofs >= 15 y. Dataset run ${area.source.runId}.`;
     const answer = [
       head,
       '',
@@ -277,11 +284,14 @@ export function createAgent(deps: AgentDeps) {
               tool: 'find_properties',
               args,
               matched: area.matched,
+              sampled: area.sampled,
               returned: area.evidence.length,
             },
           });
           return budgetToolResult({
             matched: area.matched,
+            sampled: area.sampled,
+            returned: area.evidence.length,
             source: area.source,
             evidence: area.evidence.map(({ score: _s, ...e }) => e),
           });
@@ -307,6 +317,8 @@ export function createAgent(deps: AgentDeps) {
           });
           return budgetToolResult({
             ...stats,
+            matched: res.total_in_radius ?? null,
+            sampled: res.properties.length,
             scope:
               'Counts describe the returned sample (at most 500 properties), not the entire area.',
             source: res.source,

@@ -18,7 +18,7 @@ export interface Evidence {
     openDays: number | null;
     contractor: string | null;
     bbbRating: string | null;
-    /** Display wording, e.g. "BBB: A+ (archived copy, 2026-11-01)". */
+    /** Shared BBB wording distinguishes archive capture from contractor ingestion. */
     bbb: string;
     sourceUrl: string | null;
   }[];
@@ -57,7 +57,13 @@ export async function retrieveEvidence(
       roofAgeYears: p.roof_age_years,
       roofAgeBasis: p.roof_age_basis,
       openPermits: p.permits
-        .filter((x) => x.is_roofing && x.status_is_open)
+        .filter(
+          (x) =>
+            x.is_roofing &&
+            x.status_is_open &&
+            (opts.minOpenDays === undefined ||
+              (x.open_days !== null && x.open_days >= opts.minOpenDays)),
+        )
         .map((x) => ({
           permitId: x.permit_id,
           status: x.status,

@@ -6,7 +6,7 @@ export const bbbLabel = (
 ): string => {
   if (!c) return 'BBB: not available (no contractor match)';
   if (c.bbb_state === 'stale')
-    return `BBB: ${c.bbb_rating ?? 'unknown'} (archived copy, ${c.ingested_at.slice(0, 10)})`;
+    return `BBB: ${c.bbb_rating ?? 'unknown'} (archived copy; capture date unknown; contractor ingested ${c.ingested_at.slice(0, 10) || 'unknown'})`;
   if (c.bbb_rating) return `BBB: ${c.bbb_rating}`;
   if (c.bbb_state === 'confirmed_empty') return 'BBB: no rating on file';
   if (c.bbb_state === 'unknown') return 'BBB: unknown (not checked)';

@@ -49,7 +49,7 @@ describe('ui helpers', () => {
       'BBB: unknown (not checked)',
     );
     expect(bbbLabel({ bbb_rating: 'B', bbb_state: 'stale', ingested_at: T })).toBe(
-      'BBB: B (archived copy, 2026-11-01)',
+      'BBB: B (archived copy; capture date unknown; contractor ingested 2026-11-01)',
     );
   });
 

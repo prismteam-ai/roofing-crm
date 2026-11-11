@@ -94,6 +94,20 @@ describe('tRPC routers', () => {
   it('leads require workspace header', async () => {
     await expect(client().leads.list.query()).rejects.toThrow(/x-workspace-id/);
   });
+  it('accepts 4000 note characters and rejects 4001 without losing saved notes', async () => {
+    const c = client('notes-boundary');
+    const lead = await c.leads.create.mutate({
+      pin14: '12345678901234',
+      address: 'x',
+      lat: 41.9,
+      lon: -87.7,
+    });
+    const notes = 'x'.repeat(4000);
+    await c.leads.update.mutate({ id: lead.id, notes });
+    await expect(c.leads.update.mutate({ id: lead.id, notes: `${notes}x` })).rejects.toThrow();
+    expect((await c.leads.list.query())[0]!.notes).toBe(notes);
+    await c.leads.delete.mutate({ id: lead.id });
+  });
   it('agent.ask answers offline with citations', async () => {
     const a = await c.agent.ask.mutate({
       question: 'open roofing permits older than 5 years within 3 miles of Oak Park',

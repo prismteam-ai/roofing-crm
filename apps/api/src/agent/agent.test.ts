@@ -16,6 +16,26 @@ const deps = () => ({
 });
 
 describe('agent offline mode', () => {
+  it.each([12961, undefined])('distinguishes total %s from the returned sample', async (total) => {
+    const d = deps();
+    const sample = await dataset.findProperties({ lat: 41.885, lon: -87.7845, radiusMiles: 2 });
+    const sampledDataset = new FixtureDatasetClient();
+    vi.spyOn(sampledDataset, 'findProperties').mockResolvedValue({
+      ...sample,
+      total_in_radius: total,
+    });
+    const out = await createAgent({ ...d, dataset: sampledDataset }).ask({
+      question: 'roofs older than 20 years near Oak Park',
+    });
+    expect(out.answer).toContain(
+      total === undefined ? 'Total matches unknown' : '12961 properties match',
+    );
+    expect(out.answer).toContain(`Area sample (${sample.properties.length} returned properties)`);
+    expect(d.traceSink.events.find((e) => e.stage === 'retrieval')?.data).toMatchObject({
+      matched: total ?? null,
+      sampled: sample.properties.length,
+    });
+  });
   it('answers the README example with citations, assumptions and missing data', async () => {
     const d = deps();
     const agent = createAgent(d);
@@ -52,6 +72,57 @@ describe('agent offline mode', () => {
 });
 
 describe('agent llm mode (mock model)', () => {
+  it('passes total, sample, and evidence counts through the model tools', async () => {
+    const sampledDataset = new FixtureDatasetClient();
+    const sample = await dataset.findProperties({
+      lat: 41.885,
+      lon: -87.7845,
+      radiusMiles: 2,
+      limit: 3,
+    });
+    vi.spyOn(sampledDataset, 'findProperties').mockResolvedValue({
+      ...sample,
+      total_in_radius: 12961,
+    });
+    let call = 0;
+    const model = new MockLanguageModelV2({
+      doGenerate: async (options) => {
+        call++;
+        const usage = { inputTokens: 1, outputTokens: 1, totalTokens: 2 };
+        if (call === 1)
+          return {
+            content: ['find_properties', 'summarize_area'].map((toolName) => ({
+              type: 'tool-call' as const,
+              toolCallId: toolName,
+              toolName,
+              input: JSON.stringify({ lat: 41.885, lon: -87.7845, radiusMiles: 2 }),
+            })),
+            finishReason: 'tool-calls',
+            usage,
+            warnings: [],
+          };
+        const results = options.prompt.filter((m) => m.role === 'tool').flatMap((m) => m.content);
+        expect(results.find((r) => r.toolName === 'find_properties')?.output).toMatchObject({
+          type: 'json',
+          value: { matched: 12961, sampled: 3, returned: 3 },
+        });
+        expect(results.find((r) => r.toolName === 'summarize_area')?.output).toMatchObject({
+          type: 'json',
+          value: { matched: 12961, sampled: 3, properties: 3 },
+        });
+        return {
+          content: [{ type: 'text', text: '12961 matches; 3 sampled.' }],
+          finishReason: 'stop',
+          usage,
+          warnings: [],
+        };
+      },
+    });
+    await createAgent({ ...deps(), dataset: sampledDataset, model }).ask({
+      question: 'Roofing opportunities near Oak Park',
+    });
+    expect(call).toBe(2);
+  });
   it('runs the tool loop and extracts citations from the final text', async () => {
     const d = deps();
     const pin = (

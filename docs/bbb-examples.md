@@ -8,9 +8,9 @@ A genuine roofing-permit example verified through the live pipeline MCP:
 - Coordinates: latitude `41.8533328655`, longitude `-87.6958457032`.
 - Roof age: 12 years in this publication.
 - Roofing permit: `chicago_permits:100524612`; description `REMOVE\REPLACE ROOF.SAME AS EXISTING`.
-- Contractor: `WINDWARD ROOFING & CONSTRUCTION, INC.`; archived BBB value `A+`, state `stale`. Inspect the profile link and checked timestamp in the drawer; this is not a current-rating claim.
+- Contractor: `WINDWARD ROOFING & CONSTRUCTION, INC.`; archived BBB value `A+`, state `stale`. Inspect the profile link and contractor ingestion date in the drawer; the archive capture date is unknown, and this is not a current-rating claim.
 
-In the CRM, enter those coordinates, apply the pin, choose radius 0.5 mile, set the roof-age threshold to **0**, keep confidence at low/all and leave open-permits-only off. Select `2108 S CALIFORNIA AVE`, then inspect its roofing permit and contractor/BBB evidence. The roof is younger than the default 15-year threshold, so lowering that threshold is necessary and must be explicit.
+In the CRM, enter those coordinates, apply the pin, choose radius 0.5 mile, set the roof-age threshold to **0**, set confidence to **high** and leave open-permits-only off. Select `2108 S CALIFORNIA AVE`, then inspect its roofing permit and contractor/BBB evidence. The roof is younger than the default 15-year threshold, so lowering that threshold is necessary and must be explicit. High confidence narrows the sample enough to expose this target within the 300-result display cap.
 
 In the pipeline SQL console, select **Contractors with BBB ratings (archived evidence)** to discover other roofing-linked examples and source profile links.
 

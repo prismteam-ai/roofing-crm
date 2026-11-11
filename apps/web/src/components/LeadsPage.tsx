@@ -3,6 +3,8 @@ import {
   DEFAULTS,
   formatOpenDuration,
   leadStatusSchema,
+  LEAD_NOTES_MAX_LENGTH,
+  permitState,
   type Lead,
   type LeadStatus,
 } from '@roofing/shared';
@@ -23,6 +25,8 @@ export function LeadsPage({ center, onCount }: Props) {
   const [minOpenYears, setMinOpenYears] = useState<string>('');
   const [radius, setRadius] = useState<string>('');
   const [notesDraft, setNotesDraft] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [mutationErrors, setMutationErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     try {
@@ -49,14 +53,33 @@ export function LeadsPage({ center, onCount }: Props) {
   }, [load]);
 
   const update = async (id: string, patch: { status?: LeadStatus; notes?: string }) => {
-    await api.leads.update.mutate({ id, ...patch });
-    await load();
+    setSaving((s) => ({ ...s, [id]: true }));
+    setMutationErrors((s) => ({ ...s, [id]: '' }));
+    try {
+      const saved = await api.leads.update.mutate({ id, ...patch });
+      setLeads((list) => list.map((l) => (l.id === id ? saved : l)));
+      await load();
+    } catch (e) {
+      setMutationErrors((s) => ({
+        ...s,
+        [id]: `Save failed: ${e instanceof Error ? e.message : String(e)}. Retry your change.`,
+      }));
+    } finally {
+      setSaving((s) => ({ ...s, [id]: false }));
+    }
   };
   const remove = async (id: string) => {
     const lead = leads.find((l) => l.id === id);
     if (!window.confirm(`Delete lead for ${lead?.address ?? 'this property'}?`)) return;
-    await api.leads.delete.mutate({ id });
-    await load();
+    try {
+      await api.leads.delete.mutate({ id });
+      await load();
+    } catch (e) {
+      setMutationErrors((s) => ({
+        ...s,
+        [id]: `Delete failed: ${e instanceof Error ? e.message : String(e)}. Try again.`,
+      }));
+    }
   };
 
   return (
@@ -146,12 +169,13 @@ export function LeadsPage({ center, onCount }: Props) {
                   PIN {l.pin14} · roof{' '}
                   {l.roofAgeYears === null ? '?' : `${l.roofAgeYears.toFixed(0)} y`}
                   {l.permitId &&
-                    ` · permit ${l.permitId} ${l.permitStatus ?? ''} ${l.permitIsOpen ? `(open ${formatOpenDuration(l.openDays)})` : '(closed)'}`}
+                    ` · permit ${l.permitId} ${l.permitStatus ?? ''} ${l.permitIsOpen ? `(open ${formatOpenDuration(l.openDays)})` : `(${permitState({ status: l.permitStatus, status_is_open: l.permitIsOpen })})`}`}
                   {` · added ${l.createdAt.slice(0, 10)}`}
                 </div>
               </div>
               <select
                 value={l.status}
+                disabled={saving[l.id]}
                 onChange={(e) => void update(l.id, { status: e.target.value as LeadStatus })}
                 data-testid="lead-status"
                 aria-label="Lead status"
@@ -165,15 +189,38 @@ export function LeadsPage({ center, onCount }: Props) {
             </div>
             <textarea
               placeholder="Notes"
+              maxLength={LEAD_NOTES_MAX_LENGTH}
+              disabled={saving[l.id]}
               value={notesDraft[l.id] ?? l.notes}
-              onChange={(e) => setNotesDraft({ ...notesDraft, [l.id]: e.target.value })}
+              onChange={(e) => setNotesDraft((s) => ({ ...s, [l.id]: e.target.value }))}
               onBlur={() => {
-                if (notesDraft[l.id] !== undefined && notesDraft[l.id] !== l.notes)
+                if (!saving[l.id] && notesDraft[l.id] !== undefined && notesDraft[l.id] !== l.notes)
                   void update(l.id, { notes: notesDraft[l.id] });
               }}
               data-testid="lead-notes"
               aria-label="Lead notes"
             />
+            <p className="muted" role="status" data-testid="lead-notes-state">
+              {saving[l.id]
+                ? 'Saving…'
+                : (notesDraft[l.id] ?? l.notes) !== l.notes
+                  ? 'Unsaved notes'
+                  : 'Saved'}
+            </p>
+            {mutationErrors[l.id] && (
+              <p className="error" role="alert" data-testid="lead-mutation-error">
+                {mutationErrors[l.id]}
+              </p>
+            )}
+            {mutationErrors[l.id] && (notesDraft[l.id] ?? l.notes) !== l.notes && (
+              <button
+                type="button"
+                disabled={saving[l.id]}
+                onClick={() => void update(l.id, { notes: notesDraft[l.id] })}
+              >
+                Retry save
+              </button>
+            )}
             <button
               type="button"
               className="danger"

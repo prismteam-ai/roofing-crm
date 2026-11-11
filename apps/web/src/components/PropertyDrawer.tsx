@@ -1,4 +1,4 @@
-import { formatOpenDuration, type Property } from '@roofing/shared';
+import { formatOpenDuration, permitState, type Property } from '@roofing/shared';
 import { bbbLabel } from '@roofing/shared';
 import { fmtDate, fmtMoney, fmtRoofAge } from '../lib/ui.js';
 
@@ -94,7 +94,7 @@ export function PropertyDrawer({ property: p, onClose, onAddLead }: Props) {
                 data-testid="permit-status"
               >
                 {x.status ?? 'unknown'} ·{' '}
-                {x.status_is_open ? `open ${formatOpenDuration(x.open_days)}` : 'closed'}
+                {x.status_is_open ? `open ${formatOpenDuration(x.open_days)}` : permitState(x)}
               </span>
             </div>
             <p className="desc">{x.work_description}</p>
