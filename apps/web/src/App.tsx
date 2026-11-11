@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  CONFIDENCE_RANK,
-  DEFAULT_CENTER,
-  DEFAULTS,
-  rankProperties,
-  type Property,
-  type SearchResult,
-} from '@roofing/shared';
+import { DEFAULT_CENTER, DEFAULTS, type Property, type SearchResult } from '@roofing/shared';
 import { api } from './api.js';
 import { ChatPanel } from './components/ChatPanel.js';
 import { Cid, Footer, type DatasetMeta } from './components/Footer.js';
@@ -76,6 +69,7 @@ export function App() {
         lon: center.lon,
         radiusMiles: filters.radiusMiles,
         minRoofAge: filters.minRoofAge,
+        minConfidence: filters.minConfidence,
         openPermitsOnly: filters.openPermitsOnly,
         minOpenYears:
           filters.openPermitsOnly && filters.longOpenOnly ? filters.minOpenYears : undefined,
@@ -127,16 +121,8 @@ export function App() {
     }
   };
 
-  // permit toggle on: longest-open permit first (the MCP already ranks this way; re-sort so the
-  // list order never depends on the dataset client)
-  // client-side: drop rows whose roof-age confidence is below the selected floor ('low' = keep all)
-  const confident = (result?.properties ?? []).filter(
-    (p) =>
-      filters.minConfidence === 'low' ||
-      (p.roof_age_confidence !== null &&
-        CONFIDENCE_RANK[p.roof_age_confidence] >= CONFIDENCE_RANK[filters.minConfidence]),
-  );
-  const properties = filters.openPermitsOnly ? rankProperties(confident) : confident;
+  // Pipeline filters and ranks the full radius before its cap; keep that authoritative order.
+  const properties = result?.properties ?? [];
 
   return (
     <div className="app">

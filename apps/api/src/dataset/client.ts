@@ -5,15 +5,19 @@ import { datasetInfoSchema, propertySchema, searchResultSchema } from '@roofing/
  * Pipeline MCP tool contract. The pipeline implements exactly these tool names
  * and shapes; both sides validate with these schemas.
  */
-export const findPropertiesInput = z.object({
-  lat: z.number(),
-  lon: z.number(),
-  radiusMiles: z.number(),
-  minRoofAge: z.number().optional(),
-  openRoofingPermitsOnly: z.boolean().optional(),
-  minOpenDays: z.number().int().optional(),
-  limit: z.number().int().optional(),
-});
+export const findPropertiesInput = z
+  .object({
+    lat: z.number(),
+    lon: z.number(),
+    radiusMiles: z.number(),
+    minRoofAge: z.number().optional(),
+    openRoofingPermitsOnly: z.boolean().optional(),
+    minOpenDays: z.number().int().optional(),
+    sort: z.enum(['distance', 'roof_age', 'open_days']).optional(),
+    minConfidence: z.enum(['low', 'medium', 'high']).optional(),
+    limit: z.number().int().optional(),
+  })
+  .strict();
 export type FindPropertiesInput = z.infer<typeof findPropertiesInput>;
 export const findPropertiesOutput = searchResultSchema;
 

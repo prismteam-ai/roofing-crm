@@ -1,9 +1,6 @@
 import { haversineMiles, rankProperties, searchInputSchema, type Property } from '@roofing/shared';
 import { publicProcedure, router } from '../trpc.js';
 
-/** Over-fetch from the dataset so the capped list is the most valuable leads, not the nearest rows. */
-const FETCH_LIMIT = 500;
-
 /** Toggle off: oldest roof first (ties by distance). Toggle on: longest-open permit, then roof age. */
 export function rankForLeads(
   properties: Property[],
@@ -27,11 +24,10 @@ export const searchRouter = router({
       openRoofingPermitsOnly: input.openPermitsOnly,
       minOpenDays:
         input.minOpenYears === undefined ? undefined : Math.round(input.minOpenYears * 365.25),
-      limit: Math.max(input.limit, FETCH_LIMIT),
+      sort: input.openPermitsOnly ? 'open_days' : 'roof_age',
+      minConfidence: input.minConfidence,
+      limit: input.limit,
     });
-    return {
-      ...res,
-      properties: rankForLeads(res.properties, input, input.openPermitsOnly).slice(0, input.limit),
-    };
+    return res;
   }),
 });

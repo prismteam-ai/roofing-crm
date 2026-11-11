@@ -36,22 +36,16 @@ Env (see `.env.example`): `OPENAI_API_KEY` (agent + embeddings; empty = offline 
 `DatasetClient` (`apps/api/src/dataset/client.ts`) is the only seam to the dataset. Both
 implementations return the same Zod-validated shapes. The pipeline MCP implements exactly:
 
-| tool             | input                                                                                 | output                                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `findProperties` | `{lat, lon, radiusMiles, minRoofAge?, openRoofingPermitsOnly?, minOpenDays?, limit?}` | `{properties: [property + permits[+contractor]], total_in_radius, source: {runId, rootCid, syncedAt}}` |
-| `getProperty`    | `{pin14}`                                                                             | `{property \| null, source}`                                                                           |
-| `queryDataset`   | `{sql, limit}` (read-only)                                                            | `{columns, rows, truncated}`                                                                           |
-| `getDatasetInfo` | `{}`                                                                                  | `{runId, rootCid, counts, limitations}`                                                                |
+| tool             | input                                                                                                        | output                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `findProperties` | `{lat, lon, radiusMiles, minRoofAge?, openRoofingPermitsOnly?, minOpenDays?, sort?, minConfidence?, limit?}` | `{properties: [property + permits[+contractor]], total_in_radius, source: {runId, rootCid, syncedAt}}` |
+| `getProperty`    | `{pin14}`                                                                                                    | `{property \| null, source}`                                                                           |
+| `queryDataset`   | `{sql, limit}` (read-only)                                                                                   | `{columns, rows, truncated}`                                                                           |
+| `getDatasetInfo` | `{}`                                                                                                         | `{runId, rootCid, counts, limitations}`                                                                |
 
-`findProperties` semantics (mirrored by the fixture client): within radius (haversine); default
-filter = roof age >= `minRoofAge` **or** open roofing permit; `openRoofingPermitsOnly` restricts to
-properties with an open roofing permit whose longest open duration >= `minOpenDays`. Results are
-ranked by longest open roofing permit (days desc), then roof age desc. `total_in_radius` counts every
-property in the radius before filters/limit; the UI shows "Showing N of M in radius" (limit 300).
-The API over-fetches 500 rows (the MCP returns nearest-first) and re-ranks them by lead value before
-capping (`rankForLeads` in `apps/api/src/routers/search.ts`): permit toggle off = roof age desc, ties
-by distance; toggle on = longest-open permit, then roof age. Ceiling: in dense areas the 500 nearest
-rows still cluster near the centre; narrow the radius or filters to spread further.
+`findProperties` semantics (mirrored by the fixture client): exact radius plus every supplied roof-age, confidence and permit predicate. With a roof-age threshold, unknown ages and invalid anchors are excluded. `openRoofingPermitsOnly` additionally requires a dated open roofing permit satisfying `minOpenDays`. `total_in_radius` counts properties after all filters and before LIMIT; the UI displays the matching count, capped at300 visible rows.
+
+The API requests `sort=roof_age` (or `open_days` with the open-permit toggle), `minConfidence` and the display limit from the pipeline MCP. SQL applies confidence/roof/permit predicates and global ordering before LIMIT, so far-away qualifying properties cannot be hidden by a nearest-500 pre-cap. Counts reflect all matching properties before the display limit. The CRM preserves the MCP order. Deploy the additive pipeline contract before this CRM version; the previous strict MCP rejects unknown ranking fields.
 
 The Zod contracts are tolerant of the pipeline: `z.object` strips unknown columns (pin10, geohash6,
 distance_miles, run_id, ...), `is_out_of_area`/`address` are nullable, `roof_age_basis` includes
@@ -94,7 +88,7 @@ MapLibre GL with OpenFreeMap "liberty" vector tiles (no key). First load searche
 (Evanston, 2 mi) so markers appear immediately; a note says so until the user drops a pin, picks one
 of the 12 hardcoded Cook County places (`PLACES` in `packages/shared`) or geocodes free text / a ZIP
 through `meta.geocode` (offline gazetteer first, then Nominatim). "Lowest roof-age confidence" is a
-client-side filter on `roof_age_confidence`. The Cook County boundary is a dashed line layer from
+server-side predicate on `roof_age_confidence` applied before the cap. The Cook County boundary is a dashed line layer from
 `apps/web/src/data/cook-county.json` (US Census TIGERweb State_County layer, GEOID 17031, fetched
 2026-11-11 and Douglas-Peucker simplified to ~5 KB). The top bar shows the dataset run id and root CID
 ("pending" until the pipeline reports one). Markers are coloured by lead signal

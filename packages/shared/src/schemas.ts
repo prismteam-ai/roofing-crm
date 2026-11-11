@@ -64,6 +64,7 @@ export const propertySchema = z.object({
   roof_age_years: z.number().nullable(),
   roof_age_basis: z.enum(['reroof_permit', 'new_construction_permit', 'year_built']).nullable(),
   roof_age_confidence: z.enum(['high', 'medium', 'low']).nullable(),
+  roof_age_anchor_date: z.string().nullable().optional(),
   source_url: z.string().nullable(),
   ingested_at: z.string(),
   permits: z.array(permitSchema),
@@ -85,6 +86,7 @@ export const searchInputSchema = z.object({
   radiusMiles: z.number().min(0.1).max(50).default(2),
   minRoofAge: z.number().min(0).max(200).optional(),
   openPermitsOnly: z.boolean().default(false),
+  minConfidence: z.enum(['low', 'medium', 'high']).optional(),
   minOpenYears: z.number().min(0).max(100).optional(),
   limit: z.number().int().min(1).max(500).default(200),
 });

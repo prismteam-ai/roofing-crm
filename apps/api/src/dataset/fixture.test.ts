@@ -52,7 +52,12 @@ describe('filterProperties', () => {
     }
   });
   it('sorts by open days desc then roof age and honours limit', () => {
-    const r = filterProperties(properties, { ...LOOP, radiusMiles: 10, limit: 5 });
+    const r = filterProperties(properties, {
+      ...LOOP,
+      radiusMiles: 10,
+      sort: 'open_days',
+      limit: 5,
+    });
     expect(r.length).toBe(5);
     const key = (p: (typeof r)[number]) =>
       Math.max(

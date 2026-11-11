@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { haversineMiles, propertySchema, rankProperties, type Property } from '@roofing/shared';
+import { CONFIDENCE_RANK, haversineMiles, propertySchema, type Property } from '@roofing/shared';
 import {
   findPropertiesInput,
   getDatasetInfoOutput,
@@ -29,19 +29,59 @@ export function loadFixture(dir = FIXTURE_DIR): {
 /** Pure filter shared by the fixture client and tests. */
 export function filterProperties(all: Property[], raw: FindPropertiesInput): Property[] {
   const input = findPropertiesInput.parse(raw);
+  const today = new Date().toISOString().slice(0, 10);
+  const validAnchor = (p: Property) =>
+    p.roof_age_anchor_date == null ||
+    (p.roof_age_anchor_date.slice(0, 10) >= '1900-01-01' &&
+      p.roof_age_anchor_date.slice(0, 10) <= today);
   const out = all.filter((p) => {
     if (haversineMiles(input.lat, input.lon, p.lat, p.lon) > input.radiusMiles) return false;
     const open = p.permits.filter((x) => x.is_roofing && x.status_is_open);
-    const longest = Math.max(0, ...open.map((x) => x.open_days ?? 0));
+    const longest = Math.max(
+      -Infinity,
+      ...open.filter((x) => x.open_days !== null).map((x) => x.open_days!),
+    );
     const oldEnough =
-      input.minRoofAge === undefined || (p.roof_age_years ?? -1) >= input.minRoofAge;
+      input.minRoofAge === undefined ||
+      ((p.roof_age_years ?? -1) >= input.minRoofAge && validAnchor(p));
     const openOk =
-      open.length > 0 && (input.minOpenDays === undefined || longest >= input.minOpenDays);
-    if (input.openRoofingPermitsOnly) return openOk;
-    // default: lead candidates = old roof OR qualifying open permit
-    return oldEnough || openOk;
+      Number.isFinite(longest) && (input.minOpenDays === undefined || longest >= input.minOpenDays);
+    if (
+      input.minConfidence &&
+      input.minConfidence !== 'low' &&
+      (p.roof_age_confidence === null ||
+        CONFIDENCE_RANK[p.roof_age_confidence] < CONFIDENCE_RANK[input.minConfidence])
+    )
+      return false;
+    return oldEnough && (!input.openRoofingPermitsOnly || openOk);
   });
-  return rankProperties(out).slice(0, input.limit ?? 200);
+  const sort = input.sort ?? (input.openRoofingPermitsOnly ? 'open_days' : 'distance');
+  const distance = (p: Property) => haversineMiles(input.lat, input.lon, p.lat, p.lon);
+  const openDays = (p: Property) =>
+    Math.max(
+      -1,
+      ...p.permits
+        .filter(
+          (x) =>
+            x.is_roofing &&
+            x.status_is_open &&
+            (input.minOpenDays === undefined || (x.open_days ?? -1) >= input.minOpenDays),
+        )
+        .map((x) => x.open_days ?? -1),
+    );
+  return out
+    .sort(
+      (a, b) =>
+        (sort === 'roof_age'
+          ? (validAnchor(b) ? (b.roof_age_years ?? -1) : -1) -
+            (validAnchor(a) ? (a.roof_age_years ?? -1) : -1)
+          : sort === 'open_days'
+            ? openDays(b) - openDays(a)
+            : 0) ||
+        distance(a) - distance(b) ||
+        a.pin14.localeCompare(b.pin14),
+    )
+    .slice(0, input.limit ?? 200);
 }
 
 export class FixtureDatasetClient implements DatasetClient {
@@ -58,10 +98,11 @@ export class FixtureDatasetClient implements DatasetClient {
     };
   }
   async findProperties(input: FindPropertiesInput) {
-    // pipeline semantics: total_in_radius counts every property in the radius, before filters/limit
-    const total_in_radius = this.data.properties.filter(
-      (p) => haversineMiles(input.lat, input.lon, p.lat, p.lon) <= input.radiusMiles,
-    ).length;
+    // Same predicates and count-before-limit semantics as the pipeline MCP.
+    const total_in_radius = filterProperties(this.data.properties, {
+      ...input,
+      limit: this.data.properties.length,
+    }).length;
     return {
       properties: filterProperties(this.data.properties, input),
       total_in_radius,
