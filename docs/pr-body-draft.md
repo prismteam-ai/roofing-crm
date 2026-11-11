@@ -2,7 +2,7 @@
 
 **Live runtime:** https://roofing-crm.108-142-177-43.nip.io (public, no credentials; each browser gets its own lead workspace)
 **Demo video:** https://github.com/vsterian/roofing-crm/releases/download/demo-video-2026-11-11/roofing-crm-demo.mp4 (1:44, narration only; captions in `roofing-crm-demo.srt`; recorded against build `338ad05`; loading pauses are shortened and labelled on screen)
-**Companion PR (data pipeline):** <PIPELINE_PR_URL>
+**Companion PR (data pipeline):** https://github.com/prismteam-ai/oracle-property-intelligence-platform-pipeline-cook-il/pull/1
 
 ## Runtime and access
 
