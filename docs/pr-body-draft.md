@@ -48,7 +48,3 @@
 - The public demo has no login. Leads are per browser workspace, not tenant authentication. The agent has bounded demo limits (`docs/agent-controls.md`), not a billing limit.
 - Verification: unit tests, build, lint and CI pass. Hosted Playwright passed 9/9 on Chromium 1440, including the canonical demo journey. A broader nine-variant run had failures that were test-harness issues (see `docs/hosted-matrix-repairs-2026-11-11.md`); targeted retests pass, but a complete clean re-run of the whole matrix is not yet recorded.
 - Outbound messaging is not implemented (out of scope); the sections are shown disabled.
-
-## Self-assessment
-
-Slowking round 3: `docs/slowking-self-assessment-2026-11-11-r3.md`. It reported strict 0/100 (no PR or demo existed then), issued no numeric quality score, and listed six findings. The status/label, BBB-date, RAG-count and save-feedback findings are fixed in this PR; the source-link finding is fixed in the pipeline PR. Round 2 (older build) gave 70/100 provisional. A fresh evaluation against this PR and video follows.

@@ -6,7 +6,7 @@
 - **Demo video:** [roofing-crm-demo.mp4](https://github.com/vsterian/roofing-crm/releases/download/demo-video-2026-11-11/roofing-crm-demo.mp4) (1:44, narration only)
 - **Companion PR (data pipeline):** https://github.com/prismteam-ai/oracle-property-intelligence-platform-pipeline-cook-il/pull/1
 - **Run locally:** `pnpm install && pnpm dev` (API on :8080, web on :5173; fixture dataset and offline agent unless a pipeline MCP and model key are configured), or `docker compose up --build`. See `docs/architecture.md`.
-- **Evidence:** `docs/pr-body-draft.md` (runtime, data source, limitations), `docs/e2e-testing-matrix.md`, `docs/kit-usage.md`, `docs/agent-controls.md`, and the Slowking reports `docs/slowking-self-assessment-2026-11-11-r*.md`.
+- **Evidence:** `docs/pr-body-draft.md` (runtime, data source, limitations), `docs/e2e-testing-matrix.md`, `docs/kit-usage.md`, `docs/agent-controls.md`.
 
 ---
 
