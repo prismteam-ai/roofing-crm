@@ -25,7 +25,8 @@ export function createNominatimGeocoder(fetchFn: typeof fetch = fetch): Geocoder
     const hit = cache.get(key);
     if (hit !== undefined) return Promise.resolve(hit);
     return limit(async () => {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(query)}`;
+      const field = /^\d{5}(?:-\d{4})?$/.test(key) ? 'postalcode' : 'q';
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&${field}=${encodeURIComponent(query.trim())}`;
       const result = await withRetry(
         async () => {
           const res = await fetchFn(url, {
