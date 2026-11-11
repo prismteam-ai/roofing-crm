@@ -6,7 +6,25 @@ const LOOP = { lat: '41.8781', lon: '-87.6298' };
 async function dropPin(page: Page, lat = LOOP.lat, lon = LOOP.lon) {
   await page.getByTestId('center-lat').fill(lat);
   await page.getByTestId('center-lon').fill(lon);
+  const pending = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    if (!url.pathname.includes('search.properties')) return false;
+    const index = url.pathname.split('/').at(-1)!.split(',').indexOf('search.properties');
+    const input = JSON.parse(url.searchParams.get('input') ?? '{}')[index];
+    return input?.lat === Number(lat) && input?.lon === Number(lon);
+  });
   await page.getByTestId('center-apply').click();
+  const response = await pending;
+  expect(response.ok()).toBeTruthy();
+  const index = new URL(response.url()).pathname
+    .split('/')
+    .at(-1)!
+    .split(',')
+    .indexOf('search.properties');
+  const body = await response.json();
+  await expect(page.getByTestId('results-count')).toHaveText(
+    String((Array.isArray(body) ? body[index] : body).result.data.properties.length),
+  );
   await expect(page.getByTestId('center-readout')).toContainText('Pin:');
   await expect(page.getByTestId('search-loading')).toBeHidden();
 }
