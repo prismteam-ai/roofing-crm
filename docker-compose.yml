@@ -1,0 +1,31 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    image: roofing-crm:latest
+    ports:
+      - '8080:8080'
+    env_file: .env
+    environment:
+      PORT: 8080
+    volumes:
+      - crm-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:8080/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  # Named volume: initialized with the image's /app/data ownership (user node), unlike a bind mount.
+  crm-data:

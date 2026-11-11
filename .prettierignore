@@ -1,0 +1,12 @@
+node_modules
+dist
+.turbo
+pnpm-lock.yaml
+fixtures/dataset/*.json
+fixtures/rag/corpus/*.jsonl
+data
+playwright-report
+test-results
+README.md
+cdk.out
+apps/web/src/data/*.json

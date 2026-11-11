@@ -1,0 +1,16 @@
+{
+  "runId": "run_2026-11-01T00-00-00Z_fixture",
+  "rootCid": null,
+  "syncedAt": "2026-11-01T03:12:44Z",
+  "counts": {
+    "property": 300,
+    "permit": 350,
+    "roofing_permit_open": 142,
+    "contractor": 12
+  },
+  "limitations": [
+    "Fixture dataset: synthetic rows shaped like Cook County sources, generated deterministically (seed 20261101). Not real parcels.",
+    "rootCid is null because the fixture has not been published to IPFS/Elephant.",
+    "queryDataset (SQL) is not supported by the fixture client."
+  ]
+}

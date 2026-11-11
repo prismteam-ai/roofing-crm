@@ -1,0 +1,36 @@
+[
+  {
+    "id": "q1-long-open-permits",
+    "question": "open roofing permits older than five years in Evanston",
+    "filter": { "openRoofingOnly": true, "minOpenDays": 1826, "kinds": ["permit"] },
+    "k": 5,
+    "expect": {
+      "minHits": 1,
+      "allOpenRoofing": true,
+      "minOpenDays": 1826,
+      "kinds": ["permit"],
+      "mustIncludeId": "permit:CCA-20002443"
+    }
+  },
+  {
+    "id": "q2-old-roofs",
+    "question": "houses with roofs older than 30 years",
+    "filter": { "minRoofAge": 30, "kinds": ["property"] },
+    "k": 5,
+    "expect": { "minHits": 3, "minRoofAge": 30, "kinds": ["property"] }
+  },
+  {
+    "id": "q3-tear-off-shingle",
+    "question": "tear off and reroof shingle permits",
+    "filter": { "kinds": ["permit"] },
+    "k": 3,
+    "expect": { "minHits": 3, "kinds": ["permit"] }
+  },
+  {
+    "id": "q4-contractor-bbb",
+    "question": "which roofing contractors with a BBB rating have open permits",
+    "filter": { "openRoofingOnly": true },
+    "k": 5,
+    "expect": { "minHits": 1, "allOpenRoofing": true }
+  }
+]

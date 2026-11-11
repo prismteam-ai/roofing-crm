@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+  - infra/*
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@ai-sdk/gateway@2.0.179'
+  - '@ai-sdk/openai@2.0.142'
+  - '@ai-sdk/provider-utils@3.0.46'
+  - '@trpc/client@11.28.0'
+  - '@trpc/server@11.28.0'
+  - ai@5.0.288

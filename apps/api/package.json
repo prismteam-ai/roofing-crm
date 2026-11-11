@@ -1,0 +1,49 @@
+{
+  "name": "@roofing/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./router": {
+      "types": "./dist/routers/index.d.ts",
+      "default": "./dist/routers/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "2.0.142",
+    "@hono/node-server": "1.19.18",
+    "@hono/trpc-server": "0.4.2",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@roofing/rag": "workspace:*",
+    "@roofing/shared": "workspace:*",
+    "@trpc/server": "11.28.0",
+    "ai": "5.0.288",
+    "better-sqlite3": "12.11.1",
+    "hono": "4.13.17",
+    "p-limit": "7.3.3",
+    "pino": "9.14.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@roofing/tsconfig": "workspace:*",
+    "@trpc/client": "11.28.0",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
