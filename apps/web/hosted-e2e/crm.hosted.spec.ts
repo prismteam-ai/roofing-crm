@@ -110,7 +110,11 @@ test('C02: real geolocation permission granted changes pin and denied leaves man
   await page.getByTestId('use-gps').click();
   await expect(page.getByTestId('center-readout')).toContainText('41.88500, -87.78450');
   await ready(page);
+  // Clearing returns Firefox to a pending prompt; explicitly deny all permissions instead.
   await context.clearPermissions();
+  await context.grantPermissions([]);
+  await page.reload();
+  await ready(page);
   await page.getByTestId('use-gps').click();
   await expect(page.getByTestId('gps-error')).toBeVisible({ timeout: 12_000 });
   await setPin(page);
@@ -134,7 +138,21 @@ test('C02 C06: map navigation and clicking actual marker opens matching PIN, clo
   await expect(page.getByTestId('property-drawer')).toBeHidden();
   const map = page.getByTestId('map');
   await map.scrollIntoViewIfNeeded();
-  await map.click({ position: { x: 80, y: 80 } });
+  const markerPin = await page.getByTestId('property-marker').evaluateAll((markers) => {
+    const marker = markers.find((node) => {
+      const box = node.getBoundingClientRect();
+      return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === node;
+    });
+    return (marker as HTMLElement | undefined)?.dataset.pin;
+  });
+  expect(markerPin, 'a visible, unobscured property marker').toBeTruthy();
+  await page.locator(`[data-testid="property-marker"][data-pin="${markerPin}"]`).click();
+  await expect(page.getByTestId('drawer-pin')).toHaveText(markerPin!);
+  await page.getByTestId('drawer-close').click();
+  await map.scrollIntoViewIfNeeded();
+  const box = await map.boundingBox();
+  // The old fixed80,80 click hit the mobile legend; choose open map canvas away from controls.
+  await map.click({ position: { x: box!.width * 0.8, y: box!.height * 0.65 } });
   await ready(page);
   await expect(page.getByTestId('center-readout')).not.toContainText('42.04510, -87.68770');
   if (info.project.name.endsWith('-390')) {
