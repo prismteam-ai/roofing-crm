@@ -1,0 +1,12 @@
+{
+  "extends": "../../packages/tsconfig/react.json",
+  "include": [
+    "src",
+    "test",
+    "e2e",
+    "cdk",
+    "playwright.config.ts",
+    "vite.config.ts"
+  ],
+  "compilerOptions": { "types": ["node"] }
+}

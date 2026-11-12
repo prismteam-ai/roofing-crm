@@ -1,0 +1,152 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #1b232d;
+  background: #f9f9fb;
+}
+body {
+  margin: 0;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+header {
+  grid-column: 1 / -1;
+  background: #232b37;
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+header h1 {
+  font-size: 17px;
+  margin: 0;
+}
+.count {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #ffbb45;
+  color: #1b232d;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 16px;
+}
+aside {
+  overflow: auto;
+  padding: 12px;
+  border-right: 1px solid #dedee3;
+  background: #fff;
+}
+.map {
+  position: relative;
+}
+#map {
+  position: absolute;
+  inset: 0;
+}
+.controls label {
+  display: block;
+  font-size: 13px;
+  margin: 8px 0 2px;
+}
+.controls input[type="range"] {
+  width: 100%;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+button {
+  border: 1px solid #b4b4bb;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.rule {
+  background: #fff7e6;
+  border: 1px solid #ffd78a;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  margin: 8px 0;
+}
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+}
+.list li {
+  border-bottom: 1px solid #ebebf0;
+  padding: 6px 2px;
+  cursor: pointer;
+}
+.list li:hover {
+  background: #f3f3f7;
+}
+.detail {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 340px;
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #ccccd1;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  z-index: 3;
+}
+.detail dt {
+  font-weight: 600;
+  margin-top: 4px;
+}
+.detail dd {
+  margin: 0;
+  word-break: break-all;
+}
+.future {
+  margin-top: 16px;
+}
+.future .card {
+  background: #f3f3f7;
+  border: 1px dashed #b4b4bb;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 6px 0;
+  color: #656871;
+  font-size: 12px;
+}
+.error {
+  color: #c20000;
+  font-size: 13px;
+}
+.notice {
+  font-size: 12px;
+  color: #656871;
+}
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 45vh 1fr;
+  }
+  aside {
+    order: 3;
+    border-right: 0;
+  }
+  .map {
+    order: 2;
+  }
+}
