@@ -1,0 +1,23 @@
+{
+  "name": "@roofing-crm/leads-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./router": "./src/router.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/logger": "2.36.0",
+    "@aws-lambda-powertools/metrics": "2.36.0",
+    "@aws-lambda-powertools/tracer": "2.36.0",
+    "@aws-sdk/client-dynamodb": "3.1159.0",
+    "@aws-sdk/lib-dynamodb": "3.1159.0",
+    "@trpc/server": "11.19.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.164",
+    "aws-sdk-client-mock": "4.1.0"
+  }
+}
