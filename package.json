@@ -7,7 +7,7 @@
     "node": ">=22.18"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p apps/crm && tsc --noEmit -p apps/leads-api",
     "test": "vitest run",
     "build": "turbo run build",
     "format": "prettier --check .",
