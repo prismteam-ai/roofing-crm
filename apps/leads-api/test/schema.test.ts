@@ -25,7 +25,7 @@ test("notes: an email address or 7+ digits in a row is rejected", () => {
   expect(notesProblem("call 5551234")).toBe(NOTES_REJECTED_MESSAGE);
 });
 
-test("notes: formatted phone numbers are rejected", () => {
+test("notes: phone numbers are refused, formatted or not", () => {
   for (const phone of [
     "(818) 555-1234",
     "818-555-1234",
@@ -36,40 +36,62 @@ test("notes: formatted phone numbers are rejected", () => {
     expect(notesProblem(`call ${phone} after 5`), phone).toBe(
       NOTES_REJECTED_MESSAGE,
     );
+  expect(notesProblem("write to someone@example.com")).toBe(
+    NOTES_REJECTED_MESSAGE,
+  );
 });
 
-test("notes: ISO dates and short numbers in prose are allowed", () => {
+test("notes: amounts, year ranges, dates and short numbers in prose are allowed", () => {
   for (const text of [
     "roof looks old",
     "replaced 2026-11-12",
     "2 skylights, 3 vents",
-    // Two dates side by side: each is taken out on its own, so they do not join into one run.
+    "quote $12,500.00",
+    "quote 12500.00",
+    "additions 1962-1975",
+    // Two dates side by side, and a date with a time.
     "inspected 2026-11-12 2026-11-14",
-    // A date with a time: only the date part is a long digit run.
     "visited 2026-11-12T10:30",
-    // Six digits joined by separators: one short of the phone-like rule.
     "lot 12-34-56",
   ])
     expect(notesProblem(text), text).toBeUndefined();
 });
 
-test("notes: edge cases of the phone-like rule", () => {
+test("notes: edge cases of the phone-shape rule", () => {
   for (const text of [
-    // A 7-digit local number, the shortest phone the rule is for.
-    "call 555 1234",
-    // The parcel ID as printed with dashes (4-3-3) is still 10 digits.
-    "same owner as 2317-016-013",
+    // Brackets without a space, the 1- prefix, and +1 with hyphens.
+    "call (818)555-1234",
+    "call 1-818-555-1234",
+    "call +1-818-555-1234",
     // A date next to a phone number does not hide the phone number.
     "2026-11-12 818 555 1234",
+    // A local number without a separator is 7 digits in a row.
+    "call 5551234",
     // A line break is whitespace, so it does not split a phone number.
     "call 818\n555 1234",
-    // Only a real YYYY-MM-DD shape is a date; month 55 is not.
-    "call 8185-55-1234",
-    // A hyphenated year range is one 8-digit run; "1962 to 1975" is the way to write it.
-    "additions 1962-1975",
   ])
     expect(notesProblem(text), text).toBe(NOTES_REJECTED_MESSAGE);
-  expect(notesProblem("additions 1962 to 1975")).toBeUndefined();
+});
+
+test("notes: number pairs that are not full phone numbers are allowed", () => {
+  for (const text of [
+    // A 7-digit local number with a separator: no area code, so not a full phone number.
+    "call 555-1234",
+    "call 555 1234",
+    "lot 120-1500",
+    "pages 100-1200",
+    // The parcel ID as printed 4-3-3 is not a phone shape, and has no 7 digits in a row.
+    "same owner as 2317-016-013",
+  ])
+    expect(notesProblem(text), text).toBeUndefined();
+});
+
+test("notes: the message names what is refused", () => {
+  expect(NOTES_REJECTED_MESSAGE).toMatch(/email addresses/);
+  expect(NOTES_REJECTED_MESSAGE).toMatch(
+    /phone numbers with an area code \(with or without brackets, spaces, dots or hyphens\)/,
+  );
+  expect(NOTES_REJECTED_MESSAGE).toMatch(/7 or more digits in a row/);
 });
 
 test("notes: a 10-digit parcel ID is rejected too, and the message says so", () => {

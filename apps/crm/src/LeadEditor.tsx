@@ -7,7 +7,7 @@ import {
 } from "@roofing-crm/leads-client";
 
 export const NOTES_HINT =
-  "No owner names or contact details. Email addresses and 7 or more digits in a row (phone numbers, also parcel IDs) are rejected.";
+  "No owner names or contact details. Email addresses, phone numbers with an area code (with or without brackets, spaces, dots or hyphens) and 7 or more digits in a row (which covers parcel IDs) are refused.";
 
 /** The lead of the parcel in the detail panel: create it, or edit its status and notes, or delete it. */
 export function LeadEditor({

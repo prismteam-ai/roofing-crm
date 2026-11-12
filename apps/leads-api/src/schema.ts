@@ -16,31 +16,29 @@ export const NOTES_MAX = 1000;
 
 /** An email address anywhere in the text. */
 const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+/** 7 or more digits in a row. This also covers a 10-digit parcel ID, by design (approved change 5). */
+const DIGITS_7 = /\d{7,}/;
 /**
- * An ISO date (YYYY-MM-DD, month 01-12, day 01-31) that is not part of a longer digit run, with the
- * character before it captured. A capture rather than a lookbehind, so older Safari can parse it.
+ * A full phone number (NANP) with its area code: an optional +1 or 1, the area code in brackets or not,
+ * a 3-digit exchange and a 4-digit line. The groups are separated by whitespace, dots or hyphens; only a
+ * bracketed area code may run straight into the exchange. E.g. "(818) 555-1234", "(818)555-1234",
+ * "818.555.1234", "+1 818 555 1234". The separator before the line is required: unseparated digits are
+ * DIGITS_7's. A local number without an area code ("555-1234") is not matched. Not part of a longer digit
+ * run on either side. "(^|\D)" rather than a lookbehind, so older Safari can parse it.
  */
-const ISO_DATE = /(^|\D)\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])(?!\d)/g;
-/** Digits joined only by separators: whitespace . - ( ) +, as in "(818) 555-1234" or "+1 818 555 1234". */
-const DIGIT_RUN = /\d(?:[\s.\-()+]*\d)*/g;
-/** A run with this many digits or more is phone-like. This also catches a 10-digit parcel ID, by design. */
-const PHONE_LIKE_DIGITS = 7;
-
-/** True when the text holds a phone-like digit run. ISO dates are taken out first, so they stay allowed. */
-function hasPhoneLikeRun(notes: string): boolean {
-  const runs = notes.replace(ISO_DATE, "$1#").match(DIGIT_RUN) ?? [];
-  return runs.some((run) => run.replace(/\D/g, "").length >= PHONE_LIKE_DIGITS);
-}
+const PHONE =
+  /(?:^|\D)(?:\+?1[\s.-]?)?(?:\(\d{3}\)[\s.-]?|\d{3}[\s.-])\d{3}[\s.-]\d{4}(?!\d)/;
 
 export const NOTES_REJECTED_MESSAGE =
-  "Notes must not contain an email address or 7 or more digits in a row (phone-like numbers). " +
-  "This also rejects a 10-digit parcel ID; the lead already records its parcel.";
+  "Notes must not contain email addresses, phone numbers with an area code (with or without brackets, " +
+  "spaces, dots or hyphens) or 7 or more digits in a row. That also refuses a 10-digit parcel ID; the lead already " +
+  "records its parcel.";
 
 /** Why a notes text is rejected, or undefined when it is allowed. */
 export function notesProblem(notes: string): string | undefined {
   if (notes.length > NOTES_MAX)
     return `Notes are limited to ${NOTES_MAX} characters.`;
-  if (EMAIL.test(notes) || hasPhoneLikeRun(notes))
+  if (EMAIL.test(notes) || PHONE.test(notes) || DIGITS_7.test(notes))
     return NOTES_REJECTED_MESSAGE;
   return undefined;
 }
