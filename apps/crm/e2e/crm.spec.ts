@@ -517,7 +517,7 @@ test.describe("with credentials", () => {
       })
       .toBeLessThan(0.05);
     await recentredOn(page, await pinOf(page));
-    // The app re-centres at the current zoom, so the zoom stays the one this test set (§3b.4).
+    // The app re-centres at the current zoom, so the zoom stays the one this test set.
     await renderedFor(page, zoom); // the new search (at the clicked pin) is drawn: everything the click caused has run
     expect(detailCalls).toEqual([]);
     await expect(page.getByTestId("detail")).toHaveCount(0);

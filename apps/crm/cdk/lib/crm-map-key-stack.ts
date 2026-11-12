@@ -7,7 +7,7 @@ import * as ssm from "aws-cdk-lib/aws-ssm";
 import type { Construct } from "constructs";
 
 export const MAP_KEY_NAME = "roofing-crm-map";
-/** End of the account's Free plan (D14); a teardown or the D2 rotation deletes the key earlier. */
+/** The map key expires on 2027-05-11 (MAP_KEY_EXPIRES); a teardown, or rotating the evaluation credentials once the evaluation is over, deletes it earlier. */
 export const MAP_KEY_EXPIRES = "2027-05-11T00:00:00Z";
 /** Usage alarm: more than this many map tiles in one day (= $0.20 at $0.04 per 1,000 tiles, eu-north-1). */
 export const TILES_PER_DAY_ALARM = 5_000;

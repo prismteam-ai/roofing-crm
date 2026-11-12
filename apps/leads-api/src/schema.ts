@@ -16,7 +16,7 @@ export const NOTES_MAX = 1000;
 
 /** An email address anywhere in the text. */
 const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-/** 7 or more digits in a row. This also covers a 10-digit parcel ID, by design (approved change 5). */
+/** 7 or more digits in a row. This also refuses a 10-digit parcel ID, on purpose, and the error message says so. */
 const DIGITS_7 = /\d{7,}/;
 /**
  * A full phone number (NANP) with its area code: an optional +1 or 1, the area code in brackets or not,

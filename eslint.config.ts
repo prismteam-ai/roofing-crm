@@ -1,5 +1,5 @@
 /**
- * ESLint flat config (kit: ESLint for TypeScript, apply-engineering-guidelines/rules/testing-strategy.md:22).
+ * ESLint flat config (kit: ESLint for TypeScript, apply-engineering-guidelines/rules/testing-strategy.md, "Tooling").
  * TypeScript config loaded through jiti (ESLint 10 docs, "TypeScript Configuration Files"),
  * so a plain `npx eslint .` works.
  */

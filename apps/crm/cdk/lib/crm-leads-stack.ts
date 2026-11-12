@@ -130,7 +130,7 @@ export class CrmLeadsStack extends cdk.Stack {
       tracing: lambda.Tracing.ACTIVE,
       role: data.role,
       logGroup: new logs.LogGroup(this, "ApiLogs", {
-        retention: logs.RetentionDays.THREE_MONTHS, // 90 days (kit: observability-logging-tracing.md:27)
+        retention: logs.RetentionDays.THREE_MONTHS, // 90 days (kit: apply-engineering-guidelines/rules/observability-logging-tracing.md, "Logging Standards")
         removalPolicy: cdk.RemovalPolicy.DESTROY,
       }),
       environment: {

@@ -21,7 +21,7 @@ export class CrmWebStack extends cdk.Stack {
     });
     app.addBranch("main", {
       asset: new Asset(this, "Site", { path: props.siteDir }),
-      // D3: the password sits in the CloudFormation template (no Secrets Manager standing cost).
+      // The password sits in the CloudFormation template, so there is no Secrets Manager standing cost.
       basicAuth: amplify.BasicAuth.fromCredentials(
         props.basicUser,
         cdk.SecretValue.unsafePlainText(props.basicPass),

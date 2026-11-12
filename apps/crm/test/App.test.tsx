@@ -355,7 +355,7 @@ describe("CRM main screen", () => {
     expect(h.detail).not.toHaveBeenCalled();
     expect(h.search).toHaveBeenCalledTimes(2);
     expect(h.search.mock.calls[1]![0].lon).toBeCloseTo(-118.485, 9);
-    // Re-centring keeps the current zoom (no globe zoom adjustment on a latitude pan; §3b.4).
+    // Re-centring keeps the current zoom (no globe zoom adjustment on a latitude pan).
     expect(h.easeTo).toHaveBeenLastCalledWith({
       center: [-118.485, 34.195],
       zoom: 17,
