@@ -29,3 +29,10 @@ allowBuilds:
   # only checks and swaps in the native binary; the JS API and bin shim find
   # @esbuild/linux-x64 without it (verified in the increment-2 smoke test).
   esbuild: false
+# Agent skills: none are approved. These packages ship skills and pnpm asks for approval on install;
+# the request is denied (user decision, 2026-11-12).
+permissions:
+  "@trpc/client":
+    skills: false
+  "@trpc/server":
+    skills: false
