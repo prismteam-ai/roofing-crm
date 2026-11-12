@@ -58,4 +58,5 @@ repository.
    $0.20 a day) is what catches misuse.
 9. **The notes rule is a guard, not a filter for all personal data.** It refuses email addresses, phone
    numbers with an area code and 7 or more digits in a row (`apps/leads-api/src/schema.ts`). It does not
-   detect names, street addresses or a 7-digit local number with a separator ("555-1234").
+   detect names or street addresses.
+   - The notes filter allows phone numbers without an area code (e.g. 555-1234).
