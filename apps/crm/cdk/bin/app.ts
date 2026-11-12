@@ -1,8 +1,12 @@
-/** CDK app for the Roofing CRM frontend (Amplify, no Git) and its Amazon Location map key. */
+/** CDK app for the Roofing CRM: frontend (Amplify, no Git), its Amazon Location map key and the leads API. */
 import { readFileSync } from "node:fs";
 import * as cdk from "aws-cdk-lib";
 import { CrmWebStack } from "../lib/crm-web-stack.ts";
 import { CrmMapKeyStack } from "../lib/crm-map-key-stack.ts";
+import {
+  CrmLeadsDestroyCheckStack,
+  CrmLeadsStack,
+} from "../lib/crm-leads-stack.ts";
 
 const root = new URL("../../../../", import.meta.url).pathname;
 const secrets = JSON.parse(readFileSync(`${root}.secrets/crm.json`, "utf8"));
@@ -30,5 +34,9 @@ new CrmMapKeyStack(app, "RoofingCrmMapKey", {
   ).split(","),
   alertTopicParam: app.node.tryGetContext("alertTopicParam"), // set once OracleLaGuards exists
 });
+new CrmLeadsStack(app, "RoofingCrmLeads", { env, root, origin: web.origin });
+// Destroy proof only (deployed and destroyed in one session): cdk ... -c destroyCheck=true
+if (app.node.tryGetContext("destroyCheck") === "true")
+  new CrmLeadsDestroyCheckStack(app, "RoofingCrmLeadsDestroyCheck", { env });
 for (const s of app.node.children)
   if (s instanceof cdk.Stack) cdk.Tags.of(s).add("project_name", "roofing-crm");
