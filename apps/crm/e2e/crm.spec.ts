@@ -491,7 +491,8 @@ test.describe("with credentials", () => {
     await settle(page, pts.count);
     await renderedFor(page, zoom); // the points of THIS search are drawn at THIS zoom
     const detailCalls = detailGets(page);
-    // Click exactly on a point inside the slice, ~2 miles from the pin.
+    // Click exactly on a point inside the slice, ~2 miles from the pin. It is taken from the drawn points
+    // (the nearest max_points: at 15 years from Van Nuys they reach about 2.31 mi), so it is on the map.
     const k = pts.id.findIndex(
       (_: string, j: number) =>
         Math.abs(haversine(pin, [pts.lat[j], pts.lon[j]]) - 2) < 0.1,
@@ -642,7 +643,7 @@ test.describe("with credentials", () => {
     }
   });
 
-  test("14. map points payload is compact", async () => {
+  test("14. map points payload is compact: at most max_points points, truncated when the count is larger", async () => {
     const cfg = await config();
     const res = await (
       await api()
@@ -660,11 +661,47 @@ test.describe("with credentials", () => {
       JSON.stringify({
         bytes: body.length,
         count: data.count,
-        perPoint: +(body.length / data.count).toFixed(1),
+        drawn: data.id.length,
+        perPoint: +(body.length / data.id.length).toFixed(1),
       }),
     );
-    expect(body.length).toBeLessThan(1_500_000);
-    expect(data.id).toHaveLength(data.count);
+    expect(data.id).toHaveLength(Math.min(data.count, data.max_points));
+    expect(data.lat).toHaveLength(data.id.length);
+    expect(data.truncated).toBe(data.count > data.max_points);
+    // Measured 819,810 B for 25,000 points (about 33 B each); 40 B per point leaves room for longer
+    // coordinates and stays well under the API's 3,000,000 B guard.
+    expect(body.length).toBeLessThan(40 * data.max_points);
+  });
+
+  test("14b. at 10 miles the map draws the nearest max_points and says so; the data notice names the served run", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=12`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    await page.getByTestId("radius").fill("10");
+    const get = async (proc: string, input?: unknown) =>
+      (await (await (await api()).get(trpc(cfg.apiUrl, proc, input))).json())
+        .result.data;
+    const pts = await get("parcels.points", {
+      lat: pin[0],
+      lon: pin[1],
+      radius_miles: 10,
+      threshold_years: 15,
+    });
+    expect(pts.truncated).toBe(true);
+    await settle(page, pts.count);
+    const n = (x: number) => x.toLocaleString("en-US");
+    await expect(page.getByTestId("points-truncated")).toHaveText(
+      `Map shows the nearest ${n(pts.max_points)} of ${n(pts.count)} matching parcels; the count and the list cover all ${n(pts.count)}.`,
+    );
+    const { run } = await get("explorer.runSummary");
+    await expect(page.getByTestId("data-parcels")).toHaveText(
+      n(run.row_counts.parquet),
+    );
+    await expect(page.getByTestId("data-notice")).not.toContainText("pilot");
   });
   test("15. leads API: no header 401, wrong token 403, CRM token 200", async () => {
     const cfg = await config();
@@ -706,7 +743,7 @@ test.describe("with credentials", () => {
     ).toBeUndefined();
   });
 
-  test("17. create a lead, reload, update it, delete it (the test's own lead is always deleted)", async ({
+  test("17. create a lead, reload, update it, reload, delete it (the test's own lead is always deleted)", async ({
     page,
   }) => {
     const cfg = await config();
@@ -724,17 +761,29 @@ test.describe("with credentials", () => {
         updated_at: string;
         created_at: string;
       } | null;
-    const startedAt = new Date().toISOString();
+    /** The parcel IDs of all leads, read across every page via next_cursor (read-only). */
+    const listAll = async () => {
+      const all: string[] = [];
+      let cursor: string | undefined;
+      for (let i = 0; i < 1000; i++) {
+        const r = await leadsApi.get(
+          trpc(cfg.leadsApiUrl, "leads.list", { limit: 100, cursor }),
+        );
+        if (r.status() !== 200)
+          throw new Error(`leads.list: HTTP ${r.status()}`);
+        const p = (await r.json()).result.data as {
+          items: { parcel_id: string }[];
+          next_cursor: string | null;
+        };
+        all.push(...p.items.map((l) => l.parcel_id));
+        if (!p.next_cursor) return all;
+        cursor = p.next_cursor;
+      }
+      throw new Error("leads.list: next_cursor did not end after 1,000 pages");
+    };
     // A parcel near Van Nuys without a lead (existing leads are never touched).
-    const existing = new Set<string>(
-      (
-        await (
-          await leadsApi.get(
-            trpc(cfg.leadsApiUrl, "leads.list", { limit: 100 }),
-          )
-        ).json()
-      ).result.data.items.map((l: { parcel_id: string }) => l.parcel_id),
-    );
+    const existing = new Set(await listAll());
+    console.log(`leads before: ${existing.size}`);
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
     await page.getByTestId("map").click(); // pin at the centre
@@ -766,9 +815,23 @@ test.describe("with credentials", () => {
         parcel,
       );
     };
+    /** Reload the page, pin the centre again and reopen the parcel: the lead is read back from the API. */
+    const reloadAndReopen = async () => {
+      await page.reload();
+      await ready(page);
+      await page.getByTestId("map").click();
+      await expect(page.getByTestId("result").first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await openLead();
+    };
+    // Set right before the create click. The parcel had no lead when it was chosen, so from then on any lead
+    // on it is the test's own, and cleanup needs no clock comparison.
+    let createClicked = false;
     try {
       await openLead();
       await page.getByTestId("lead-notes").fill("Playwright test lead");
+      createClicked = true;
       await page.getByTestId("lead-create").click();
       await expect(page.getByTestId("lead-save")).toBeVisible({
         timeout: 10_000,
@@ -780,13 +843,7 @@ test.describe("with credentials", () => {
       });
 
       // Reload between create and update: the lead is read back from the API, not from page state.
-      await page.reload();
-      await ready(page);
-      await page.getByTestId("map").click();
-      await expect(page.getByTestId("result").first()).toBeVisible({
-        timeout: 20_000,
-      });
-      await openLead();
+      await reloadAndReopen();
       await expect(page.getByTestId("lead-status")).toHaveValue("new");
       await expect(page.getByTestId("lead-notes")).toHaveValue(
         "Playwright test lead",
@@ -795,10 +852,32 @@ test.describe("with credentials", () => {
         page.getByTestId("lead-item").filter({ hasText: parcel }),
       ).toHaveCount(1);
       await page.getByTestId("lead-status").selectOption("contacted");
+      await page
+        .getByTestId("lead-notes")
+        .fill("Playwright test lead, contacted");
       await page.getByTestId("lead-save").click();
       await expect
-        .poll(async () => (await get(parcel))?.status, { timeout: 10_000 })
-        .toBe("contacted");
+        .poll(
+          async () => {
+            const l = await get(parcel);
+            return l && { status: l.status, notes: l.notes };
+          },
+          { timeout: 10_000 },
+        )
+        .toEqual({
+          status: "contacted",
+          notes: "Playwright test lead, contacted",
+        });
+
+      // Reload again after the update: the edit is read back in the editor and in the list.
+      await reloadAndReopen();
+      await expect(page.getByTestId("lead-status")).toHaveValue("contacted");
+      await expect(page.getByTestId("lead-notes")).toHaveValue(
+        "Playwright test lead, contacted",
+      );
+      await expect(
+        page.getByTestId("lead-item").filter({ hasText: parcel }),
+      ).toContainText("contacted");
 
       await page.getByTestId("lead-delete").click();
       await expect(page.getByTestId("lead-create")).toBeVisible({
@@ -806,13 +885,19 @@ test.describe("with credentials", () => {
       });
       expect(await get(parcel)).toBeNull();
     } finally {
-      // Always delete this test's own lead (created after startedAt), also when a step above failed.
-      const left = parcel ? await get(parcel) : null;
-      if (left && left.created_at >= startedAt)
+      // Always delete this test's own lead once Create was clicked, also when a step above failed.
+      const left = createClicked ? await get(parcel) : null;
+      if (left)
         await leadsApi.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
           data: { parcel_id: parcel, expected_updated_at: left.updated_at },
         });
       if (parcel) expect(await get(parcel)).toBeNull();
+      // Evidence that nothing was left behind; a failed read here never hides the test's own error.
+      await listAll().then(
+        (all) => console.log(`leads after cleanup: ${all.length}`),
+        (e: Error) =>
+          console.log(`leads after cleanup: unknown (${e.message})`),
+      );
     }
   });
 });
