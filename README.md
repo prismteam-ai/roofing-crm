@@ -44,3 +44,9 @@ The UI should present property and permit details, including contractor informat
 ## Reference
 - [Soofi XYZ Team Kit](https://github.com/soofi-xyz/soofi-xyz-team-kit)
 - [Elephant Oracle Skills](https://github.com/elephant-xyz/skills)
+
+## Candidate submission: how to run and deploy
+
+How to deploy the CRM and the data API it reads, run the tests and tear everything down is in [docs/runbook.md](docs/runbook.md). Where the work departs from the team kit, and why, is in [docs/kit-deviations.md](docs/kit-deviations.md). The access model and its known limits are in [docs/access-rules.md](docs/access-rules.md), and the labels used in commits and docs in [docs/glossary.md](docs/glossary.md).
+
+Delivered: a map-based CRM on all Los Angeles County parcels (assessor's roll 2026, served by the pipeline's data API). It finds parcels from a pin or GPS within a radius and a roof-age threshold, shows parcel details with their source, and creates and manages leads from the map, stored behind the shared token authorizer. Not done: permits (no permit data yet, so the permit filters are disabled placeholders), contractor and BBB details, and the RAG agent.
