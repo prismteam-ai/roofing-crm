@@ -4,6 +4,7 @@ import {
   type ApiClient,
   type ParcelDetail as Detail,
   type PointsResult,
+  type RunSummary,
   type SearchResult,
 } from "@oracle-la/api-client";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@roofing-crm/geo";
 import { mapStyleUrl } from "./basemap.ts";
 import { loadConfig } from "./config.ts";
+import { DataNotice } from "./DataNotice.tsx";
 import { FuturePlaceholders } from "./FuturePlaceholders.tsx";
 import {
   GeoJSONSource,
@@ -29,7 +31,8 @@ import {
 } from "./maplibre.ts";
 import { DETAIL_MIN_ZOOM, HIT_TOLERANCE_PX, nearestPoint } from "./hitTest.ts";
 import { LeadEditor } from "./LeadEditor.tsx";
-import { LeadsList } from "./LeadsList.tsx";
+import { useLeadsInSearch } from "./leadsInSearch.ts";
+import { LEADS_MAX_PAGES, LEADS_PAGE_SIZE, LeadsList } from "./LeadsList.tsx";
 import { ParcelDetail } from "./ParcelDetail.tsx";
 import { useDebounced } from "./useDebounced.ts";
 
@@ -66,7 +69,13 @@ export function App() {
   const [leadsApi, setLeadsApi] = useState<LeadsClient>();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadsError, setLeadsError] = useState<string>();
+  /** True when the last page read still had a next cursor: more leads are stored than the list loaded. */
+  const [leadsCapped, setLeadsCapped] = useState(false);
   const [leadBusy, setLeadBusy] = useState(false);
+  /** The "Leads in this search" filter; parcels.match calls are made only while it is on. */
+  const [inSearch, setInSearch] = useState(false);
+  /** The served run (explorer.runSummary), for the data notice. */
+  const [run, setRun] = useState<{ run?: RunSummary["run"]; error?: string }>();
   // Debounce a stable primitive key (an object would change identity on every render and re-fire forever).
   // The search key: pin rounded to 6 decimals (as in data-pin-*), radius and threshold.
   const key = useDebounced(
@@ -289,20 +298,42 @@ export function App() {
     );
   }, [points, result?.key]);
 
-  // All leads (a small table: paged Scan, up to 20 pages of 100).
+  // The served run, once per client.
+  useEffect(() => {
+    if (!api) return;
+    let live = true;
+    api.explorer.runSummary.query().then(
+      (s) => live && setRun({ run: s.run }),
+      (e: Error) => live && setRun({ error: e.message }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [api]);
+
+  // All leads (a small table: paged Scan, up to LEADS_MAX_PAGES pages of LEADS_PAGE_SIZE). When the last
+  // page still has a next cursor, the list says it shows only the first leads.
   useEffect(() => {
     if (!leadsApi) return;
     let live = true;
     (async () => {
       const all: Lead[] = [];
       let cursor: string | undefined;
-      for (let i = 0; i < 20; i++) {
-        const p = await leadsApi.leads.list.query({ limit: 100, cursor });
+      let more = false;
+      for (let i = 0; i < LEADS_MAX_PAGES; i++) {
+        const p = await leadsApi.leads.list.query({
+          limit: LEADS_PAGE_SIZE,
+          cursor,
+        });
         all.push(...p.items);
+        more = p.next_cursor !== null;
         if (!p.next_cursor) break;
         cursor = p.next_cursor;
       }
-      if (live) setLeads(all);
+      if (live) {
+        setLeads(all);
+        setLeadsCapped(more);
+      }
     })().catch((e: Error) => live && setLeadsError(e.message));
     return () => {
       live = false;
@@ -385,10 +416,8 @@ export function App() {
       });
       return null;
     });
-  const searchIds = useMemo(
-    () => (points ? new Set(points.id) : undefined),
-    [points],
-  );
+  const leadIds = useMemo(() => leads.map((l) => l.parcel_id), [leads]);
+  const leadsInSearch = useLeadsInSearch(api, result, leadIds, inSearch);
 
   const page = async (off: number) => {
     if (!api || !center) return;
@@ -447,11 +476,7 @@ export function App() {
       </header>
       <aside>
         <section className="controls">
-          <p className="notice">
-            Opens on Los Angeles County. Click the map to drop a pin, or use
-            GPS. Data: City of LA, ZIP 91405/91406/91411 (roll 2026 pilot
-            slice).
-          </p>
+          <DataNotice run={run?.run} error={run?.error} />
           <div className="row">
             <button data-testid="gps" onClick={gps}>
               Use my location
@@ -508,6 +533,15 @@ export function App() {
         )}
         {search && (
           <section>
+            {points?.truncated && (
+              <p className="notice" data-testid="points-truncated">
+                Map shows the nearest{" "}
+                {points.max_points.toLocaleString("en-US")} of{" "}
+                {points.count.toLocaleString("en-US")} matching parcels; the
+                count and the list cover all{" "}
+                {points.count.toLocaleString("en-US")}.
+              </p>
+            )}
             <div className="row">
               <span className="notice">
                 Showing {search.items.length ? offset + 1 : 0}–
@@ -546,8 +580,11 @@ export function App() {
         {leadsApi && (
           <LeadsList
             leads={leads}
-            searchIds={searchIds}
+            search={leadsInSearch}
+            inSearch={inSearch}
+            onInSearch={setInSearch}
             error={leadsError}
+            capped={leadsCapped}
             onOpen={(id) => void openDetail(id)}
           />
         )}

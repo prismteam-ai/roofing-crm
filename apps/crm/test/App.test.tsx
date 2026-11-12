@@ -28,6 +28,8 @@ const h = vi.hoisted(() => {
   const search = vi.fn();
   const points = vi.fn();
   const detail = vi.fn();
+  const match = vi.fn();
+  const runSummary = vi.fn();
   const easeTo = vi.fn();
   const leads = {
     list: vi.fn(),
@@ -36,7 +38,7 @@ const h = vi.hoisted(() => {
     update: vi.fn(),
     delete: vi.fn(),
   };
-  return { maps, search, points, detail, easeTo, leads };
+  return { maps, search, points, detail, match, runSummary, easeTo, leads };
 });
 
 vi.mock("../src/maplibre.ts", () => {
@@ -148,7 +150,9 @@ vi.mock("@oracle-la/api-client", () => ({
         search: { query: h.search },
         points: { query: h.points },
         detail: { query: h.detail },
+        match: { query: h.match },
       },
+      explorer: { runSummary: { query: h.runSummary } },
     }),
 }));
 
@@ -184,6 +188,18 @@ const item = (id: string, d: number) => ({
   latitude: 34.2,
   longitude: -118.49,
 });
+/** explorer.runSummary of a made-up county run: 1,000 parcels, 900 with year built, 990 with coordinates. */
+const RUN = {
+  run: {
+    run_id: "r",
+    county: "Los Angeles",
+    roll_year: "2026",
+    scope: { jurisdiction: "all", zips: [] },
+    row_counts: { parquet: 1000 },
+    coverage: { with_year_built: 900, with_coordinates: 990 },
+  },
+  history: [],
+};
 const flush = () =>
   act(async () => {
     await vi.advanceTimersByTimeAsync(0);
@@ -204,6 +220,8 @@ describe("CRM main screen", () => {
     vi.useFakeTimers();
     h.maps.length = 0;
     h.easeTo.mockReset();
+    h.match.mockReset();
+    h.runSummary.mockReset().mockResolvedValue(RUN);
     h.search.mockReset().mockResolvedValue({
       count: 3,
       rule,
@@ -378,6 +396,8 @@ describe("leads (with leadsApiUrl in config.json)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     h.maps.length = 0;
+    h.match.mockReset();
+    h.runSummary.mockReset().mockResolvedValue(RUN);
     vi.mocked(loadConfig).mockResolvedValue({
       client: "crm",
       apiUrl: "https://api.test",
@@ -524,6 +544,48 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     );
   });
 
+  /** A list page of 100 leads with IDs from `first`, and the given next cursor. */
+  const page = (first: number, next_cursor: string | null) => ({
+    items: Array.from({ length: 100 }, (_, i) =>
+      lead(String(first + i).padStart(10, "0")),
+    ),
+    next_cursor,
+  });
+
+  test("the leads list reads every page until the cursor ends, with no cap notice", async () => {
+    h.leads.list
+      .mockResolvedValueOnce(page(0, "0000000099"))
+      .mockResolvedValueOnce(page(100, "0000000199"))
+      .mockResolvedValueOnce(page(200, null));
+    await start();
+    await flush();
+    expect(h.leads.list).toHaveBeenCalledTimes(3);
+    expect(h.leads.list.mock.calls.map((c) => c[0])).toEqual([
+      { limit: 100, cursor: undefined },
+      { limit: 100, cursor: "0000000099" },
+      { limit: 100, cursor: "0000000199" },
+    ]);
+    expect(screen.getByTestId("leads-count").textContent).toBe("300");
+    expect(screen.queryByTestId("leads-cap-notice")).toBeNull();
+  });
+
+  test("when 20 pages of 100 still leave a cursor, the list stops and shows the cap notice", async () => {
+    // A cursor that never ends: every page has 100 new leads and a next cursor.
+    let n = 0;
+    h.leads.list.mockImplementation(async () => {
+      const p = page(n, String(n + 99).padStart(10, "0"));
+      n += 100;
+      return p;
+    });
+    await start();
+    await flush();
+    expect(h.leads.list).toHaveBeenCalledTimes(20);
+    expect(screen.getByTestId("leads-count").textContent).toBe("2000");
+    expect(screen.getByTestId("leads-cap-notice").textContent).toMatch(
+      /^Showing the first 2,000 leads\./,
+    );
+  });
+
   test("'Leads in this search' keeps the leads whose parcel is in the current result; status filter", async () => {
     const map = await start();
     await flush();
@@ -544,5 +606,177 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     expect(
       screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
     ).toEqual(["0000000009"]);
+  });
+
+  describe("county notices and 'Leads in this search' when the points are capped", () => {
+    /** 25,000 drawn of 30,000 matching; the drawn IDs are 0000000003 and 0000000004. */
+    const capped = (ids = ["0000000003", "0000000004"]) => ({
+      count: 30000,
+      encoding: "columnar-v1",
+      precision: 5,
+      id: ids,
+      lat: ids.map(() => 34.21),
+      lon: ids.map(() => -118.48),
+      truncated: true,
+      max_points: 25000,
+    });
+    /** n leads in pages of 100, IDs from 1,000,000 (none of them drawn). */
+    const leadPages = (n: number) => {
+      const pages = Array.from({ length: Math.ceil(n / 100) }, (_, i) => ({
+        items: Array.from({ length: Math.min(100, n - i * 100) }, (_, j) =>
+          lead(String(1_000_000 + i * 100 + j).padStart(10, "0")),
+        ),
+        next_cursor: i * 100 + 100 < n ? `c${i}` : null,
+      }));
+      let k = 0;
+      h.leads.list.mockImplementation(async () => pages[k++]);
+    };
+    const throttled = () =>
+      Object.assign(new Error("Too Many Requests"), {
+        data: { code: "TOO_MANY_REQUESTS", httpStatus: 429 },
+      });
+    /** Start, drop a pin (search + points) and turn on "Leads in this search". */
+    const searchAndFilter = async () => {
+      const map = await start();
+      await flush();
+      act(() => map.clickAt(300, 100));
+      await wait(300);
+      fireEvent.click(screen.getByTestId("leads-in-search"));
+      await flush();
+    };
+
+    test("the data notice comes from the run summary: county-wide, parcels, no-year-built share", async () => {
+      await start();
+      await flush();
+      const text = screen.getByTestId("data-notice").textContent!;
+      expect(text).toMatch(
+        /Los Angeles County Assessor roll 2026, county-wide, 1,000 parcels/,
+      );
+      expect(text).not.toMatch(/pilot|91405/);
+      expect(screen.getByTestId("data-no-year-built-pct").textContent).toBe(
+        "10.00%",
+      );
+      expect(screen.getByTestId("data-coverage").textContent).toMatch(
+        /10\.00% of parcels have no year built in the assessor roll and 1\.00% have no coordinates; they never appear in roof-age results\./,
+      );
+    });
+
+    test("truncated points show the nearest-N-of-M notice; untruncated points do not", async () => {
+      const map = await start();
+      act(() => map.clickAt(300, 100));
+      await wait(300);
+      expect(screen.queryByTestId("points-truncated")).toBeNull();
+      h.points.mockResolvedValue(capped());
+      fireEvent.change(screen.getByTestId("radius"), {
+        target: { value: "10" },
+      });
+      await wait(300);
+      expect(screen.getByTestId("points-truncated").textContent).toBe(
+        "Map shows the nearest 25,000 of 30,000 matching parcels; the count and the list cover all 30,000.",
+      );
+    });
+
+    test("a missing year built shows 'not in source' in the parcel detail", async () => {
+      h.leads.get.mockResolvedValue(null);
+      const map = await start();
+      await openDetail(map);
+      expect(
+        screen.getByTestId("detail").querySelector('[data-field="year_built"]')!
+          .textContent,
+      ).toBe("not in source");
+    });
+
+    test("not truncated: the drawn IDs decide and no match call is made", async () => {
+      await searchAndFilter();
+      await wait(2000);
+      expect(h.match).not.toHaveBeenCalled();
+      expect(
+        screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
+      ).toEqual(["0000000003"]);
+    });
+
+    test("truncated, all leads drawn: no match call", async () => {
+      h.points.mockResolvedValue(capped(["0000000003", "0000000009"]));
+      await searchAndFilter();
+      await wait(2000);
+      expect(h.match).not.toHaveBeenCalled();
+      expect(screen.getByTestId("leads-count").textContent).toBe("2");
+    });
+
+    test("at the cap: 2,000 leads, none drawn, give 25 paced match calls (2 in flight at most, starts 250 ms apart)", async () => {
+      h.points.mockResolvedValue(capped());
+      leadPages(2000);
+      const starts: number[] = [];
+      let inFlight = 0;
+      let maxInFlight = 0;
+      const asked: string[] = [];
+      h.match.mockImplementation(
+        async (v: { parcel_ids: string[]; radius_miles: number }) => {
+          starts.push(Date.now());
+          asked.push(...v.parcel_ids);
+          maxInFlight = Math.max(maxInFlight, ++inFlight);
+          // 1 s per call: the 250 ms spacing alone would allow 4 in flight, so only the limit keeps it at 2.
+          await new Promise((r) => setTimeout(r, 1000));
+          inFlight--;
+          // Every third parcel matches.
+          return { parcel_ids: v.parcel_ids.filter((id) => +id % 3 === 0) };
+        },
+      );
+      await searchAndFilter();
+      expect(screen.getByTestId("leads-checking").textContent).toBe(
+        "checking 2,000 leads…",
+      );
+      expect(screen.queryAllByTestId("lead-item")).toHaveLength(0); // never a partial list
+      await wait(30_000);
+      expect(h.match).toHaveBeenCalledTimes(25);
+      expect(
+        h.match.mock.calls.every(
+          ([v]) => (v as { parcel_ids: string[] }).parcel_ids.length <= 80,
+        ),
+      ).toBe(true);
+      expect(new Set(asked).size).toBe(2000);
+      expect(maxInFlight).toBe(2);
+      for (let i = 1; i < starts.length; i++)
+        expect(starts[i]! - starts[i - 1]!).toBeGreaterThanOrEqual(250);
+      const want = Array.from({ length: 2000 }, (_, i) => 1_000_000 + i).filter(
+        (n) => n % 3 === 0,
+      ).length;
+      expect(screen.queryByTestId("leads-checking")).toBeNull();
+      expect(screen.getByTestId("leads-count").textContent).toBe(String(want));
+    });
+
+    test("a TOO_MANY_REQUESTS answer is retried once after 1 s", async () => {
+      h.points.mockResolvedValue(capped());
+      leadPages(100);
+      const starts: number[] = [];
+      h.match.mockImplementation(async (v: { parcel_ids: string[] }) => {
+        starts.push(Date.now());
+        if (starts.length === 1) throw throttled();
+        return { parcel_ids: v.parcel_ids.slice(0, 1) };
+      });
+      await searchAndFilter();
+      await wait(5000);
+      // Chunk 1 (80) is refused, chunk 2 (20) starts 250 ms later, chunk 1 is retried 1 s after its refusal.
+      expect(h.match).toHaveBeenCalledTimes(3);
+      expect(starts[2]! - starts[0]!).toBeGreaterThanOrEqual(1000);
+      expect(screen.queryByTestId("leads-search-error")).toBeNull();
+      expect(screen.getByTestId("leads-count").textContent).toBe("2");
+    });
+
+    test("a second refusal is an error state, never a partial list", async () => {
+      h.points.mockResolvedValue(capped());
+      leadPages(100);
+      h.match.mockImplementation(async (v: { parcel_ids: string[] }) => {
+        if (v.parcel_ids.length === 80) throw throttled();
+        return { parcel_ids: v.parcel_ids };
+      });
+      await searchAndFilter();
+      await wait(5000);
+      expect(screen.getByTestId("leads-search-error").textContent).toMatch(
+        /^Could not check 100 leads against this search: Too Many Requests/,
+      );
+      expect(screen.queryAllByTestId("lead-item")).toHaveLength(0);
+      expect(screen.queryByTestId("leads-checking")).toBeNull();
+    });
   });
 });

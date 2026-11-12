@@ -17,6 +17,8 @@ const LABELS: Array<[string, string]> = [
   ["last_recording_date", "Last recorded document"],
   ["owner_unchanged_10y_proxy", "No recorded document in 10+ years (proxy)"],
 ];
+/** Fields the assessor roll leaves empty for some parcels: shown as "not in source" rather than a dash. */
+const NOT_IN_SOURCE = new Set(["year_built", "effective_year_built"]);
 export function ParcelDetail({
   detail,
   onClose,
@@ -41,7 +43,9 @@ export function ParcelDetail({
         {LABELS.map(([k, l]) => (
           <div key={k}>
             <dt>{l}</dt>
-            <dd data-field={k}>{String(p[k] ?? "—")}</dd>
+            <dd data-field={k}>
+              {String(p[k] ?? (NOT_IN_SOURCE.has(k) ? "not in source" : "—"))}
+            </dd>
           </div>
         ))}
       </dl>

@@ -4,25 +4,40 @@ import {
   type Lead,
   type LeadStatus,
 } from "@roofing-crm/leads-client";
+import type { LeadsInSearch } from "./leadsInSearch.ts";
+
+/** The list reads at most this many pages of this many leads. */
+export const LEADS_PAGE_SIZE = 100;
+export const LEADS_MAX_PAGES = 20;
 
 /**
  * Leads, filtered at read time: by status, and "Leads in this search" (the parcels of the current radius and
- * roof-age result). Nothing derived is stored with a lead. Permit filters wait for permit data.
+ * roof-age result; see leadsInSearch.ts). Nothing derived is stored with a lead. Permit filters wait for
+ * permit data.
  */
 export function LeadsList({
   leads,
-  searchIds,
+  search,
+  inSearch,
+  onInSearch,
   error,
+  capped,
   onOpen,
 }: {
   leads: Lead[];
-  /** Parcel IDs of the current search result (radius + roof age), if there is one. */
-  searchIds?: Set<string>;
+  /** Which leads the current search result (radius + roof age) matches. */
+  search: LeadsInSearch;
+  /** The "Leads in this search" filter is on (kept by the app, which only checks leads while it is on). */
+  inSearch: boolean;
+  onInSearch: (on: boolean) => void;
   error?: string;
+  /** More leads are stored than the list loaded (the page limit was reached with a next cursor left). */
+  capped?: boolean;
   onOpen: (parcelId: string) => void;
 }) {
   const [status, setStatus] = useState<LeadStatus | "all">("all");
-  const [inSearch, setInSearch] = useState(false);
+  const searchIds = search.ids;
+  // With the filter on, nothing is listed until the answer is complete (never a partial result).
   const shown = useMemo(
     () =>
       leads
@@ -53,9 +68,9 @@ export function LeadsList({
           <input
             type="checkbox"
             data-testid="leads-in-search"
-            disabled={!searchIds}
+            disabled={!search.available}
             checked={inSearch}
-            onChange={(e) => setInSearch(e.target.checked)}
+            onChange={(e) => onInSearch(e.target.checked)}
           />{" "}
           Leads in this search
         </label>
@@ -66,6 +81,23 @@ export function LeadsList({
         </select>{" "}
         Permit filters: permits are not harvested yet.
       </label>
+      {inSearch && search.checking !== undefined && (
+        <p className="notice" data-testid="leads-checking">
+          checking {search.checking.toLocaleString("en-US")} leads…
+        </p>
+      )}
+      {inSearch && search.error && (
+        <p className="error" data-testid="leads-search-error">
+          {search.error}
+        </p>
+      )}
+      {capped && (
+        <p className="notice" data-testid="leads-cap-notice">
+          Showing the first{" "}
+          {(LEADS_MAX_PAGES * LEADS_PAGE_SIZE).toLocaleString("en-US")} leads.
+          More are stored; the count and the filters cover only these.
+        </p>
+      )}
       {error && (
         <p className="error" data-testid="leads-error">
           {error}
