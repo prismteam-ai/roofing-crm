@@ -846,7 +846,7 @@ packages:
     resolution: {integrity: sha512-dEe5XUd64RQbxNxy2OzIkJnwNDWjVmSXjCd0A7zLirm7QJ/WWbmtDFIkfsiM4yt1cplqzG6oSivRYeWx1SM1yg==}
 
   '@oracle-la/api-client@file:vendor/oracle-la-api-client-0.1.0.tgz':
-    resolution: {integrity: sha512-3VB0zSRjT/8FZH5tTDvwJRhza4pl4iW12UpeVrZbdwbcyKUQxM+nfCLi1aV9B6Js1y1Lm+2ZTpuKGS2iVV1iKg==, tarball: file:vendor/oracle-la-api-client-0.1.0.tgz}
+    resolution: {integrity: sha512-ldY75ZhiY4WKhLZVfJAaEF1OhJ+sptVMCExknaRJIdU1IQIYHWqicCb4JraE8tiGl/s5hjavzYg3VTvn5nt+Dw==, tarball: file:vendor/oracle-la-api-client-0.1.0.tgz}
     version: 0.1.0
 
   '@oxc-project/types@0.155.0':

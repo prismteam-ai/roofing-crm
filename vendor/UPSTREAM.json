@@ -2,9 +2,9 @@
   "package": "@oracle-la/api-client",
   "version": "0.1.0",
   "tarball": "oracle-la-api-client-0.1.0.tgz",
-  "sha256": "5fd17da8bd97a0e0a4ba2f85e0305fe588c22b3cb585d8e1d6545082b0a55027",
+  "sha256": "e00eeec313f063f7b0f37240302d661be0f4a2dcecf8b7d75b83b1eafb4eaa8f",
   "source_repo": "oracle-property-intelligence-platform-pipeline-los-angeles-ca",
-  "source_commit": "d178c201eac751996e4a4ae9d337655f3d4f6322",
+  "source_commit": "0878c7887dae40e157c78897f73ab4cff2d14733",
   "source_uncommitted_changes": false,
-  "built_at": "2026-11-12T09:19:46.560Z"
+  "built_at": "2026-11-12T15:17:44.322Z"
 }
