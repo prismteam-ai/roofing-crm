@@ -1,0 +1,31 @@
+# pnpm settings for this repository. pnpm 12 reads its settings from this file
+# (https://pnpm.io/settings). apps/* hold the CRM app; packages/* shared code.
+packages:
+  - apps/*
+  - packages/*
+# Supply chain: install only versions published at least 14 days ago
+# (minutes; https://pnpm.io/settings/dependency-resolution#minimumreleaseage).
+# Strict: fail instead of falling back to a newer version.
+minimumReleaseAge: 20160
+minimumReleaseAgeStrict: true
+# Fail when a package has no publish time instead of skipping the age check.
+minimumReleaseAgeIgnoreMissingTime: false
+# Only direct dependencies may use git/tarball sources (we use none).
+blockExoticSubdeps: true
+
+# Install scripts: none are allowed. strictDepBuilds fails the install if any
+# dependency declares an unreviewed build script
+# (https://pnpm.io/settings/build#strictdepbuilds). Every package that
+# declares a build script is listed below with the decision and the reason;
+# none is allowed to run.
+strictDepBuilds: true
+dangerouslyAllowAllBuilds: false
+allowBuilds:
+  # macOS-only optional dependency of vite (file watching). Its install script
+  # is `node-gyp rebuild`; the package ships a prebuilt fsevents.node, so the
+  # rebuild is not needed. Never installed on Linux.
+  fsevents: false
+  # Bundler for Lambda code (CDK NodejsFunction). Its postinstall (node install.js)
+  # only checks and swaps in the native binary; the JS API and bin shim find
+  # @esbuild/linux-x64 without it (verified in the increment-2 smoke test).
+  esbuild: false

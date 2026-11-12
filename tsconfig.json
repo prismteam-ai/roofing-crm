@@ -1,0 +1,10 @@
+{
+  "extends": "./packages/tsconfig/base.json",
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "test",
+    "vitest.config.ts",
+    "eslint.config.ts"
+  ]
+}
