@@ -150,3 +150,18 @@ button:disabled {
     order: 2;
   }
 }
+.lead,
+.leads {
+  border-top: 1px solid #dedee3;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.lead label {
+  display: block;
+  font-size: 13px;
+  margin: 6px 0;
+}
+.lead textarea {
+  width: 100%;
+  box-sizing: border-box;
+}

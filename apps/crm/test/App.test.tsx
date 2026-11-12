@@ -7,6 +7,7 @@
  * - ../src/config.ts: loadConfig resolves a fixed config (no network).
  * - @oracle-la/api-client: createApiClient returns a CALLABLE object, like the real tRPC v11 proxy
  *   (typeof client === "function"), with vi.fn() procedures.
+ * - @roofing-crm/leads-client: createLeadsClient likewise (the schemas and notes rule stay real).
  */
 import {
   act,
@@ -27,7 +28,15 @@ const h = vi.hoisted(() => {
   const search = vi.fn();
   const points = vi.fn();
   const detail = vi.fn();
-  return { maps, search, points, detail };
+  const easeTo = vi.fn();
+  const leads = {
+    list: vi.fn(),
+    get: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  };
+  return { maps, search, points, detail, easeTo, leads };
 });
 
 vi.mock("../src/maplibre.ts", () => {
@@ -92,7 +101,9 @@ vi.mock("../src/maplibre.ts", () => {
         );
       });
     }
-    easeTo() {}
+    easeTo(o: unknown) {
+      h.easeTo(o);
+    }
     remove() {}
     getCanvas() {
       return { style: {} };
@@ -141,7 +152,22 @@ vi.mock("@oracle-la/api-client", () => ({
     }),
 }));
 
+vi.mock("@roofing-crm/leads-client", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  createLeadsClient: () =>
+    Object.assign(() => undefined, {
+      leads: {
+        list: { query: h.leads.list },
+        get: { query: h.leads.get },
+        create: { mutate: h.leads.create },
+        update: { mutate: h.leads.update },
+        delete: { mutate: h.leads.delete },
+      },
+    }),
+}));
+
 import { App } from "../src/App.tsx";
+import { loadConfig } from "../src/config.ts";
 
 const rule = {
   roll_year: 2026,
@@ -177,6 +203,7 @@ describe("CRM main screen", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     h.maps.length = 0;
+    h.easeTo.mockReset();
     h.search.mockReset().mockResolvedValue({
       count: 3,
       rule,
@@ -310,6 +337,12 @@ describe("CRM main screen", () => {
     expect(h.detail).not.toHaveBeenCalled();
     expect(h.search).toHaveBeenCalledTimes(2);
     expect(h.search.mock.calls[1]![0].lon).toBeCloseTo(-118.485, 9);
+    // Re-centring keeps the current zoom (no globe zoom adjustment on a latitude pan; §3b.4).
+    expect(h.easeTo).toHaveBeenLastCalledWith({
+      center: [-118.485, 34.195],
+      zoom: 17,
+      duration: 0,
+    });
   });
 
   test("d) below the detail zoom, a click on a point drops the pin", async () => {
@@ -329,5 +362,184 @@ describe("CRM main screen", () => {
     });
     expect(h.detail).toHaveBeenCalledTimes(1);
     expect(h.detail).toHaveBeenCalledWith({ parcel_id: "0000000002" });
+  });
+});
+
+describe("leads (with leadsApiUrl in config.json)", () => {
+  const T0 = "2026-11-12T10:00:00.000Z";
+  const T1 = "2026-11-12T10:05:00.000Z";
+  const lead = (parcel_id: string, status = "new", updated_at = T0) => ({
+    parcel_id,
+    status,
+    notes: "",
+    created_at: T0,
+    updated_at,
+  });
+  beforeEach(() => {
+    vi.useFakeTimers();
+    h.maps.length = 0;
+    vi.mocked(loadConfig).mockResolvedValue({
+      client: "crm",
+      apiUrl: "https://api.test",
+      leadsApiUrl: "https://leads.test",
+      apiToken: "t",
+      mapKey: "k",
+    });
+    h.search.mockReset().mockResolvedValue({
+      count: 1,
+      rule,
+      items: [item("0000000003", 0.9)],
+      next_offset: null,
+    });
+    h.points.mockReset().mockResolvedValue({
+      count: 1,
+      encoding: "columnar-v1",
+      precision: 5,
+      id: ["0000000003"],
+      lat: [34.21],
+      lon: [-118.48],
+      truncated: false,
+      max_points: 25000,
+    });
+    h.detail
+      .mockReset()
+      .mockImplementation(async ({ parcel_id }: { parcel_id: string }) => ({
+        property: {
+          parcel_id,
+          address: `${parcel_id} TEST ST`,
+          roll_year: 2026,
+        },
+        provenance: { parcel_id, source_name: "Test Source" },
+      }));
+    for (const f of Object.values(h.leads)) f.mockReset();
+    h.leads.list.mockResolvedValue({
+      items: [lead("0000000003", "contacted"), lead("0000000009", "won")],
+      next_cursor: null,
+    });
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.mocked(loadConfig).mockReset();
+  });
+  const start = async () => {
+    render(<App />);
+    await flush();
+    const map = h.maps[0]!;
+    map.fire("load");
+    return map;
+  };
+  /** Drop a pin (so the points are drawn), then click the point 0000000003. */
+  const openDetail = async (map: (typeof h.maps)[number]) => {
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    await act(async () => {
+      map.clickAt(1000, -1000); // the point 0000000003
+      await vi.advanceTimersByTimeAsync(0);
+    });
+  };
+
+  test("create a lead from the parcel detail; it appears in the list", async () => {
+    h.leads.list.mockResolvedValue({ items: [], next_cursor: null });
+    h.leads.get.mockResolvedValue(null);
+    h.leads.create.mockImplementation(
+      async (v: { parcel_id: string; status: string; notes: string }) => ({
+        ...v,
+        created_at: T0,
+        updated_at: T0,
+      }),
+    );
+    const map = await start();
+    await openDetail(map);
+    expect(h.leads.get).toHaveBeenCalledWith({ parcel_id: "0000000003" });
+    fireEvent.change(screen.getByTestId("lead-notes"), {
+      target: { value: "Original roof." },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-create"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.leads.create).toHaveBeenCalledWith({
+      parcel_id: "0000000003",
+      status: "new",
+      notes: "Original roof.",
+    });
+    expect(screen.getByTestId("lead-save")).toBeTruthy();
+    expect(
+      screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
+    ).toEqual(["0000000003"]);
+  });
+
+  test("notes with a parcel ID or a phone number are refused in the UI with the reason", async () => {
+    h.leads.get.mockResolvedValue(null);
+    const map = await start();
+    await openDetail(map);
+    fireEvent.change(screen.getByTestId("lead-notes"), {
+      target: { value: "same as 2319005018" },
+    });
+    expect(screen.getByTestId("lead-notes-problem").textContent).toMatch(
+      /10-digit parcel ID/,
+    );
+    expect(
+      (screen.getByTestId("lead-create") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(h.leads.create).not.toHaveBeenCalled();
+  });
+
+  test("a CONFLICT on save shows 'Changed elsewhere, reload'; Reload reads the lead again", async () => {
+    h.leads.get.mockResolvedValueOnce(lead("0000000003", "contacted"));
+    h.leads.update.mockRejectedValue(
+      Object.assign(new Error("conflict"), { data: { code: "CONFLICT" } }),
+    );
+    const map = await start();
+    await openDetail(map);
+    fireEvent.change(screen.getByTestId("lead-status"), {
+      target: { value: "won" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-save"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.leads.update).toHaveBeenCalledWith({
+      parcel_id: "0000000003",
+      expected_updated_at: T0,
+      status: "won",
+      notes: "",
+    });
+    expect(screen.getByTestId("lead-conflict").textContent).toContain(
+      "Changed elsewhere, reload",
+    );
+    h.leads.get.mockResolvedValueOnce(lead("0000000003", "qualified", T1));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-reload"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.leads.get).toHaveBeenCalledTimes(2);
+    expect(screen.queryByTestId("lead-conflict")).toBeNull();
+    expect((screen.getByTestId("lead-status") as HTMLSelectElement).value).toBe(
+      "qualified",
+    );
+  });
+
+  test("'Leads in this search' keeps the leads whose parcel is in the current result; status filter", async () => {
+    const map = await start();
+    await flush();
+    expect(screen.getByTestId("leads-count").textContent).toBe("2");
+    expect(
+      (screen.getByTestId("leads-in-search") as HTMLInputElement).disabled,
+    ).toBe(true);
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    fireEvent.click(screen.getByTestId("leads-in-search"));
+    expect(
+      screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
+    ).toEqual(["0000000003"]);
+    fireEvent.click(screen.getByTestId("leads-in-search"));
+    fireEvent.change(screen.getByTestId("leads-status-filter"), {
+      target: { value: "won" },
+    });
+    expect(
+      screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
+    ).toEqual(["0000000009"]);
   });
 });

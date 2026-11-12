@@ -2,6 +2,8 @@
  * https://user:pass@host/ URL form works (relative fetches fail in that form). */
 export interface AppConfig {
   apiUrl?: string;
+  /** Leads API (RoofingCrmLeads output); the leads UI is hidden when absent. */
+  leadsApiUrl?: string;
   apiToken?: string;
   mapKey?: string;
   client?: string;

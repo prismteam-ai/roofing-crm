@@ -70,17 +70,6 @@ const renderedFor = async (page: Page, zoom: number) => {
     })
     .toBeCloseTo(zoom, 6);
 };
-/**
- * MapLibre's globe projection (the Amazon Location style declares "projection": {"type": "globe"}) keeps the
- * planet size constant when the centre's latitude changes: zoom += log2(cos(newLat) / cos(oldLat))
- * (maplibre-gl 6.16.0 getZoomAdjustment / planetScaleAtLatitude). It applies while the globe camera helper is
- * active (zoom 11 here; tests at zoom 12 and 17 see no adjustment).
- */
-const globeZoomAfterPan = (zoom: number, oldLat: number, newLat: number) =>
-  zoom +
-  Math.log2(
-    Math.cos((newLat * Math.PI) / 180) / Math.cos((oldLat * Math.PI) / 180),
-  );
 /** GET requests to /trpc/parcels.detail (CORS preflights excluded). */
 const detailGets = (page: Page) => {
   const calls: string[] = [];
@@ -128,7 +117,12 @@ const recentredOn = (page: Page, p: number[]) =>
 test.describe.configure({
   mode: process.env.PW_SERIAL === "0" ? "default" : "serial",
 });
-type Cfg = { apiUrl: string; apiToken: string; mapKey: string };
+type Cfg = {
+  apiUrl: string;
+  leadsApiUrl: string;
+  apiToken: string;
+  mapKey: string;
+};
 let cfgP: Promise<Cfg> | undefined;
 /** The hosted /config.json (the only source of the API token and the map key), fetched once per worker. */
 const config = (): Promise<Cfg> =>
@@ -522,13 +516,8 @@ test.describe("with credentials", () => {
       })
       .toBeLessThan(0.05);
     await recentredOn(page, await pinOf(page));
-    // The re-centre pans the globe from the pin's latitude to the click's latitude, so MapLibre adjusts the zoom.
-    const zoomAfter = globeZoomAfterPan(
-      zoom,
-      pin[0]!,
-      (await centre(page))[0]!,
-    );
-    await renderedFor(page, zoomAfter); // the new search (at the clicked pin) is drawn: everything the click caused has run
+    // The app re-centres at the current zoom, so the zoom stays the one this test set (§3b.4).
+    await renderedFor(page, zoom); // the new search (at the clicked pin) is drawn: everything the click caused has run
     expect(detailCalls).toEqual([]);
     await expect(page.getByTestId("detail")).toHaveCount(0);
   });
@@ -633,9 +622,16 @@ test.describe("with credentials", () => {
     await expect(d.locator('[data-field="roof_age_basis"]')).toContainText(
       "PROXY",
     );
-    expect(await page.locator("body").innerText()).not.toMatch(
-      /owner name|mailing address|phone|e-?mail/i,
-    );
+    // The page shows no owner or contact field. The lead editor's hint ("No owner names or contact
+    // details…") is the only text about them, so it is left out of this check.
+    const text = await page.locator("body").evaluate((b) => {
+      const c = b.cloneNode(true) as HTMLElement;
+      c.querySelectorAll('[data-testid="lead"] .notice').forEach((n) =>
+        n.remove(),
+      );
+      return c.textContent ?? "";
+    });
+    expect(text).not.toMatch(/owner name|mailing address|phone|e-?mail/i);
   });
 
   test("13. future sections are disabled placeholders", async ({ page }) => {
@@ -671,5 +667,154 @@ test.describe("with credentials", () => {
     );
     expect(body.length).toBeLessThan(1_500_000);
     expect(data.id).toHaveLength(data.count);
+  });
+  test("15. leads API: no header 401, wrong token 403, CRM token 200", async () => {
+    const cfg = await config();
+    expect(cfg.leadsApiUrl).toMatch(
+      /^https:\/\/[a-z0-9]+\.execute-api\.eu-north-1\.amazonaws\.com$/,
+    );
+    const anon = await request.newContext();
+    const url = trpc(cfg.leadsApiUrl, "leads.list", { limit: 1 });
+    expect((await anon.get(url)).status()).toBe(401);
+    expect(
+      (
+        await anon.get(url, {
+          headers: { authorization: `Bearer wrong-${Date.now()}` },
+        })
+      ).status(),
+    ).toBe(403);
+    expect((await (await api()).get(url)).status()).toBe(200);
+  });
+
+  test("16. leads CORS: GET and POST from the CRM origin only", async () => {
+    const cfg = await config();
+    const anon = await request.newContext();
+    const pre = (origin: string, method: string) =>
+      anon.fetch(`${cfg.leadsApiUrl}/trpc/leads.create`, {
+        method: "OPTIONS",
+        headers: {
+          origin,
+          "access-control-request-method": method,
+          "access-control-request-headers": "authorization,content-type",
+        },
+      });
+    const ok = (await pre(ORIGIN, "POST")).headers();
+    expect(ok["access-control-allow-origin"]).toBe(ORIGIN);
+    expect(ok["access-control-allow-methods"]?.toUpperCase()).toContain("POST");
+    expect(
+      (await pre("https://evil.example", "POST")).headers()[
+        "access-control-allow-origin"
+      ],
+    ).toBeUndefined();
+  });
+
+  test("17. create a lead, reload, update it, delete it (the test's own lead is always deleted)", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    const leadsApi = await api();
+    const get = async (id: string) =>
+      (
+        await (
+          await leadsApi.get(
+            trpc(cfg.leadsApiUrl, "leads.get", { parcel_id: id }),
+          )
+        ).json()
+      ).result.data as {
+        status: string;
+        notes: string;
+        updated_at: string;
+        created_at: string;
+      } | null;
+    const startedAt = new Date().toISOString();
+    // A parcel near Van Nuys without a lead (existing leads are never touched).
+    const existing = new Set<string>(
+      (
+        await (
+          await leadsApi.get(
+            trpc(cfg.leadsApiUrl, "leads.list", { limit: 100 }),
+          )
+        ).json()
+      ).result.data.items.map((l: { parcel_id: string }) => l.parcel_id),
+    );
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre
+    await expect(page.getByTestId("result").first()).toBeVisible({
+      timeout: 20_000,
+    });
+    const ids = await page
+      .getByTestId("result")
+      .evaluateAll((els) => els.map((e) => e.textContent ?? ""));
+    expect(ids.length).toBeGreaterThan(0);
+    let index = -1;
+    let parcel = "";
+    for (let i = 0; i < ids.length && index < 0; i++) {
+      await page.getByTestId("result").nth(i).click();
+      const id = (await page
+        .getByTestId("detail")
+        .locator('[data-field="parcel_id"]')
+        .textContent())!;
+      if (!existing.has(id) && (await get(id)) === null) {
+        index = i;
+        parcel = id;
+      }
+    }
+    expect(parcel).toMatch(/^\d{10}$/);
+    const openLead = async () => {
+      await page.getByTestId("result").nth(index).click();
+      await expect(page.getByTestId("lead")).toHaveAttribute(
+        "data-parcel",
+        parcel,
+      );
+    };
+    try {
+      await openLead();
+      await page.getByTestId("lead-notes").fill("Playwright test lead");
+      await page.getByTestId("lead-create").click();
+      await expect(page.getByTestId("lead-save")).toBeVisible({
+        timeout: 10_000,
+      });
+      const created = await get(parcel);
+      expect(created).toMatchObject({
+        status: "new",
+        notes: "Playwright test lead",
+      });
+
+      // Reload between create and update: the lead is read back from the API, not from page state.
+      await page.reload();
+      await ready(page);
+      await page.getByTestId("map").click();
+      await expect(page.getByTestId("result").first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await openLead();
+      await expect(page.getByTestId("lead-status")).toHaveValue("new");
+      await expect(page.getByTestId("lead-notes")).toHaveValue(
+        "Playwright test lead",
+      );
+      await expect(
+        page.getByTestId("lead-item").filter({ hasText: parcel }),
+      ).toHaveCount(1);
+      await page.getByTestId("lead-status").selectOption("contacted");
+      await page.getByTestId("lead-save").click();
+      await expect
+        .poll(async () => (await get(parcel))?.status, { timeout: 10_000 })
+        .toBe("contacted");
+
+      await page.getByTestId("lead-delete").click();
+      await expect(page.getByTestId("lead-create")).toBeVisible({
+        timeout: 10_000,
+      });
+      expect(await get(parcel)).toBeNull();
+    } finally {
+      // Always delete this test's own lead (created after startedAt), also when a step above failed.
+      const left = parcel ? await get(parcel) : null;
+      if (left && left.created_at >= startedAt)
+        await leadsApi.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
+          data: { parcel_id: parcel, expected_updated_at: left.updated_at },
+        });
+      if (parcel) expect(await get(parcel)).toBeNull();
+    }
   });
 });

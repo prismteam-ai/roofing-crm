@@ -7,6 +7,12 @@ import {
   type SearchResult,
 } from "@oracle-la/api-client";
 import {
+  createLeadsClient,
+  type Lead,
+  type LeadsClient,
+  type LeadStatus,
+} from "@roofing-crm/leads-client";
+import {
   circleRing,
   haversineMiles,
   LA_COUNTY_BOUNDS,
@@ -22,11 +28,16 @@ import {
   NavigationControl,
 } from "./maplibre.ts";
 import { DETAIL_MIN_ZOOM, HIT_TOLERANCE_PX, nearestPoint } from "./hitTest.ts";
+import { LeadEditor } from "./LeadEditor.tsx";
+import { LeadsList } from "./LeadsList.tsx";
 import { ParcelDetail } from "./ParcelDetail.tsx";
 import { useDebounced } from "./useDebounced.ts";
 
 const EMPTY = { type: "FeatureCollection", features: [] } as const;
 const params = new URLSearchParams(location.search);
+/** tRPC error code of a failed call (e.g. "CONFLICT"), if any. */
+const codeOf = (e: unknown) =>
+  (e as { data?: { code?: string } } | undefined)?.data?.code;
 
 export function App() {
   const mapEl = useRef<HTMLDivElement>(null);
@@ -51,6 +62,11 @@ export function App() {
   const [offset, setOffset] = useState(0);
   const [detail, setDetail] = useState<Detail>();
   const [gpsMsg, setGpsMsg] = useState<string>();
+  // Leads (increment 3): the leads API client, all leads, and the lead of the parcel in the detail panel.
+  const [leadsApi, setLeadsApi] = useState<LeadsClient>();
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leadsError, setLeadsError] = useState<string>();
+  const [leadBusy, setLeadBusy] = useState(false);
   // Debounce a stable primitive key (an object would change identity on every render and re-fire forever).
   // The search key: pin rounded to 6 decimals (as in data-pin-*), radius and threshold.
   const key = useDebounced(
@@ -100,7 +116,9 @@ export function App() {
   const recentre = useCallback((p: LatLon) => {
     setCenter(p);
     setOffset(0);
-    map.current?.easeTo({ center: [p.lon, p.lat], duration: 0 });
+    // Keep the current zoom: without it the globe projection adjusts the zoom on a latitude pan.
+    const m = map.current;
+    m?.easeTo({ center: [p.lon, p.lat], zoom: m.getZoom(), duration: 0 });
   }, []);
 
   // Config, API client and map.
@@ -114,6 +132,13 @@ export function App() {
             apiToken: cfg.apiToken,
           });
           setApi(() => client);
+          if (cfg.leadsApiUrl) {
+            const leadsClient = createLeadsClient({
+              leadsApiUrl: cfg.leadsApiUrl,
+              apiToken: cfg.apiToken,
+            });
+            setLeadsApi(() => leadsClient);
+          }
         }
         const lat = Number(params.get("lat")),
           lon = Number(params.get("lon")),
@@ -263,6 +288,107 @@ export function App() {
         : EMPTY,
     );
   }, [points, result?.key]);
+
+  // All leads (a small table: paged Scan, up to 20 pages of 100).
+  useEffect(() => {
+    if (!leadsApi) return;
+    let live = true;
+    (async () => {
+      const all: Lead[] = [];
+      let cursor: string | undefined;
+      for (let i = 0; i < 20; i++) {
+        const p = await leadsApi.leads.list.query({ limit: 100, cursor });
+        all.push(...p.items);
+        if (!p.next_cursor) break;
+        cursor = p.next_cursor;
+      }
+      if (live) setLeads(all);
+    })().catch((e: Error) => live && setLeadsError(e.message));
+    return () => {
+      live = false;
+    };
+  }, [leadsApi]);
+
+  // The lead of the parcel in the detail panel, read fresh on open and on "Reload". State is keyed by the
+  // parcel, so "loading" is derived and state changes only happen in the async callbacks.
+  const detailId = detail
+    ? String((detail.property as { parcel_id?: unknown }).parcel_id)
+    : undefined;
+  const [leadFor, setLeadFor] = useState<{ id: string; lead: Lead | null }>();
+  const [leadMsg, setLeadMsg] = useState<{
+    id: string;
+    error?: string;
+    conflict?: boolean;
+  }>();
+  const [reloads, setReloads] = useState(0);
+  const detailLead = leadFor?.id === detailId ? leadFor?.lead : undefined;
+  const msg = leadMsg?.id === detailId ? leadMsg : undefined;
+  useEffect(() => {
+    if (!leadsApi || !detailId) return;
+    let live = true;
+    leadsApi.leads.get.query({ parcel_id: detailId }).then(
+      (lead) => {
+        if (!live) return;
+        setLeadFor({ id: detailId, lead });
+        setLeadMsg(undefined);
+      },
+      (e: Error) => live && setLeadMsg({ id: detailId, error: e.message }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [leadsApi, detailId, reloads]);
+  const reloadLead = () => {
+    setLeadFor(undefined);
+    setReloads((n) => n + 1);
+  };
+
+  /** Runs a lead write; keeps the list in step; a CONFLICT asks for a reload. */
+  const leadWrite = async (run: () => Promise<Lead | null>) => {
+    const id = detailId!;
+    setLeadBusy(true);
+    setLeadMsg(undefined);
+    try {
+      const l = await run();
+      setLeadFor({ id, lead: l });
+      setLeads((all) => {
+        const rest = all.filter((x) => x.parcel_id !== id);
+        return l ? [...rest, l] : rest;
+      });
+    } catch (e) {
+      setLeadMsg(
+        codeOf(e) === "CONFLICT"
+          ? { id, conflict: true }
+          : { id, error: (e as Error).message },
+      );
+    } finally {
+      setLeadBusy(false);
+    }
+  };
+  const createLead = (v: { status: LeadStatus; notes: string }) =>
+    void leadWrite(() =>
+      leadsApi!.leads.create.mutate({ parcel_id: detailId!, ...v }),
+    );
+  const saveLead = (v: { status: LeadStatus; notes: string }) =>
+    void leadWrite(() =>
+      leadsApi!.leads.update.mutate({
+        parcel_id: detailId!,
+        expected_updated_at: detailLead!.updated_at,
+        ...v,
+      }),
+    );
+  const deleteLead = () =>
+    void leadWrite(async () => {
+      await leadsApi!.leads.delete.mutate({
+        parcel_id: detailId!,
+        expected_updated_at: detailLead!.updated_at,
+      });
+      return null;
+    });
+  const searchIds = useMemo(
+    () => (points ? new Set(points.id) : undefined),
+    [points],
+  );
 
   const page = async (off: number) => {
     if (!api || !center) return;
@@ -417,12 +543,34 @@ export function App() {
             </ul>
           </section>
         )}
+        {leadsApi && (
+          <LeadsList
+            leads={leads}
+            searchIds={searchIds}
+            error={leadsError}
+            onOpen={(id) => void openDetail(id)}
+          />
+        )}
         <FuturePlaceholders />
       </aside>
       <div className="map">
         <div id="map" ref={mapEl} data-testid="map" />
         {detail && (
-          <ParcelDetail detail={detail} onClose={() => setDetail(undefined)} />
+          <ParcelDetail detail={detail} onClose={() => setDetail(undefined)}>
+            {leadsApi && detailId && (
+              <LeadEditor
+                parcelId={detailId}
+                lead={detailLead}
+                busy={leadBusy}
+                error={msg?.error}
+                conflict={!!msg?.conflict}
+                onCreate={createLead}
+                onSave={saveLead}
+                onDelete={deleteLead}
+                onReload={reloadLead}
+              />
+            )}
+          </ParcelDetail>
         )}
       </div>
     </div>

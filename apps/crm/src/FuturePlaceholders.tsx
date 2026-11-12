@@ -9,8 +9,8 @@ const FUTURE: Array<[string, string]> = [
     "Depends on permits, CSLB and BBB data.",
   ],
   [
-    "Lead records (create and manage)",
-    "Increment 3: leads API with its own table.",
+    "Leads from permits",
+    "Permits are not harvested yet; leads are created from properties.",
   ],
   ["Ask the agent (RAG)", "Not in this increment (no Bedrock)."],
   [

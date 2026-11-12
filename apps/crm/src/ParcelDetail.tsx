@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { ParcelDetail as Detail } from "@oracle-la/api-client";
 
 const LABELS: Array<[string, string]> = [
@@ -19,9 +20,12 @@ const LABELS: Array<[string, string]> = [
 export function ParcelDetail({
   detail,
   onClose,
+  children,
 }: {
   detail: Detail;
   onClose: () => void;
+  /** The parcel's lead editor, when the leads API is configured. */
+  children?: ReactNode;
 }) {
   const p = detail.property as Record<string, unknown>,
     v = detail.provenance as Record<string, unknown>;
@@ -41,6 +45,7 @@ export function ParcelDetail({
           </div>
         ))}
       </dl>
+      {children}
       <p className="notice">
         The recording date is the latest recorded document, not necessarily a
         sale. Roof age is a proxy from year built.
