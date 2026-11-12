@@ -10,7 +10,7 @@ repository.
 - **The site** (RoofingCrmWeb, Amplify Hosting) asks for HTTP basic auth on every path, including
   `config.json`.
 - **The token.** The browser loads `config.json`, which holds the API URLs, one API token and the map key
-  (`scripts/write-config.ts:50-57`). The app sends that token as `Authorization: Bearer …` to both APIs
+  (`scripts/write-config.ts:55-63`). The app sends that token as `Authorization: Bearer …` to both APIs
   (`apps/crm/src/App.tsx:138-149`).
 - **The shared authorizer.** Both APIs use one token authorizer, owned by the pipeline's data API. It compares
   the token's sha256 with the hashes stored in SSM. The leads API also requires the authorizer to name the
@@ -24,7 +24,7 @@ repository.
 ## Known limits
 
 1. **One shared, long-lived token sits in the browser.** The `crm` token is in `config.json`
-   (`scripts/write-config.ts:55`), behind the site's basic auth only.
+   (`scripts/write-config.ts:61`), behind the site's basic auth only.
    - Anyone with the basic-auth credentials can read it, and then read the data API and create, update or
      delete any lead, until the token is rotated.
    - Rotating it takes a new token in `.secrets/crm.json`, its hash in the pipeline's

@@ -1,8 +1,9 @@
 /**
  * Write <dist>/config.json for the deployed CRM: absolute API URL (OracleLaDataApi output), leads API URL
  * (RoofingCrmLeads output; omitted, with the leads UI hidden, while that stack does not exist), the CRM API
- * token and the Amazon Location map key (both from .secrets/). Prints nothing secret.
- * Usage: node scripts/write-config.ts <dist-dir>
+ * token and the Amazon Location map key (both from .secrets/). Prints nothing secret. The stack outputs are
+ * read with the AWS CLI profile named in AWS_PROFILE; the script stops if it is unset.
+ * Usage: AWS_PROFILE=<profile> node scripts/write-config.ts <dist-dir>
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -10,6 +11,11 @@ import { join } from "node:path";
 
 const dist = process.argv[2];
 if (!dist) throw new Error("usage: write-config.ts <dist-dir>");
+const profile = process.env.AWS_PROFILE;
+if (!profile)
+  throw new Error(
+    "AWS_PROFILE is not set: name the AWS CLI profile for the target account, e.g. AWS_PROFILE=<profile> node scripts/write-config.ts <dist-dir>",
+  );
 const s = JSON.parse(
   readFileSync(new URL("../.secrets/crm.json", import.meta.url), "utf8"),
 );
@@ -22,7 +28,7 @@ const output = (stack: string, key: string) =>
       "--stack-name",
       stack,
       "--profile",
-      "prism",
+      profile,
       "--region",
       "eu-north-1",
       "--query",
