@@ -622,13 +622,11 @@ test.describe("with credentials", () => {
     await expect(d.locator('[data-field="roof_age_basis"]')).toContainText(
       "PROXY",
     );
-    // The page shows no owner or contact field. The lead editor's hint ("No owner names or contact
-    // details…") is the only text about them, so it is left out of this check.
+    // The page shows no owner or contact field. Only the lead editor's notes hint ("No owner names or
+    // contact details…") names them, so only that one element is left out of this check.
     const text = await page.locator("body").evaluate((b) => {
       const c = b.cloneNode(true) as HTMLElement;
-      c.querySelectorAll('[data-testid="lead"] .notice').forEach((n) =>
-        n.remove(),
-      );
+      c.querySelector('[data-testid="lead-notes-hint"]')?.remove();
       return c.textContent ?? "";
     });
     expect(text).not.toMatch(/owner name|mailing address|phone|e-?mail/i);

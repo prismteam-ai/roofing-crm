@@ -111,7 +111,9 @@ function LeadForm({
           onChange={(e) => setNotes(e.target.value)}
         />
       </label>
-      <p className="notice">{NOTES_HINT}</p>
+      <p className="notice" data-testid="lead-notes-hint">
+        {NOTES_HINT}
+      </p>
       {problem && (
         <p className="error" data-testid="lead-notes-problem">
           {problem}

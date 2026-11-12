@@ -480,6 +480,9 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     expect(screen.getByTestId("lead-notes-problem").textContent).toMatch(
       /10-digit parcel ID/,
     );
+    expect(screen.getByTestId("lead-notes-hint").textContent).toMatch(
+      /^No owner names or contact details\./,
+    );
     expect(
       (screen.getByTestId("lead-create") as HTMLButtonElement).disabled,
     ).toBe(true);
