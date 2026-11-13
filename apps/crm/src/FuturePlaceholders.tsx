@@ -1,17 +1,5 @@
 /** Sections the CRM story lists beyond this increment, shown disabled with the reason. */
 const FUTURE: Array<[string, string]> = [
-  [
-    "Open roofing permits (long-open first)",
-    "Permits are not harvested yet in the data pipeline.",
-  ],
-  [
-    "Permit details: contractor and BBB rating",
-    "Depends on permits, CSLB and BBB data.",
-  ],
-  [
-    "Leads from permits",
-    "Permits are not harvested yet; leads are created from properties.",
-  ],
   ["Ask the agent (RAG)", "Not in this increment (no Bedrock)."],
   [
     "Filter by ownership (>10 years, out-of-area owner)",

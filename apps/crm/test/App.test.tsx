@@ -8,6 +8,8 @@
  * - @oracle-la/api-client: createApiClient returns a CALLABLE object, like the real tRPC v11 proxy
  *   (typeof client === "function"), with vi.fn() procedures.
  * - @roofing-crm/leads-client: createLeadsClient likewise (the schemas and notes rule stay real).
+ * - The api-client mock also carries permits.longOpen / permits.forParcel, the planned permit routes
+ *   (src/permitsApi.ts); the vendored client does not have them yet.
  */
 import {
   act,
@@ -15,6 +17,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -30,6 +33,8 @@ const h = vi.hoisted(() => {
   const detail = vi.fn();
   const match = vi.fn();
   const runSummary = vi.fn();
+  const longOpen = vi.fn();
+  const forParcel = vi.fn();
   const easeTo = vi.fn();
   const leads = {
     list: vi.fn(),
@@ -38,7 +43,18 @@ const h = vi.hoisted(() => {
     update: vi.fn(),
     delete: vi.fn(),
   };
-  return { maps, search, points, detail, match, runSummary, easeTo, leads };
+  return {
+    maps,
+    search,
+    points,
+    detail,
+    match,
+    runSummary,
+    longOpen,
+    forParcel,
+    easeTo,
+    leads,
+  };
 });
 
 vi.mock("../src/maplibre.ts", () => {
@@ -153,6 +169,10 @@ vi.mock("@oracle-la/api-client", () => ({
         match: { query: h.match },
       },
       explorer: { runSummary: { query: h.runSummary } },
+      permits: {
+        longOpen: { query: h.longOpen },
+        forParcel: { query: h.forParcel },
+      },
     }),
 }));
 
@@ -200,6 +220,19 @@ const RUN = {
   },
   history: [],
 };
+/** Permit answers with nothing in them (the default for the tests that are not about permits). */
+const EMPTY_LONG_OPEN = {
+  count: 0,
+  rule: { text: "" },
+  items: [],
+  next_offset: null,
+};
+const NO_PERMITS = {
+  permit_data_available: true,
+  jurisdiction: "LOS ANGELES",
+  permits: [],
+  bbb: { available: false, reason: "no BBB data source" },
+};
 const flush = () =>
   act(async () => {
     await vi.advanceTimersByTimeAsync(0);
@@ -222,6 +255,8 @@ describe("CRM main screen", () => {
     h.easeTo.mockReset();
     h.match.mockReset();
     h.runSummary.mockReset().mockResolvedValue(RUN);
+    h.longOpen.mockReset().mockResolvedValue(EMPTY_LONG_OPEN);
+    h.forParcel.mockReset().mockResolvedValue(NO_PERMITS);
     h.search.mockReset().mockResolvedValue({
       count: 3,
       rule,
@@ -398,6 +433,8 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     h.maps.length = 0;
     h.match.mockReset();
     h.runSummary.mockReset().mockResolvedValue(RUN);
+    h.longOpen.mockReset().mockResolvedValue(EMPTY_LONG_OPEN);
+    h.forParcel.mockReset().mockResolvedValue(NO_PERMITS);
     vi.mocked(loadConfig).mockResolvedValue({
       client: "crm",
       apiUrl: "https://api.test",
@@ -778,5 +815,522 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       expect(screen.queryAllByTestId("lead-item")).toHaveLength(0);
       expect(screen.queryByTestId("leads-checking")).toBeNull();
     });
+  });
+});
+
+describe("permits and the effective roof year", () => {
+  /** Every fixture carries a description; it must never reach the DOM. */
+  const SENTINEL = "SENTINEL-DESCRIPTION";
+  /** A long-open item (permits.longOpen), with an extra work_desc the UI must ignore. */
+  const lo = (
+    permit_nbr: string,
+    open_days: number,
+    distance_miles: number,
+    extra: object = {},
+  ) => ({
+    permit_nbr,
+    status: "Issued",
+    status_class: "open-issued",
+    issue_date: "2010-03-01",
+    status_date: "2010-03-01",
+    open_days,
+    distance_miles,
+    address: `${permit_nbr} ROOF ST`,
+    parcel_count: 1,
+    building_level: false,
+    join_method: "direct",
+    effective_roof_year: 1980,
+    work_desc: SENTINEL,
+    ...extra,
+  });
+  /** Longest open first, as the API sorts by default; 120 in all, next page at 50. */
+  const LONG_OPEN = {
+    count: 120,
+    rule: { text: "API RULE TEXT" },
+    items: [
+      lo("P-3", 6000, 0.8),
+      lo("P-1", 4000, 0.2, {
+        building_level: true,
+        parcel_count: 12,
+        join_method: "condo-building",
+      }),
+      lo("P-2", 2000, 0.5),
+    ],
+    next_offset: 50,
+  };
+  const contractor = (extra: object = {}) => ({
+    licence_class: "C39",
+    licence_class_raw: "C-39 ROOFING",
+    class_note: null,
+    owner_builder: false,
+    licence_expiration_date: "2027-01-31",
+    contractor_city: "VAN NUYS",
+    contractor_state: "CA",
+    business_name: "ACME ROOFING INC",
+    licence_number: "123456",
+    ...extra,
+  });
+  /** A permit of the parcel (permits.forParcel), with an extra work_desc the UI must ignore. */
+  const pp = (
+    permit_nbr: string,
+    status: string,
+    status_class: string,
+    open_days: number | null,
+    contractors: object[],
+  ) => ({
+    permit_nbr,
+    status,
+    status_class,
+    issue_date: "2012-05-01",
+    status_date: "2013-06-01",
+    open_days,
+    address: "0000000001 TEST ST",
+    parcel_count: 1,
+    building_level: false,
+    join_method: "direct",
+    effective_roof_year: 2009,
+    contractors,
+    work_desc: SENTINEL,
+  });
+  const PARCEL_PERMITS = {
+    permit_data_available: true,
+    jurisdiction: "LOS ANGELES",
+    permits: [
+      pp("A-1", "Issued", "open-issued", 3000, [contractor()]),
+      pp("A-2", "Plan Check", "open-application", 400, []),
+      pp("A-3", "Permit Finaled", "closed", null, [
+        contractor({
+          business_name: null,
+          licence_number: null,
+          licence_class: null,
+          licence_class_raw: null,
+          class_note: "owner-builder",
+          owner_builder: true,
+        }),
+      ]),
+      pp("A-4", "CofO in Progress", "unclear", null, []),
+      pp("A-5", "Odd Status", "unmapped", null, []),
+    ],
+    bbb: { available: false, reason: "no BBB data source" },
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    h.maps.length = 0;
+    h.easeTo.mockReset();
+    h.match.mockReset();
+    vi.mocked(loadConfig).mockResolvedValue({
+      client: "crm",
+      apiUrl: "https://api.test",
+      apiToken: "t",
+      mapKey: "k",
+    });
+    h.runSummary.mockReset().mockResolvedValue(RUN);
+    h.search.mockReset().mockResolvedValue({
+      count: 3,
+      rule,
+      items: [
+        {
+          ...item("0000000001", 0.1),
+          effective_roof_year: 2009,
+          roof_year_basis: "permit",
+        },
+        {
+          ...item("0000000002", 0.2),
+          effective_roof_year: 1962,
+          roof_year_basis: "year_built",
+        },
+        item("0000000003", 0.9), // served without a roof year: the proxy text stays
+      ],
+      next_offset: null,
+    });
+    h.points.mockReset().mockResolvedValue({
+      count: 3,
+      encoding: "columnar-v1",
+      precision: 5,
+      id: ["0000000001", "0000000002", "0000000003"],
+      lat: [34.2, 34.2, 34.21],
+      lon: [-118.49, -118.48996, -118.48],
+      truncated: false,
+      max_points: 25000,
+    });
+    h.detail
+      .mockReset()
+      .mockImplementation(async ({ parcel_id }: { parcel_id: string }) => ({
+        property: {
+          parcel_id,
+          address: `${parcel_id} TEST ST`,
+          year_built: 1980,
+          roof_age_basis: "PERMIT",
+          effective_roof_year: 2009,
+          roof_year_basis: "permit",
+          roof_year_permit_nbr: "09016-10000-01234",
+          permit_data_available: true,
+          roll_year: 2026,
+        },
+        provenance: { parcel_id, source_name: "Test Source" },
+      }));
+    h.longOpen.mockReset().mockResolvedValue(LONG_OPEN);
+    h.forParcel.mockReset().mockResolvedValue(PARCEL_PERMITS);
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  /** Render, load the map, drop a pin at (300, 100) and wait past the debounce. */
+  const pinned = async () => {
+    render(<App />);
+    await flush();
+    const map = h.maps[0]!;
+    map.fire("load");
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    return map;
+  };
+  /** Open the detail of the first result row. */
+  const openFirst = async () => {
+    await act(async () => {
+      fireEvent.click(screen.getAllByTestId("result")[0]!);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await flush();
+  };
+  const field = (name: string) =>
+    screen.getByTestId("detail").querySelector(`[data-field="${name}"]`)!
+      .textContent;
+  const lastLongOpen = () =>
+    h.longOpen.mock.calls.at(-1)![0] as Record<string, unknown>;
+  const setInput = (testId: string, value: string) =>
+    fireEvent.change(screen.getByTestId(testId), { target: { value } });
+
+  test("results show the roof year with its basis; the rule before the answer describes the effective roof year", async () => {
+    render(<App />);
+    await flush();
+    expect(screen.getByTestId("rule").textContent).toBe(
+      "Roof age uses the effective roof year: the latest finaled roofing permit, else the assessor year built. Older than 15 years means a roof year before roll year − 15.",
+    );
+    const map = h.maps[0]!;
+    map.fire("load");
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    const rows = screen.getAllByTestId("result").map((r) => r.textContent);
+    expect(rows[0]).toContain("roof year 2009 (permit)");
+    expect(rows[1]).toContain("roof year 1962 (year built)");
+    expect(rows[2]).toContain("roof-age proxy 46 y");
+    expect(rows[0]).toContain("built 1980");
+  });
+
+  test("the parcel detail shows the effective roof year, its basis and the roof-year permit", async () => {
+    await pinned();
+    await openFirst();
+    expect(field("effective_roof_year")).toBe("2009");
+    expect(field("roof_year_basis")).toBe("permit");
+    expect(field("roof_year_permit_nbr")).toBe("09016-10000-01234");
+    expect(field("roof_age_basis")).toBe("PERMIT"); // the existing row stays
+    const text = screen.getByTestId("detail").textContent!;
+    expect(text).not.toContain("Roof age is a proxy from year built");
+    expect(text).toContain(
+      "Roof age uses the effective roof year: the year of the latest finaled roofing permit, else the assessor year built.",
+    );
+  });
+
+  test("longOpen: 5 years (1,826 days) by default, longest open first, with pin, radius and roof age, no max_open_days; one call per change", async () => {
+    await pinned();
+    expect(h.longOpen).toHaveBeenCalledTimes(1);
+    const q = lastLongOpen();
+    expect(q.lat).toBeCloseTo(34.199, 9);
+    expect(q.lon).toBeCloseTo(-118.487, 9);
+    expect(q).toMatchObject({
+      radius_miles: 1,
+      threshold_years: 15,
+      min_open_days: 1826,
+      sort: "open_days",
+      offset: 0,
+      limit: 50,
+    });
+    expect("max_open_days" in q).toBe(false);
+    expect(screen.getByTestId("permits-rule").textContent).toContain(
+      "at least 5 years (1,826 days)",
+    );
+    expect(screen.getByTestId("permits-rule").textContent).toContain(
+      "Only permits with status class Open (issued) count as open.",
+    );
+    await wait(5000); // idle: no further calls
+    expect(h.longOpen).toHaveBeenCalledTimes(1);
+    setInput("radius", "5");
+    setInput("threshold", "30");
+    await wait(300);
+    expect(h.longOpen).toHaveBeenCalledTimes(2);
+    expect(h.search).toHaveBeenCalledTimes(2);
+    expect(lastLongOpen()).toMatchObject({
+      radius_miles: 5,
+      threshold_years: 30,
+    });
+    await wait(5000);
+    expect(h.longOpen).toHaveBeenCalledTimes(2);
+  });
+
+  test("a maximum sends max_open_days; a maximum below the minimum shows a message and makes no call", async () => {
+    await pinned();
+    setInput("permits-max-years", "10");
+    await wait(300);
+    expect(h.longOpen).toHaveBeenCalledTimes(2);
+    expect(lastLongOpen()).toMatchObject({
+      min_open_days: 1826,
+      max_open_days: 3653,
+    });
+    expect(screen.getByTestId("permits-rule").textContent).toContain(
+      "at most 10 years (3,653 days)",
+    );
+    setInput("permits-max-years", "3");
+    expect(screen.getByTestId("permits-window-error").textContent).toMatch(
+      /maximum \(3 years\) is below the minimum \(5 years\)/,
+    );
+    await wait(2000);
+    expect(h.longOpen).toHaveBeenCalledTimes(2);
+    expect(screen.queryAllByTestId("permit-row")).toHaveLength(0);
+    setInput("permits-max-years", ""); // cleared: no maximum again
+    await wait(300);
+    expect(h.longOpen).toHaveBeenCalledTimes(3);
+    expect("max_open_days" in lastLongOpen()).toBe(false);
+    expect(screen.queryByTestId("permits-window-error")).toBeNull();
+  });
+
+  test("a new minimum re-queries once; Next uses next_offset; 'Nearest first' sends sort distance from offset 0", async () => {
+    await pinned();
+    setInput("permits-min-years", "8");
+    await wait(300);
+    expect(h.longOpen).toHaveBeenCalledTimes(2);
+    expect(lastLongOpen()).toMatchObject({ min_open_days: 2922, offset: 0 });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("permits-next"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.longOpen).toHaveBeenCalledTimes(3);
+    expect(lastLongOpen()).toMatchObject({
+      min_open_days: 2922,
+      sort: "open_days",
+      offset: 50,
+      limit: 50,
+    });
+    expect(screen.getByTestId("permits-count").textContent).toContain(
+      "showing 51–53",
+    );
+    setInput("permits-sort", "distance");
+    await wait(300);
+    expect(h.longOpen).toHaveBeenCalledTimes(4);
+    expect(lastLongOpen()).toMatchObject({
+      sort: "distance",
+      offset: 0,
+      min_open_days: 2922,
+    });
+    await wait(2000);
+    expect(h.longOpen).toHaveBeenCalledTimes(4);
+  });
+
+  test("rows keep the API order (longest first), are highlighted as long-open, and the count is the API's", async () => {
+    await pinned();
+    const rows = screen.getAllByTestId("permit-row");
+    expect(rows.map((r) => r.dataset.permit)).toEqual(["P-3", "P-1", "P-2"]);
+    expect(rows.map((r) => r.dataset.openDays)).toEqual([
+      "6000",
+      "4000",
+      "2000",
+    ]);
+    for (const r of rows) {
+      expect(r.classList.contains("long-open")).toBe(true);
+      expect(r.textContent).toContain("long-open");
+    }
+    const count = screen.getByTestId("permits-count");
+    expect(count.dataset.count).toBe("120");
+    expect(count.textContent).toMatch(/^120 long-open permits/);
+    expect(rows[0]!.textContent).toContain("P-3 ROOF ST");
+    expect(rows[0]!.textContent).toContain(
+      "Issued · Open (issued) · open 16.4 years (6,000 days)",
+    );
+    expect(rows[0]!.textContent).toContain("issued 2010-03-01 · 0.8 mi");
+    expect(rows[1]!.textContent).toContain(
+      "join condo building · building-level (12 units)",
+    );
+    expect(rows[0]!.textContent).not.toContain("building-level");
+    expect(screen.getByTestId("permits-api-rule").textContent).toBe(
+      "API RULE TEXT",
+    );
+  });
+
+  test("detail permits: the five status classes, contractors, 'Contractor not published', BBB not available, long-open highlight", async () => {
+    await pinned();
+    await openFirst();
+    expect(h.forParcel).toHaveBeenCalledTimes(1);
+    expect(h.forParcel).toHaveBeenCalledWith({ parcel_id: "0000000001" });
+    const section = screen.getByTestId("parcel-permits");
+    const permits = within(section).getAllByTestId("parcel-permit");
+    expect(
+      within(section)
+        .getAllByTestId("permit-status-class")
+        .map((e) => e.textContent),
+    ).toEqual([
+      "Open (issued)",
+      "Open (application stage)",
+      "Closed",
+      "Unclear (neither open nor closed)",
+      "Unmapped status",
+    ]);
+    // Long-open: open-issued and 3,000 days within the default window (at least 1,826).
+    expect(permits.map((p) => p.dataset.longOpen)).toEqual([
+      "true",
+      "false",
+      "false",
+      "false",
+      "false",
+    ]);
+    expect(permits[0]!.classList.contains("long-open")).toBe(true);
+    const a1 = within(permits[0]!);
+    expect(a1.getByTestId("contractor-name").textContent).toBe(
+      "ACME ROOFING INC",
+    );
+    expect(a1.getByTestId("contractor-licence").textContent).toBe("123456");
+    expect(a1.getByTestId("contractor-class").textContent).toBe(
+      "C39 [C-39 ROOFING]",
+    );
+    expect(
+      permits[0]!.querySelector('[data-field="open_days"]')!.textContent,
+    ).toBe("8.2 years (3,000 days)");
+    expect(
+      permits[2]!.querySelector('[data-field="open_days"]')!.textContent,
+    ).toBe("not open");
+    expect(
+      within(permits[2]!).getByTestId("contractor-owner-builder"),
+    ).toBeTruthy();
+    expect(
+      within(permits[2]!).getByTestId("contractor-class").textContent,
+    ).toBe("— (owner-builder)");
+    expect(
+      within(permits[1]!).getByTestId("contractor-not-published").textContent,
+    ).toBe("Contractor not published");
+    expect(within(section).getByTestId("bbb-rating").textContent).toBe(
+      "not available (no BBB data source)",
+    );
+    expect(section.textContent).toContain("BBB rating");
+    // A maximum of 7 years (2,557 days) takes the 3,000-day permit out of the long-open window.
+    setInput("permits-max-years", "7");
+    expect(
+      within(screen.getByTestId("parcel-permits"))
+        .getAllByTestId("parcel-permit")
+        .map((p) => p.dataset.longOpen),
+    ).toEqual(["false", "false", "false", "false", "false"]);
+  });
+
+  test("no permits: outside the City of Los Angeles the no-permit-data marker, inside 'No permits on record'", async () => {
+    h.forParcel.mockResolvedValueOnce({
+      permit_data_available: false,
+      jurisdiction: "BURBANK",
+      permits: [],
+      bbb: { available: false, reason: "no BBB data source" },
+    });
+    await pinned();
+    await openFirst();
+    expect(screen.getByTestId("no-permit-data").textContent).toBe(
+      "No permit data: outside the City of Los Angeles (jurisdiction: BURBANK)",
+    );
+    expect(screen.queryByTestId("no-permits")).toBeNull();
+    h.forParcel.mockResolvedValueOnce(NO_PERMITS);
+    await act(async () => {
+      fireEvent.click(screen.getAllByTestId("result")[1]!);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await flush();
+    expect(h.forParcel).toHaveBeenLastCalledWith({ parcel_id: "0000000002" });
+    expect(screen.getByTestId("no-permits").textContent).toBe(
+      "No permits on record for this parcel.",
+    );
+    expect(screen.queryByTestId("no-permit-data")).toBeNull();
+  });
+
+  test("permit descriptions are never shown or requested", async () => {
+    await pinned();
+    await openFirst();
+    expect(screen.getAllByTestId("permit-row")).toHaveLength(3);
+    expect(screen.getAllByTestId("parcel-permit")).toHaveLength(5);
+    expect(document.body.textContent).not.toContain(SENTINEL);
+    expect(document.body.innerHTML).not.toContain(SENTINEL);
+    const keysDeep = (v: unknown): string[] =>
+      v && typeof v === "object"
+        ? Object.entries(v).flatMap(([k, x]) => [k, ...keysDeep(x)])
+        : [];
+    const procedures = [
+      h.search,
+      h.points,
+      h.detail,
+      h.match,
+      h.runSummary,
+      h.longOpen,
+      h.forParcel,
+    ];
+    const keys = procedures.flatMap((p) => p.mock.calls.flatMap(keysDeep));
+    expect(keys.length).toBeGreaterThan(0);
+    expect(keys.filter((k) => /desc/i.test(k))).toEqual([]);
+  });
+
+  test("a longOpen failure shows inside the permits section only; the rest of the app keeps working", async () => {
+    h.longOpen.mockRejectedValue(new Error("No procedure found on path"));
+    await pinned();
+    const section = screen.getByTestId("permits-list");
+    expect(within(section).getByTestId("permits-error").textContent).toBe(
+      "Permits unavailable: No procedure found on path",
+    );
+    expect(screen.queryByTestId("error")).toBeNull();
+    expect(screen.getAllByTestId("result")).toHaveLength(3);
+    expect(screen.getByTestId("result-count").textContent).toBe("3 results");
+    await openFirst();
+    expect(field("parcel_id")).toBe("0000000001");
+    expect(screen.getAllByTestId("parcel-permit")).toHaveLength(5);
+  });
+
+  test("a forParcel failure shows inside the detail's permits section only", async () => {
+    h.forParcel.mockRejectedValue(new Error("No procedure found on path"));
+    await pinned();
+    await openFirst();
+    const section = screen.getByTestId("parcel-permits");
+    expect(
+      within(section).getByTestId("parcel-permits-error").textContent,
+    ).toBe("Permits unavailable: No procedure found on path");
+    expect(screen.queryByTestId("error")).toBeNull();
+    expect(screen.queryByTestId("bbb-rating")).toBeNull();
+    expect(field("parcel_id")).toBe("0000000001");
+    expect(field("effective_roof_year")).toBe("2009");
+    expect(screen.getAllByTestId("permit-row")).toHaveLength(3);
+  });
+
+  test("against an API client without the permit routes, both sections show an error and nothing else breaks", async () => {
+    // A call that throws before any request (as on a client object without `permits`) is caught the same way.
+    h.longOpen.mockImplementation(() => {
+      throw new TypeError("permits is not available");
+    });
+    h.forParcel.mockImplementation(() => {
+      throw new TypeError("permits is not available");
+    });
+    await pinned();
+    expect(screen.getByTestId("permits-error").textContent).toMatch(
+      /^Permits unavailable: /,
+    );
+    await openFirst();
+    expect(screen.getByTestId("parcel-permits-error").textContent).toMatch(
+      /^Permits unavailable: /,
+    );
+    expect(screen.queryByTestId("error")).toBeNull();
+    expect(screen.getAllByTestId("result")).toHaveLength(3);
+  });
+
+  test("the placeholders no longer list permit sections", async () => {
+    render(<App />);
+    await flush();
+    const cards = screen.getAllByTestId("future").map((c) => c.textContent);
+    expect(cards).toHaveLength(3);
+    expect(cards.join(" ")).not.toMatch(/permit/i);
+    expect(cards.join(" ")).toMatch(/RAG/);
+    expect(cards.join(" ")).toMatch(/ownership/);
+    expect(cards.join(" ")).toMatch(/Outreach/);
   });
 });

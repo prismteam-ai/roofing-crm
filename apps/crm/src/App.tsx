@@ -5,6 +5,7 @@ import {
   type ParcelDetail as Detail,
   type PointsResult,
   type RunSummary,
+  type SearchItem,
   type SearchResult,
 } from "@oracle-la/api-client";
 import {
@@ -34,6 +35,15 @@ import { LeadEditor } from "./LeadEditor.tsx";
 import { useLeadsInSearch } from "./leadsInSearch.ts";
 import { LEADS_MAX_PAGES, LEADS_PAGE_SIZE, LeadsList } from "./LeadsList.tsx";
 import { ParcelDetail } from "./ParcelDetail.tsx";
+import { ParcelPermits } from "./ParcelPermits.tsx";
+import {
+  DEFAULT_WINDOW,
+  isRoofYearBasis,
+  roofYearBasisLabel,
+  type OpenWindow,
+} from "./permitDisplay.ts";
+import { permitsApi, type SearchItemRoofYear } from "./permitsApi.ts";
+import { PermitsList } from "./PermitsList.tsx";
 import { useDebounced } from "./useDebounced.ts";
 
 const EMPTY = { type: "FeatureCollection", features: [] } as const;
@@ -41,6 +51,11 @@ const params = new URLSearchParams(location.search);
 /** tRPC error code of a failed call (e.g. "CONFLICT"), if any. */
 const codeOf = (e: unknown) =>
   (e as { data?: { code?: string } } | undefined)?.data?.code;
+/** A result's roof: the effective roof year with its basis when served, else the year-built proxy. */
+const roofText = (i: SearchItem & SearchItemRoofYear) =>
+  i.effective_roof_year == null
+    ? `roof-age proxy ${i.roof_age_years_proxy} y`
+    : `roof year ${i.effective_roof_year}${isRoofYearBasis(i.roof_year_basis) ? ` (${roofYearBasisLabel(i.roof_year_basis)})` : ""}`;
 
 export function App() {
   const mapEl = useRef<HTMLDivElement>(null);
@@ -74,6 +89,8 @@ export function App() {
   const [leadBusy, setLeadBusy] = useState(false);
   /** The "Leads in this search" filter; parcels.match calls are made only while it is on. */
   const [inSearch, setInSearch] = useState(false);
+  /** The open-duration window of long-open permits (list and parcel detail). */
+  const [permitWindow, setPermitWindow] = useState<OpenWindow>(DEFAULT_WINDOW);
   /** The served run (explorer.runSummary), for the data notice. */
   const [run, setRun] = useState<{ run?: RunSummary["run"]; error?: string }>();
   // Debounce a stable primitive key (an object would change identity on every render and re-fire forever).
@@ -103,6 +120,7 @@ export function App() {
   useEffect(() => {
     apiRef.current = api;
   }, [api]);
+  const permits = useMemo(() => api && permitsApi(api), [api]);
 
   /** Opens the details panel with the CURRENT client (stable function, safe in map handlers). */
   const openDetail = useCallback(async (id: string) => {
@@ -523,7 +541,7 @@ export function App() {
           </div>
           <p className="rule" data-testid="rule">
             {search?.rule.text ??
-              `Roof age is a proxy (assessor year built): older than ${threshold} years means built before roll year − ${threshold}.`}
+              `Roof age uses the effective roof year: the latest finaled roofing permit, else the assessor year built. Older than ${threshold} years means a roof year before roll year − ${threshold}.`}
           </p>
         </section>
         {(queryError ?? error) && (
@@ -570,12 +588,21 @@ export function App() {
                 >
                   <b>{i.address ?? i.parcel_id}</b>
                   <br />
-                  built {i.year_built} · roof-age proxy {i.roof_age_years_proxy}{" "}
-                  y · {i.distance_miles} mi
+                  built {i.year_built} · {roofText(i)} · {i.distance_miles} mi
                 </li>
               ))}
             </ul>
           </section>
+        )}
+        {permits && (
+          <PermitsList
+            permits={permits}
+            center={center}
+            radius={radius}
+            threshold={threshold}
+            openWindow={permitWindow}
+            onWindow={setPermitWindow}
+          />
         )}
         {leadsApi && (
           <LeadsList
@@ -605,6 +632,13 @@ export function App() {
                 onSave={saveLead}
                 onDelete={deleteLead}
                 onReload={reloadLead}
+              />
+            )}
+            {permits && detailId && (
+              <ParcelPermits
+                permits={permits}
+                parcelId={detailId}
+                openWindow={permitWindow}
               />
             )}
           </ParcelDetail>
