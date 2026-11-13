@@ -32,13 +32,17 @@ import {
 } from "./maplibre.ts";
 import { DETAIL_MIN_ZOOM, HIT_TOLERANCE_PX, nearestPoint } from "./hitTest.ts";
 import { LeadEditor } from "./LeadEditor.tsx";
-import { useLeadsInSearch } from "./leadsInSearch.ts";
+import { filterOfKey, useLeadsInSearch } from "./leadsInSearch.ts";
 import { LEADS_MAX_PAGES, LEADS_PAGE_SIZE, LeadsList } from "./LeadsList.tsx";
 import { ParcelDetail } from "./ParcelDetail.tsx";
 import { ParcelPermits } from "./ParcelPermits.tsx";
 import {
+  daysOfKey,
   DEFAULT_WINDOW,
+  openDaysText,
   roofBasisLabel,
+  windowInvalid,
+  windowKey,
   type OpenWindow,
 } from "./permitDisplay.ts";
 import { permitsApi } from "./permitsApi.ts";
@@ -46,6 +50,8 @@ import { PermitsList } from "./PermitsList.tsx";
 import { useDebounced } from "./useDebounced.ts";
 
 const EMPTY = { type: "FeatureCollection", features: [] } as const;
+/** The map layers that hold parcel points (a click on either opens the parcel). */
+const POINT_LAYERS = ["points", "points-long-open"];
 const params = new URLSearchParams(location.search);
 /** tRPC error code of a failed call (e.g. "CONFLICT"), if any. */
 const codeOf = (e: unknown) =>
@@ -65,15 +71,27 @@ export function App() {
   const apiRef = useRef<ApiClient | undefined>(undefined);
   /** Search key of the data last given to the points source (written to the map element on every "idle"). */
   const renderedSearchRef = useRef("");
+  /** Window (windowKey) of the long-open highlight last given to the points source (written on "idle" too). */
+  const renderedWinRef = useRef("");
   const [error, setError] = useState<string>();
   const [center, setCenter] = useState<LatLon>();
   const [radius, setRadius] = useState(1);
   const [threshold, setThreshold] = useState(15);
-  /** Last query result, tagged with the debounced key it answers (loading = the key has no result yet). */
+  /**
+   * Last query result, tagged with the debounced key it answers (loading = the key has no result yet) and with
+   * the open-duration window (windowKey, in days) its points' long-open highlight was asked for.
+   */
   const [result, setResult] = useState<{
     key: string;
     search: SearchResult;
     points: PointsResult;
+    win: string;
+  }>();
+  /** A failed highlight update (points for a new window), tagged with the search key and window it was for. */
+  const [highlightFailed, setHighlightFailed] = useState<{
+    key: string;
+    win: string;
+    message: string;
   }>();
   const [failed, setFailed] = useState<{ key: string; message: string }>();
   const [offset, setOffset] = useState(0);
@@ -113,6 +131,16 @@ export function App() {
   }, [key]);
   const search = result?.search;
   const points = result?.points;
+  /**
+   * The map highlight's window: the long-open list's (same days), debounced like it; "" while the window is
+   * invalid (no call; the map keeps its last highlight).
+   */
+  const winKey = useDebounced(
+    windowInvalid(permitWindow) ? "" : windowKey(permitWindow),
+    250,
+  );
+  /** The last valid highlight window, for the points of a new search (read only in effects). */
+  const winRef = useRef(windowKey(DEFAULT_WINDOW));
   const loading = !!key && result?.key !== key && failed?.key !== key;
   const queryError = failed?.key === key ? failed.message : undefined;
 
@@ -210,12 +238,44 @@ export function App() {
               "circle-opacity": 0.75,
             },
           });
+          // Parcels with a long-open roofing permit (parcels.points long_open_permit = 1), drawn over the
+          // points: larger, blue with a white ring.
+          m.addLayer({
+            id: "points-long-open",
+            type: "circle",
+            source: "points",
+            filter: ["==", ["get", "long_open"], 1],
+            paint: {
+              "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                10,
+                3,
+                15,
+                7,
+              ],
+              "circle-color": "#1f5fd1",
+              "circle-stroke-color": "#ffffff",
+              "circle-stroke-width": 1.5,
+            },
+          });
           m.on(
             "mouseenter",
             "points",
             () => (m.getCanvas().style.cursor = "pointer"),
           );
           m.on("mouseleave", "points", () => (m.getCanvas().style.cursor = ""));
+          m.on(
+            "mouseenter",
+            "points-long-open",
+            () => (m.getCanvas().style.cursor = "pointer"),
+          );
+          m.on(
+            "mouseleave",
+            "points-long-open",
+            () => (m.getCanvas().style.cursor = ""),
+          );
           writeCenter(m);
           mapEl.current!.dataset.ready = "true";
         });
@@ -230,7 +290,7 @@ export function App() {
                 [x - t, y - t],
                 [x + t, y + t],
               ],
-              { layers: ["points"] },
+              { layers: POINT_LAYERS },
             );
             const hit = nearestPoint(hits, e.point, (c) => m.project(c));
             if (hit) {
@@ -244,6 +304,7 @@ export function App() {
         // Render marker, on every "idle" (everything drawn): the search key of the drawn points and the zoom.
         m.on("idle", () => {
           mapEl.current!.dataset.renderedSearch = renderedSearchRef.current;
+          mapEl.current!.dataset.renderedLongOpen = renderedWinRef.current;
           mapEl.current!.dataset.renderedZoom = String(m.getZoom());
         });
         map.current = m;
@@ -273,18 +334,24 @@ export function App() {
     }).toFixed(3);
   }, [center, radius]);
 
-  // Query the data API (count, page, map points).
+  // Keep the last valid highlight window for the next search (declared before the query, so it runs first).
+  useEffect(() => {
+    if (winKey) winRef.current = winKey;
+  }, [winKey]);
+
+  // Query the data API (count, page, map points with the long-open highlight of the current window).
   // State changes happen only in the async callbacks; "loading" is derived from the key.
   useEffect(() => {
     if (!api || !q) return;
     let live = true;
+    const win = winRef.current;
     Promise.all([
       api.parcels.search.query({ ...q, offset: 0, limit: 50 }),
-      api.parcels.points.query(q),
+      api.parcels.points.query({ ...q, ...daysOfKey(win) }),
     ])
       .then(([s, p]) => {
         if (!live) return;
-        setResult({ key, search: s, points: p });
+        setResult({ key, search: s, points: p, win });
         setOffset(0);
       })
       .catch((e: Error) => live && setFailed({ key, message: e.message }));
@@ -293,18 +360,43 @@ export function App() {
     };
   }, [api, q, key]);
 
+  // A new open-duration window with the same search: only the points are asked again (the same parcels, a
+  // new long_open_permit column); the count and the list stay. One call per window change.
+  const resultKey = result?.key;
+  const resultWin = result?.win;
+  useEffect(() => {
+    if (!api || !winKey || !resultKey || resultKey !== key) return;
+    if (resultWin === winKey) return;
+    let live = true;
+    const k = resultKey,
+      w = winKey;
+    api.parcels.points.query({ ...filterOfKey(k), ...daysOfKey(w) }).then(
+      (p) => {
+        if (live)
+          setResult((r) => (r?.key === k ? { ...r, points: p, win: w } : r));
+      },
+      (e: Error) =>
+        live && setHighlightFailed({ key: k, win: w, message: e.message }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [api, key, resultKey, resultWin, winKey]);
+
   // Points layer. The same code records which search the drawn points belong to.
   useEffect(() => {
     const src = map.current?.getSource("points") as GeoJSONSource | undefined;
     if (!src) return;
     renderedSearchRef.current = result?.key ?? "";
+    renderedWinRef.current = result?.win ?? "";
     src.setData(
       points
         ? {
             type: "FeatureCollection",
             features: points.id.map((id, i) => ({
               type: "Feature",
-              properties: { id },
+              // long_open: 1 if the parcel has a long-open roofing permit in the window (the highlight layer).
+              properties: { id, long_open: points.long_open_permit?.[i] ?? 0 },
               geometry: {
                 type: "Point",
                 coordinates: [points.lon[i]!, points.lat[i]!],
@@ -313,7 +405,7 @@ export function App() {
           }
         : EMPTY,
     );
-  }, [points, result?.key]);
+  }, [points, result?.key, result?.win]);
 
   // The served run, once per client.
   useEffect(() => {
@@ -463,6 +555,25 @@ export function App() {
       { timeout: 10_000 },
     );
   };
+  /** The drawn parcels the highlight marks: the sum of long_open_permit (undefined from an API without it). */
+  const longOpenDrawn = points?.long_open_permit?.reduce<number>(
+    (n, x) => n + x,
+    0,
+  );
+  /** The drawn highlight's window in words ("open at least 1,826 days"). */
+  const legendWindow = result
+    ? openDaysText(
+        daysOfKey(result.win).min_open_days,
+        daysOfKey(result.win).max_open_days,
+      )
+    : "";
+  const highlightError =
+    highlightFailed &&
+    highlightFailed.key === key &&
+    highlightFailed.win === winKey &&
+    result?.win !== winKey
+      ? highlightFailed.message
+      : undefined;
   const countText = useMemo(
     () =>
       !center
@@ -604,6 +715,7 @@ export function App() {
             threshold={threshold}
             openWindow={permitWindow}
             onWindow={setPermitWindow}
+            onOpen={(id) => void openDetail(id)}
           />
         )}
         {leadsApi && (
@@ -621,6 +733,47 @@ export function App() {
       </aside>
       <div className="map">
         <div id="map" ref={mapEl} data-testid="map" />
+        {points && result && (
+          <div className="legend" data-testid="map-legend">
+            <div>
+              <span className="swatch parcel" aria-hidden="true" />
+              Parcel within the radius whose roof is older than{" "}
+              {filterOfKey(result.key).threshold_years} years
+            </div>
+            {longOpenDrawn === undefined ? (
+              <div data-testid="legend-long-open-unavailable">
+                Long-open roofing permits: not marked by this data API
+              </div>
+            ) : (
+              <div
+                data-testid="legend-long-open"
+                data-count={longOpenDrawn}
+                data-window={result.win}
+              >
+                <span className="swatch long-open-permit" aria-hidden="true" />
+                <span>
+                  Has a long-open roofing permit ({legendWindow}):{" "}
+                  <b data-testid="legend-long-open-count">
+                    {longOpenDrawn.toLocaleString("en-US")}
+                  </b>{" "}
+                  of the {points.id.length.toLocaleString("en-US")} parcels
+                  drawn
+                </span>
+              </div>
+            )}
+            {!winKey && (
+              <div className="notice" data-testid="legend-window-invalid">
+                The open-duration window is invalid; the map keeps the last
+                valid one.
+              </div>
+            )}
+            {highlightError && (
+              <div className="error" data-testid="legend-error">
+                Long-open highlight not updated: {highlightError}
+              </div>
+            )}
+          </div>
+        )}
         {detail && (
           <ParcelDetail detail={detail} onClose={() => setDetail(undefined)}>
             {leadsApi && detailId && (

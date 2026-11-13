@@ -181,9 +181,9 @@ button:disabled {
 .permits .row {
   margin: 4px 0;
 }
-/* Permit rows open nothing (long-open items carry no parcel ID). */
+/* A long-open row opens its parcel's detail. */
 .permits .list li {
-  cursor: default;
+  cursor: pointer;
 }
 .parcel-permits .list li {
   cursor: default;
@@ -208,4 +208,40 @@ button:disabled {
   padding: 0 6px;
   font-size: 11px;
   font-weight: 600;
+}
+.legend {
+  position: absolute;
+  left: 12px;
+  bottom: 28px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #ccccd1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  max-width: 300px;
+}
+.legend div {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 2px 0;
+}
+.swatch {
+  flex: none;
+  display: inline-block;
+  border-radius: 50%;
+}
+.swatch.parcel {
+  width: 8px;
+  height: 8px;
+  background: #c20030;
+  opacity: 0.75;
+}
+.swatch.long-open-permit {
+  width: 10px;
+  height: 10px;
+  background: #1f5fd1;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #1f5fd1;
 }

@@ -12,8 +12,9 @@ export const LEADS_MAX_PAGES = 20;
 
 /**
  * Leads, filtered at read time: by status, and "Leads in this search" (the parcels of the current radius and
- * roof-age result; see leadsInSearch.ts). Nothing derived is stored with a lead. Permit filters wait for
- * permit data.
+ * roof-age result; see leadsInSearch.ts). Nothing derived is stored with a lead. There is no permit-status or
+ * open-duration filter: a lead holds no permit data, so such a filter would need each lead's permits from the
+ * data API; the disabled control says so.
  */
 export function LeadsList({
   leads,
@@ -75,11 +76,13 @@ export function LeadsList({
           Leads in this search
         </label>
       </div>
-      <label className="notice">
+      <label className="notice" data-testid="leads-permit-filter-note">
         <select disabled aria-label="Permit status filter">
           <option>permit status</option>
         </select>{" "}
-        Permit filters: permits are not harvested yet.
+        Leads filter by status and by this search (radius and roof age), not by
+        permit status or open duration: open a lead to see its parcel&apos;s
+        permits.
       </label>
       {inSearch && search.checking !== undefined && (
         <p className="notice" data-testid="leads-checking">

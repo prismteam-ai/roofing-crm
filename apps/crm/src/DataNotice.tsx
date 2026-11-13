@@ -6,8 +6,9 @@ const missingPct = (total: number, present: number) =>
 
 /**
  * What the data covers, from the served run (explorer.runSummary): the county, roll year, scope and parcel
- * count, and as a source limit the parcels the assessor roll gives no year built or no coordinates (they never
- * appear in roof-age results). Nothing here is hard-coded; until the summary loads only the usage line shows.
+ * count; as a source limit the parcels the assessor roll gives no year built or no coordinates (they never
+ * appear in roof-age results); and the permit coverage (run.coverage.permit_data): LADBS permits cover the City
+ * of Los Angeles only. Nothing here is hard-coded; until the summary loads only the usage line shows.
  */
 export function DataNotice({
   run,
@@ -22,7 +23,15 @@ export function DataNotice({
         roll_year?: string;
         scope?: { jurisdiction?: string; zips?: string[] };
         row_counts?: { parquet?: number };
-        coverage?: { with_year_built?: number; with_coordinates?: number };
+        coverage?: {
+          with_year_built?: number;
+          with_coordinates?: number;
+          permit_data?: {
+            parcels_with_permit_data?: number;
+            parcels_without_permit_data?: number;
+            parcels_with_permits?: number;
+          };
+        };
       }
     | undefined;
   const total = r?.row_counts?.parquet;
@@ -61,6 +70,18 @@ export function DataNotice({
           {cov.with_coordinates !== undefined &&
             ` and ${missingPct(total, cov.with_coordinates)}% have no coordinates`}
           ; they never appear in roof-age results.
+        </p>
+      )}
+      {!!total && cov?.permit_data?.parcels_with_permit_data !== undefined && (
+        <p className="notice" data-testid="data-permit-coverage">
+          Permit coverage: LADBS building permits, City of Los Angeles only:{" "}
+          <span data-testid="data-permit-parcels">
+            {cov.permit_data.parcels_with_permit_data.toLocaleString("en-US")}
+          </span>{" "}
+          of the {total.toLocaleString("en-US")} parcels have permit data
+          {cov.permit_data.parcels_with_permits !== undefined &&
+            ` (${cov.permit_data.parcels_with_permits.toLocaleString("en-US")} with at least one permit)`}
+          .
         </p>
       )}
       {error && (

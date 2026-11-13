@@ -32,6 +32,8 @@ import type {
 const h = vi.hoisted(() => {
   const maps: Array<{
     handlers: Record<string, Array<(e: unknown) => void>>;
+    layers: Array<{ id: string; source?: string; filter?: unknown }>;
+    sources: Record<string, { data?: unknown }>;
     fire: (ev: string, e?: unknown) => void;
     clickAt: (x: number, y: number) => void;
     zoom: number;
@@ -102,7 +104,10 @@ vi.mock("../src/maplibre.ts", () => {
       };
       this.sources[id] = src;
     }
-    addLayer() {}
+    layers: Array<{ id: string; source?: string; filter?: unknown }> = [];
+    addLayer(l: { id: string; source?: string; filter?: unknown }) {
+      this.layers.push(l);
+    }
     getSource(id: string) {
       return this.sources[id];
     }
@@ -732,6 +737,39 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       );
     });
 
+    test("the data notice states the permit coverage from the run summary; the lead list says what it filters by", async () => {
+      // A run without permit coverage: no permit line.
+      await start();
+      await flush();
+      expect(screen.queryByTestId("data-permit-coverage")).toBeNull();
+      cleanup();
+      h.maps.length = 0;
+      h.runSummary.mockResolvedValue({
+        ...RUN,
+        run: {
+          ...RUN.run,
+          coverage: {
+            ...RUN.run.coverage,
+            permit_data: {
+              parcels_with_permit_data: 400,
+              parcels_without_permit_data: 600,
+              parcels_with_permits: 150,
+            },
+          },
+        },
+      });
+      await start();
+      await flush();
+      expect(screen.getByTestId("data-permit-coverage").textContent).toBe(
+        "Permit coverage: LADBS building permits, City of Los Angeles only: 400 of the 1,000 parcels have permit data (150 with at least one permit).",
+      );
+      expect(screen.getByTestId("data-permit-parcels").textContent).toBe("400");
+      expect(screen.getByTestId("leads-permit-filter-note").textContent).toBe(
+        "permit status Leads filter by status and by this search (radius and roof age), not by permit status or open duration: open a lead to see its parcel's permits.",
+      );
+      expect(document.body.textContent).not.toMatch(/not harvested/i);
+    });
+
     test("truncated points show the nearest-N-of-M notice; untruncated points do not", async () => {
       const map = await start();
       act(() => map.clickAt(300, 100));
@@ -1236,7 +1274,8 @@ describe("permits and the effective roof year", () => {
       "join condo building · building-level (12 units)",
     );
     expect(rows[0]!.textContent).not.toContain("building-level");
-    // The roofing flag: roofing, roofing through the roof-coating phrase only, not roofing.
+    // The roofing flag: roofing, roofing through the roof-coating phrase only, not roofing (a row the
+    // server's roofing filter no longer sends). The list is roofing work only, so plain roofing has no tag.
     expect(rows.map((r) => r.dataset.roofing)).toEqual([
       "true",
       "true",
@@ -1246,7 +1285,7 @@ describe("permits and the effective roof year", () => {
       rows.map(
         (r) => within(r).queryByTestId("permit-roofing")?.textContent ?? null,
       ),
-    ).toEqual(["roofing", "roofing (roof coating only)", null]);
+    ).toEqual([null, "roof coating only", "not roofing work"]);
     expect(screen.getByTestId("permits-api-rule").textContent).toBe(
       "API RULE TEXT",
     );
@@ -1419,6 +1458,180 @@ describe("permits and the effective roof year", () => {
     );
     expect(screen.queryByTestId("error")).toBeNull();
     expect(screen.getAllByTestId("result")).toHaveLength(3);
+  });
+
+  test("the list is titled 'Long-open roofing permits' and says roofing work only; the detail highlights only roofing work", async () => {
+    h.forParcel.mockResolvedValue({
+      ...PARCEL_PERMITS,
+      permits: [
+        // Open-issued for 3,000 days, but not roofing work: never long-open.
+        pp("A-6", "Issued", "open-issued", 3000, []),
+        ...PARCEL_PERMITS.permits,
+      ],
+    });
+    await pinned();
+    expect(screen.getByTestId("permits-heading").textContent).toBe(
+      "Long-open roofing permits",
+    );
+    expect(screen.getByTestId("permits-rule").textContent).toContain(
+      "Roofing work only: a permit that is not roofing work never counts; a roof-coating-only permit counts and is tagged.",
+    );
+    await openFirst();
+    const permits = within(screen.getByTestId("parcel-permits")).getAllByTestId(
+      "parcel-permit",
+    );
+    expect(permits.map((p) => [p.dataset.permit, p.dataset.longOpen])).toEqual([
+      ["A-6", "false"],
+      ["A-1", "true"],
+      ["A-2", "false"],
+      ["A-3", "false"],
+      ["A-4", "false"],
+      ["A-5", "false"],
+    ]);
+    expect(permits[0]!.classList.contains("long-open")).toBe(false);
+  });
+
+  test("the map highlights parcels with a long-open roofing permit: points get the list's window in days, and the legend counts the highlighted parcels drawn", async () => {
+    const pts = (long_open_permit: Array<0 | 1>, max: number | null) => ({
+      count: 3,
+      encoding: "columnar-v1",
+      precision: 5,
+      id: ["0000000001", "0000000002", "0000000003"],
+      lat: [34.2, 34.2, 34.21],
+      lon: [-118.49, -118.48996, -118.48],
+      permit_data_available: [1, 1, 1],
+      long_open_permit,
+      long_open: { min_open_days: 1826, max_open_days: max },
+      truncated: false,
+      max_points: 25000,
+    });
+    h.points.mockResolvedValue(pts([1, 0, 1], null));
+    const map = await pinned();
+    // One call each; the points carry the long-open list's window in days (default 1,826, no maximum).
+    expect(h.search).toHaveBeenCalledTimes(1);
+    expect(h.points).toHaveBeenCalledTimes(1);
+    const p0 = h.points.mock.calls[0]![0] as Record<string, unknown>;
+    expect(p0).toMatchObject({
+      radius_miles: 1,
+      threshold_years: 15,
+      min_open_days: 1826,
+    });
+    expect(p0.lat).toBeCloseTo(34.199, 9);
+    expect("max_open_days" in p0).toBe(false);
+    expect(lastLongOpen().min_open_days).toBe(p0.min_open_days);
+    // A distinct layer over the points, for the features marked long_open = 1.
+    expect(map.layers.map((l) => l.id)).toEqual([
+      "radius-fill",
+      "radius-line",
+      "points",
+      "points-long-open",
+    ]);
+    expect(map.layers[3]).toMatchObject({
+      source: "points",
+      filter: ["==", ["get", "long_open"], 1],
+    });
+    const features = () =>
+      (
+        map.sources.points!.data as {
+          features: Array<{ properties: { id: string; long_open: number } }>;
+        }
+      ).features.map((f) => [f.properties.id, f.properties.long_open]);
+    expect(features()).toEqual([
+      ["0000000001", 1],
+      ["0000000002", 0],
+      ["0000000003", 1],
+    ]);
+    const legend = () => screen.getByTestId("legend-long-open");
+    expect(legend().dataset.count).toBe("2");
+    expect(screen.getByTestId("map-legend").textContent).toContain(
+      "Parcel within the radius whose roof is older than 15 years",
+    );
+    expect(legend().textContent).toBe(
+      "Has a long-open roofing permit (open at least 1,826 days): 2 of the 3 parcels drawn",
+    );
+    act(() => map.fire("idle"));
+    expect(screen.getByTestId("map").dataset.renderedLongOpen).toBe("1826|");
+
+    // A maximum: the points are asked again with the same days as the list; the search is not.
+    h.points.mockResolvedValue(pts([0, 0, 1], 3653));
+    setInput("permits-max-years", "10");
+    await wait(300);
+    await flush();
+    expect(h.search).toHaveBeenCalledTimes(1);
+    expect(h.points).toHaveBeenCalledTimes(2);
+    const p1 = h.points.mock.calls[1]![0] as Record<string, unknown>;
+    expect(p1).toMatchObject({
+      radius_miles: 1,
+      threshold_years: 15,
+      min_open_days: 1826,
+      max_open_days: 3653,
+    });
+    expect(p1.lat).toBeCloseTo(34.199, 9);
+    expect(lastLongOpen()).toMatchObject({
+      min_open_days: 1826,
+      max_open_days: 3653,
+    });
+    expect(legend().dataset.count).toBe("1");
+    expect(legend().textContent).toContain("open 1,826 to 3,653 days");
+    expect(features().map((f) => f[1])).toEqual([0, 0, 1]);
+    act(() => map.fire("idle"));
+    expect(screen.getByTestId("map").dataset.renderedLongOpen).toBe(
+      "1826|3653",
+    );
+    await wait(5000); // idle: no further calls
+    expect(h.points).toHaveBeenCalledTimes(2);
+
+    // An invalid window: no call; the map keeps the last valid highlight and says so.
+    setInput("permits-max-years", "3");
+    await wait(2000);
+    expect(h.points).toHaveBeenCalledTimes(2);
+    expect(legend().dataset.count).toBe("1");
+    expect(screen.getByTestId("legend-window-invalid").textContent).toBe(
+      "The open-duration window is invalid; the map keeps the last valid one.",
+    );
+    // A new search meanwhile uses the last valid window.
+    setInput("radius", "2");
+    await wait(300);
+    expect(h.search).toHaveBeenCalledTimes(2);
+    expect(h.points).toHaveBeenCalledTimes(3);
+    expect(h.points.mock.calls[2]![0]).toMatchObject({
+      radius_miles: 2,
+      min_open_days: 1826,
+      max_open_days: 3653,
+    });
+  });
+
+  test("a long-open row opens its parcel's detail, the same panel as a map click", async () => {
+    h.longOpen.mockResolvedValue({
+      ...LONG_OPEN,
+      items: [
+        LONG_OPEN.items[0]!,
+        { ...LONG_OPEN.items[1]!, parcel_id: "0000000002" },
+        LONG_OPEN.items[2]!,
+      ],
+    });
+    await pinned();
+    const rows = screen.getAllByTestId("permit-row");
+    expect(rows.map((r) => r.dataset.parcel)).toEqual([
+      "0000000001",
+      "0000000002",
+      "0000000001",
+    ]);
+    expect(screen.getByTestId("permits-open-hint").textContent).toBe(
+      "Click a permit to open its parcel; a building-level permit opens its nearest unit.",
+    );
+    await act(async () => {
+      fireEvent.click(rows[1]!);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await flush();
+    expect(h.detail).toHaveBeenCalledTimes(1);
+    expect(h.detail).toHaveBeenCalledWith({ parcel_id: "0000000002" });
+    expect(field("parcel_id")).toBe("0000000002");
+    expect(h.forParcel).toHaveBeenLastCalledWith({ parcel_id: "0000000002" });
+    expect(screen.getAllByTestId("parcel-permit")).toHaveLength(5);
+    await wait(300);
+    expect(h.search).toHaveBeenCalledTimes(1); // the pin did not move
   });
 
   test("the placeholders no longer list permit sections", async () => {

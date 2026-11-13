@@ -1094,4 +1094,219 @@ test.describe("with credentials", () => {
     );
     await expect(section).not.toContainText("Permits unavailable");
   });
+
+  test("20. the map highlights parcels with a long-open roofing permit; the legend count equals parcels.points' long_open_permit sum for the same pin, radius, roof age and window", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    const zoom = 13;
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=${zoom}`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    await page.getByTestId("radius").fill("5");
+    await expect(page.getByTestId("radius-value")).toHaveText("5");
+    await expect(page.getByTestId("threshold")).toHaveValue("15");
+    const points = async (days: object) =>
+      (
+        await (
+          await (
+            await api()
+          ).get(
+            trpc(cfg.apiUrl, "parcels.points", {
+              lat: pin[0],
+              lon: pin[1],
+              radius_miles: 5,
+              threshold_years: 15,
+              ...days,
+            }),
+          )
+        ).json()
+      ).result.data as {
+        id: string[];
+        long_open_permit: number[];
+        long_open: { min_open_days: number; max_open_days: number | null };
+      };
+    const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+    const n = (x: number) => x.toLocaleString("en-US");
+    const legend = page.getByTestId("legend-long-open");
+    const legendCount = () =>
+      strictNum(legend, "data-count", "[data-testid=legend-long-open]");
+
+    // Default window: at least 1,826 days, no maximum (the long-open list's).
+    const a = await points({ min_open_days: 1826 });
+    expect(a.long_open).toEqual({ min_open_days: 1826, max_open_days: null });
+    const nA = sum(a.long_open_permit);
+    console.log(
+      "HIGHLIGHT",
+      JSON.stringify({ drawn: a.id.length, highlighted: nA }),
+    );
+    expect(nA).toBeGreaterThan(0);
+    await expect(legend).toHaveAttribute("data-window", "1826|", {
+      timeout: 20_000,
+    });
+    await expect.poll(legendCount, { timeout: 20_000 }).toBe(nA);
+    await expect(legend).toContainText(
+      `(open at least 1,826 days): ${n(nA)} of the ${n(a.id.length)} parcels drawn`,
+    );
+    await renderedFor(page, zoom); // this search is drawn
+    await expect(page.getByTestId("map")).toHaveAttribute(
+      "data-rendered-long-open",
+      "1826|",
+    );
+
+    // A maximum of 10 years (3,653 days): the highlight follows the list's window.
+    await page.getByTestId("permits-max-years").fill("10");
+    const b = await points({ min_open_days: 1826, max_open_days: 3653 });
+    expect(b.long_open).toEqual({ min_open_days: 1826, max_open_days: 3653 });
+    const nB = sum(b.long_open_permit);
+    console.log("HIGHLIGHT_MAX_10Y", JSON.stringify({ highlighted: nB }));
+    expect(nB).toBeLessThanOrEqual(nA);
+    await expect(legend).toHaveAttribute("data-window", "1826|3653", {
+      timeout: 20_000,
+    });
+    await expect.poll(legendCount, { timeout: 20_000 }).toBe(nB);
+    await expect(legend).toContainText("(open 1,826 to 3,653 days)");
+    await expect(page.getByTestId("map")).toHaveAttribute(
+      "data-rendered-long-open",
+      "1826|3653",
+      { timeout: 20_000 },
+    );
+  });
+
+  test("21. a long-open roofing permit row opens its parcel's detail (the item's parcel_id from permits.longOpen)", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    await page.getByTestId("radius").fill("5");
+    await expect(page.getByTestId("radius-value")).toHaveText("5");
+    const lo = (
+      await (
+        await (
+          await api()
+        ).get(
+          trpc(cfg.apiUrl, "permits.longOpen", {
+            lat: pin[0],
+            lon: pin[1],
+            radius_miles: 5,
+            threshold_years: 15,
+            min_open_days: 1826,
+            sort: "open_days",
+            offset: 0,
+            limit: 50,
+          }),
+        )
+      ).json()
+    ).result.data as {
+      count: number;
+      items: Array<{
+        permit_number: string;
+        parcel_id: string;
+        building_level: boolean;
+      }>;
+    };
+    await expect
+      .poll(() => attrNum(page, "permits-count", "data-count"), {
+        timeout: 20_000,
+      })
+      .toBe(lo.count);
+    // The first row that is not building-level (a building-level row opens its nearest unit).
+    const i = lo.items.findIndex((x) => !x.building_level);
+    expect(i).toBeGreaterThanOrEqual(0);
+    const want = lo.items[i]!;
+    console.log(
+      "ROW_OPENS",
+      JSON.stringify({ row: i, parcel: want.parcel_id }),
+    );
+    const row = page.getByTestId("permit-row").nth(i);
+    await expect(row).toHaveAttribute("data-permit", want.permit_number);
+    await expect(row).toHaveAttribute("data-parcel", want.parcel_id);
+    const detailCalls = detailGets(page);
+    await row.click();
+    const d = page.getByTestId("detail");
+    await expect(d.locator('[data-field="parcel_id"]')).toHaveText(
+      want.parcel_id,
+    );
+    expect(detailCalls).toHaveLength(1);
+    expect(await pinOf(page)).toEqual(pin); // the pin did not move
+    // The parcel's permits include the row's permit, marked long-open.
+    const mine = d
+      .getByTestId("parcel-permits")
+      .locator(`[data-permit="${want.permit_number}"]`);
+    await expect(mine).toHaveCount(1, { timeout: 20_000 });
+    await expect(mine).toHaveAttribute("data-long-open", "true");
+  });
+
+  test("22. the list is 'Long-open roofing permits' with roofing work only; the data notice states the permit coverage from explorer.runSummary; no 'not harvested' text", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    const n = (x: number) => x.toLocaleString("en-US");
+    const { run } = (
+      await (
+        await (await api()).get(trpc(cfg.apiUrl, "explorer.runSummary"))
+      ).json()
+    ).result.data;
+    const pd = run.coverage.permit_data as {
+      parcels_with_permit_data: number;
+      parcels_with_permits: number;
+    };
+    console.log("PERMIT_COVERAGE", JSON.stringify(pd));
+    await expect(page.getByTestId("data-permit-parcels")).toHaveText(
+      n(pd.parcels_with_permit_data),
+      { timeout: 20_000 },
+    );
+    await expect(page.getByTestId("data-permit-coverage")).toHaveText(
+      `Permit coverage: LADBS building permits, City of Los Angeles only: ${n(pd.parcels_with_permit_data)} of the ${n(run.row_counts.parquet)} parcels have permit data (${n(pd.parcels_with_permits)} with at least one permit).`,
+    );
+    await expect(page.getByTestId("leads-permit-filter-note")).toContainText(
+      "not by permit status or open duration",
+    );
+
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    await expect(page.getByTestId("permits-heading")).toHaveText(
+      "Long-open roofing permits",
+    );
+    const lo = (
+      await (
+        await (
+          await api()
+        ).get(
+          trpc(cfg.apiUrl, "permits.longOpen", {
+            lat: pin[0],
+            lon: pin[1],
+            radius_miles: 1,
+            threshold_years: 15,
+            min_open_days: 1826,
+            sort: "open_days",
+            offset: 0,
+            limit: 50,
+          }),
+        )
+      ).json()
+    ).result.data as {
+      count: number;
+      items: Array<{ permit_number: string; roofing_work: boolean }>;
+    };
+    expect(lo.items.length).toBeGreaterThan(0);
+    expect(lo.items.every((x) => x.roofing_work)).toBe(true);
+    const rows = page.getByTestId("permit-row");
+    await expect(rows).toHaveCount(lo.items.length, { timeout: 20_000 });
+    expect(
+      await rows.evaluateAll((els) =>
+        els.map((e) => [
+          e.getAttribute("data-permit"),
+          e.getAttribute("data-roofing"),
+        ]),
+      ),
+    ).toEqual(lo.items.map((x) => [x.permit_number, "true"]));
+    await expect(page.locator("body")).not.toContainText(/not harvested/i);
+  });
 });

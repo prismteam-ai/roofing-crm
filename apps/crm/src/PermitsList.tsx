@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { LatLon } from "@roofing-crm/geo";
 import {
   joinLabel,
+  longOpenTag,
   openDuration,
-  roofingTag,
   statusClassLabel,
   wholeYears,
   windowInvalid,
+  windowKey,
   yearsAndDays,
-  yearsToDays,
   type OpenWindow,
 } from "./permitDisplay.ts";
 import type {
@@ -39,13 +39,11 @@ const parseKey = (key: string): Omit<LongOpenInput, "offset" | "limit"> => {
 };
 
 /**
- * Long-open permits around the pin, combined with the radius and the roof-age threshold. Only open-issued
- * permits count as open (the server decides). The API returns every long-open LADBS permit, roofing work or
- * not; each row shows its roofing flag. Like the parcel search, the inputs are debounced as one stable string
- * key (250 ms): one call per input change.
- *
- * The API also serves each item's parcel ID and, in parcels.points, a long-open column; this list does not
- * use them yet (rows do not open a parcel, and the map does not highlight long-open parcels).
+ * Long-open roofing permits around the pin, combined with the radius and the roof-age threshold. The server
+ * decides: only roofing work counts, and only open-issued permits count as open. A row is tagged only when it
+ * stands apart (roof coating only). Like the parcel search, the inputs are debounced as one stable string key
+ * (250 ms): one call per input change. A row opens its parcel's detail (the item's parcel_id; for a
+ * building-level permit, its nearest unit). The map highlights the same window's parcels (App, parcels.points).
  */
 export function PermitsList({
   permits,
@@ -54,6 +52,7 @@ export function PermitsList({
   threshold,
   openWindow: w,
   onWindow,
+  onOpen,
 }: {
   permits: PermitsApi;
   /** The pin; nothing is shown or asked until there is one. */
@@ -62,16 +61,16 @@ export function PermitsList({
   threshold: number;
   openWindow: OpenWindow;
   onWindow: (w: OpenWindow) => void;
+  /** Opens a parcel's detail (the same panel as a map click). */
+  onOpen: (parcelId: string) => void;
 }) {
   const [sort, setSort] = useState<Sort>("open_days");
   const invalid = windowInvalid(w);
-  const minDays = yearsToDays(w.minYears);
-  const maxDays =
-    w.maxYears === undefined ? undefined : yearsToDays(w.maxYears);
   // Key: pin (6 decimals, as the parcel search), radius, threshold, min days, max days ("" = unset), sort.
+  // The days are windowKey's, the same the map highlight sends.
   const key = useDebounced(
     center && !invalid
-      ? `${center.lat.toFixed(6)},${center.lon.toFixed(6)}|${radius}|${threshold}|${minDays}|${maxDays ?? ""}|${sort}`
+      ? `${center.lat.toFixed(6)},${center.lon.toFixed(6)}|${radius}|${threshold}|${windowKey(w)}|${sort}`
       : "",
     250,
   );
@@ -123,7 +122,7 @@ export function PermitsList({
   const offset = shown?.offset ?? 0;
   return (
     <section className="permits" data-testid="permits-list">
-      <h3>Long-open permits</h3>
+      <h3 data-testid="permits-heading">Long-open roofing permits</h3>
       <div className="row">
         <label htmlFor="permits-min">Open at least (years)</label>
         <input
@@ -176,8 +175,10 @@ export function PermitsList({
         </p>
       )}
       <p className="rule" data-testid="permits-rule">
-        Only permits with status class Open (issued) count as open. Long-open:
-        open at least {yearsAndDays(w.minYears)}
+        Only permits with status class Open (issued) count as open. Roofing work
+        only: a permit that is not roofing work never counts; a
+        roof-coating-only permit counts and is tagged. Long-open: open at least{" "}
+        {yearsAndDays(w.minYears)}
         {w.maxYears !== undefined && (
           <> and at most {yearsAndDays(w.maxYears)}</>
         )}
@@ -222,26 +223,39 @@ export function PermitsList({
               Next
             </button>
           </div>
+          {data.items.length > 0 && (
+            <p className="notice" data-testid="permits-open-hint">
+              Click a permit to open its parcel; a building-level permit opens
+              its nearest unit.
+            </p>
+          )}
           <ul className="list">
             {data.items.map((p) => {
-              const roofing = roofingTag(p);
+              const tag = longOpenTag(p);
               return (
                 <li
                   key={p.permit_number}
                   className="permit long-open"
                   data-testid="permit-row"
                   data-permit={p.permit_number}
+                  data-parcel={p.parcel_id}
                   data-open-days={p.open_days ?? undefined}
                   data-distance={p.distance_miles}
                   data-roofing={String(p.roofing_work)}
+                  title={
+                    p.building_level
+                      ? "Open the parcel's details (the nearest unit of this building)"
+                      : "Open the parcel's details"
+                  }
+                  onClick={() => onOpen(p.parcel_id)}
                 >
                   <b>{p.permit_number}</b>{" "}
                   <span className="tag">long-open</span>
-                  {roofing && (
+                  {tag && (
                     <>
                       {" "}
                       <span className="tag" data-testid="permit-roofing">
-                        {roofing}
+                        {tag}
                       </span>
                     </>
                   )}
