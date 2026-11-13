@@ -3,6 +3,7 @@ import {
   isLongOpen,
   joinLabel,
   openDuration,
+  roofingTag,
   statusClassLabel,
   type OpenWindow,
 } from "./permitDisplay.ts";
@@ -13,37 +14,40 @@ import type {
   PermitsApi,
 } from "./permitsApi.ts";
 
-/** "R [raw]" when the raw class differs from the normalized one, plus the class note when set. */
-const licenceClass = (c: PermitContractor) => {
-  const base = c.licence_class ?? c.licence_class_raw ?? "—";
-  const raw =
-    c.licence_class_raw && c.licence_class_raw !== base
-      ? ` [${c.licence_class_raw}]`
+/**
+ * The license class: the normalized class (license_class), with the type as printed on the permit
+ * (source_license_type) in brackets when it differs, plus the class note (license_class_note) when set.
+ */
+const licenseClass = (c: PermitContractor) => {
+  const base = c.license_class ?? c.source_license_type ?? "—";
+  const printed =
+    c.source_license_type && c.source_license_type !== base
+      ? ` [${c.source_license_type}]`
       : "";
-  return `${base}${raw}${c.class_note ? ` (${c.class_note})` : ""}`;
+  return `${base}${printed}${c.license_class_note ? ` (${c.license_class_note})` : ""}`;
 };
 
 function Contractor({ c }: { c: PermitContractor }) {
-  const place = [c.contractor_city, c.contractor_state]
-    .filter(Boolean)
-    .join(", ");
+  const place = [c.city_name, c.state_code].filter(Boolean).join(", ");
   return (
     <li data-testid="contractor">
       <span data-testid="contractor-name">
-        {c.business_name ?? "business name not published"}
+        {c.contractors_business_name ?? "business name not published"}
       </span>
-      {" · licence "}
-      <span data-testid="contractor-licence">{c.licence_number ?? "—"}</span>
+      {" · license "}
+      <span data-testid="contractor-license">
+        {c.license_identifier ?? "—"}
+      </span>
       {" · class "}
-      <span data-testid="contractor-class">{licenceClass(c)}</span>
-      {c.owner_builder && (
+      <span data-testid="contractor-class">{licenseClass(c)}</span>
+      {c.is_owner_builder && (
         <>
           {" · "}
           <span data-testid="contractor-owner-builder">owner-builder</span>
         </>
       )}
-      {c.licence_expiration_date && (
-        <> · licence expires {c.licence_expiration_date}</>
+      {c.license_expiration_date && (
+        <> · license expires {c.license_expiration_date}</>
       )}
       {place && <> · {place}</>}
     </li>
@@ -58,21 +62,31 @@ function Permit({
   openWindow: OpenWindow;
 }) {
   const long = isLongOpen(p, openWindow);
+  const roofing = roofingTag(p);
   return (
     <li
       className={long ? "permit long-open" : "permit"}
       data-testid="parcel-permit"
-      data-permit={p.permit_nbr}
+      data-permit={p.permit_number}
       data-long-open={String(long)}
+      data-roofing={String(p.roofing_work)}
     >
-      <b data-testid="permit-number">{p.permit_nbr}</b>{" "}
-      {long && <span className="tag">long-open</span>}
+      <b data-testid="permit-number">{p.permit_number}</b>{" "}
+      {long && <span className="tag">long-open</span>}{" "}
+      {roofing && (
+        <span className="tag" data-testid="permit-roofing">
+          {roofing}
+        </span>
+      )}
       <dl>
         <dt>Status</dt>
         <dd>
-          {p.status} ·{" "}
-          <span data-testid="permit-status-class" data-class={p.status_class}>
-            {statusClassLabel(p.status_class)}
+          {p.source_status_desc ?? "status not published"} ·{" "}
+          <span
+            data-testid="permit-status-class"
+            data-class={p.permit_status_class}
+          >
+            {statusClassLabel(p.permit_status_class)}
           </span>
         </dd>
         <dt>Open duration</dt>
@@ -80,7 +94,7 @@ function Permit({
           {p.open_days === null ? "not open" : openDuration(p.open_days)}
         </dd>
         <dt>Issued</dt>
-        <dd data-field="issue_date">{p.issue_date ?? "—"}</dd>
+        <dd data-field="permit_issue_date">{p.permit_issue_date ?? "—"}</dd>
         <dt>Status date</dt>
         <dd data-field="status_date">{p.status_date ?? "—"}</dd>
         <dt>Join method</dt>
@@ -169,7 +183,7 @@ export function ParcelPermits({
       {data && data.permits.length > 0 && (
         <ul className="list">
           {data.permits.map((p) => (
-            <Permit key={p.permit_nbr} p={p} openWindow={openWindow} />
+            <Permit key={p.permit_number} p={p} openWindow={openWindow} />
           ))}
         </ul>
       )}

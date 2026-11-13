@@ -566,8 +566,10 @@ test.describe("with credentials", () => {
     await expect(page.getByTestId("result-count")).toHaveText(
       `${fmt(a15.count)} results`,
     );
+    // The rule shown is the API's: roof age counts from the effective roof year.
+    await expect(page.getByTestId("rule")).toHaveText(a15.rule.text);
     await expect(page.getByTestId("rule")).toContainText(
-      `built before ${a15.rule.built_before_year}`,
+      `effective roof year before ${a15.rule.built_before_year}`,
     );
     // 80 years: same check, and the screen visibly changes.
     await page.getByTestId("threshold").fill("80");
@@ -576,8 +578,9 @@ test.describe("with credentials", () => {
     await expect(page.getByTestId("result-count")).toHaveText(
       `${fmt(a80.count)} results`,
     );
+    await expect(page.getByTestId("rule")).toHaveText(a80.rule.text);
     await expect(page.getByTestId("rule")).toContainText(
-      `built before ${a80.rule.built_before_year}`,
+      `effective roof year before ${a80.rule.built_before_year}`,
     );
     console.log(
       "THRESHOLD",
@@ -589,7 +592,7 @@ test.describe("with credentials", () => {
     for (const y of await Promise.all(
       (await page.getByTestId("result").all()).map((i) => i.innerText()),
     ))
-      expect(Number(/built (\d{4})/.exec(y)![1])).toBeLessThan(
+      expect(Number(/roof year (\d{4})/.exec(y)![1])).toBeLessThan(
         a80.rule.built_before_year,
       );
     await page.getByTestId("threshold").fill("120");
@@ -941,7 +944,7 @@ test.describe("with credentials", () => {
       ).result.data as {
         count: number;
         items: Array<{
-          permit_nbr: string;
+          permit_number: string;
           open_days: number;
           distance_miles: number;
         }>;
@@ -956,7 +959,8 @@ test.describe("with credentials", () => {
       .toBe(a.count);
     const rows = page.getByTestId("permit-row");
     await expect(rows).toHaveCount(a.items.length);
-    // Longest open first: data-open-days never increases down the list, and the first page is the API's.
+    // Longest open first: data-open-days never increases down the list, and the first page is the API's
+    // (the API breaks ties by permit_number, so the order is the API's exactly).
     const days = await Promise.all(
       (await rows.all()).map((r, k) =>
         strictNum(r, "data-open-days", `permit-row #${k}`),
@@ -969,10 +973,10 @@ test.describe("with credentials", () => {
       await rows.evaluateAll((els) =>
         els.map((e) => e.getAttribute("data-permit")),
       ),
-    ).toEqual(a.items.map((i) => i.permit_nbr));
+    ).toEqual(a.items.map((i) => i.permit_number));
     await expect(rows.first()).toHaveClass(/long-open/);
-    // Nearest first: the same count; the distances are the API's for the same inputs, never decreasing
-    // (compared as distances, since permits at one address tie and may come in any order).
+    // Nearest first: the same count; the distances are the API's for the same inputs, never decreasing, and
+    // the rows are the API's in its order (ties by permit_number).
     await page.getByTestId("permits-sort").selectOption("distance");
     const near = await longOpen("distance");
     await expect
@@ -986,6 +990,11 @@ test.describe("with credentials", () => {
         { timeout: 20_000 },
       )
       .toBe(near.items.map((i) => String(i.distance_miles)).join(","));
+    expect(
+      await rows.evaluateAll((els) =>
+        els.map((e) => e.getAttribute("data-permit")),
+      ),
+    ).toEqual(near.items.map((i) => i.permit_number));
     expect(await attrNum(page, "permits-count", "data-count")).toBe(a.count);
     const dists = await Promise.all(
       (await rows.all()).map((r, k) =>
@@ -1003,9 +1012,9 @@ test.describe("with credentials", () => {
     type Permits = {
       permit_data_available: boolean;
       permits: Array<{
-        permit_nbr: string;
-        status_class: string;
-        contractors: Array<{ licence_number: string | null }>;
+        permit_number: string;
+        permit_status_class: string;
+        contractors: Array<{ license_identifier: string | null }>;
       }>;
       bbb: { available: boolean; reason: string };
     };
@@ -1048,12 +1057,14 @@ test.describe("with credentials", () => {
       "PARCEL_PERMITS",
       JSON.stringify({ parcel, permits: want!.permits.length }),
     );
-    // The API serves no description field at all.
+    // The API serves no description field at all (source_status_desc is LADBS's status, not a description).
     const keys = (v: unknown): string[] =>
       v && typeof v === "object"
         ? Object.entries(v).flatMap(([k, x]) => [k, ...keys(x)])
         : [];
-    expect(keys(want).filter((k) => /desc/i.test(k))).toEqual([]);
+    expect(
+      keys(want).filter((k) => /desc/i.test(k) && k !== "source_status_desc"),
+    ).toEqual([]);
     expect(want!.bbb.available).toBe(false);
 
     await expect(idEl).toHaveText(parcel);
@@ -1062,10 +1073,12 @@ test.describe("with credentials", () => {
     await expect(shown).toHaveCount(want!.permits.length, { timeout: 20_000 });
     const first = shown.first();
     const p0 = want!.permits[0]!;
-    await expect(first.getByTestId("permit-number")).toHaveText(p0.permit_nbr);
+    await expect(first.getByTestId("permit-number")).toHaveText(
+      p0.permit_number,
+    );
     await expect(first.getByTestId("permit-status-class")).toHaveAttribute(
       "data-class",
-      p0.status_class,
+      p0.permit_status_class,
     );
     await expect(first.getByTestId("permit-status-class")).not.toBeEmpty();
     if (p0.contractors.length === 0)
@@ -1073,8 +1086,8 @@ test.describe("with credentials", () => {
         "Contractor not published",
       );
     else
-      await expect(first.getByTestId("contractor-licence").first()).toHaveText(
-        p0.contractors[0]!.licence_number ?? "—",
+      await expect(first.getByTestId("contractor-license").first()).toHaveText(
+        p0.contractors[0]!.license_identifier ?? "—",
       );
     await expect(section.getByTestId("bbb-rating")).toHaveText(
       `not available (${want!.bbb.reason})`,

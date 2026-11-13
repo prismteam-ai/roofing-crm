@@ -8,8 +8,8 @@
  * - @oracle-la/api-client: createApiClient returns a CALLABLE object, like the real tRPC v11 proxy
  *   (typeof client === "function"), with vi.fn() procedures.
  * - @roofing-crm/leads-client: createLeadsClient likewise (the schemas and notes rule stay real).
- * - The api-client mock also carries permits.longOpen / permits.forParcel, the planned permit routes
- *   (src/permitsApi.ts); the vendored client does not have them yet.
+ * - The api-client mock also carries permits.longOpen / permits.forParcel (src/permitsApi.ts). The permit
+ *   and search fixtures are typed with the client's contract types, so they carry the served field names.
  */
 import {
   act,
@@ -20,6 +20,14 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type {
+  LongOpenItem,
+  LongOpenResult,
+  ParcelPermit,
+  ParcelPermits,
+  PermitContractor,
+  SearchItem,
+} from "@oracle-la/api-client";
 
 const h = vi.hoisted(() => {
   const maps: Array<{
@@ -191,6 +199,11 @@ vi.mock("@roofing-crm/leads-client", async (importOriginal) => ({
 }));
 
 import { App } from "../src/App.tsx";
+import {
+  DEFAULT_MIN_DAYS,
+  DEFAULT_WINDOW,
+  yearsToDays,
+} from "../src/permitDisplay.ts";
 import { loadConfig } from "../src/config.ts";
 
 const rule = {
@@ -199,11 +212,21 @@ const rule = {
   built_before_year: 2011,
   text: "older than 15 years means built before 2011",
 };
-const item = (id: string, d: number) => ({
+/** The two roof-age basis labels as stored and served (roof_age_basis); clients test the first word. */
+const PROXY =
+  "PROXY: assessor year built / effective year built; not a roof installation date";
+const PERMIT =
+  "PERMIT: latest finaled LADBS roofing permit (status date); a roof coating alone does not count";
+const item = (id: string, d: number): SearchItem => ({
   parcel_id: id,
   address: `${id} TEST ST`,
   year_built: 1980,
   roof_age_years_proxy: 46,
+  effective_roof_year: 1980,
+  roof_age_years: 46,
+  roof_age_basis: PROXY,
+  roof_year_permit_number: null,
+  permit_data_available: true,
   distance_miles: d,
   latitude: 34.2,
   longitude: -118.49,
@@ -221,15 +244,26 @@ const RUN = {
   history: [],
 };
 /** Permit answers with nothing in them (the default for the tests that are not about permits). */
-const EMPTY_LONG_OPEN = {
+const EMPTY_LONG_OPEN: LongOpenResult = {
   count: 0,
-  rule: { text: "" },
+  rule: {
+    reference_date: "2026-11-12",
+    status_class: "open-issued",
+    min_open_days: 1826,
+    max_open_days: null,
+    roof_age: null,
+    text: "",
+  },
   items: [],
   next_offset: null,
 };
-const NO_PERMITS = {
+const NO_PERMITS: ParcelPermits = {
+  parcel_id: "0000000001",
   permit_data_available: true,
   jurisdiction: "LOS ANGELES",
+  effective_roof_year: 1980,
+  roof_age_basis: PROXY,
+  roof_year_permit_number: null,
   permits: [],
   bbb: { available: false, reason: "no BBB data source" },
 };
@@ -821,91 +855,120 @@ describe("leads (with leadsApiUrl in config.json)", () => {
 describe("permits and the effective roof year", () => {
   /** Every fixture carries a description; it must never reach the DOM. */
   const SENTINEL = "SENTINEL-DESCRIPTION";
-  /** A long-open item (permits.longOpen), with an extra work_desc the UI must ignore. */
+  /**
+   * A long-open item (permits.longOpen), with an extra work_desc the UI must ignore (the API serves none;
+   * the fixture carries one to prove the UI would not show it).
+   */
   const lo = (
-    permit_nbr: string,
+    permit_number: string,
     open_days: number,
     distance_miles: number,
-    extra: object = {},
-  ) => ({
-    permit_nbr,
-    status: "Issued",
-    status_class: "open-issued",
-    issue_date: "2010-03-01",
+    extra: Partial<LongOpenItem> = {},
+  ): LongOpenItem & { work_desc: string } => ({
+    permit_number,
+    address: `${permit_number} ROOF ST`,
+    postal_code: "91405",
+    source_permit_type: "Bldg-Alter/Repair",
+    source_permit_sub_type: "1 or 2 Family Dwelling",
+    source_status_desc: "Issued",
+    permit_status_class: "open-issued",
+    application_received_date: "2010-02-01",
+    permit_issue_date: "2010-03-01",
     status_date: "2010-03-01",
+    open_since: "2010-03-01",
     open_days,
-    distance_miles,
-    address: `${permit_nbr} ROOF ST`,
-    parcel_count: 1,
-    building_level: false,
+    roofing_work: true,
+    roof_coating_only: false,
     join_method: "direct",
+    building_level: false,
+    parcel_count: 1,
+    parcel_id: "0000000001",
+    distance_miles,
     effective_roof_year: 1980,
+    roof_age_basis: PROXY,
+    roof_year_permit_number: null,
     work_desc: SENTINEL,
     ...extra,
   });
   /** Longest open first, as the API sorts by default; 120 in all, next page at 50. */
-  const LONG_OPEN = {
+  const LONG_OPEN: LongOpenResult = {
     count: 120,
-    rule: { text: "API RULE TEXT" },
+    rule: { ...EMPTY_LONG_OPEN.rule, text: "API RULE TEXT" },
     items: [
       lo("P-3", 6000, 0.8),
       lo("P-1", 4000, 0.2, {
         building_level: true,
         parcel_count: 12,
         join_method: "condo-building",
+        roof_coating_only: true,
       }),
-      lo("P-2", 2000, 0.5),
+      lo("P-2", 2000, 0.5, { roofing_work: false }),
     ],
     next_offset: 50,
   };
-  const contractor = (extra: object = {}) => ({
-    licence_class: "C39",
-    licence_class_raw: "C-39 ROOFING",
-    class_note: null,
-    owner_builder: false,
-    licence_expiration_date: "2027-01-31",
-    contractor_city: "VAN NUYS",
-    contractor_state: "CA",
-    business_name: "ACME ROOFING INC",
-    licence_number: "123456",
+  const contractor = (
+    extra: Partial<PermitContractor> = {},
+  ): PermitContractor => ({
+    contractors_business_name: "ACME ROOFING INC",
+    license_identifier: "123456",
+    source_license_type: "C-39 ROOFING",
+    license_class: "C39",
+    license_class_note: null,
+    is_owner_builder: false,
+    license_expiration_date: "2027-01-31",
+    city_name: "VAN NUYS",
+    state_code: "CA",
     ...extra,
   });
   /** A permit of the parcel (permits.forParcel), with an extra work_desc the UI must ignore. */
   const pp = (
-    permit_nbr: string,
-    status: string,
-    status_class: string,
+    permit_number: string,
+    source_status_desc: string,
+    permit_status_class: ParcelPermit["permit_status_class"],
     open_days: number | null,
-    contractors: object[],
-  ) => ({
-    permit_nbr,
-    status,
-    status_class,
-    issue_date: "2012-05-01",
-    status_date: "2013-06-01",
-    open_days,
+    contractors: PermitContractor[],
+  ): ParcelPermit & { work_desc: string } => ({
+    permit_number,
     address: "0000000001 TEST ST",
-    parcel_count: 1,
-    building_level: false,
+    postal_code: "91405",
+    source_permit_type: "Bldg-Alter/Repair",
+    source_permit_sub_type: "1 or 2 Family Dwelling",
+    source_status_desc,
+    permit_status_class,
+    application_received_date: "2012-04-01",
+    permit_issue_date: "2012-05-01",
+    status_date: "2013-06-01",
+    open_since: open_days === null ? null : "2012-05-01",
+    open_days,
+    roofing_work: false,
+    roof_coating_only: false,
     join_method: "direct",
-    effective_roof_year: 2009,
+    building_level: false,
+    parcel_count: 1,
     contractors,
     work_desc: SENTINEL,
   });
-  const PARCEL_PERMITS = {
+  const PARCEL_PERMITS: ParcelPermits = {
+    parcel_id: "0000000001",
     permit_data_available: true,
     jurisdiction: "LOS ANGELES",
+    effective_roof_year: 2009,
+    roof_age_basis: PERMIT,
+    roof_year_permit_number: "09016-10000-01234",
     permits: [
-      pp("A-1", "Issued", "open-issued", 3000, [contractor()]),
+      {
+        ...pp("A-1", "Issued", "open-issued", 3000, [contractor()]),
+        roofing_work: true,
+      },
       pp("A-2", "Plan Check", "open-application", 400, []),
       pp("A-3", "Permit Finaled", "closed", null, [
         contractor({
-          business_name: null,
-          licence_number: null,
-          licence_class: null,
-          licence_class_raw: null,
-          class_note: "owner-builder",
-          owner_builder: true,
+          contractors_business_name: null,
+          license_identifier: null,
+          license_class: null,
+          source_license_type: null,
+          license_class_note: "owner-builder",
+          is_owner_builder: true,
         }),
       ]),
       pp("A-4", "CofO in Progress", "unclear", null, []),
@@ -933,14 +996,27 @@ describe("permits and the effective roof year", () => {
         {
           ...item("0000000001", 0.1),
           effective_roof_year: 2009,
-          roof_year_basis: "permit",
+          roof_age_years: 17,
+          roof_age_basis: PERMIT,
+          roof_year_permit_number: "09016-10000-01234",
         },
         {
           ...item("0000000002", 0.2),
+          year_built: 1962,
+          roof_age_years_proxy: 64,
           effective_roof_year: 1962,
-          roof_year_basis: "year_built",
+          roof_age_years: 64,
         },
-        item("0000000003", 0.9), // served without a roof year: the proxy text stays
+        {
+          // No year built: only a permit gives this parcel a roof year.
+          ...item("0000000003", 0.9),
+          year_built: null,
+          roof_age_years_proxy: null,
+          effective_roof_year: 2005,
+          roof_age_years: 21,
+          roof_age_basis: PERMIT,
+          roof_year_permit_number: "05016-10000-00042",
+        },
       ],
       next_offset: null,
     });
@@ -961,10 +1037,9 @@ describe("permits and the effective roof year", () => {
           parcel_id,
           address: `${parcel_id} TEST ST`,
           year_built: 1980,
-          roof_age_basis: "PERMIT",
+          roof_age_basis: PERMIT,
           effective_roof_year: 2009,
-          roof_year_basis: "permit",
-          roof_year_permit_nbr: "09016-10000-01234",
+          roof_year_permit_number: "09016-10000-01234",
           permit_data_available: true,
           roll_year: 2026,
         },
@@ -1008,30 +1083,35 @@ describe("permits and the effective roof year", () => {
     render(<App />);
     await flush();
     expect(screen.getByTestId("rule").textContent).toBe(
-      "Roof age uses the effective roof year: the latest finaled roofing permit, else the assessor year built. Older than 15 years means a roof year before roll year − 15.",
+      "Roof age counts from the effective roof year: the later of the assessor year built and the year of the latest finaled roofing permit. Older than 15 years means an effective roof year before roll year − 15.",
     );
     const map = h.maps[0]!;
     map.fire("load");
     act(() => map.clickAt(300, 100));
     await wait(300);
     const rows = screen.getAllByTestId("result").map((r) => r.textContent);
-    expect(rows[0]).toContain("roof year 2009 (permit)");
-    expect(rows[1]).toContain("roof year 1962 (year built)");
-    expect(rows[2]).toContain("roof-age proxy 46 y");
-    expect(rows[0]).toContain("built 1980");
+    expect(rows[0]).toContain("built 1980 · roof year 2009 (permit)");
+    expect(rows[1]).toContain("built 1962 · roof year 1962 (year built)");
+    expect(rows[2]).toContain(
+      "year built not in source · roof year 2005 (permit)",
+    );
   });
 
   test("the parcel detail shows the effective roof year, its basis and the roof-year permit", async () => {
     await pinned();
     await openFirst();
     expect(field("effective_roof_year")).toBe("2009");
-    expect(field("roof_year_basis")).toBe("permit");
-    expect(field("roof_year_permit_nbr")).toBe("09016-10000-01234");
-    expect(field("roof_age_basis")).toBe("PERMIT"); // the existing row stays
+    expect(field("roof_year_permit_number")).toBe("09016-10000-01234");
+    // One basis row: the existing roof_age_basis row, with the label as served.
+    expect(field("roof_age_basis")).toBe(PERMIT);
+    const basisRows = [...screen.getByTestId("detail").querySelectorAll("dt")]
+      .map((d) => d.textContent)
+      .filter((t) => /roof/i.test(t!) && /basis/i.test(t!));
+    expect(basisRows).toEqual(["Roof-age basis"]);
     const text = screen.getByTestId("detail").textContent!;
     expect(text).not.toContain("Roof age is a proxy from year built");
     expect(text).toContain(
-      "Roof age uses the effective roof year: the year of the latest finaled roofing permit, else the assessor year built.",
+      "Roof age counts from the effective roof year: the later of the assessor year built and the year of the latest finaled roofing permit.",
     );
   });
 
@@ -1050,6 +1130,8 @@ describe("permits and the effective roof year", () => {
       limit: 50,
     });
     expect("max_open_days" in q).toBe(false);
+    // The CRM's default equals the API's (DEFAULT_MIN_DAYS is typed as the API's DEFAULT_MIN_OPEN_DAYS).
+    expect(yearsToDays(DEFAULT_WINDOW.minYears)).toBe(DEFAULT_MIN_DAYS);
     expect(screen.getByTestId("permits-rule").textContent).toContain(
       "at least 5 years (1,826 days)",
     );
@@ -1154,6 +1236,17 @@ describe("permits and the effective roof year", () => {
       "join condo building · building-level (12 units)",
     );
     expect(rows[0]!.textContent).not.toContain("building-level");
+    // The roofing flag: roofing, roofing through the roof-coating phrase only, not roofing.
+    expect(rows.map((r) => r.dataset.roofing)).toEqual([
+      "true",
+      "true",
+      "false",
+    ]);
+    expect(
+      rows.map(
+        (r) => within(r).queryByTestId("permit-roofing")?.textContent ?? null,
+      ),
+    ).toEqual(["roofing", "roofing (roof coating only)", null]);
     expect(screen.getByTestId("permits-api-rule").textContent).toBe(
       "API RULE TEXT",
     );
@@ -1190,7 +1283,12 @@ describe("permits and the effective roof year", () => {
     expect(a1.getByTestId("contractor-name").textContent).toBe(
       "ACME ROOFING INC",
     );
-    expect(a1.getByTestId("contractor-licence").textContent).toBe("123456");
+    expect(a1.getByTestId("contractor-license").textContent).toBe("123456");
+    expect(permits[0]!.textContent).toContain("license 123456");
+    expect(permits[0]!.textContent).toContain("license expires 2027-01-31");
+    expect(permits[0]!.textContent).toContain("VAN NUYS, CA");
+    expect(a1.getByTestId("permit-roofing").textContent).toBe("roofing");
+    expect(within(permits[1]!).queryByTestId("permit-roofing")).toBeNull();
     expect(a1.getByTestId("contractor-class").textContent).toBe(
       "C39 [C-39 ROOFING]",
     );

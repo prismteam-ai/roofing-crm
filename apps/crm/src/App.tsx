@@ -38,11 +38,10 @@ import { ParcelDetail } from "./ParcelDetail.tsx";
 import { ParcelPermits } from "./ParcelPermits.tsx";
 import {
   DEFAULT_WINDOW,
-  isRoofYearBasis,
-  roofYearBasisLabel,
+  roofBasisLabel,
   type OpenWindow,
 } from "./permitDisplay.ts";
-import { permitsApi, type SearchItemRoofYear } from "./permitsApi.ts";
+import { permitsApi } from "./permitsApi.ts";
 import { PermitsList } from "./PermitsList.tsx";
 import { useDebounced } from "./useDebounced.ts";
 
@@ -51,11 +50,11 @@ const params = new URLSearchParams(location.search);
 /** tRPC error code of a failed call (e.g. "CONFLICT"), if any. */
 const codeOf = (e: unknown) =>
   (e as { data?: { code?: string } } | undefined)?.data?.code;
-/** A result's roof: the effective roof year with its basis when served, else the year-built proxy. */
-const roofText = (i: SearchItem & SearchItemRoofYear) =>
-  i.effective_roof_year == null
-    ? `roof-age proxy ${i.roof_age_years_proxy} y`
-    : `roof year ${i.effective_roof_year}${isRoofYearBasis(i.roof_year_basis) ? ` (${roofYearBasisLabel(i.roof_year_basis)})` : ""}`;
+/** A result's roof: the effective roof year (the filter's), with its basis ("permit" or "year built"). */
+const roofText = (i: SearchItem) => {
+  const basis = roofBasisLabel(i.roof_age_basis);
+  return `roof year ${i.effective_roof_year}${basis ? ` (${basis})` : ""}`;
+};
 
 export function App() {
   const mapEl = useRef<HTMLDivElement>(null);
@@ -541,7 +540,7 @@ export function App() {
           </div>
           <p className="rule" data-testid="rule">
             {search?.rule.text ??
-              `Roof age uses the effective roof year: the latest finaled roofing permit, else the assessor year built. Older than ${threshold} years means a roof year before roll year − ${threshold}.`}
+              `Roof age counts from the effective roof year: the later of the assessor year built and the year of the latest finaled roofing permit. Older than ${threshold} years means an effective roof year before roll year − ${threshold}.`}
           </p>
         </section>
         {(queryError ?? error) && (
@@ -588,7 +587,10 @@ export function App() {
                 >
                   <b>{i.address ?? i.parcel_id}</b>
                   <br />
-                  built {i.year_built} · {roofText(i)} · {i.distance_miles} mi
+                  {i.year_built === null
+                    ? "year built not in source"
+                    : `built ${i.year_built}`}{" "}
+                  · {roofText(i)} · {i.distance_miles} mi
                 </li>
               ))}
             </ul>

@@ -3,6 +3,7 @@ import type { LatLon } from "@roofing-crm/geo";
 import {
   joinLabel,
   openDuration,
+  roofingTag,
   statusClassLabel,
   wholeYears,
   windowInvalid,
@@ -19,7 +20,7 @@ import { useDebounced } from "./useDebounced.ts";
 
 /** Page size of the long-open list. */
 export const PERMITS_PAGE_SIZE = 50;
-type Sort = LongOpenInput["sort"];
+type Sort = NonNullable<LongOpenInput["sort"]>;
 
 /** The query a debounced key stands for (offset and limit are added per call). */
 const parseKey = (key: string): Omit<LongOpenInput, "offset" | "limit"> => {
@@ -38,12 +39,13 @@ const parseKey = (key: string): Omit<LongOpenInput, "offset" | "limit"> => {
 };
 
 /**
- * Long-open roofing permits around the pin, combined with the radius and the roof-age threshold. Only
- * open-issued permits count as open (the server decides). Like the parcel search, the inputs are debounced as
- * one stable string key (250 ms): one call per input change.
+ * Long-open permits around the pin, combined with the radius and the roof-age threshold. Only open-issued
+ * permits count as open (the server decides). The API returns every long-open LADBS permit, roofing work or
+ * not; each row shows its roofing flag. Like the parcel search, the inputs are debounced as one stable string
+ * key (250 ms): one call per input change.
  *
- * Rows do not open a parcel: long-open items carry no parcel ID in the planned API.
- * No map highlighting: the planned API names no permit column in parcels.points.
+ * The API also serves each item's parcel ID and, in parcels.points, a long-open column; this list does not
+ * use them yet (rows do not open a parcel, and the map does not highlight long-open parcels).
  */
 export function PermitsList({
   permits,
@@ -121,7 +123,7 @@ export function PermitsList({
   const offset = shown?.offset ?? 0;
   return (
     <section className="permits" data-testid="permits-list">
-      <h3>Long-open roofing permits</h3>
+      <h3>Long-open permits</h3>
       <div className="row">
         <label htmlFor="permits-min">Open at least (years)</label>
         <input
@@ -221,28 +223,42 @@ export function PermitsList({
             </button>
           </div>
           <ul className="list">
-            {data.items.map((p) => (
-              <li
-                key={p.permit_nbr}
-                className="permit long-open"
-                data-testid="permit-row"
-                data-permit={p.permit_nbr}
-                data-open-days={p.open_days ?? undefined}
-                data-distance={p.distance_miles}
-              >
-                <b>{p.permit_nbr}</b> <span className="tag">long-open</span>
-                <br />
-                {p.address ?? "address not published"}
-                <br />
-                {p.status} · {statusClassLabel(p.status_class)} · open{" "}
-                {p.open_days === null ? "—" : openDuration(p.open_days)}
-                <br />
-                issued {p.issue_date ?? "—"} · {p.distance_miles} mi · join{" "}
-                {joinLabel(p.join_method)}
-                {p.building_level &&
-                  ` · building-level (${p.parcel_count} units)`}
-              </li>
-            ))}
+            {data.items.map((p) => {
+              const roofing = roofingTag(p);
+              return (
+                <li
+                  key={p.permit_number}
+                  className="permit long-open"
+                  data-testid="permit-row"
+                  data-permit={p.permit_number}
+                  data-open-days={p.open_days ?? undefined}
+                  data-distance={p.distance_miles}
+                  data-roofing={String(p.roofing_work)}
+                >
+                  <b>{p.permit_number}</b>{" "}
+                  <span className="tag">long-open</span>
+                  {roofing && (
+                    <>
+                      {" "}
+                      <span className="tag" data-testid="permit-roofing">
+                        {roofing}
+                      </span>
+                    </>
+                  )}
+                  <br />
+                  {p.address ?? "address not published"}
+                  <br />
+                  {p.source_status_desc ?? "status not published"} ·{" "}
+                  {statusClassLabel(p.permit_status_class)} · open{" "}
+                  {p.open_days === null ? "—" : openDuration(p.open_days)}
+                  <br />
+                  issued {p.permit_issue_date ?? "—"} · {p.distance_miles} mi ·
+                  join {joinLabel(p.join_method)}
+                  {p.building_level &&
+                    ` · building-level (${p.parcel_count} units)`}
+                </li>
+              );
+            })}
           </ul>
         </>
       )}
