@@ -633,10 +633,13 @@ test.describe("with credentials", () => {
     expect(text).not.toMatch(/owner name|mailing address|phone|e-?mail/i);
   });
 
-  test("13. future sections are disabled placeholders", async ({ page }) => {
+  test("13. future sections are disabled placeholders (permit sections are no longer among them)", async ({
+    page,
+  }) => {
     await page.goto("/");
     const cards = page.getByTestId("future");
-    await expect(cards).toHaveCount(6);
+    await expect(cards).toHaveCount(3);
+    await expect(cards.filter({ hasText: /permit/i })).toHaveCount(0);
     for (const c of await cards.all()) {
       await expect(c).toHaveAttribute("aria-disabled", "true");
       await expect(c.getByRole("button")).toBeDisabled();
@@ -899,5 +902,183 @@ test.describe("with credentials", () => {
           console.log(`leads after cleanup: unknown (${e.message})`),
       );
     }
+  });
+
+  test("18. long-open permits: open days descending, re-sortable by distance; the count equals permits.longOpen for the same pin, radius, roof age and minimum", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    await page.getByTestId("radius").fill("5");
+    await expect(page.getByTestId("radius-value")).toHaveText("5");
+    await expect(page.getByTestId("threshold")).toHaveValue("15");
+    await expect(page.getByTestId("permits-min-years")).toHaveValue("5");
+    await expect(page.getByTestId("permits-max-years")).toHaveValue("");
+    await expect(page.getByTestId("permits-rule")).toContainText(
+      "at least 5 years (1,826 days)",
+    );
+    const longOpen = async (sort: string) =>
+      (
+        await (
+          await (
+            await api()
+          ).get(
+            trpc(cfg.apiUrl, "permits.longOpen", {
+              lat: pin[0],
+              lon: pin[1],
+              radius_miles: 5,
+              threshold_years: 15,
+              min_open_days: 1826,
+              sort,
+              offset: 0,
+              limit: 50,
+            }),
+          )
+        ).json()
+      ).result.data as {
+        count: number;
+        items: Array<{
+          permit_nbr: string;
+          open_days: number;
+          distance_miles: number;
+        }>;
+      };
+    const a = await longOpen("open_days");
+    console.log("LONG_OPEN", JSON.stringify({ count: a.count }));
+    expect(a.count).toBeGreaterThan(0);
+    await expect
+      .poll(() => attrNum(page, "permits-count", "data-count"), {
+        timeout: 20_000,
+      })
+      .toBe(a.count);
+    const rows = page.getByTestId("permit-row");
+    await expect(rows).toHaveCount(a.items.length);
+    // Longest open first: data-open-days never increases down the list, and the first page is the API's.
+    const days = await Promise.all(
+      (await rows.all()).map((r, k) =>
+        strictNum(r, "data-open-days", `permit-row #${k}`),
+      ),
+    );
+    for (let i = 1; i < days.length; i++)
+      expect(days[i]!).toBeLessThanOrEqual(days[i - 1]!);
+    expect(Math.min(...days)).toBeGreaterThanOrEqual(1826);
+    expect(
+      await rows.evaluateAll((els) =>
+        els.map((e) => e.getAttribute("data-permit")),
+      ),
+    ).toEqual(a.items.map((i) => i.permit_nbr));
+    await expect(rows.first()).toHaveClass(/long-open/);
+    // Nearest first: the same count; the distances are the API's for the same inputs, never decreasing
+    // (compared as distances, since permits at one address tie and may come in any order).
+    await page.getByTestId("permits-sort").selectOption("distance");
+    const near = await longOpen("distance");
+    await expect
+      .poll(
+        async () =>
+          (
+            await rows.evaluateAll((els) =>
+              els.map((e) => e.getAttribute("data-distance")),
+            )
+          ).join(","),
+        { timeout: 20_000 },
+      )
+      .toBe(near.items.map((i) => String(i.distance_miles)).join(","));
+    expect(await attrNum(page, "permits-count", "data-count")).toBe(a.count);
+    const dists = await Promise.all(
+      (await rows.all()).map((r, k) =>
+        strictNum(r, "data-distance", `permit-row #${k}`),
+      ),
+    );
+    for (let i = 1; i < dists.length; i++)
+      expect(dists[i]!).toBeGreaterThanOrEqual(dists[i - 1]!);
+  });
+
+  test("19. permit details of a parcel: number, status class, contractors or 'Contractor not published', BBB rating not available; never a description", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    type Permits = {
+      permit_data_available: boolean;
+      permits: Array<{
+        permit_nbr: string;
+        status_class: string;
+        contractors: Array<{ licence_number: string | null }>;
+      }>;
+      bbb: { available: boolean; reason: string };
+    };
+    const forParcel = async (id: string) => {
+      const r = await (
+        await api()
+      ).get(trpc(cfg.apiUrl, "permits.forParcel", { parcel_id: id }));
+      if (r.status() !== 200)
+        throw new Error(`permits.forParcel: HTTP ${r.status()}`);
+      return (await r.json()).result.data as Permits;
+    };
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre (Van Nuys, City of Los Angeles)
+    await expect(page.getByTestId("result").first()).toBeVisible({
+      timeout: 20_000,
+    });
+    // The first listed parcel with at least one permit (taken from the API, not hard-coded).
+    const d = page.getByTestId("detail");
+    const n = await page.getByTestId("result").count();
+    let parcel = "";
+    let want: Permits | undefined;
+    const idEl = d.locator('[data-field="parcel_id"]');
+    let prev = "";
+    for (let i = 0; i < n && !want; i++) {
+      await page.getByTestId("result").nth(i).click();
+      // Each row is another parcel: wait until the detail shows the clicked one, not the previous one.
+      await expect(idEl).toHaveText(/^\d{10}$/);
+      if (prev) await expect(idEl).not.toHaveText(prev);
+      const id = (await idEl.textContent())!;
+      prev = id;
+      const got = await forParcel(id);
+      if (got.permits.length > 0) {
+        parcel = id;
+        want = got;
+      }
+    }
+    expect(want, "a listed parcel with permits").toBeDefined();
+    console.log(
+      "PARCEL_PERMITS",
+      JSON.stringify({ parcel, permits: want!.permits.length }),
+    );
+    // The API serves no description field at all.
+    const keys = (v: unknown): string[] =>
+      v && typeof v === "object"
+        ? Object.entries(v).flatMap(([k, x]) => [k, ...keys(x)])
+        : [];
+    expect(keys(want).filter((k) => /desc/i.test(k))).toEqual([]);
+    expect(want!.bbb.available).toBe(false);
+
+    await expect(idEl).toHaveText(parcel);
+    const section = d.getByTestId("parcel-permits");
+    const shown = section.getByTestId("parcel-permit");
+    await expect(shown).toHaveCount(want!.permits.length, { timeout: 20_000 });
+    const first = shown.first();
+    const p0 = want!.permits[0]!;
+    await expect(first.getByTestId("permit-number")).toHaveText(p0.permit_nbr);
+    await expect(first.getByTestId("permit-status-class")).toHaveAttribute(
+      "data-class",
+      p0.status_class,
+    );
+    await expect(first.getByTestId("permit-status-class")).not.toBeEmpty();
+    if (p0.contractors.length === 0)
+      await expect(first.getByTestId("contractor-not-published")).toHaveText(
+        "Contractor not published",
+      );
+    else
+      await expect(first.getByTestId("contractor-licence").first()).toHaveText(
+        p0.contractors[0]!.licence_number ?? "—",
+      );
+    await expect(section.getByTestId("bbb-rating")).toHaveText(
+      `not available (${want!.bbb.reason})`,
+    );
+    await expect(section).not.toContainText("Permits unavailable");
   });
 });
