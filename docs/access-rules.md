@@ -8,7 +8,8 @@ repository.
 ## How access works
 
 - **The site** (RoofingCrmWeb, Amplify Hosting) asks for HTTP basic auth on every path, including
-  `config.json`.
+  `config.json`. Its credentials are set on the `main` branch; the pipeline's Explorer, on the same app's
+  `explorer` branch, has its own.
 - **The token.** The browser loads `config.json`, which holds the API URLs, one API token and the map key
   (`scripts/write-config.ts` (the `config.json` it writes)). The app sends that token as `Authorization: Bearer …` to both APIs
   (`apps/crm/src/App.tsx` (`App`, the `loadConfig` effect)).
@@ -44,10 +45,11 @@ repository.
      function (`iam:PassRole`), or to change the leads Lambda's code (`lambda:UpdateFunctionCode`), can
      write as that role.
    - The boundary is only as strong as those two permissions in the account.
-5. **CORS is not access control.** The leads API and the data API allow browser calls only from the CRM's
-   origin (`apps/crm/cdk/lib/crm-leads-stack.ts` (`CrmLeadsStack`, `HttpApi` `corsPreflight`); pipeline
-   `apps/api/cdk/lib/data-api-stack.ts` (`DataApiStack`, `HttpApi` `corsPreflight`)). A request without an `Origin` header, from curl or a script,
-   is served whenever the token is valid.
+5. **CORS is not access control.** The leads API allows browser calls only from the CRM's origin
+   (`apps/crm/cdk/lib/crm-leads-stack.ts` (`CrmLeadsStack`, `HttpApi` `corsPreflight`)). The data API allows
+   the CRM's and the Explorer's origins (pipeline `apps/api/cdk/lib/data-api-stack.ts` (`DataApiStack`,
+   `HttpApi` `corsPreflight`), from pipeline `apps/api/cdk/clients.json`). A request without an `Origin`
+   header, from curl or a script, is served whenever the token is valid.
 6. **The authorizer caches its answer for 300 seconds** (`apps/crm/cdk/lib/crm-leads-stack.ts` (`CrmLeadsStack`, `TokenAuthorizer` `resultsCacheTtl`); pipeline
    `apps/api/cdk/lib/data-api-stack.ts` (`DataApiStack`, `TokenAuthorizer` `resultsCacheTtl`)). A rotated or removed token keeps working for up to 5 minutes.
 7. **Any valid client may call every data API route.** The data API ignores the client name the authorizer
@@ -60,3 +62,15 @@ repository.
    numbers with an area code and 7 or more digits in a row (`apps/leads-api/src/schema.ts`). It does not
    detect names or street addresses.
    - The notes filter allows phone numbers without an area code (e.g. 555-1234).
+10. **The CRM and the pipeline's Explorer share one Amplify app.** The Explorer is the `explorer` branch of
+    this repository's app `roofing-crm`; the account allows one Amplify app.
+    - Each branch has its own basic-auth credentials, so neither site's password opens the other.
+    - The app-level settings belong to RoofingCrmWeb and apply to both sites: the single-page rewrite rule,
+      basic auth (off at app level), the service role, and deleting the app, which deletes both branches
+      (`apps/crm/cdk/lib/crm-web-stack.ts` (`CrmWebStack`); `apps/crm/test/web-stack.test.ts`).
+    - Anyone who can deploy either stack can deploy a site to either branch: the Amplify asset-deployment
+      provider in each stack may call `amplify:StartDeployment` on any app.
+    - The Explorer's token is refused by the leads API, which accepts only the client `crm`
+      (`apps/leads-api/src/trpc.ts` (`procedure`, `LEADS_CLIENT`)). The Explorer's origin is in neither the
+      leads API's CORS nor the map key's Referer list, and the Explorer's `config.json` has no leads API URL
+      and no map key.
