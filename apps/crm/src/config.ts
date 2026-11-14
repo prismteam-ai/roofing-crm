@@ -4,6 +4,8 @@ export interface AppConfig {
   apiUrl?: string;
   /** Leads API (RoofingCrmLeads output); the leads UI is hidden when absent. */
   leadsApiUrl?: string;
+  /** Agent API (OracleLaAgentApi output); the "Ask the agent" section is hidden when absent. */
+  agentApiUrl?: string;
   apiToken?: string;
   mapKey?: string;
   client?: string;

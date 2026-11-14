@@ -2,9 +2,21 @@ import {
   expect,
   request,
   test,
+  type BrowserContext,
   type Locator,
   type Page,
 } from "@playwright/test";
+import type { AnswerResponse } from "../src/agent-types.ts";
+import {
+  ANSWERED,
+  CITED_PARCEL,
+  FOLLOW_UP,
+  QUESTION_1,
+  QUESTION_2,
+  REFUSED,
+  STANDING_GAPS,
+  STOPPED,
+} from "./agent-fixtures.ts";
 import { BASE_URL, CREDS, ORIGIN } from "./env.ts";
 
 const VN = { lat: 34.199, lon: -118.487 };
@@ -117,6 +129,30 @@ const recentredOn = (page: Page, p: number[]) =>
 test.describe.configure({
   mode: process.env.PW_SERIAL === "0" ? "default" : "serial",
 });
+
+/**
+ * HARD RULE: no test ever sends a real request to /agent/answer (it would be a model call). Every browser context
+ * gets this catch-all: a request to /agent/answer that no test mock answered is aborted and fails the test.
+ * (A test's own page.route takes precedence over this context route.) The panel may call the real /agent/warm.
+ */
+const unmockedAnswers: string[] = [];
+async function guardAgentAnswer(ctx: BrowserContext) {
+  await ctx.route("**/agent/answer", async (route) => {
+    unmockedAnswers.push(
+      `${route.request().method()} ${route.request().url()}`,
+    );
+    await route.abort("blockedbyclient");
+  });
+}
+test.beforeEach(async ({ context }) => {
+  unmockedAnswers.length = 0;
+  await guardAgentAnswer(context);
+});
+test.afterEach(() => {
+  expect(unmockedAnswers, "requests to /agent/answer without a mock").toEqual(
+    [],
+  );
+});
 type Cfg = {
   apiUrl: string;
   leadsApiUrl: string;
@@ -148,6 +184,7 @@ test.describe("without credentials", () => {
     browser,
   }) => {
     const ctx = await browser.newContext(); // no httpCredentials: the credentials are in the URL only
+    await guardAgentAnswer(ctx);
     const page = await ctx.newPage();
     await page.goto(
       `https://${encodeURIComponent(CREDS.username)}:${encodeURIComponent(CREDS.password)}@${new URL(BASE_URL).host}/?lat=${VN.lat}&lon=${VN.lon}&z=13`,
@@ -532,6 +569,7 @@ test.describe("with credentials", () => {
       geolocation: { latitude: VN.lat, longitude: VN.lon },
       permissions: ["geolocation"],
     });
+    await guardAgentAnswer(ctx);
     const page = await ctx.newPage();
     await page.goto(`${BASE_URL}/`); // opens on LA County, far from the GPS point
     await ready(page);
@@ -636,13 +674,14 @@ test.describe("with credentials", () => {
     expect(text).not.toMatch(/owner name|mailing address|phone|e-?mail/i);
   });
 
-  test("13. future sections are disabled placeholders (permit sections are no longer among them)", async ({
+  test("13. future sections are disabled placeholders (permit sections and the agent are no longer among them)", async ({
     page,
   }) => {
     await page.goto("/");
     const cards = page.getByTestId("future");
-    await expect(cards).toHaveCount(3);
+    await expect(cards).toHaveCount(2);
     await expect(cards.filter({ hasText: /permit/i })).toHaveCount(0);
+    await expect(cards.filter({ hasText: /agent|RAG/i })).toHaveCount(0);
     for (const c of await cards.all()) {
       await expect(c).toHaveAttribute("aria-disabled", "true");
       await expect(c.getByRole("button")).toBeDisabled();
@@ -1696,5 +1735,353 @@ test.describe("with credentials", () => {
         c.canonical_business_name === null ? 0 : 1,
       );
     }
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// Ask the agent (POST /agent/answer always mocked; the section may call the real /agent/warm and the data API).
+
+type Reply = AnswerResponse | { httpStatus: number; body: unknown };
+/** CORS headers for the mocked agent API: the CRM origin only, as the agent stack's CORS does. */
+const AGENT_CORS = {
+  "access-control-allow-origin": ORIGIN,
+  "access-control-allow-headers": "authorization,content-type",
+  "access-control-allow-methods": "GET,POST,OPTIONS",
+};
+
+/**
+ * Mocks POST /agent/answer with the given replies in order (page route, ahead of the catch-all) and records each
+ * request body; a request with no reply left is aborted and fails the test.
+ */
+async function mockAnswers(page: Page, replies: Reply[], log?: string[]) {
+  const bodies: Array<Record<string, unknown>> = [];
+  await page.route("**/agent/answer", async (route) => {
+    const req = route.request();
+    if (req.method() === "OPTIONS")
+      return route.fulfill({ status: 204, headers: AGENT_CORS });
+    const next = replies.shift();
+    if (!next) {
+      unmockedAnswers.push(
+        `${req.method()} ${req.url()} (no mocked reply left)`,
+      );
+      return route.abort("blockedbyclient");
+    }
+    bodies.push(req.postDataJSON() as Record<string, unknown>);
+    log?.push("answer");
+    const [status, body] =
+      "httpStatus" in next ? [next.httpStatus, next.body] : [200, next];
+    await route.fulfill({
+      status,
+      headers: { ...AGENT_CORS, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  });
+  return bodies;
+}
+
+/** Records the warm-up traffic in order: "warm:req", "warm:res", "data:req", "data:res" (meta.info). */
+function watchWarmup(page: Page, log: string[]) {
+  const kind = (url: string) =>
+    /\/agent\/warm$/.test(new URL(url).pathname)
+      ? "warm"
+      : /\/trpc\/meta\.info$/.test(new URL(url).pathname)
+        ? "data"
+        : null;
+  page.on("request", (r) => {
+    const k = kind(r.url());
+    if (k && r.method() === "GET") log.push(`${k}:req`);
+  });
+  page.on("response", (r) => {
+    const k = kind(r.url());
+    if (k && r.request().method() === "GET") log.push(`${k}:res`);
+  });
+}
+
+const openAgent = async (page: Page) => {
+  await page.getByTestId("agent-open").click();
+  await expect(page.getByTestId("agent-body")).toBeVisible();
+};
+const ask = async (page: Page, q: string) => {
+  await page.getByRole("textbox", { name: /question/i }).fill(q);
+  await page.getByTestId("agent-send").click();
+};
+const seen = (log: string[], e: string) => log.filter((x) => x === e).length;
+const box = (page: Page) => page.getByRole("textbox", { name: /question/i });
+
+test.describe("Ask the agent (answers mocked)", () => {
+  test.use({ httpCredentials: CREDS });
+
+  test("26. config.json names the agent API (OracleLaAgentApi, eu-north-1)", async ({
+    page,
+  }) => {
+    const cfg = (await (
+      await page.request.get(`${BASE_URL}/config.json`)
+    ).json()) as Cfg & { agentApiUrl?: string };
+    expect(cfg.agentApiUrl).toMatch(
+      /^https:\/\/[a-z0-9]+\.execute-api\.eu-north-1\.amazonaws\.com$/,
+    );
+    expect(cfg.agentApiUrl).not.toBe(cfg.apiUrl);
+  });
+
+  test("27. the section is in the aside below the controls; opening it warms the agent and two data API requests at once; the notice and the pin as the center are shown", async ({
+    page,
+  }) => {
+    const log: string[] = [];
+    watchWarmup(page, log);
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    const section = page.getByTestId("ask-agent");
+    await expect(section).toBeVisible();
+    expect(
+      await section.evaluate(
+        (el) =>
+          el.closest("aside") !== null &&
+          el.previousElementSibling?.classList.contains("controls"),
+      ),
+    ).toBe(true);
+    // Collapsed: nothing warmed yet.
+    await expect(page.getByTestId("agent-body")).toBeHidden();
+    expect(log).toEqual([]);
+    await openAgent(page);
+    await expect
+      .poll(() => [seen(log, "warm:res"), seen(log, "data:res")])
+      .toEqual([1, 2]);
+    // Both data requests went out before either answered (sent at once).
+    expect(log.filter((x) => x.startsWith("data:")).slice(0, 2)).toEqual([
+      "data:req",
+      "data:req",
+    ]);
+    await expect(page.getByTestId("agent-notice")).toHaveText(
+      "Your question, the map center and the data the agent reads are sent to Anthropic to answer it.",
+    );
+    await expect(page.getByTestId("agent-center")).toContainText(
+      "Center: none yet",
+    );
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    await expect(page.getByTestId("agent-center")).toHaveText(
+      `Center: map pin (${pin[0]!.toFixed(6)}, ${pin[1]!.toFixed(6)})`,
+    );
+    await expect(page.getByTestId("agent-send")).toBeEnabled();
+  });
+
+  test("28. an answered reply around the pin: markdown text, How I got this collapsed, Sources by kind, Gaps with Always true, unverified ID flagged", async ({
+    page,
+  }) => {
+    const bodies = await mockAnswers(page, [ANSWERED]);
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    await openAgent(page);
+    await ask(page, QUESTION_1);
+    const a = page.getByTestId("agent-answer");
+    await expect(a).toHaveAttribute("data-status", "answered");
+    expect(bodies).toHaveLength(1);
+    const sent = bodies[0] as {
+      question: string;
+      center: { lat: number; lon: number; label: string };
+    };
+    expect(sent.question).toBe(QUESTION_1);
+    expect(Object.keys(sent).sort()).toEqual(["center", "question"]);
+    expect(sent.center.label).toBe("map pin");
+    expect(sent.center.lat.toFixed(6)).toBe(pin[0]!.toFixed(6));
+    expect(sent.center.lon.toFixed(6)).toBe(pin[1]!.toFixed(6));
+    await expect(
+      a.getByTestId("agent-text").locator("strong").first(),
+    ).toHaveText(
+      "115,373 parcels within 5 miles of Van Nuys have roofs older than 15 years.",
+    );
+    await expect(a.getByTestId("agent-text").locator("tbody tr")).toHaveCount(
+      2,
+    );
+    await expect(a.getByTestId("unverified-id")).toHaveText([
+      "2218099999 (unverified)",
+    ]);
+    const how = a.getByTestId("agent-how");
+    await expect(how).not.toHaveAttribute("open", /.*/);
+    await expect(how.getByText(ANSWERED.reasoning)).toBeHidden();
+    await how.locator("summary").click();
+    await expect(how.getByText(ANSWERED.reasoning)).toBeVisible();
+    await expect(a.getByTestId("agent-sources")).toHaveCount(3);
+    for (const r of ANSWERED.records) {
+      const row = a.locator(
+        `[data-testid="agent-sources"][data-kind="${r.kind}"] tbody tr`,
+      );
+      await expect(row.locator("td")).toHaveText([
+        r.id,
+        r.source_name,
+        r.license ?? "—",
+        r.attribution ?? "—",
+        r.collected_at,
+      ]);
+    }
+    await expect(a.getByTestId("agent-gaps").locator("li")).toHaveText(
+      ANSWERED.gaps.slice(STANDING_GAPS.length),
+    );
+    await expect(a.getByTestId("agent-standing-gaps").locator("li")).toHaveText(
+      STANDING_GAPS,
+    );
+    await expect(box(page)).toHaveValue("");
+  });
+
+  test("29. a refused reply is a normal message with its gaps; a stopped reply and a 503 are plain messages that keep the question", async ({
+    page,
+  }) => {
+    await mockAnswers(page, [
+      REFUSED,
+      STOPPED,
+      { httpStatus: 503, body: { error: "agent not configured" } },
+    ]);
+    await page.goto("/");
+    await openAgent(page);
+    await ask(page, "Who owns parcel 2218022020?");
+    const a = page.getByTestId("agent-answer");
+    await expect(a).toHaveAttribute("data-status", "refused");
+    await expect(a.getByTestId("agent-text")).toHaveText(REFUSED.text);
+    await expect(page.getByTestId("agent-message")).toHaveCount(0);
+    await expect(a.getByTestId("agent-standing-gaps").locator("li")).toHaveText(
+      STANDING_GAPS,
+    );
+
+    await ask(page, QUESTION_1);
+    await expect(page.getByTestId("agent-message")).toContainText(
+      "The answer stopped before it was complete (time_budget)",
+    );
+    await expect(box(page)).toHaveValue(QUESTION_1);
+    await expect(page.getByTestId("agent-answer")).toHaveCount(1);
+
+    await page.getByTestId("agent-send").click();
+    await expect(page.getByTestId("agent-message")).toContainText(
+      "not available right now (HTTP 503: agent not configured)",
+    );
+    await expect(box(page)).toHaveValue(QUESTION_1);
+  });
+
+  test("30. a follow-up sends the history, session and signature; nothing is stored; New conversation clears them", async ({
+    page,
+  }) => {
+    const bodies = await mockAnswers(page, [ANSWERED, FOLLOW_UP, ANSWERED]);
+    await page.goto("/");
+    await openAgent(page);
+    await ask(page, QUESTION_1);
+    await expect(page.getByTestId("agent-turn")).toHaveCount(1);
+    await ask(page, QUESTION_2);
+    await expect(page.getByTestId("agent-turn")).toHaveCount(2);
+    expect(bodies[1]).toEqual({
+      question: QUESTION_2,
+      history: ANSWERED.history,
+      session: ANSWERED.session,
+      signature: ANSWERED.signature,
+    });
+    expect(
+      await page.evaluate(() => [localStorage.length, sessionStorage.length]),
+    ).toEqual([0, 0]);
+    await page.getByTestId("agent-new").click();
+    await expect(page.getByTestId("agent-turn")).toHaveCount(0);
+    await ask(page, QUESTION_1);
+    await expect(page.getByTestId("agent-turn")).toHaveCount(1);
+    expect(bodies[2]).toEqual({ question: QUESTION_1 });
+  });
+
+  test("31. a question asked before the warm-up answered is held with a waking-up status and sent when the agent and both data requests answered", async ({
+    page,
+  }) => {
+    const log: string[] = [];
+    watchWarmup(page, log);
+    let release!: () => void;
+    const released = new Promise<void>((r) => (release = r));
+    // The real /agent/warm, held back until the test releases it.
+    await page.route("**/agent/warm", async (route) => {
+      await released;
+      await route.continue();
+    });
+    const bodies = await mockAnswers(page, [ANSWERED], log);
+    await page.goto("/");
+    await openAgent(page);
+    await ask(page, QUESTION_1);
+    await expect(page.getByTestId("agent-status")).toHaveAttribute(
+      "data-state",
+      "waking",
+    );
+    await expect(page.getByTestId("agent-status")).toContainText("Waking up");
+    await expect(page.getByTestId("agent-send")).toBeEnabled();
+    await expect.poll(() => seen(log, "data:res")).toBe(2);
+    expect(bodies).toEqual([]);
+    release();
+    await expect(page.getByTestId("agent-answer")).toHaveAttribute(
+      "data-status",
+      "answered",
+    );
+    // The answer went out only after the warm-up's agent and data responses.
+    expect(log.indexOf("answer")).toBeGreaterThan(log.lastIndexOf("warm:res"));
+    expect(log.indexOf("answer")).toBeGreaterThan(log.lastIndexOf("data:res"));
+  });
+
+  test("32. re-warm: more than 4 minutes after the last data API response, the warm-up runs again before the question", async ({
+    page,
+  }) => {
+    await page.clock.install();
+    const log: string[] = [];
+    watchWarmup(page, log);
+    await mockAnswers(page, [ANSWERED, FOLLOW_UP], log);
+    await page.goto("/");
+    await openAgent(page);
+    await expect.poll(() => seen(log, "data:res")).toBe(2);
+    await ask(page, QUESTION_1);
+    await expect(page.getByTestId("agent-turn")).toHaveCount(1);
+    expect(seen(log, "warm:req")).toBe(1);
+    await page.clock.fastForward("04:01");
+    await ask(page, QUESTION_2);
+    await expect(page.getByTestId("agent-turn")).toHaveCount(2);
+    expect(seen(log, "warm:req")).toBe(2);
+    expect(seen(log, "data:req")).toBe(4);
+    // The second question went out after the second warm-up had answered.
+    expect(log.lastIndexOf("answer")).toBeGreaterThan(
+      log.lastIndexOf("data:res"),
+    );
+    expect(log.lastIndexOf("answer")).toBeGreaterThan(
+      log.lastIndexOf("warm:res"),
+    );
+  });
+
+  test("33. a parcel ID in Sources opens the parcel's detail and pans the map to it; the pin stays", async ({
+    page,
+  }) => {
+    expect(ANSWERED.records[0]).toMatchObject({
+      kind: "parcel",
+      id: CITED_PARCEL,
+    });
+    await mockAnswers(page, [ANSWERED]);
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    // A pin away from the parcel, so the pan is visible.
+    const m = (await page.getByTestId("map").boundingBox())!;
+    await page.mouse.click(m.x + m.width / 2 + 150, m.y + m.height / 2 + 100);
+    await expect(page.getByTestId("map")).toHaveAttribute(
+      "data-pin-lat",
+      /^-?\d+\.\d+$/,
+    );
+    const pin = await pinOf(page);
+    await recentredOn(page, pin);
+    await openAgent(page);
+    await ask(page, QUESTION_1);
+    await expect(page.getByTestId("agent-turn")).toHaveCount(1);
+    const detailCalls = detailGets(page);
+    await page.getByTestId("agent-parcel-link").click();
+    const d = page.getByTestId("detail");
+    await expect(d.locator('[data-field="parcel_id"]')).toHaveText(
+      CITED_PARCEL,
+    );
+    expect(detailCalls).toHaveLength(1);
+    const at = [
+      Number(await d.locator('[data-field="latitude"]').innerText()),
+      Number(await d.locator('[data-field="longitude"]').innerText()),
+    ];
+    expect(at.every(Number.isFinite)).toBe(true);
+    expect(haversine(at, pin)).toBeGreaterThan(0.1); // the parcel is not where the map was
+    await recentredOn(page, at); // the map is centred on the parcel
+    expect(await pinOf(page)).toEqual(pin); // the pin (and the search) did not move
+    await expect(page.getByTestId("agent-turn")).toHaveCount(1);
   });
 });

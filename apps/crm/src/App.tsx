@@ -20,6 +20,9 @@ import {
   LA_COUNTY_BOUNDS,
   type LatLon,
 } from "@roofing-crm/geo";
+import { createAgentApi, type AgentApi } from "./agent-api.ts";
+import type { AgentCenter } from "./agent-types.ts";
+import { AskAgent } from "./AskAgent.tsx";
 import { mapStyleUrl } from "./basemap.ts";
 import { loadConfig } from "./config.ts";
 import { DataNotice } from "./DataNotice.tsx";
@@ -60,6 +63,8 @@ const EMPTY = { type: "FeatureCollection", features: [] } as const;
 /** The map layers that hold parcel points (a click on either opens the parcel). */
 const POINT_LAYERS = ["points", "points-long-open"];
 const params = new URLSearchParams(location.search);
+/** How the pin was placed (the label of the center sent to the agent). */
+type PinLabel = "map pin" | "my location";
 /** tRPC error code of a failed call (e.g. "CONFLICT"), if any. */
 const codeOf = (e: unknown) =>
   (e as { data?: { code?: string } } | undefined)?.data?.code;
@@ -106,6 +111,13 @@ export function App() {
   const [offset, setOffset] = useState(0);
   const [detail, setDetail] = useState<Detail>();
   const [gpsMsg, setGpsMsg] = useState<string>();
+  /** How the pin was placed: the label of the center sent to the agent. */
+  const [pinLabel, setPinLabel] = useState<PinLabel>("map pin");
+  /** The agent API (config.json agentApiUrl); the "Ask the agent" section is shown only with it. */
+  const [agent, setAgent] = useState<{
+    api: AgentApi;
+    warmData: () => Promise<unknown>;
+  }>();
   // Leads (increment 3): the leads API client, all leads, and the lead of the parcel in the detail panel.
   const [leadsApi, setLeadsApi] = useState<LeadsClient>();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -157,14 +169,20 @@ export function App() {
   }, [api]);
   const permits = useMemo(() => api && permitsApi(api), [api]);
 
-  /** Opens the details panel with the CURRENT client (stable function, safe in map handlers). */
+  /**
+   * Opens the details panel with the CURRENT client (stable function, safe in map handlers); resolves with the
+   * detail shown, or undefined when it could not be read.
+   */
   const openDetail = useCallback(async (id: string) => {
     const client = apiRef.current;
-    if (!client) return;
+    if (!client) return undefined;
     try {
-      setDetail(await client.parcels.detail.query({ parcel_id: id }));
+      const d = await client.parcels.detail.query({ parcel_id: id });
+      setDetail(d);
+      return d;
     } catch (e) {
       setError((e as Error).message);
+      return undefined;
     }
   }, []);
 
@@ -175,13 +193,43 @@ export function App() {
     mapEl.current!.dataset.centerLon = c.lng.toFixed(6);
   }, []);
 
-  const recentre = useCallback((p: LatLon) => {
-    setCenter(p);
-    setOffset(0);
+  /** Pans the map to a point (the pin and the search stay). */
+  const panTo = useCallback((p: LatLon) => {
     // Keep the current zoom: without it the globe projection adjusts the zoom on a latitude pan.
     const m = map.current;
     m?.easeTo({ center: [p.lon, p.lat], zoom: m.getZoom(), duration: 0 });
   }, []);
+
+  /** Moves the pin (a new search) and pans the map to it. */
+  const recentre = useCallback(
+    (p: LatLon, label: PinLabel = "map pin") => {
+      setCenter(p);
+      setPinLabel(label);
+      setOffset(0);
+      panTo(p);
+    },
+    [panTo],
+  );
+
+  /**
+   * A parcel ID in the agent's Sources: opens the parcel's detail (as a map click does) and pans the map to the
+   * parcel's coordinates from that detail. The pin and the search stay where they are.
+   */
+  const openParcelOnMap = useCallback(
+    async (id: string) => {
+      const d = await openDetail(id);
+      const p = d?.property as
+        { latitude?: unknown; longitude?: unknown } | undefined;
+      if (
+        typeof p?.latitude === "number" &&
+        typeof p.longitude === "number" &&
+        Number.isFinite(p.latitude) &&
+        Number.isFinite(p.longitude)
+      )
+        panTo({ lat: p.latitude, lon: p.longitude });
+    },
+    [openDetail, panTo],
+  );
 
   // Config, API client and map.
   useEffect(() => {
@@ -200,6 +248,17 @@ export function App() {
               apiToken: cfg.apiToken,
             });
             setLeadsApi(() => leadsClient);
+          }
+          if (cfg.agentApiUrl) {
+            const apiUrl = cfg.apiUrl,
+              apiToken = cfg.apiToken;
+            setAgent({
+              api: createAgentApi({ agentApiUrl: cfg.agentApiUrl, apiToken }),
+              // A client of its own per warm-up request: each goes out as its own HTTP request (never batched
+              // with the other), so two data API instances are warmed.
+              warmData: () =>
+                createApiClient({ apiUrl, apiToken }).meta.info.query(),
+            });
           }
         }
         const lat = Number(params.get("lat")),
@@ -565,7 +624,11 @@ export function App() {
     if (!navigator.geolocation)
       return setGpsMsg("This browser has no GPS/geolocation.");
     navigator.geolocation.getCurrentPosition(
-      (p) => recentre({ lat: p.coords.latitude, lon: p.coords.longitude }),
+      (p) =>
+        recentre(
+          { lat: p.coords.latitude, lon: p.coords.longitude },
+          "my location",
+        ),
       (e) => setGpsMsg(`Location unavailable: ${e.message}`),
       { timeout: 10_000 },
     );
@@ -589,6 +652,11 @@ export function App() {
     result?.win !== winKey
       ? highlightFailed.message
       : undefined;
+  /** The center sent with a question: the pin, labelled by how it was placed. */
+  const agentCenter = useMemo<AgentCenter | undefined>(
+    () => center && { lat: center.lat, lon: center.lon, label: pinLabel },
+    [center, pinLabel],
+  );
   const countText = useMemo(
     () =>
       !center
@@ -717,6 +785,14 @@ export function App() {
             )}
           </fieldset>
         </section>
+        {agent && (
+          <AskAgent
+            agent={agent.api}
+            warmData={agent.warmData}
+            center={agentCenter}
+            onOpenParcel={(id) => void openParcelOnMap(id)}
+          />
+        )}
         {(queryError ?? error) && (
           <p className="error" data-testid="error">
             {queryError ?? error}

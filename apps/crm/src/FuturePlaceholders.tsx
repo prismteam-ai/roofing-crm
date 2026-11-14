@@ -1,6 +1,8 @@
-/** Sections the CRM story lists beyond this increment, shown disabled with the reason. */
+/**
+ * Sections the CRM story lists beyond this increment, shown disabled with the reason. "Ask the agent" is a
+ * section of the aside now (AskAgent.tsx), shown when config.json names the agent API.
+ */
 const FUTURE: Array<[string, string]> = [
-  ["Ask the agent (RAG)", "Not in this increment (no Bedrock)."],
   [
     "Out-of-area owner: not available",
     "Out-of-area owner data is not available in the open roll.",

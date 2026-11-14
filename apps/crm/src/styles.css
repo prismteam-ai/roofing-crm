@@ -245,3 +245,96 @@ button:disabled {
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px #1f5fd1;
 }
+.ask-agent {
+  border-top: 1px solid #dedee3;
+  margin-top: 8px;
+  padding-top: 4px;
+}
+.ask-agent h3 {
+  margin: 4px 0;
+  font-size: 15px;
+}
+.ask-agent button.disclosure {
+  border: 0;
+  padding: 2px 0;
+  font: inherit;
+  font-weight: 700;
+  background: none;
+}
+.ask-agent label.agent-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.ask-agent textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+.ask-agent .status {
+  background: #eef4ff;
+  border: 1px solid #b8cdf5;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.agent-turns {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+.agent-turns > li {
+  border: 1px solid #ebebf0;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.agent-question {
+  margin-top: 0;
+}
+.agent-answer h4 {
+  margin: 8px 0 4px;
+}
+.agent-answer table {
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.agent-answer th,
+.agent-answer td {
+  border-bottom: 1px solid #ebebf0;
+  padding: 2px 4px;
+  text-align: left;
+  vertical-align: top;
+}
+.agent-answer table caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.table-wrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+.agent-answer button.link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #1f5fd1;
+  text-decoration: underline;
+  font: inherit;
+}
+mark.unverified {
+  background: #ffe1e1;
+  border-bottom: 1px dashed #c20000;
+}
+pre.mono {
+  white-space: pre-wrap;
+  background: #f3f3f7;
+  padding: 8px;
+  border-radius: 6px;
+}
+.mono {
+  font-family: ui-monospace, monospace;
+}

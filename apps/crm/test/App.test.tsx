@@ -43,9 +43,12 @@ const h = vi.hoisted(() => {
   const detail = vi.fn();
   const match = vi.fn();
   const runSummary = vi.fn();
+  const metaInfo = vi.fn();
   const longOpen = vi.fn();
   const forParcel = vi.fn();
   const easeTo = vi.fn();
+  /** The arguments of every createApiClient call (one per client created). */
+  const clients: unknown[] = [];
   const leads = {
     list: vi.fn(),
     get: vi.fn(),
@@ -60,9 +63,11 @@ const h = vi.hoisted(() => {
     detail,
     match,
     runSummary,
+    metaInfo,
     longOpen,
     forParcel,
     easeTo,
+    clients,
     leads,
   };
 });
@@ -173,7 +178,8 @@ vi.mock("../src/config.ts", () => ({
   })),
 }));
 vi.mock("@oracle-la/api-client", () => ({
-  createApiClient: () =>
+  createApiClient: (opts: unknown) =>
+    h.clients.push(opts) &&
     Object.assign(() => undefined, {
       parcels: {
         search: { query: h.search },
@@ -182,6 +188,7 @@ vi.mock("@oracle-la/api-client", () => ({
         match: { query: h.match },
       },
       explorer: { runSummary: { query: h.runSummary } },
+      meta: { info: { query: h.metaInfo } },
       permits: {
         longOpen: { query: h.longOpen },
         forParcel: { query: h.forParcel },
@@ -204,6 +211,7 @@ vi.mock("@roofing-crm/leads-client", async (importOriginal) => ({
 }));
 
 import { App } from "../src/App.tsx";
+import { ANSWERED, CITED_PARCEL, QUESTION_1 } from "../e2e/agent-fixtures.ts";
 import {
   DEFAULT_MIN_DAYS,
   DEFAULT_WINDOW,
@@ -2027,16 +2035,288 @@ describe("permits and the effective roof year", () => {
     expect(rows[0]!.textContent!.match(/ACME ROOFING/g)).toHaveLength(2);
   });
 
-  test("the placeholders no longer list permit sections", async () => {
+  test("the placeholders no longer list permit sections or the agent", async () => {
     render(<App />);
     await flush();
     const cards = screen.getAllByTestId("future").map((c) => c.textContent);
-    expect(cards).toHaveLength(3);
+    expect(cards).toHaveLength(2);
     expect(cards.join(" ")).not.toMatch(/permit/i);
-    expect(cards.join(" ")).toMatch(/RAG/);
+    expect(cards.join(" ")).not.toMatch(/RAG|agent/i);
     // The 10-year ownership filter is on the search now; only the out-of-area owner stays unavailable.
     expect(cards.join(" ")).toMatch(/Out-of-area owner: not available/);
     expect(cards.join(" ")).not.toMatch(/10 years|>10|ownership/i);
     expect(cards.join(" ")).toMatch(/Outreach/);
+  });
+});
+
+describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
+  const AGENT_URL = "https://agent.test";
+  /** Requests the agent client sent (the fake fetch); /agent/answer replies come from `answers`. */
+  let agentRequests: Array<{ method: string; path: string; body?: unknown }>;
+  let answers: unknown[];
+  const PARCEL_AT = { lat: 34.2011, lon: -118.4652 };
+  beforeEach(() => {
+    vi.useFakeTimers();
+    h.maps.length = 0;
+    h.clients.length = 0;
+    h.easeTo.mockReset();
+    h.match.mockReset();
+    h.metaInfo.mockReset().mockResolvedValue({ api_version: "test" });
+    h.runSummary.mockReset().mockResolvedValue(RUN);
+    h.longOpen.mockReset().mockResolvedValue(EMPTY_LONG_OPEN);
+    h.forParcel.mockReset().mockResolvedValue(NO_PERMITS);
+    h.search.mockReset().mockResolvedValue({
+      count: 1,
+      rule,
+      items: [item("0000000003", 0.9)],
+      next_offset: null,
+    });
+    h.points.mockReset().mockResolvedValue({
+      count: 1,
+      encoding: "columnar-v1",
+      precision: 5,
+      id: ["0000000003"],
+      lat: [34.21],
+      lon: [-118.48],
+      truncated: false,
+      max_points: 25000,
+    });
+    h.detail
+      .mockReset()
+      .mockImplementation(async ({ parcel_id }: { parcel_id: string }) => ({
+        property: {
+          parcel_id,
+          address: `${parcel_id} TEST ST`,
+          latitude: PARCEL_AT.lat,
+          longitude: PARCEL_AT.lon,
+          roll_year: 2026,
+        },
+        provenance: { parcel_id, source_name: "Test Source" },
+      }));
+    vi.mocked(loadConfig).mockResolvedValue({
+      client: "crm",
+      apiUrl: "https://api.test",
+      agentApiUrl: AGENT_URL,
+      apiToken: "t",
+      mapKey: "k",
+    });
+    agentRequests = [];
+    answers = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = new URL(String(input));
+        expect(url.origin).toBe(AGENT_URL);
+        expect((init?.headers as Record<string, string>).authorization).toBe(
+          "Bearer t",
+        );
+        agentRequests.push({
+          method: init?.method ?? "GET",
+          path: url.pathname,
+          body: init?.body ? JSON.parse(String(init.body)) : undefined,
+        });
+        if (url.pathname === "/agent/warm")
+          return new Response(JSON.stringify({ status: "warm" }), {
+            status: 200,
+          });
+        if (url.pathname === "/agent/answer" && answers.length)
+          return new Response(JSON.stringify(answers.shift()), {
+            status: 200,
+          });
+        throw new Error(`unexpected agent request ${url.pathname}`);
+      }),
+    );
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.mocked(loadConfig).mockReset();
+  });
+  const start = async () => {
+    render(<App />);
+    await flush();
+    const map = h.maps[0]!;
+    map.fire("load");
+    return map;
+  };
+  const openSection = async () => {
+    fireEvent.click(screen.getByTestId("agent-open"));
+    await flush();
+  };
+  const ask = async (q: string) => {
+    fireEvent.change(screen.getByRole("textbox", { name: /question/i }), {
+      target: { value: q },
+    });
+    fireEvent.click(screen.getByTestId("agent-send"));
+    await flush();
+  };
+
+  test.each([
+    ["without agentApiUrl", undefined],
+    ["with an empty agentApiUrl", ""],
+  ])(
+    "%s the section is hidden and nothing is warmed (no disabled agent card either)",
+    async (_label, agentApiUrl) => {
+      vi.mocked(loadConfig).mockResolvedValue({
+        client: "crm",
+        apiUrl: "https://api.test",
+        apiToken: "t",
+        mapKey: "k",
+        ...(agentApiUrl === undefined ? {} : { agentApiUrl }),
+      });
+      await start();
+      expect(screen.queryByTestId("ask-agent")).toBeNull();
+      expect(
+        screen
+          .getAllByTestId("future")
+          .map((c) => c.textContent)
+          .join(" "),
+      ).not.toMatch(/agent|RAG/i);
+      await wait(1000);
+      expect(agentRequests).toEqual([]);
+      expect(h.metaInfo).not.toHaveBeenCalled();
+    },
+  );
+
+  test("the section sits in the aside right below the controls, collapsed; opening it warms the agent and two data API requests, each from a client of its own", async () => {
+    await start();
+    const section = screen.getByTestId("ask-agent");
+    expect(section.closest("aside")).toBeTruthy();
+    expect(section.previousElementSibling!.classList.contains("controls")).toBe(
+      true,
+    );
+    expect(screen.getByTestId("agent-open").getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    await wait(1000);
+    expect(agentRequests).toEqual([]);
+    expect(h.metaInfo).not.toHaveBeenCalled();
+    const clientsBefore = h.clients.length;
+    await openSection();
+    expect(agentRequests).toEqual([
+      { method: "GET", path: "/agent/warm", body: undefined },
+    ]);
+    expect(h.metaInfo).toHaveBeenCalledTimes(2);
+    // Two new data API clients, one per warm-up request: each request goes out on its own (never batched).
+    expect(h.clients.slice(clientsBefore)).toEqual([
+      { apiUrl: "https://api.test", apiToken: "t" },
+      { apiUrl: "https://api.test", apiToken: "t" },
+    ]);
+  });
+
+  test("the center is the map pin ('map pin'); after 'Use my location' it is 'my location'", async () => {
+    const map = await start();
+    await openSection();
+    expect(screen.getByTestId("agent-center").textContent).toMatch(
+      /^Center: none yet/,
+    );
+    act(() => map.clickAt(300, 100)); // drops the pin at (34.199, -118.487)
+    await wait(300);
+    expect(screen.getByTestId("agent-center").textContent).toBe(
+      "Center: map pin (34.199000, -118.487000)",
+    );
+    answers.push(ANSWERED, ANSWERED);
+    await ask(QUESTION_1);
+    const body = (agentRequests.find((r) => r.path === "/agent/answer")!.body ??
+      {}) as { center: { lat: number; lon: number; label: string } };
+    expect(body.center.label).toBe("map pin");
+    expect(body.center.lat).toBeCloseTo(34.199, 9);
+    expect(body.center.lon).toBeCloseTo(-118.487, 9);
+
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition: (ok: (p: unknown) => void) =>
+          ok({ coords: { latitude: 34.1, longitude: -118.3 } }),
+      },
+    });
+    try {
+      fireEvent.click(screen.getByTestId("gps"));
+      await wait(300);
+      expect(screen.getByTestId("agent-center").textContent).toBe(
+        "Center: my location (34.100000, -118.300000)",
+      );
+      await ask(QUESTION_1);
+      expect(
+        agentRequests.filter((r) => r.path === "/agent/answer")[1]!.body,
+      ).toMatchObject({
+        center: { lat: 34.1, lon: -118.3, label: "my location" },
+      });
+      // A pin dropped on the map afterwards is a "map pin" again.
+      act(() => map.clickAt(300, 100));
+      await wait(300);
+      expect(screen.getByTestId("agent-center").textContent).toBe(
+        "Center: map pin (34.199000, -118.487000)",
+      );
+    } finally {
+      Reflect.deleteProperty(navigator, "geolocation");
+    }
+  });
+
+  test("a parcel ID in Sources opens its detail (as a map click does) and pans the map to it; the pin and the search stay", async () => {
+    const map = await start();
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    expect(h.search).toHaveBeenCalledTimes(1);
+    const pin = [
+      screen.getByTestId("map").dataset.pinLat,
+      screen.getByTestId("map").dataset.pinLon,
+    ];
+    await openSection();
+    answers.push(ANSWERED);
+    await ask(QUESTION_1);
+    h.easeTo.mockClear();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("agent-parcel-link"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.detail).toHaveBeenCalledExactlyOnceWith({
+      parcel_id: CITED_PARCEL,
+    });
+    expect(
+      screen.getByTestId("detail").querySelector('[data-field="parcel_id"]')!
+        .textContent,
+    ).toBe(CITED_PARCEL);
+    expect(h.easeTo).toHaveBeenCalledExactlyOnceWith({
+      center: [PARCEL_AT.lon, PARCEL_AT.lat],
+      zoom: 17,
+      duration: 0,
+    });
+    await wait(300);
+    expect([
+      screen.getByTestId("map").dataset.pinLat,
+      screen.getByTestId("map").dataset.pinLon,
+    ]).toEqual(pin);
+    expect(h.search).toHaveBeenCalledTimes(1);
+    // The conversation is still there.
+    expect(screen.getAllByTestId("agent-turn")).toHaveLength(1);
+  });
+
+  test("a parcel whose detail has no coordinates opens without a pan; a failed detail neither opens nor pans", async () => {
+    await start();
+    await openSection();
+    answers.push(ANSWERED, ANSWERED);
+    await ask(QUESTION_1);
+    h.detail.mockResolvedValueOnce({
+      property: { parcel_id: CITED_PARCEL, latitude: null, longitude: null },
+      provenance: { parcel_id: CITED_PARCEL, source_name: "Test Source" },
+    });
+    h.easeTo.mockClear();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("agent-parcel-link"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByTestId("detail")).toBeTruthy();
+    expect(h.easeTo).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    h.detail.mockRejectedValueOnce(new Error("HTTP 503"));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("agent-parcel-link"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.queryByTestId("detail")).toBeNull();
+    expect(h.easeTo).not.toHaveBeenCalled();
+    expect(screen.getByTestId("error").textContent).toBe("HTTP 503");
   });
 });
