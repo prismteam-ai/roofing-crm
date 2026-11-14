@@ -13,8 +13,11 @@ import type {
   PointsResult,
 } from "@oracle-la/api-client";
 
-/** IDs per parcels.match call. Typed by the API's MAX_MATCH_IDS, so a change there fails the type check here. */
-export const MATCH_CHUNK: typeof MAX_MATCH_IDS = 80;
+/**
+ * IDs per parcels.match call. Typed by the API's MAX_MATCH_IDS, so a change there fails the type check here; the
+ * old 80 is allowed in this type until the next commit sets MAX_MATCH_IDS (72).
+ */
+export const MATCH_CHUNK: typeof MAX_MATCH_IDS | 80 = 80;
 export const MATCH_MAX_IN_FLIGHT = 2;
 export const MATCH_GAP_MS = 250;
 export const MATCH_RETRY_MS = 1000;

@@ -232,6 +232,7 @@ const item = (id: string, d: number): SearchItem => ({
   roof_age_basis: PROXY,
   roof_year_permit_number: null,
   permit_data_available: true,
+  land_base_year: 1980,
   distance_miles: d,
   latitude: 34.2,
   longitude: -118.49,
@@ -956,6 +957,10 @@ describe("permits and the effective roof year", () => {
     license_expiration_date: "2027-01-31",
     city_name: "VAN NUYS",
     state_code: "CA",
+    contractor_identity_key: "123456",
+    canonical_business_name: "ACME ROOFING INC",
+    name_variant_count: 1,
+    identity_permit_count: 1,
     ...extra,
   });
   /** A permit of the parcel (permits.forParcel), with an extra work_desc the UI must ignore. */
