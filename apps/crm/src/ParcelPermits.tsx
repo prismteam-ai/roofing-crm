@@ -27,6 +27,43 @@ const licenseClass = (c: PermitContractor) => {
   return `${base}${printed}${c.license_class_note ? ` (${c.license_class_note})` : ""}`;
 };
 
+/**
+ * The contractor's identity, one per license number (not verified against CSLB): the key, the canonical name
+ * and how many names the license carries (counted, never listed). A license without a name on any of its
+ * rows has no canonical name, and none is shown; a row without a license number has no identity.
+ */
+function Identity({ c }: { c: PermitContractor }) {
+  if (c.contractor_identity_key === null) return null;
+  const n = c.name_variant_count;
+  return (
+    <span
+      data-testid="contractor-identity"
+      data-key={c.contractor_identity_key}
+    >
+      {" · identity "}
+      <span data-testid="contractor-identity-key">
+        {c.contractor_identity_key}
+      </span>
+      {c.canonical_business_name !== null && (
+        <>
+          {" · canonical name "}
+          <span data-testid="contractor-canonical-name">
+            {c.canonical_business_name}
+          </span>
+        </>
+      )}
+      {n !== null && (
+        <>
+          {" · name variants "}
+          <span data-testid="contractor-name-variants" data-count={n}>
+            {n.toLocaleString("en-US")}
+          </span>
+        </>
+      )}
+    </span>
+  );
+}
+
 function Contractor({ c }: { c: PermitContractor }) {
   const place = [c.city_name, c.state_code].filter(Boolean).join(", ");
   return (
@@ -38,6 +75,7 @@ function Contractor({ c }: { c: PermitContractor }) {
       <span data-testid="contractor-license">
         {c.license_identifier ?? "—"}
       </span>
+      <Identity c={c} />
       {" · class "}
       <span data-testid="contractor-class">{licenseClass(c)}</span>
       {c.is_owner_builder && (

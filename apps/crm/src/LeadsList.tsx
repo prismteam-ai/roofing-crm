@@ -11,26 +11,36 @@ export const LEADS_PAGE_SIZE = 100;
 export const LEADS_MAX_PAGES = 20;
 
 /**
- * Leads, filtered at read time: by status, and "Leads in this search" (the parcels of the current radius and
- * roof-age result; see leadsInSearch.ts). Nothing derived is stored with a lead. There is no permit-status or
- * open-duration filter: a lead holds no permit data, so such a filter would need each lead's permits from the
- * data API; the disabled control says so.
+ * Leads, filtered at read time: by status, by "Leads in this search" (the parcels of the current radius,
+ * roof-age and ownership result) and by "Has a long-open roofing permit" (the map's open-duration window).
+ * The data API answers both of the last two through parcels.match (see leadsInSearch.ts); the long-open
+ * toggle works with "Leads in this search" on (the search filter and the lead IDs) and off (the lead IDs
+ * only). Nothing derived is stored with a lead, which holds the parcel only. There is no filter on other
+ * permit statuses; the disabled control says so.
  */
 export function LeadsList({
   leads,
   search,
   inSearch,
   onInSearch,
+  longOpen,
+  onLongOpen,
+  windowText,
   error,
   capped,
   onOpen,
 }: {
   leads: Lead[];
-  /** Which leads the current search result (radius + roof age) matches. */
+  /** Which leads pass the filters that ask the data API ("Leads in this search", the long-open toggle). */
   search: LeadsInSearch;
   /** The "Leads in this search" filter is on (kept by the app, which only checks leads while it is on). */
   inSearch: boolean;
   onInSearch: (on: boolean) => void;
+  /** The "Has a long-open roofing permit" toggle is on. */
+  longOpen: boolean;
+  onLongOpen: (on: boolean) => void;
+  /** The map's open-duration window in words ("open at least 1,826 days"); undefined while it is invalid. */
+  windowText?: string;
   error?: string;
   /** More leads are stored than the list loaded (the page limit was reached with a next cursor left). */
   capped?: boolean;
@@ -38,14 +48,15 @@ export function LeadsList({
 }) {
   const [status, setStatus] = useState<LeadStatus | "all">("all");
   const searchIds = search.ids;
-  // With the filter on, nothing is listed until the answer is complete (never a partial result).
+  const asked = inSearch || longOpen;
+  // With a filter on, nothing is listed until the answer is complete (never a partial result).
   const shown = useMemo(
     () =>
       leads
         .filter((l) => status === "all" || l.status === status)
-        .filter((l) => !inSearch || !!searchIds?.has(l.parcel_id))
+        .filter((l) => !asked || !!searchIds?.has(l.parcel_id))
         .sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
-    [leads, status, inSearch, searchIds],
+    [leads, status, asked, searchIds],
   );
   return (
     <section className="leads" data-testid="leads">
@@ -76,20 +87,39 @@ export function LeadsList({
           Leads in this search
         </label>
       </div>
+      <label data-testid="leads-long-open-label">
+        <input
+          type="checkbox"
+          data-testid="leads-long-open"
+          checked={longOpen}
+          onChange={(e) => onLongOpen(e.target.checked)}
+        />{" "}
+        Has a long-open roofing permit
+        {windowText && (
+          <span data-testid="leads-long-open-window"> ({windowText})</span>
+        )}
+      </label>
       <label className="notice" data-testid="leads-permit-filter-note">
         <select disabled aria-label="Permit status filter">
           <option>permit status</option>
         </select>{" "}
-        Leads filter by status and by this search (radius and roof age), not by
-        permit status or open duration: open a lead to see its parcel&apos;s
-        permits.
+        Leads filter by status, by this search (radius, roof age and ownership)
+        and by a long-open roofing permit in the map&apos;s open-duration
+        window, which the data API checks; not by other permit statuses: open a
+        lead to see its parcel&apos;s permits.
       </label>
-      {inSearch && search.checking !== undefined && (
+      {longOpen && search.windowInvalid && (
+        <p className="notice" data-testid="leads-window-invalid">
+          The open-duration window is invalid: set a maximum not below the
+          minimum.
+        </p>
+      )}
+      {asked && search.checking !== undefined && (
         <p className="notice" data-testid="leads-checking">
           checking {search.checking.toLocaleString("en-US")} leads…
         </p>
       )}
-      {inSearch && search.error && (
+      {asked && search.error && (
         <p className="error" data-testid="leads-search-error">
           {search.error}
         </p>

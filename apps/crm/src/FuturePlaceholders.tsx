@@ -2,7 +2,7 @@
 const FUTURE: Array<[string, string]> = [
   ["Ask the agent (RAG)", "Not in this increment (no Bedrock)."],
   [
-    "Filter by ownership (>10 years, out-of-area owner)",
+    "Out-of-area owner: not available",
     "Out-of-area owner data is not available in the open roll.",
   ],
   ["Outreach", "Out of scope (no messaging to owners)."],

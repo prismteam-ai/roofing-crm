@@ -18,6 +18,7 @@ const LABELS: Array<[string, string]> = [
   ["roll_year", "Roll year"],
   ["last_recording_date", "Last recorded document"],
   ["owner_unchanged_10y_proxy", "No recorded document in 10+ years (proxy)"],
+  ["land_base_year", "Land base year"],
 ];
 /** Fields the assessor roll leaves empty for some parcels: shown as "not in source" rather than a dash. */
 const NOT_IN_SOURCE = new Set(["year_built", "effective_year_built"]);
@@ -54,8 +55,10 @@ export function ParcelDetail({
       {children}
       <p className="notice">
         The recording date is the latest recorded document, not necessarily a
-        sale. Roof age counts from the effective roof year: the later of the
-        assessor year built and the year of the latest finaled roofing permit.
+        sale. The land base year is the assessor roll&apos;s year of the last
+        reassessment (a fiscal-year label), not a sale date either. Roof age
+        counts from the effective roof year: the later of the assessor year
+        built and the year of the latest finaled roofing permit.
       </p>
       <h4>Source</h4>
       <dl>

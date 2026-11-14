@@ -210,6 +210,8 @@ import {
   yearsToDays,
 } from "../src/permitDisplay.ts";
 import { loadConfig } from "../src/config.ts";
+import { MATCH_CHUNK } from "../src/leadsInSearch.ts";
+import { OWNERSHIP_TEXTS, PROXY_NOTE } from "../src/ownership.ts";
 
 const rule = {
   roll_year: 2026,
@@ -455,6 +457,141 @@ describe("CRM main screen", () => {
     });
     expect(h.detail).toHaveBeenCalledTimes(1);
     expect(h.detail).toHaveBeenCalledWith({ parcel_id: "0000000002" });
+  });
+});
+
+describe("the ownership filter on the search", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    h.maps.length = 0;
+    h.easeTo.mockReset();
+    h.match.mockReset();
+    h.runSummary.mockReset().mockResolvedValue(RUN);
+    h.longOpen.mockReset().mockResolvedValue(EMPTY_LONG_OPEN);
+    h.forParcel.mockReset().mockResolvedValue(NO_PERMITS);
+    vi.mocked(loadConfig).mockResolvedValue({
+      client: "crm",
+      apiUrl: "https://api.test",
+      apiToken: "t",
+      mapKey: "k",
+    });
+    // The API states the basis it applied with the contract's texts (null without one).
+    h.search
+      .mockReset()
+      .mockImplementation(
+        async (i: { ownership_basis?: keyof typeof OWNERSHIP_TEXTS }) => ({
+          count: i.ownership_basis ? 1 : 2,
+          rule,
+          ownership: i.ownership_basis
+            ? {
+                basis: i.ownership_basis,
+                ...OWNERSHIP_TEXTS[i.ownership_basis],
+                proxy_note: PROXY_NOTE,
+              }
+            : null,
+          items: [item("0000000001", 0.1)],
+          next_offset: null,
+        }),
+      );
+    h.points.mockReset().mockResolvedValue({
+      count: 1,
+      encoding: "columnar-v1",
+      precision: 5,
+      id: ["0000000001"],
+      lat: [34.2],
+      lon: [-118.49],
+      permit_data_available: [1],
+      long_open_permit: [0],
+      long_open: { min_open_days: 1826, max_open_days: null },
+      ownership: null,
+      truncated: false,
+      max_points: 25000,
+    });
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.mocked(loadConfig).mockReset();
+  });
+  const pinned = async () => {
+    render(<App />);
+    await flush();
+    const map = h.maps[0]!;
+    map.fire("load");
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    return map;
+  };
+  const last = (f: typeof h.search) =>
+    f.mock.lastCall![0] as Record<string, unknown>;
+
+  test("off by default: no basis is sent to search or points, and none is stated", async () => {
+    await pinned();
+    expect(
+      (screen.getByTestId("ownership-on") as HTMLInputElement).checked,
+    ).toBe(false);
+    expect(screen.queryAllByTestId("ownership-basis")).toHaveLength(0);
+    expect("ownership_basis" in last(h.search)).toBe(false);
+    expect("ownership_basis" in last(h.points)).toBe(false);
+    expect(screen.queryByTestId("ownership-rule")).toBeNull();
+    expect(screen.getByTestId("result-count").textContent).toBe("2 results");
+  });
+
+  test("turned on, 'both' is preselected; the three bases show the contract's texts, weaknesses and the proxy note; search and points get the basis and the result states the API's", async () => {
+    const map = await pinned();
+    fireEvent.click(screen.getByTestId("ownership-on"));
+    expect(
+      screen.getAllByTestId("ownership-basis").map((e) => e.dataset.basis),
+    ).toEqual(["both", "recording", "base_year"]);
+    expect(
+      (screen.getByTestId("ownership-basis-both") as HTMLInputElement).checked,
+    ).toBe(true);
+    const bases = ["both", "recording", "base_year"] as const;
+    expect(
+      screen.getAllByTestId("ownership-text").map((e) => e.textContent),
+    ).toEqual(bases.map((b) => OWNERSHIP_TEXTS[b].text));
+    expect(
+      screen.getAllByTestId("ownership-weakness").map((e) => e.textContent),
+    ).toEqual(bases.map((b) => `Weakness: ${OWNERSHIP_TEXTS[b].weakness}`));
+    expect(screen.getByTestId("ownership-proxy-note").textContent).toBe(
+      PROXY_NOTE,
+    );
+    await wait(300);
+    expect(h.search).toHaveBeenCalledTimes(2);
+    expect(last(h.search)).toMatchObject({ ownership_basis: "both" });
+    expect(last(h.points)).toMatchObject({ ownership_basis: "both" });
+    const stated = screen.getByTestId("ownership-rule");
+    expect(stated.dataset.basis).toBe("both");
+    expect(stated.textContent).toBe(
+      `Ownership filter (both): ${OWNERSHIP_TEXTS.both.text} Weakness: ${OWNERSHIP_TEXTS.both.weakness} ${PROXY_NOTE}`,
+    );
+    expect(screen.getByTestId("result-count").textContent).toBe("1 results");
+    // The search key carries the basis (the map's render marker shows it).
+    act(() => map.fire("idle"));
+    expect(screen.getByTestId("map").dataset.renderedSearch).toBe(
+      "34.199000,-118.487000|1|15|both",
+    );
+    // Another basis: one new search, stated as the API's.
+    fireEvent.click(screen.getByTestId("ownership-basis-recording"));
+    await wait(300);
+    expect(h.search).toHaveBeenCalledTimes(3);
+    expect(last(h.search)).toMatchObject({ ownership_basis: "recording" });
+    expect(last(h.points)).toMatchObject({ ownership_basis: "recording" });
+    expect(screen.getByTestId("ownership-rule").dataset.basis).toBe(
+      "recording",
+    );
+    // Off again: no basis is sent and none is stated; the key is the one without the filter.
+    fireEvent.click(screen.getByTestId("ownership-on"));
+    await wait(300);
+    expect(h.search).toHaveBeenCalledTimes(4);
+    expect("ownership_basis" in last(h.search)).toBe(false);
+    expect(screen.queryByTestId("ownership-rule")).toBeNull();
+    act(() => map.fire("idle"));
+    expect(screen.getByTestId("map").dataset.renderedSearch).toBe(
+      "34.199000,-118.487000|1|15",
+    );
+    await wait(5000);
+    expect(h.search).toHaveBeenCalledTimes(4);
   });
 });
 
@@ -766,7 +903,7 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       );
       expect(screen.getByTestId("data-permit-parcels").textContent).toBe("400");
       expect(screen.getByTestId("leads-permit-filter-note").textContent).toBe(
-        "permit status Leads filter by status and by this search (radius and roof age), not by permit status or open duration: open a lead to see its parcel's permits.",
+        "permit status Leads filter by status, by this search (radius, roof age and ownership) and by a long-open roofing permit in the map's open-duration window, which the data API checks; not by other permit statuses: open a lead to see its parcel's permits.",
       );
       expect(document.body.textContent).not.toMatch(/not harvested/i);
     });
@@ -813,7 +950,7 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       expect(screen.getByTestId("leads-count").textContent).toBe("2");
     });
 
-    test("at the cap: 2,000 leads, none drawn, give 25 paced match calls (2 in flight at most, starts 250 ms apart)", async () => {
+    test("at the cap: 2,000 leads, none drawn, give 28 paced match calls of at most MATCH_CHUNK (72, the API's MAX_MATCH_IDS) IDs (2 in flight at most, starts 250 ms apart)", async () => {
       h.points.mockResolvedValue(capped());
       leadPages(2000);
       const starts: number[] = [];
@@ -838,10 +975,13 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       );
       expect(screen.queryAllByTestId("lead-item")).toHaveLength(0); // never a partial list
       await wait(30_000);
-      expect(h.match).toHaveBeenCalledTimes(25);
+      expect(MATCH_CHUNK).toBe(72);
+      expect(h.match).toHaveBeenCalledTimes(Math.ceil(2000 / MATCH_CHUNK));
+      expect(h.match).toHaveBeenCalledTimes(28);
       expect(
         h.match.mock.calls.every(
-          ([v]) => (v as { parcel_ids: string[] }).parcel_ids.length <= 80,
+          ([v]) =>
+            (v as { parcel_ids: string[] }).parcel_ids.length <= MATCH_CHUNK,
         ),
       ).toBe(true);
       expect(new Set(asked).size).toBe(2000);
@@ -866,7 +1006,7 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       });
       await searchAndFilter();
       await wait(5000);
-      // Chunk 1 (80) is refused, chunk 2 (20) starts 250 ms later, chunk 1 is retried 1 s after its refusal.
+      // Chunk 1 (72) is refused, chunk 2 (28) starts 250 ms later, chunk 1 is retried 1 s after its refusal.
       expect(h.match).toHaveBeenCalledTimes(3);
       expect(starts[2]! - starts[0]!).toBeGreaterThanOrEqual(1000);
       expect(screen.queryByTestId("leads-search-error")).toBeNull();
@@ -877,7 +1017,7 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       h.points.mockResolvedValue(capped());
       leadPages(100);
       h.match.mockImplementation(async (v: { parcel_ids: string[] }) => {
-        if (v.parcel_ids.length === 80) throw throttled();
+        if (v.parcel_ids.length === MATCH_CHUNK) throw throttled();
         return { parcel_ids: v.parcel_ids };
       });
       await searchAndFilter();
@@ -887,6 +1027,168 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       );
       expect(screen.queryAllByTestId("lead-item")).toHaveLength(0);
       expect(screen.queryByTestId("leads-checking")).toBeNull();
+    });
+  });
+  describe("'Has a long-open roofing permit': always through parcels.match", () => {
+    type MatchCall = Record<string, unknown> & { parcel_ids: string[] };
+    const calls = () => h.match.mock.calls.map(([v]) => v as MatchCall);
+    const listed = () =>
+      screen.queryAllByTestId("lead-item").map((e) => e.dataset.parcel);
+    /** parcels.match as the API answers it: the given IDs among `hits`, with the window echoed. */
+    const answer =
+      (hits: string[]) =>
+      async (
+        v: MatchCall & { min_open_days?: number; max_open_days?: number },
+      ) => ({
+        parcel_ids: v.parcel_ids.filter((id) => hits.includes(id)),
+        long_open: v.long_open_permit
+          ? {
+              min_open_days: v.min_open_days ?? 1826,
+              max_open_days: v.max_open_days ?? null,
+            }
+          : null,
+        ownership: null,
+      });
+
+    test("with 'Leads in this search' off: the lead IDs, long_open_permit and the map's window only (no search needed); the list is the API's answer", async () => {
+      h.match.mockImplementation(answer(["0000000009"]));
+      const map = await start();
+      await flush();
+      expect(screen.getByTestId("leads-long-open-window").textContent).toBe(
+        " (open at least 1,826 days)",
+      );
+      fireEvent.click(screen.getByTestId("leads-long-open"));
+      await wait(300);
+      expect(calls()).toEqual([
+        {
+          long_open_permit: true,
+          min_open_days: 1826,
+          parcel_ids: ["0000000003", "0000000009"],
+        },
+      ]);
+      expect(listed()).toEqual(["0000000009"]);
+      expect(screen.getByTestId("leads-count").textContent).toBe("1");
+      // Off: every lead again, no call.
+      fireEvent.click(screen.getByTestId("leads-long-open"));
+      expect(listed()).toHaveLength(2);
+      // On again with the same window: the answer is kept, no new call; a search does not change the
+      // question while "Leads in this search" is off.
+      fireEvent.click(screen.getByTestId("leads-long-open"));
+      act(() => map.clickAt(300, 100));
+      await wait(300);
+      expect(h.match).toHaveBeenCalledTimes(1);
+      expect(listed()).toEqual(["0000000009"]);
+      // A maximum in the long-open list (the map's window): asked again with it.
+      fireEvent.change(screen.getByTestId("permits-max-years"), {
+        target: { value: "10" },
+      });
+      await wait(300);
+      expect(h.match).toHaveBeenCalledTimes(2);
+      expect(calls()[1]).toEqual({
+        long_open_permit: true,
+        min_open_days: 1826,
+        max_open_days: 3653,
+        parcel_ids: ["0000000003", "0000000009"],
+      });
+      expect(screen.getByTestId("leads-long-open-window").textContent).toBe(
+        " (open 1,826 to 3,653 days)",
+      );
+    });
+
+    test("with 'Leads in this search' on: the search filter, the lead IDs and the window go to parcels.match, also when the drawn points would answer (no browser-side path)", async () => {
+      // The drawn point is marked long-open; the API says no lead passes: the list follows the API.
+      h.points.mockResolvedValue({
+        count: 1,
+        encoding: "columnar-v1",
+        precision: 5,
+        id: ["0000000003"],
+        lat: [34.21],
+        lon: [-118.48],
+        permit_data_available: [1],
+        long_open_permit: [1],
+        long_open: { min_open_days: 1826, max_open_days: null },
+        ownership: null,
+        truncated: false,
+        max_points: 25000,
+      });
+      h.match.mockImplementation(answer([]));
+      const map = await start();
+      await flush();
+      act(() => map.clickAt(300, 100));
+      await wait(300);
+      fireEvent.click(screen.getByTestId("leads-in-search"));
+      await wait(300);
+      expect(h.match).not.toHaveBeenCalled(); // "Leads in this search" alone: the drawn IDs
+      expect(listed()).toEqual(["0000000003"]);
+      fireEvent.click(screen.getByTestId("leads-long-open"));
+      await wait(300);
+      expect(h.match).toHaveBeenCalledTimes(1);
+      const c = calls()[0]!;
+      expect(c).toMatchObject({
+        radius_miles: 1,
+        threshold_years: 15,
+        long_open_permit: true,
+        min_open_days: 1826,
+        parcel_ids: ["0000000003", "0000000009"],
+      });
+      expect(c.lat).toBeCloseTo(34.199, 9);
+      expect(c.lon).toBeCloseTo(-118.487, 9);
+      expect("ownership_basis" in c).toBe(false);
+      expect("max_open_days" in c).toBe(false);
+      expect(listed()).toEqual([]);
+      expect(screen.getByTestId("leads-count").textContent).toBe("0");
+      // The ownership filter is part of the search: the next question carries it.
+      h.match.mockImplementation(answer(["0000000003"]));
+      fireEvent.click(screen.getByTestId("ownership-on"));
+      await wait(300);
+      expect(h.match).toHaveBeenCalledTimes(2);
+      expect(calls()[1]).toMatchObject({
+        ownership_basis: "both",
+        long_open_permit: true,
+        parcel_ids: ["0000000003", "0000000009"],
+      });
+      expect(listed()).toEqual(["0000000003"]);
+    });
+
+    test("leads go in chunks of MATCH_CHUNK; an invalid window makes no call and says so", async () => {
+      const ids = Array.from({ length: 150 }, (_, i) =>
+        String(2_000_000 + i).padStart(10, "0"),
+      );
+      h.leads.list
+        .mockResolvedValueOnce({
+          items: ids.slice(0, 100).map((id) => lead(id)),
+          next_cursor: "c0",
+        })
+        .mockResolvedValueOnce({
+          items: ids.slice(100).map((id) => lead(id)),
+          next_cursor: null,
+        });
+      h.match.mockImplementation(answer(ids.filter((_, i) => i % 2 === 0)));
+      const map = await start();
+      await flush();
+      fireEvent.click(screen.getByTestId("leads-long-open"));
+      await wait(2000);
+      expect(calls().map((c) => c.parcel_ids.length)).toEqual([
+        MATCH_CHUNK,
+        MATCH_CHUNK,
+        150 - 2 * MATCH_CHUNK,
+      ]);
+      expect(calls().every((c) => c.long_open_permit === true)).toBe(true);
+      expect(new Set(calls().flatMap((c) => c.parcel_ids)).size).toBe(150);
+      expect(screen.getByTestId("leads-count").textContent).toBe("75");
+      // A maximum below the minimum (set in the long-open list, shown once a pin is dropped): no call,
+      // nothing listed, the list says why.
+      act(() => map.clickAt(300, 100));
+      await wait(300);
+      expect(h.match).toHaveBeenCalledTimes(3);
+      fireEvent.change(screen.getByTestId("permits-max-years"), {
+        target: { value: "3" },
+      });
+      await wait(2000);
+      expect(h.match).toHaveBeenCalledTimes(3);
+      expect(screen.getByTestId("leads-window-invalid")).toBeTruthy();
+      expect(screen.queryByTestId("leads-long-open-window")).toBeNull();
+      expect(listed()).toEqual([]);
     });
   });
 });
@@ -1012,6 +1314,10 @@ describe("permits and the effective roof year", () => {
           source_license_type: null,
           license_class_note: "owner-builder",
           is_owner_builder: true,
+          contractor_identity_key: null,
+          canonical_business_name: null,
+          name_variant_count: null,
+          identity_permit_count: null,
         }),
       ]),
       pp("A-4", "CofO in Progress", "unclear", null, []),
@@ -1639,6 +1945,88 @@ describe("permits and the effective roof year", () => {
     expect(h.search).toHaveBeenCalledTimes(1); // the pin did not move
   });
 
+  test("the parcel detail shows the land base year, with a note that it is not a sale date", async () => {
+    h.detail.mockImplementation(
+      async ({ parcel_id }: { parcel_id: string }) => ({
+        property: { parcel_id, land_base_year: 1975, roll_year: 2026 },
+        provenance: { parcel_id, source_name: "Test Source" },
+      }),
+    );
+    await pinned();
+    await openFirst();
+    expect(field("land_base_year")).toBe("1975");
+    expect(screen.getByTestId("detail").textContent).toContain(
+      "The land base year is the assessor roll's year of the last reassessment (a fiscal-year label), not a sale date either.",
+    );
+  });
+
+  test("a long-open permit's contractors show the identity (key, canonical name, name-variant count); a license without a name shows no name; a row without a license has none; variants are never listed", async () => {
+    h.forParcel.mockResolvedValue({
+      ...PARCEL_PERMITS,
+      permits: [
+        {
+          ...pp("A-1", "Issued", "open-issued", 3000, [
+            contractor({
+              contractors_business_name: "ACME ROOFING",
+              canonical_business_name: "ACME ROOFING INC",
+              name_variant_count: 3,
+              identity_permit_count: 12,
+            }),
+            contractor({
+              contractors_business_name: null,
+              license_identifier: "777777",
+              contractor_identity_key: "777777",
+              canonical_business_name: null,
+              name_variant_count: 0,
+              identity_permit_count: 2,
+            }),
+            contractor({
+              contractors_business_name: null,
+              license_identifier: null,
+              license_class: null,
+              source_license_type: null,
+              license_class_note: "owner-builder",
+              is_owner_builder: true,
+              contractor_identity_key: null,
+              canonical_business_name: null,
+              name_variant_count: null,
+              identity_permit_count: null,
+            }),
+          ]),
+          roofing_work: true,
+        },
+      ],
+    });
+    await pinned();
+    await openFirst();
+    const permit = within(screen.getByTestId("parcel-permits")).getByTestId(
+      "parcel-permit",
+    );
+    expect(permit.dataset.longOpen).toBe("true");
+    const rows = within(permit).getAllByTestId("contractor");
+    expect(rows).toHaveLength(3);
+    const ids = rows.map((r) =>
+      r.querySelector('[data-testid="contractor-identity"]'),
+    );
+    expect(ids[0]!.getAttribute("data-key")).toBe("123456");
+    expect(ids[0]!.textContent).toBe(
+      " · identity 123456 · canonical name ACME ROOFING INC · name variants 3",
+    );
+    expect(
+      within(rows[0]!).getByTestId("contractor-name-variants").dataset.count,
+    ).toBe("3");
+    // A license without a name: its key and count, and no name at all (never a guessed one).
+    expect(ids[1]!.getAttribute("data-key")).toBe("777777");
+    expect(ids[1]!.textContent).toBe(" · identity 777777 · name variants 0");
+    expect(
+      within(rows[1]!).queryByTestId("contractor-canonical-name"),
+    ).toBeNull();
+    // No license number: no identity.
+    expect(ids[2]).toBeNull();
+    // Only the row's own name and the canonical name appear; no list of variants.
+    expect(rows[0]!.textContent!.match(/ACME ROOFING/g)).toHaveLength(2);
+  });
+
   test("the placeholders no longer list permit sections", async () => {
     render(<App />);
     await flush();
@@ -1646,7 +2034,9 @@ describe("permits and the effective roof year", () => {
     expect(cards).toHaveLength(3);
     expect(cards.join(" ")).not.toMatch(/permit/i);
     expect(cards.join(" ")).toMatch(/RAG/);
-    expect(cards.join(" ")).toMatch(/ownership/);
+    // The 10-year ownership filter is on the search now; only the out-of-area owner stays unavailable.
+    expect(cards.join(" ")).toMatch(/Out-of-area owner: not available/);
+    expect(cards.join(" ")).not.toMatch(/10 years|>10|ownership/i);
     expect(cards.join(" ")).toMatch(/Outreach/);
   });
 });

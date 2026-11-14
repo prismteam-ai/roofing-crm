@@ -1266,7 +1266,7 @@ test.describe("with credentials", () => {
       `Permit coverage: LADBS building permits, City of Los Angeles only: ${n(pd.parcels_with_permit_data)} of the ${n(run.row_counts.parquet)} parcels have permit data (${n(pd.parcels_with_permits)} with at least one permit).`,
     );
     await expect(page.getByTestId("leads-permit-filter-note")).toContainText(
-      "not by permit status or open duration",
+      "by a long-open roofing permit in the map's open-duration window",
     );
 
     await page.getByTestId("map").click(); // pin at the centre
@@ -1308,5 +1308,393 @@ test.describe("with credentials", () => {
       ),
     ).toEqual(lo.items.map((x) => [x.permit_number, "true"]));
     await expect(page.locator("body")).not.toContainText(/not harvested/i);
+  });
+
+  test("23. the ownership filter: off by default; turned on, 'both' is preselected; each basis's count equals parcels.search with it, and the texts shown are the API's", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre; radius 1 mi, 15 years (defaults)
+    const pin = await pinOf(page);
+    type Rule = {
+      basis: string;
+      text: string;
+      weakness: string;
+      proxy_note: string;
+    };
+    const search = async (basis?: string) => {
+      const r = await (
+        await api()
+      ).get(
+        trpc(cfg.apiUrl, "parcels.search", {
+          lat: pin[0],
+          lon: pin[1],
+          radius_miles: 1,
+          threshold_years: 15,
+          ...(basis ? { ownership_basis: basis } : {}),
+          limit: 1,
+        }),
+      );
+      if (r.status() !== 200)
+        throw new Error(`parcels.search: HTTP ${r.status()}`);
+      return (await r.json()).result.data as {
+        count: number;
+        ownership: Rule | null;
+      };
+    };
+    const off = await search();
+    expect(off.ownership).toBeNull();
+    await settle(page, off.count);
+    await expect(page.getByTestId("ownership-on")).not.toBeChecked();
+    await expect(page.getByTestId("ownership-basis")).toHaveCount(0);
+    await expect(page.getByTestId("ownership-rule")).toHaveCount(0);
+
+    await page.getByTestId("ownership-on").check();
+    await expect(page.getByTestId("ownership-basis-both")).toBeChecked();
+    const counts: Record<string, number> = {};
+    for (const b of ["both", "recording", "base_year"]) {
+      if (b !== "both") await page.getByTestId(`ownership-basis-${b}`).check();
+      const r = await search(b);
+      expect(r.ownership?.basis).toBe(b);
+      const rule = r.ownership!;
+      const stated = page.getByTestId("ownership-rule");
+      await expect(stated).toHaveAttribute("data-basis", b, {
+        timeout: 20_000,
+      });
+      await settle(page, r.count);
+      await expect(stated).toHaveText(
+        `Ownership filter (${b}): ${rule.text} Weakness: ${rule.weakness} ${rule.proxy_note}`,
+      );
+      // The control shows the API's own texts for this basis.
+      const box = page.locator(
+        `[data-testid="ownership-basis"][data-basis="${b}"]`,
+      );
+      await expect(box.getByTestId("ownership-text")).toHaveText(rule.text);
+      await expect(box.getByTestId("ownership-weakness")).toHaveText(
+        `Weakness: ${rule.weakness}`,
+      );
+      await expect(page.getByTestId("ownership-proxy-note")).toHaveText(
+        rule.proxy_note,
+      );
+      counts[b] = r.count;
+    }
+    console.log("OWNERSHIP", JSON.stringify({ off: off.count, ...counts }));
+    expect(counts.both).toBeLessThanOrEqual(
+      Math.min(counts.recording!, counts.base_year!),
+    );
+    expect(Math.max(counts.recording!, counts.base_year!)).toBeLessThanOrEqual(
+      off.count,
+    );
+
+    await page.getByTestId("ownership-on").uncheck();
+    await expect(page.getByTestId("ownership-rule")).toHaveCount(0, {
+      timeout: 20_000,
+    });
+    await settle(page, off.count);
+  });
+
+  test("24. the lead list's 'Has a long-open roofing permit' toggle, with 'Leads in this search' on and off: the list equals parcels.match for the same leads (the test's own leads are always deleted)", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    const a = await api();
+    const json = async (
+      r: Awaited<ReturnType<typeof a.get>>,
+      what: string,
+    ): Promise<unknown> => {
+      if (r.status() !== 200) throw new Error(`${what}: HTTP ${r.status()}`);
+      return ((await r.json()) as { result: { data: unknown } }).result.data;
+    };
+    const getLead = async (id: string) =>
+      (await json(
+        await a.get(trpc(cfg.leadsApiUrl, "leads.get", { parcel_id: id })),
+        "leads.get",
+      )) as { updated_at: string } | null;
+    /** The parcel IDs of all leads, read across every page via next_cursor (read-only). */
+    const listAll = async () => {
+      const all: string[] = [];
+      let cursor: string | undefined;
+      for (let i = 0; i < 1000; i++) {
+        const p = (await json(
+          await a.get(
+            trpc(cfg.leadsApiUrl, "leads.list", { limit: 100, cursor }),
+          ),
+          "leads.list",
+        )) as { items: { parcel_id: string }[]; next_cursor: string | null };
+        all.push(...p.items.map((l) => l.parcel_id));
+        if (!p.next_cursor) return all;
+        cursor = p.next_cursor;
+      }
+      throw new Error("leads.list: next_cursor did not end after 1,000 pages");
+    };
+    /** parcels.match over all the given IDs, in chunks of the API's MAX_MATCH_IDS (72). */
+    const match = async (input: object, ids: string[]) => {
+      const hit = new Set<string>();
+      for (let i = 0; i < ids.length; i += 72) {
+        const r = (await json(
+          await a.get(
+            trpc(cfg.apiUrl, "parcels.match", {
+              ...input,
+              parcel_ids: ids.slice(i, i + 72),
+            }),
+          ),
+          "parcels.match",
+        )) as { parcel_ids: string[] };
+        for (const id of r.parcel_ids) hit.add(id);
+      }
+      return hit;
+    };
+    const pinAt = async () => {
+      await ready(page);
+      await page.getByTestId("map").click(); // pin at the centre; radius 1 mi, 15 years (defaults)
+      return pinOf(page);
+    };
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    const pin = await pinAt();
+    const filter = {
+      lat: pin[0],
+      lon: pin[1],
+      radius_miles: 1,
+      threshold_years: 15,
+    };
+    const WINDOW = { long_open_permit: true, min_open_days: 1826 };
+    const points = async (radius: number) =>
+      (await json(
+        await a.get(
+          trpc(cfg.apiUrl, "parcels.points", {
+            ...filter,
+            radius_miles: radius,
+            min_open_days: 1826,
+          }),
+        ),
+        "parcels.points",
+      )) as { id: string[]; long_open_permit: number[] };
+    const existing = new Set(await listAll());
+    console.log(`leads before: ${existing.size}`);
+    // Three parcels without a lead, picked from the API's points (default window, 1,826 days):
+    // in the 1 mi search with a long-open roofing permit, in it without one, and outside it with one.
+    const near = await points(1);
+    const nearIds = new Set(near.id);
+    const free = (id: string) => !existing.has(id);
+    const inLong = near.id.find(
+      (id, i) => near.long_open_permit[i] === 1 && free(id),
+    );
+    const inPlain = near.id.find(
+      (id, i) => near.long_open_permit[i] === 0 && free(id),
+    );
+    const far = await points(5);
+    const outLong = far.id.find(
+      (id, i) => far.long_open_permit[i] === 1 && !nearIds.has(id) && free(id),
+    );
+    expect([inLong, inPlain, outLong].every(Boolean)).toBe(true);
+    const mine = [inLong!, inPlain!, outLong!];
+    console.log("TOGGLE_LEADS", JSON.stringify(mine));
+    const created: string[] = [];
+    try {
+      for (const id of mine) {
+        // The parcel had no lead when it was chosen: from here on a lead on it is this test's own.
+        created.push(id);
+        const r = await a.post(`${cfg.leadsApiUrl}/trpc/leads.create`, {
+          data: { parcel_id: id, status: "new", notes: "" },
+        });
+        expect(r.status(), `leads.create ${id}`).toBe(200);
+      }
+      const all = await listAll();
+      const toggleOnly = await match(WINDOW, all);
+      const searchOnly = await match(filter, all);
+      const both = await match({ ...filter, ...WINDOW }, all);
+      console.log(
+        "TOGGLE_COUNTS",
+        JSON.stringify({
+          leads: all.length,
+          toggle: toggleOnly.size,
+          search: searchOnly.size,
+          both: both.size,
+        }),
+      );
+      // The three leads behave as picked (the API's own answers).
+      expect([...mine].map((id) => toggleOnly.has(id))).toEqual([
+        true,
+        false,
+        true,
+      ]);
+      expect([...mine].map((id) => searchOnly.has(id))).toEqual([
+        true,
+        true,
+        false,
+      ]);
+      expect([...mine].map((id) => both.has(id))).toEqual([true, false, false]);
+
+      // The page reads the leads at start: reload, pin the same centre again.
+      await page.reload();
+      expect(await pinAt()).toEqual(pin);
+      await expect(page.getByTestId("result").first()).toBeVisible({
+        timeout: 20_000,
+      });
+      const shown = async () =>
+        new Set(
+          await page
+            .getByTestId("lead-item")
+            .evaluateAll((els) =>
+              els.map((e) => e.getAttribute("data-parcel")!),
+            ),
+        );
+      const expectList = async (want: Set<string>) => {
+        await expect(page.getByTestId("leads-count")).toHaveText(
+          String(want.size),
+          { timeout: 30_000 },
+        );
+        expect(await shown()).toEqual(want);
+      };
+      await expectList(new Set(all));
+      await expect(page.getByTestId("leads-long-open-window")).toHaveText(
+        " (open at least 1,826 days)",
+      );
+      // Toggle on, "Leads in this search" off: the lead IDs only.
+      await page.getByTestId("leads-long-open").check();
+      await expectList(toggleOnly);
+      // Both on: the search filter and the lead IDs.
+      await page.getByTestId("leads-in-search").check();
+      await expectList(both);
+      // Toggle off, "Leads in this search" on.
+      await page.getByTestId("leads-long-open").uncheck();
+      await expectList(searchOnly);
+      await page.getByTestId("leads-in-search").uncheck();
+      await expectList(new Set(all));
+    } finally {
+      // Always delete this test's own leads, also when a step above failed.
+      for (const id of created) {
+        const left = await getLead(id);
+        if (left)
+          await a.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
+            data: { parcel_id: id, expected_updated_at: left.updated_at },
+          });
+      }
+      for (const id of created) expect(await getLead(id)).toBeNull();
+      await listAll().then(
+        (all) => console.log(`leads after cleanup: ${all.length}`),
+        (e: Error) =>
+          console.log(`leads after cleanup: unknown (${e.message})`),
+      );
+    }
+  });
+
+  test("25. a long-open roofing permit's detail shows each contractor's identity as permits.forParcel serves it (key, canonical name, name-variant count; no name where the license has none; variants never listed)", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    const a = await api();
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    type Contractor = Record<string, unknown> & {
+      contractor_identity_key: string | null;
+      canonical_business_name: string | null;
+      name_variant_count: number | null;
+    };
+    const lo = (
+      await (
+        await a.get(
+          trpc(cfg.apiUrl, "permits.longOpen", {
+            lat: pin[0],
+            lon: pin[1],
+            radius_miles: 1,
+            threshold_years: 15,
+            min_open_days: 1826,
+            sort: "open_days",
+            offset: 0,
+            limit: 50,
+          }),
+        )
+      ).json()
+    ).result.data as {
+      count: number;
+      items: Array<{
+        permit_number: string;
+        parcel_id: string;
+        building_level: boolean;
+      }>;
+    };
+    // The first row (not building-level: such a row opens its nearest unit) whose permit has a contractor
+    // with an identity, from the API.
+    let row = -1;
+    let want: { permit_number: string; contractors: Contractor[] } | undefined;
+    for (let i = 0; i < lo.items.length && !want; i++) {
+      const it = lo.items[i]!;
+      if (it.building_level) continue;
+      const fp = (
+        await (
+          await a.get(
+            trpc(cfg.apiUrl, "permits.forParcel", { parcel_id: it.parcel_id }),
+          )
+        ).json()
+      ).result.data as {
+        permits: Array<{ permit_number: string; contractors: Contractor[] }>;
+      };
+      const p = fp.permits.find((x) => x.permit_number === it.permit_number);
+      if (p?.contractors.some((c) => c.contractor_identity_key !== null)) {
+        row = i;
+        want = p;
+      }
+    }
+    expect(
+      want,
+      "a long-open permit with an identified contractor",
+    ).toBeDefined();
+    console.log(
+      "IDENTITY_PERMIT",
+      JSON.stringify({
+        row,
+        permit: want!.permit_number,
+        contractors: want!.contractors.length,
+      }),
+    );
+    // Counted, never listed: no contractor row carries a list.
+    for (const c of want!.contractors)
+      expect(Object.values(c).some((v) => Array.isArray(v))).toBe(false);
+
+    await expect
+      .poll(() => attrNum(page, "permits-count", "data-count"), {
+        timeout: 20_000,
+      })
+      .toBe(lo.count);
+    const r = page.getByTestId("permit-row").nth(row);
+    await expect(r).toHaveAttribute("data-permit", want!.permit_number);
+    await r.click();
+    const permit = page
+      .getByTestId("detail")
+      .getByTestId("parcel-permits")
+      .locator(`[data-permit="${want!.permit_number}"]`);
+    await expect(permit).toHaveCount(1, { timeout: 20_000 });
+    await expect(permit).toHaveAttribute("data-long-open", "true");
+    const rows = permit.getByTestId("contractor");
+    await expect(rows).toHaveCount(want!.contractors.length);
+    for (let j = 0; j < want!.contractors.length; j++) {
+      const c = want!.contractors[j]!;
+      const id = rows.nth(j).getByTestId("contractor-identity");
+      if (c.contractor_identity_key === null) {
+        await expect(id).toHaveCount(0);
+        continue;
+      }
+      await expect(id).toHaveAttribute("data-key", c.contractor_identity_key);
+      const name =
+        c.canonical_business_name === null
+          ? ""
+          : ` · canonical name ${c.canonical_business_name}`;
+      const variants =
+        c.name_variant_count === null
+          ? ""
+          : ` · name variants ${c.name_variant_count.toLocaleString("en-US")}`;
+      await expect(id).toHaveText(
+        ` · identity ${c.contractor_identity_key}${name}${variants}`,
+      );
+      // A license without a name shows no name at all.
+      await expect(id.getByTestId("contractor-canonical-name")).toHaveCount(
+        c.canonical_business_name === null ? 0 : 1,
+      );
+    }
   });
 });

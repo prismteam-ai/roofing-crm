@@ -32,8 +32,15 @@ import {
 } from "./maplibre.ts";
 import { DETAIL_MIN_ZOOM, HIT_TOLERANCE_PX, nearestPoint } from "./hitTest.ts";
 import { LeadEditor } from "./LeadEditor.tsx";
-import { filterOfKey, useLeadsInSearch } from "./leadsInSearch.ts";
+import { filterOfKey, searchKeyOf, useLeadsInSearch } from "./leadsInSearch.ts";
 import { LEADS_MAX_PAGES, LEADS_PAGE_SIZE, LeadsList } from "./LeadsList.tsx";
+import {
+  BASES,
+  OWNERSHIP_OFF,
+  OWNERSHIP_TEXTS,
+  PROXY_NOTE,
+  type OwnershipFilter,
+} from "./ownership.ts";
 import { ParcelDetail } from "./ParcelDetail.tsx";
 import { ParcelPermits } from "./ParcelPermits.tsx";
 import {
@@ -77,6 +84,8 @@ export function App() {
   const [center, setCenter] = useState<LatLon>();
   const [radius, setRadius] = useState(1);
   const [threshold, setThreshold] = useState(15);
+  /** The ownership filter: off by default; turned on, "both" is preselected. */
+  const [ownership, setOwnership] = useState<OwnershipFilter>(OWNERSHIP_OFF);
   /**
    * Last query result, tagged with the debounced key it answers (loading = the key has no result yet) and with
    * the open-duration window (windowKey, in days) its points' long-open highlight was asked for.
@@ -104,31 +113,30 @@ export function App() {
   /** True when the last page read still had a next cursor: more leads are stored than the list loaded. */
   const [leadsCapped, setLeadsCapped] = useState(false);
   const [leadBusy, setLeadBusy] = useState(false);
-  /** The "Leads in this search" filter; parcels.match calls are made only while it is on. */
+  /** The "Leads in this search" filter; parcels.match calls are made only while it or the toggle is on. */
   const [inSearch, setInSearch] = useState(false);
+  /** The lead list's "Has a long-open roofing permit" toggle (the map's open-duration window). */
+  const [leadsLongOpen, setLeadsLongOpen] = useState(false);
   /** The open-duration window of long-open permits (list and parcel detail). */
   const [permitWindow, setPermitWindow] = useState<OpenWindow>(DEFAULT_WINDOW);
   /** The served run (explorer.runSummary), for the data notice. */
   const [run, setRun] = useState<{ run?: RunSummary["run"]; error?: string }>();
   // Debounce a stable primitive key (an object would change identity on every render and re-fire forever).
-  // The search key: pin rounded to 6 decimals (as in data-pin-*), radius and threshold.
+  // The search key: pin rounded to 6 decimals (as in data-pin-*), radius, threshold and, when the ownership
+  // filter is on, its basis (searchKeyOf).
   const key = useDebounced(
     center
-      ? `${center.lat.toFixed(6)},${center.lon.toFixed(6)}|${radius}|${threshold}`
+      ? searchKeyOf(
+          center.lat,
+          center.lon,
+          radius,
+          threshold,
+          ownership.on ? ownership.basis : undefined,
+        )
       : "",
     250,
   );
-  const q = useMemo(() => {
-    if (!key) return undefined;
-    const [ll, r, t] = key.split("|");
-    const [lat, lon] = ll!.split(",").map(Number);
-    return {
-      lat: lat!,
-      lon: lon!,
-      radius_miles: Number(r),
-      threshold_years: Number(t),
-    };
-  }, [key]);
+  const q = useMemo(() => (key ? filterOfKey(key) : undefined), [key]);
   const search = result?.search;
   const points = result?.points;
   /**
@@ -526,7 +534,13 @@ export function App() {
       return null;
     });
   const leadIds = useMemo(() => leads.map((l) => l.parcel_id), [leads]);
-  const leadsInSearch = useLeadsInSearch(api, result, leadIds, inSearch);
+  const leadsInSearch = useLeadsInSearch(
+    api,
+    result,
+    leadIds,
+    inSearch,
+    leadsLongOpen ? winKey : undefined,
+  );
 
   const page = async (off: number) => {
     if (!api || !center) return;
@@ -536,6 +550,7 @@ export function App() {
         lon: center.lon,
         radius_miles: radius,
         threshold_years: threshold,
+        ...(ownership.on ? { ownership_basis: ownership.basis } : {}),
         offset: off,
         limit: 50,
       });
@@ -653,6 +668,54 @@ export function App() {
             {search?.rule.text ??
               `Roof age counts from the effective roof year: the later of the assessor year built and the year of the latest finaled roofing permit. Older than ${threshold} years means an effective roof year before roll year − ${threshold}.`}
           </p>
+          <fieldset className="ownership" data-testid="ownership">
+            <legend>
+              <label>
+                <input
+                  type="checkbox"
+                  data-testid="ownership-on"
+                  checked={ownership.on}
+                  onChange={(e) =>
+                    setOwnership((o) => ({ ...o, on: e.target.checked }))
+                  }
+                />{" "}
+                Owner unchanged for 10 years or more (ownership filter)
+              </label>
+            </legend>
+            {ownership.on && (
+              <>
+                {BASES.map(([basis, label]) => (
+                  <div
+                    key={basis}
+                    className="basis"
+                    data-testid="ownership-basis"
+                    data-basis={basis}
+                  >
+                    <label>
+                      <input
+                        type="radio"
+                        name="ownership-basis"
+                        data-testid={`ownership-basis-${basis}`}
+                        value={basis}
+                        checked={ownership.basis === basis}
+                        onChange={() => setOwnership((o) => ({ ...o, basis }))}
+                      />{" "}
+                      {label}
+                    </label>
+                    <p className="notice" data-testid="ownership-text">
+                      {OWNERSHIP_TEXTS[basis].text}
+                    </p>
+                    <p className="notice" data-testid="ownership-weakness">
+                      Weakness: {OWNERSHIP_TEXTS[basis].weakness}
+                    </p>
+                  </div>
+                ))}
+                <p className="notice" data-testid="ownership-proxy-note">
+                  {PROXY_NOTE}
+                </p>
+              </>
+            )}
+          </fieldset>
         </section>
         {(queryError ?? error) && (
           <p className="error" data-testid="error">
@@ -661,6 +724,17 @@ export function App() {
         )}
         {search && (
           <section>
+            {search.ownership && (
+              <p
+                className="notice"
+                data-testid="ownership-rule"
+                data-basis={search.ownership.basis}
+              >
+                Ownership filter ({search.ownership.basis}):{" "}
+                {search.ownership.text} Weakness: {search.ownership.weakness}{" "}
+                {search.ownership.proxy_note}
+              </p>
+            )}
             {points?.truncated && (
               <p className="notice" data-testid="points-truncated">
                 Map shows the nearest{" "}
@@ -724,6 +798,16 @@ export function App() {
             search={leadsInSearch}
             inSearch={inSearch}
             onInSearch={setInSearch}
+            longOpen={leadsLongOpen}
+            onLongOpen={setLeadsLongOpen}
+            windowText={
+              winKey
+                ? openDaysText(
+                    daysOfKey(winKey).min_open_days,
+                    daysOfKey(winKey).max_open_days,
+                  )
+                : undefined
+            }
             error={leadsError}
             capped={leadsCapped}
             onOpen={(id) => void openDetail(id)}
