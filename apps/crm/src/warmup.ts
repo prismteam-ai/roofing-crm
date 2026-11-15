@@ -1,5 +1,5 @@
 /**
- * The panel's warm-up (hosting plan revision 2 §1 and §5; approvals §3e.74.2, §3e.78.3, §3e.90.3):
+ * The panel's warm-up:
  * GET /agent/warm and DATA_WARM_REQUESTS (2) data API requests, all sent at once, so the agent's function and two
  * data API instances are initialized before the first question. A question asked while a warm-up runs is held
  * until every warm-up request has answered (any response, or a network failure) or HOLD_MAX_MS after it was

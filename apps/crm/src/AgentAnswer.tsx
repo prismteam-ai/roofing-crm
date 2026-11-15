@@ -62,7 +62,7 @@ function Unbroken({ text }: { text: string }) {
 }
 
 /**
- * One answer as §8 of the hosting plan renders it. A parcel ID in Sources is a button: it opens the parcel's
+ * One answer as the agent panel renders it. A parcel ID in Sources is a button: it opens the parcel's
  * detail and pans the map to it (onOpenParcel).
  */
 export function AgentAnswerView({

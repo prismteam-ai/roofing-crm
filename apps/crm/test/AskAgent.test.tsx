@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The aside's "Ask the agent" section (hosting plan §8, revision 2 §1 and §5), on jsdom with fake timers (Date
+ * The aside's "Ask the agent" section, on jsdom with fake timers (Date
  * included). The agent API is the CRM's real client (createAgentApi) over a fake fetch: nothing leaves the
  * process, and no request ever reaches a real /agent/answer.
  */

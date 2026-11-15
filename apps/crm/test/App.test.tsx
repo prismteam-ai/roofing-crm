@@ -2051,7 +2051,7 @@ describe("permits and the effective roof year", () => {
   });
 
   /**
-   * Number fields as text entries (approvals §3e.94 A2): a field can be emptied and retyped and shows what was
+   * Number fields as text entries: a field can be emptied and retyped and shows what was
    * typed (before, a cleared field put back 1, so "8" typed after clearing came out as "18"). The search runs
    * on each change: an empty or invalid value shows a plain message and sends nothing (the search keeps its
    * last valid value).

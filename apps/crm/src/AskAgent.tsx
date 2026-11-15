@@ -10,7 +10,7 @@ import type { AgentCenter, AnswerResponse } from "./agent-types.ts";
 import { AgentAnswerView } from "./AgentAnswer.tsx";
 import { createWarmup, HOLD_MAX_MS, type Warmup } from "./warmup.ts";
 
-/** Hosting plan revision 2 §1: the notice under the question box. */
+/** The notice under the question box. */
 export const NOTICE =
   "Your question, the map center and the data the agent reads are sent to Anthropic to answer it.";
 
@@ -29,7 +29,7 @@ export function centerText(center: AgentCenter | undefined): string {
 }
 
 /**
- * The "Ask the agent" section of the aside (hosting plan §8, revision 2 §1 and §5). Collapsed at first; opening
+ * The "Ask the agent" section of the aside. Collapsed at first; opening
  * it starts the warm-up. The body stays mounted while collapsed, so the conversation (history, session,
  * signature) lives in component state only, never in storage; "New conversation" drops it. The center is the
  * map pin as the App gives it. The Send button is never disabled: a question asked during the warm-up is held
