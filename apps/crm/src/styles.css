@@ -115,7 +115,8 @@ button:disabled {
 }
 .detail dd {
   margin: 0;
-  word-break: break-all;
+  /* Words wrap whole; only a token longer than the line (a URL, a sha256) breaks inside. */
+  overflow-wrap: anywhere;
 }
 .future {
   margin-top: 16px;
@@ -316,6 +317,56 @@ button:disabled {
 .table-wrap {
   overflow-x: auto;
   margin-bottom: 8px;
+}
+/*
+ * The answer's Sources in the aside (about 300 px wide on a desktop, under 760 px in the one-column layout): five
+ * columns of long text came out one word per line and "Collected at" was cut off. While the answer is narrower
+ * than 760 px, each record is stacked instead: one line per field, labelled with its column's name
+ * (data-label). Wider, it stays a table.
+ */
+.agent-answer {
+  container-type: inline-size;
+}
+@container (max-width: 760px) {
+  .agent-answer table.agent-sources,
+  .agent-answer table.agent-sources caption,
+  .agent-answer table.agent-sources tbody,
+  .agent-answer table.agent-sources tr {
+    display: block;
+  }
+  .agent-answer table.agent-sources thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .agent-answer table.agent-sources tr {
+    border-bottom: 1px solid #ebebf0;
+    padding: 4px 0;
+  }
+  .agent-answer table.agent-sources td {
+    display: grid;
+    grid-template-columns: 6.5em minmax(0, 1fr);
+    gap: 6px;
+    border: 0;
+    padding: 1px 0;
+    overflow-wrap: anywhere;
+  }
+  .agent-answer table.agent-sources td::before {
+    content: attr(data-label);
+    font-family: system-ui, sans-serif;
+    font-weight: 600;
+    color: #656871;
+  }
+  .agent-answer table.agent-sources td > button.link {
+    justify-self: start;
+    text-align: left;
+  }
+}
+.nowrap {
+  white-space: nowrap;
 }
 .agent-answer button.link {
   border: 0;

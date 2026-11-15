@@ -125,6 +125,70 @@ const recentredOn = (page: Page, p: number[]) =>
     .poll(async () => haversine(p, await centre(page)), { timeout: 10_000 })
     .toBeLessThan(CENTRE_TOLERANCE_MILES);
 
+/**
+ * The inputs of the GET requests to a data API procedure, in order (batched calls included: the path lists the
+ * procedures and the input is keyed by position).
+ */
+const trpcInputs = (page: Page, proc: string) => {
+  const inputs: Array<Record<string, unknown>> = [];
+  page.on("request", (r) => {
+    const u = new URL(r.url());
+    if (r.method() !== "GET" || !u.pathname.startsWith("/trpc/")) return;
+    const i = u.pathname.slice("/trpc/".length).split(",").indexOf(proc);
+    if (i < 0) return;
+    const input = JSON.parse(u.searchParams.get("input") ?? "{}");
+    inputs.push(u.searchParams.has("batch") ? input[i] : input);
+  });
+  return inputs;
+};
+/**
+ * Empties a field with the keyboard (it must stay empty), then types the text key by key (it must show exactly
+ * that: before, a cleared field showed 1 again and "20" came out as "120").
+ */
+const retype = async (field: Locator, text: string) => {
+  await field.click();
+  await field.press("ControlOrMeta+a");
+  await field.press("Backspace");
+  await expect(field).toHaveValue("");
+  await field.pressSequentially(text);
+  await expect(field).toHaveValue(text);
+};
+/**
+ * The words of an element's text that the browser split over two lines although they fit on one line of the
+ * element (a token longer than the line, such as a URL or a hash, may break). A hyphen ends a word: a break
+ * after the hyphen of "stand-in" is a normal break.
+ */
+const splitWords = (el: Locator, word = "[^\\s-]+-?") =>
+  el.evaluate((node, word) => {
+    const out: string[] = [];
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+      const text = t as Text;
+      for (const m of text.data.matchAll(new RegExp(word, "g"))) {
+        const r = document.createRange();
+        r.setStart(text, m.index);
+        r.setEnd(text, m.index + m[0].length);
+        const rects = [...r.getClientRects()].filter((x) => x.width > 0);
+        const lines = new Set(rects.map((x) => Math.round(x.top)));
+        const width = rects.reduce((w, x) => w + x.width, 0);
+        if (lines.size > 1 && width <= (node as HTMLElement).clientWidth)
+          out.push(m[0]);
+      }
+    }
+    return out;
+  }, word);
+/** The number of lines an element's text takes. */
+const lineCount = (el: Locator) =>
+  el.evaluate((node) => {
+    const r = document.createRange();
+    r.selectNodeContents(node);
+    return new Set(
+      [...r.getClientRects()]
+        .filter((x) => x.width > 0)
+        .map((x) => Math.round(x.top)),
+    ).size;
+  });
+
 // Serial by default (a failure stops the run); PW_SERIAL=0 runs tests independently (each loads its own config).
 test.describe.configure({
   mode: process.env.PW_SERIAL === "0" ? "default" : "serial",
@@ -219,6 +283,24 @@ test.describe("with credentials", () => {
     expect(cfg.mapKey.length).toBeGreaterThan(20);
     await expect(page.getByTestId("result-count")).toContainText("0 results");
     expect(errors).toEqual([]);
+  });
+
+  test("3b. the site's own favicon: /favicon.ico (16 and 32 px) and /favicon.svg are served and linked", async ({
+    page,
+  }) => {
+    const ico = await page.request.get("/favicon.ico");
+    expect(ico.status()).toBe(200);
+    const b = await ico.body();
+    expect([...b.subarray(0, 6)]).toEqual([0, 0, 1, 0, 2, 0]); // an icon with two images
+    const svg = await page.request.get("/favicon.svg");
+    expect(svg.status()).toBe(200);
+    expect(await svg.text()).toMatch(/^<svg /);
+    await page.goto("/");
+    expect(
+      await page
+        .locator('link[rel="icon"]')
+        .evaluateAll((ls) => ls.map((l) => l.getAttribute("href"))),
+    ).toEqual(["/favicon.ico", "/favicon.svg"]);
   });
 
   test("4. API: no header 401, wrong token 403, right token 200", async () => {
@@ -1736,6 +1818,114 @@ test.describe("with credentials", () => {
       );
     }
   });
+
+  test("34. number fields are text entries: roof age and the open-duration years can be emptied and retyped; an empty or invalid value shows a message and sends nothing; the search sends what was typed and the counts equal the API", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    const searches = trpcInputs(page, "parcels.search");
+    const longOpens = trpcInputs(page, "permits.longOpen");
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the centre
+    const pin = await pinOf(page);
+    const get = async (proc: string, input: unknown) =>
+      (await (await (await api()).get(trpc(cfg.apiUrl, proc, input))).json())
+        .result.data as { count: number };
+    const where = { lat: pin[0], lon: pin[1], radius_miles: 1 };
+    await settle(
+      page,
+      (await get("parcels.search", { ...where, threshold_years: 15 })).count,
+    );
+    await expect
+      .poll(() => attrNum(page, "permits-count", "data-count"))
+      .toBeGreaterThanOrEqual(0);
+    const calls = () => [searches.length, longOpens.length];
+    const before = calls();
+
+    // Roof age: emptied, then out of range: a message each time, no call. (The search runs as the field
+    // changes, so the invalid value is one with no valid value on the way: "0".)
+    const years = page.getByTestId("threshold");
+    await retype(years, "");
+    await expect(page.getByTestId("threshold-error")).toHaveText(
+      "Roof older than (years) is empty: enter a whole number from 1 to 120. The search keeps 15 years until then.",
+    );
+    await years.pressSequentially("0");
+    await expect(page.getByTestId("threshold-error")).toContainText(
+      "must be a whole number from 1 to 120",
+    );
+    await page.waitForTimeout(1_000); // past the 250 ms debounce
+    expect(calls()).toEqual(before);
+    // Retyped: the search sends what was typed; the count equals the API.
+    await retype(years, "20");
+    await expect(page.getByTestId("threshold-error")).toHaveCount(0);
+    const at20 = await get("parcels.search", { ...where, threshold_years: 20 });
+    await settle(page, at20.count);
+    expect(searches.at(-1)).toMatchObject({ threshold_years: 20 });
+    expect(searches.map((s) => s.threshold_years)).not.toContain(0);
+
+    // Open at least (years): emptied, a message and no call; retyped, the list sends what was typed.
+    const minYears = page.getByTestId("permits-min-years");
+    const n = longOpens.length;
+    await retype(minYears, "");
+    await expect(page.getByTestId("permits-window-error")).toHaveText(
+      "Open at least (years) is empty: enter a whole number from 1 to 100.",
+    );
+    await page.waitForTimeout(1_000);
+    expect(longOpens.length).toBe(n);
+    await retype(minYears, "8");
+    const lo8 = await get("permits.longOpen", {
+      ...where,
+      threshold_years: 20,
+      min_open_days: 2922,
+    });
+    await expect
+      .poll(() => attrNum(page, "permits-count", "data-count"), {
+        timeout: 20_000,
+      })
+      .toBe(lo8.count);
+    expect(longOpens.at(-1)).toMatchObject({
+      threshold_years: 20,
+      min_open_days: 2922,
+    });
+    expect("max_open_days" in longOpens.at(-1)!).toBe(false);
+    // At most (years): typed after clearing, then a maximum below the minimum (a message, no call).
+    const maxYears = page.getByTestId("permits-max-years");
+    await retype(maxYears, "12");
+    await expect
+      .poll(() => longOpens.at(-1)?.max_open_days, { timeout: 20_000 })
+      .toBe(4383);
+    const m = longOpens.length;
+    // Typed over the selected text (no empty value on the way, which would be a valid window).
+    await maxYears.click();
+    await maxYears.press("ControlOrMeta+a");
+    await maxYears.pressSequentially("3");
+    await expect(page.getByTestId("permits-window-error")).toHaveText(
+      "The maximum (3 years) is below the minimum (8 years); set a larger maximum or clear it.",
+    );
+    await page.waitForTimeout(1_000);
+    expect(longOpens.length).toBe(m);
+    // The arrows step whole years.
+    await years.press("ArrowUp");
+    await expect(years).toHaveValue("21");
+  });
+
+  test("35. the parcel detail wraps whole words (no word split over two lines)", async ({
+    page,
+  }) => {
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click();
+    await page.getByTestId("result").first().click();
+    const d = page.getByTestId("detail");
+    const basis = d.locator('[data-field="roof_age_basis"]');
+    await expect(basis).toContainText("not a roof installation date");
+    await expect(basis).toHaveCSS("word-break", "normal");
+    await expect(basis).toHaveCSS("overflow-wrap", "anywhere");
+    expect(await lineCount(basis)).toBeGreaterThan(1); // it does wrap
+    for (const dd of await d.locator("dd").all())
+      expect(await splitWords(dd)).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -2084,4 +2274,67 @@ test.describe("Ask the agent (answers mocked)", () => {
     expect(await pinOf(page)).toEqual(pin); // the pin (and the search) did not move
     await expect(page.getByTestId("agent-turn")).toHaveCount(1);
   });
+
+  /** Breakpoints of the aside (responsive-design-tests method): the answer's Sources are stacked at each. */
+  const SOURCES_BREAKPOINTS = [
+    { name: "desktop", viewport: { width: 1280, height: 900 } },
+    { name: "tablet", viewport: { width: 768, height: 1024 } },
+    { name: "phone (one column)", viewport: { width: 390, height: 844 } },
+    { name: "widest one column", viewport: { width: 759, height: 900 } },
+  ];
+  const COLUMNS = ["ID", "Source", "License", "Attribution", "Collected at"];
+
+  for (const bp of SOURCES_BREAKPOINTS)
+    test(`37. ${bp.name} (${bp.viewport.width} px): the answer's Sources are stacked records, labelled, nothing cut off or one word per line`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(bp.viewport);
+      await mockAnswers(page, [ANSWERED]);
+      await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+      await ready(page);
+      await page.getByTestId("map").click();
+      await openAgent(page);
+      await ask(page, QUESTION_1);
+      const a = page.getByTestId("agent-answer");
+      await expect(a).toHaveAttribute("data-status", "answered");
+      await a.scrollIntoViewIfNeeded();
+      const answerBox = (await a.boundingBox())!;
+      const tables = a.getByTestId("agent-sources");
+      await expect(tables).toHaveCount(3);
+      for (const t of await tables.all()) {
+        await expect(t).toHaveCSS("display", "block");
+        // Nothing to scroll sideways: the records fit the answer.
+        expect(
+          await t.evaluate(
+            (el) =>
+              el.parentElement!.scrollWidth <= el.parentElement!.clientWidth,
+          ),
+        ).toBe(true);
+        for (const tr of await t.locator("tbody tr").all()) {
+          const tds = tr.locator("td");
+          await expect(tds).toHaveCount(5);
+          for (let i = 0; i < 5; i++) {
+            const td = tds.nth(i);
+            await expect(td).toHaveCSS("display", "grid");
+            expect(
+              await td.evaluate(
+                (el) => getComputedStyle(el, "::before").content,
+              ),
+            ).toBe(`"${COLUMNS[i]}"`);
+            const box = (await td.boundingBox())!;
+            expect(box.x + box.width).toBeLessThanOrEqual(
+              answerBox.x + answerBox.width + 1,
+            );
+            expect(await splitWords(td)).toEqual([]);
+            // Not one word per line: a value of several words shares lines.
+            const words = ((await td.textContent()) ?? "").trim().split(/\s+/);
+            if (words.length >= 4)
+              expect(await lineCount(td)).toBeLessThan(words.length);
+          }
+          // "Collected at" is shown whole: each timestamp on one line.
+          await expect(tds.nth(4)).toBeVisible();
+          expect(await splitWords(tds.nth(4), "\\S+")).toEqual([]);
+        }
+      }
+    });
 });

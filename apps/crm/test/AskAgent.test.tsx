@@ -619,6 +619,14 @@ describe("Ask the agent: rendering", () => {
     ).toEqual(["ID", "Source", "License", "Attribution", "Collected at"]);
     const cells = (t: HTMLElement) =>
       [...t.querySelectorAll("tbody td")].map((td) => td.textContent);
+    // Each cell names its column (the label shown when the narrow aside stacks a record; styles.css).
+    for (const t of tables) {
+      expect(t.classList.contains("agent-sources")).toBe(true);
+      for (const tr of t.querySelectorAll("tbody tr"))
+        expect(
+          [...tr.querySelectorAll("td")].map((td) => td.dataset.label),
+        ).toEqual(["ID", "Source", "License", "Attribution", "Collected at"]);
+    }
     const [parcel, permit] = ANSWERED.records;
     expect(cells(tables[0]!)).toEqual([
       parcel!.id,

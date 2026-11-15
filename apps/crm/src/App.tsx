@@ -46,14 +46,16 @@ import {
 } from "./ownership.ts";
 import { ParcelDetail } from "./ParcelDetail.tsx";
 import { ParcelPermits } from "./ParcelPermits.tsx";
+import { inputValue, readNumber, THRESHOLD, typed } from "./numeric.ts";
 import {
   daysOfKey,
   DEFAULT_WINDOW,
+  DEFAULT_WINDOW_TEXT,
   openDaysText,
+  readWindow,
   roofBasisLabel,
-  windowInvalid,
   windowKey,
-  type OpenWindow,
+  type WindowText,
 } from "./permitDisplay.ts";
 import { permitsApi } from "./permitsApi.ts";
 import { PermitsList } from "./PermitsList.tsx";
@@ -88,7 +90,11 @@ export function App() {
   const [error, setError] = useState<string>();
   const [center, setCenter] = useState<LatLon>();
   const [radius, setRadius] = useState(1);
+  /** The roof-age threshold of the search: the last valid one typed (or set on the slider). */
   const [threshold, setThreshold] = useState(15);
+  /** The threshold field as typed; while it is empty or invalid, a message shows and the search keeps the last. */
+  const [thresholdText, setThresholdText] = useState("15");
+  const thresholdRead = readNumber(thresholdText, THRESHOLD);
   /** The ownership filter: off by default; turned on, "both" is preselected. */
   const [ownership, setOwnership] = useState<OwnershipFilter>(OWNERSHIP_OFF);
   /**
@@ -129,8 +135,11 @@ export function App() {
   const [inSearch, setInSearch] = useState(false);
   /** The lead list's "Has a long-open roofing permit" toggle (the map's open-duration window). */
   const [leadsLongOpen, setLeadsLongOpen] = useState(false);
-  /** The open-duration window of long-open permits (list and parcel detail). */
-  const [permitWindow, setPermitWindow] = useState<OpenWindow>(DEFAULT_WINDOW);
+  /** The open-duration window's fields as typed (long-open list, map highlight, lead toggle, parcel detail). */
+  const [windowText, setWindowText] = useState<WindowText>(DEFAULT_WINDOW_TEXT);
+  /** The window read from them; undefined (with the message) while a field is empty or invalid. */
+  const windowRead = useMemo(() => readWindow(windowText), [windowText]);
+  const permitWindow = windowRead.window;
   /** The served run (explorer.runSummary), for the data notice. */
   const [run, setRun] = useState<{ run?: RunSummary["run"]; error?: string }>();
   // Debounce a stable primitive key (an object would change identity on every render and re-fire forever).
@@ -155,10 +164,7 @@ export function App() {
    * The map highlight's window: the long-open list's (same days), debounced like it; "" while the window is
    * invalid (no call; the map keeps its last highlight).
    */
-  const winKey = useDebounced(
-    windowInvalid(permitWindow) ? "" : windowKey(permitWindow),
-    250,
-  );
+  const winKey = useDebounced(permitWindow ? windowKey(permitWindow) : "", 250);
   /** The last valid highlight window, for the points of a new search (read only in effects). */
   const winRef = useRef(windowKey(DEFAULT_WINDOW));
   const loading = !!key && result?.key !== key && failed?.key !== key;
@@ -713,14 +719,16 @@ export function App() {
               id="threshold"
               data-testid="threshold"
               type="number"
-              min={1}
-              max={120}
-              value={threshold}
-              onChange={(e) =>
-                setThreshold(
-                  Math.max(1, Math.min(120, Number(e.target.value) || 1)),
-                )
-              }
+              min={THRESHOLD.min}
+              max={THRESHOLD.max}
+              step={1}
+              value={inputValue(thresholdText)}
+              onChange={(e) => {
+                const text = typed(e);
+                setThresholdText(text);
+                const r = readNumber(text, THRESHOLD);
+                if ("value" in r) setThreshold(r.value);
+              }}
             />
             <input
               aria-label="Roof age threshold slider"
@@ -728,10 +736,19 @@ export function App() {
               min={1}
               max={120}
               value={threshold}
-              onChange={(e) => setThreshold(Number(e.target.value))}
+              onChange={(e) => {
+                setThreshold(Number(e.target.value));
+                setThresholdText(e.target.value);
+              }}
               style={{ flex: 1 }}
             />
           </div>
+          {"error" in thresholdRead && (
+            <p className="error" data-testid="threshold-error" role="alert">
+              {thresholdRead.error} The search keeps {threshold} years until
+              then.
+            </p>
+          )}
           <p className="rule" data-testid="rule">
             {search?.rule.text ??
               `Roof age counts from the effective roof year: the later of the assessor year built and the year of the latest finaled roofing permit. Older than ${threshold} years means an effective roof year before roll year − ${threshold}.`}
@@ -863,8 +880,10 @@ export function App() {
             center={center}
             radius={radius}
             threshold={threshold}
+            windowText={windowText}
+            onWindowText={setWindowText}
             openWindow={permitWindow}
-            onWindow={setPermitWindow}
+            windowError={windowRead.error}
             onOpen={(id) => void openDetail(id)}
           />
         )}

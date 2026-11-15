@@ -215,6 +215,8 @@ import { ANSWERED, CITED_PARCEL, QUESTION_1 } from "../e2e/agent-fixtures.ts";
 import {
   DEFAULT_MIN_DAYS,
   DEFAULT_WINDOW,
+  MAX_DAYS,
+  MAX_YEARS,
   yearsToDays,
 } from "../src/permitDisplay.ts";
 import { loadConfig } from "../src/config.ts";
@@ -2046,6 +2048,155 @@ describe("permits and the effective roof year", () => {
     expect(cards.join(" ")).toMatch(/Out-of-area owner: not available/);
     expect(cards.join(" ")).not.toMatch(/10 years|>10|ownership/i);
     expect(cards.join(" ")).toMatch(/Outreach/);
+  });
+
+  /**
+   * Number fields as text entries (approvals §3e.94 A2): a field can be emptied and retyped and shows what was
+   * typed (before, a cleared field put back 1, so "8" typed after clearing came out as "18"). The search runs
+   * on each change: an empty or invalid value shows a plain message and sends nothing (the search keeps its
+   * last valid value).
+   */
+  const retype = (testId: string, text: string) => {
+    const el = screen.getByTestId(testId) as HTMLInputElement;
+    fireEvent.change(el, { target: { value: "" } });
+    expect(el.value).toBe("");
+    fireEvent.change(el, { target: { value: el.value + text } });
+    expect(el.value).toBe(text);
+  };
+
+  test("roof age: cleared and retyped, it shows what was typed and the search sends it; the slider follows", async () => {
+    await pinned();
+    expect(h.search).toHaveBeenCalledTimes(1);
+    retype("threshold", "20");
+    await wait(300);
+    expect(h.search).toHaveBeenCalledTimes(2);
+    expect(h.search.mock.lastCall![0]).toMatchObject({ threshold_years: 20 });
+    expect(lastLongOpen()).toMatchObject({ threshold_years: 20 });
+    expect(
+      (screen.getByLabelText("Roof age threshold slider") as HTMLInputElement)
+        .value,
+    ).toBe("20");
+    expect(screen.queryByTestId("threshold-error")).toBeNull();
+    // The slider writes the field.
+    setInput("threshold", "20");
+    fireEvent.change(screen.getByLabelText("Roof age threshold slider"), {
+      target: { value: "35" },
+    });
+    expect((screen.getByTestId("threshold") as HTMLInputElement).value).toBe(
+      "35",
+    );
+    await wait(300);
+    expect(h.search.mock.lastCall![0]).toMatchObject({ threshold_years: 35 });
+  });
+
+  test.each([
+    [
+      "",
+      "Roof older than (years) is empty: enter a whole number from 1 to 120.",
+    ],
+    ["0", "Roof older than (years) must be a whole number from 1 to 120."],
+    ["121", "Roof older than (years) must be a whole number from 1 to 120."],
+    ["2.5", "Roof older than (years) must be a whole number from 1 to 120."],
+  ])(
+    "roof age %j: a plain message, nothing sent; the search keeps the last valid value",
+    async (text, message) => {
+      await pinned();
+      setInput("threshold", text);
+      await wait(2000);
+      expect(h.search).toHaveBeenCalledTimes(1);
+      expect(h.longOpen).toHaveBeenCalledTimes(1);
+      expect((screen.getByTestId("threshold") as HTMLInputElement).value).toBe(
+        text,
+      );
+      expect(screen.getByTestId("threshold-error").textContent).toBe(
+        `${message} The search keeps 15 years until then.`,
+      );
+      setInput("threshold", "16");
+      await wait(300);
+      expect(h.search).toHaveBeenCalledTimes(2);
+      expect(screen.queryByTestId("threshold-error")).toBeNull();
+    },
+  );
+
+  test("open at least (years): cleared and retyped, it shows what was typed and the list sends it", async () => {
+    await pinned();
+    retype("permits-min-years", "8");
+    await wait(300);
+    expect(h.longOpen).toHaveBeenCalledTimes(2);
+    expect(lastLongOpen()).toMatchObject({ min_open_days: 2922 });
+    expect(screen.queryByTestId("permits-window-error")).toBeNull();
+  });
+
+  test("at most (years): cleared and retyped, it shows what was typed and the list sends it", async () => {
+    await pinned();
+    setInput("permits-max-years", "12");
+    await wait(300);
+    retype("permits-max-years", "10");
+    await wait(300);
+    expect(lastLongOpen()).toMatchObject({
+      min_open_days: 1826,
+      max_open_days: 3653,
+    });
+  });
+
+  test.each([
+    [
+      "permits-min-years",
+      "",
+      "Open at least (years) is empty: enter a whole number from 1 to 100.",
+    ],
+    [
+      "permits-min-years",
+      "0",
+      "Open at least (years) must be a whole number from 1 to 100.",
+    ],
+    [
+      "permits-min-years",
+      "5.5",
+      "Open at least (years) must be a whole number from 1 to 100.",
+    ],
+    [
+      "permits-max-years",
+      "101",
+      "At most (years, optional) must be a whole number from 1 to 100.",
+    ],
+    [
+      "permits-max-years",
+      "0",
+      "At most (years, optional) must be a whole number from 1 to 100.",
+    ],
+  ])(
+    "%s %j: a plain message and no call; the map keeps its last valid window and says so",
+    async (testId, text, message) => {
+      await pinned();
+      expect(h.points).toHaveBeenCalledTimes(1);
+      setInput(testId, text);
+      await wait(2000);
+      expect(h.longOpen).toHaveBeenCalledTimes(1);
+      expect(h.points).toHaveBeenCalledTimes(1);
+      expect((screen.getByTestId(testId) as HTMLInputElement).value).toBe(text);
+      expect(screen.getByTestId("permits-window-error").textContent).toBe(
+        message,
+      );
+      expect(screen.getByTestId("permits-rule").textContent).toContain(
+        "Long-open: in the open-duration window above, once it is valid, within 1 miles",
+      );
+      expect(screen.queryAllByTestId("permit-row")).toHaveLength(0);
+      expect(screen.getByTestId("legend-window-invalid")).toBeTruthy();
+    },
+  );
+
+  test("the arrows step whole units: roof age by 1 year (1 to 120), the window by 1 year (1 to 100)", async () => {
+    await pinned();
+    const attrs = (id: string) => {
+      const el = screen.getByTestId(id) as HTMLInputElement;
+      return [el.type, el.step, el.min, el.max];
+    };
+    expect(attrs("threshold")).toEqual(["number", "1", "1", "120"]);
+    expect(attrs("permits-min-years")).toEqual(["number", "1", "1", "100"]);
+    expect(attrs("permits-max-years")).toEqual(["number", "1", "1", "100"]);
+    // 100 years is the API's largest window (MAX_DAYS is typed as the API's MAX_OPEN_DAYS).
+    expect(yearsToDays(MAX_YEARS)).toBe(MAX_DAYS);
   });
 });
 

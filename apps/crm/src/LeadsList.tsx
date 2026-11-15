@@ -110,8 +110,8 @@ export function LeadsList({
       </label>
       {longOpen && search.windowInvalid && (
         <p className="notice" data-testid="leads-window-invalid">
-          The open-duration window is invalid: set a maximum not below the
-          minimum.
+          The open-duration window is invalid: correct the years under Long-open
+          roofing permits.
         </p>
       )}
       {asked && search.checking !== undefined && (

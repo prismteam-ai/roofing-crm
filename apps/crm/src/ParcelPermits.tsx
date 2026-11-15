@@ -97,9 +97,10 @@ function Permit({
   openWindow,
 }: {
   p: ParcelPermit;
-  openWindow: OpenWindow;
+  openWindow: OpenWindow | undefined;
 }) {
-  const long = isLongOpen(p, openWindow);
+  // No window while its fields are invalid: nothing is marked long-open.
+  const long = !!openWindow && isLongOpen(p, openWindow);
   const roofing = roofingTag(p);
   return (
     <li
@@ -177,7 +178,8 @@ export function ParcelPermits({
 }: {
   permits: PermitsApi;
   parcelId: string;
-  openWindow: OpenWindow;
+  /** The long-open window; undefined while its fields are invalid. */
+  openWindow: OpenWindow | undefined;
 }) {
   // Keyed by parcel, so "loading" is derived and state changes only happen in the async callbacks.
   const [got, setGot] = useState<{

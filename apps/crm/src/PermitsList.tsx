@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import type { LatLon } from "@roofing-crm/geo";
+import { inputValue, typed } from "./numeric.ts";
 import {
   joinLabel,
   longOpenTag,
+  MAX_YEARS,
   openDuration,
   statusClassLabel,
-  wholeYears,
-  windowInvalid,
   windowKey,
   yearsAndDays,
   type OpenWindow,
+  type WindowText,
 } from "./permitDisplay.ts";
 import type {
   LongOpenInput,
@@ -50,8 +51,10 @@ export function PermitsList({
   center,
   radius,
   threshold,
+  windowText,
+  onWindowText,
   openWindow: w,
-  onWindow,
+  windowError,
   onOpen,
 }: {
   permits: PermitsApi;
@@ -59,17 +62,20 @@ export function PermitsList({
   center?: LatLon;
   radius: number;
   threshold: number;
-  openWindow: OpenWindow;
-  onWindow: (w: OpenWindow) => void;
+  /** The window's fields as typed. */
+  windowText: WindowText;
+  onWindowText: (t: WindowText) => void;
+  /** The window read from them; undefined while a field is empty or invalid (windowError says why). */
+  openWindow: OpenWindow | undefined;
+  windowError: string | undefined;
   /** Opens a parcel's detail (the same panel as a map click). */
   onOpen: (parcelId: string) => void;
 }) {
   const [sort, setSort] = useState<Sort>("open_days");
-  const invalid = windowInvalid(w);
   // Key: pin (6 decimals, as the parcel search), radius, threshold, min days, max days ("" = unset), sort.
   // The days are windowKey's, the same the map highlight sends.
   const key = useDebounced(
-    center && !invalid
+    center && w
       ? `${center.lat.toFixed(6)},${center.lon.toFixed(6)}|${radius}|${threshold}|${windowKey(w)}|${sort}`
       : "",
     250,
@@ -130,11 +136,10 @@ export function PermitsList({
           data-testid="permits-min-years"
           type="number"
           min={1}
+          max={MAX_YEARS}
           step={1}
-          value={w.minYears}
-          onChange={(e) =>
-            onWindow({ ...w, minYears: wholeYears(e.target.value) })
-          }
+          value={inputValue(windowText.minYears)}
+          onChange={(e) => onWindowText({ ...windowText, minYears: typed(e) })}
         />
       </div>
       <div className="row">
@@ -144,16 +149,11 @@ export function PermitsList({
           data-testid="permits-max-years"
           type="number"
           min={1}
+          max={MAX_YEARS}
           step={1}
           placeholder="no maximum"
-          value={w.maxYears ?? ""}
-          onChange={(e) =>
-            onWindow({
-              ...w,
-              maxYears:
-                e.target.value === "" ? undefined : wholeYears(e.target.value),
-            })
-          }
+          value={inputValue(windowText.maxYears)}
+          onChange={(e) => onWindowText({ ...windowText, maxYears: typed(e) })}
         />
       </div>
       <div className="row">
@@ -168,19 +168,24 @@ export function PermitsList({
           <option value="distance">Nearest first</option>
         </select>
       </div>
-      {invalid && (
-        <p className="error" data-testid="permits-window-error">
-          The maximum ({w.maxYears} years) is below the minimum ({w.minYears}{" "}
-          years); set a larger maximum or clear it.
+      {windowError && (
+        <p className="error" data-testid="permits-window-error" role="alert">
+          {windowError}
         </p>
       )}
       <p className="rule" data-testid="permits-rule">
         Only permits with status class Open (issued) count as open. Roofing work
         only: a permit that is not roofing work never counts; a
-        roof-coating-only permit counts and is tagged. Long-open: open at least{" "}
-        {yearsAndDays(w.minYears)}
-        {w.maxYears !== undefined && (
-          <> and at most {yearsAndDays(w.maxYears)}</>
+        roof-coating-only permit counts and is tagged. Long-open:{" "}
+        {w ? (
+          <>
+            open at least {yearsAndDays(w.minYears)}
+            {w.maxYears !== undefined && (
+              <> and at most {yearsAndDays(w.maxYears)}</>
+            )}
+          </>
+        ) : (
+          "in the open-duration window above, once it is valid"
         )}
         , within {radius} miles of the pin, on parcels whose roof is older than{" "}
         {threshold} years. Days = years × 365.25, rounded.

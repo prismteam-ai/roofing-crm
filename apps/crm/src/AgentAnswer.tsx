@@ -42,11 +42,24 @@ export function splitGaps(gaps: readonly string[]): {
   };
 }
 
+/** The Sources columns; each cell also carries its column's name, shown as the field's label when stacked. */
+const COLUMNS = ["ID", "Source", "License", "Attribution", "Collected at"];
+
 const KINDS: ReadonlyArray<[Citation["kind"], string]> = [
   ["parcel", "Parcels"],
   ["permit", "Permits"],
   ["contractor", "Contractor rows (by permit)"],
 ];
+
+/** Text whose space-separated tokens never break inside (a timestamp may otherwise break after a hyphen). */
+function Unbroken({ text }: { text: string }) {
+  return text.split(" ").map((t, i) => (
+    <span key={i}>
+      {i > 0 && " "}
+      <span className="nowrap">{t}</span>
+    </span>
+  ));
+}
 
 /**
  * One answer as §8 of the hosting plan renders it. A parcel ID in Sources is a button: it opens the parcel's
@@ -98,21 +111,23 @@ export function AgentAnswerView({
           if (!rows.length) return null;
           return (
             <div key={kind} className="table-wrap">
-              <table data-testid="agent-sources" data-kind={kind}>
+              <table
+                className="agent-sources"
+                data-testid="agent-sources"
+                data-kind={kind}
+              >
                 <caption>{label}</caption>
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Source</th>
-                    <th>License</th>
-                    <th>Attribution</th>
-                    <th>Collected at</th>
+                    {COLUMNS.map((c) => (
+                      <th key={c}>{c}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r) => (
                     <tr key={`${r.kind}/${r.id}`}>
-                      <td className="mono">
+                      <td className="mono" data-label={COLUMNS[0]}>
                         {kind === "parcel" ? (
                           <button
                             type="button"
@@ -127,10 +142,12 @@ export function AgentAnswerView({
                           r.id
                         )}
                       </td>
-                      <td>{r.source_name}</td>
-                      <td>{r.license ?? "—"}</td>
-                      <td>{r.attribution ?? "—"}</td>
-                      <td>{r.collected_at}</td>
+                      <td data-label={COLUMNS[1]}>{r.source_name}</td>
+                      <td data-label={COLUMNS[2]}>{r.license ?? "—"}</td>
+                      <td data-label={COLUMNS[3]}>{r.attribution ?? "—"}</td>
+                      <td data-label={COLUMNS[4]}>
+                        <Unbroken text={r.collected_at} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

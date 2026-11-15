@@ -1,5 +1,9 @@
 /** How the CRM shows permits: labels, the years-to-days conversion and the long-open test. */
-import type { DEFAULT_MIN_OPEN_DAYS } from "@oracle-la/api-client";
+import type {
+  DEFAULT_MIN_OPEN_DAYS,
+  MAX_OPEN_DAYS,
+} from "@oracle-la/api-client";
+import { readNumber, readOptional, type NumberRule } from "./numeric.ts";
 import type { JoinMethod, PermitStatusClass } from "./permitsApi.ts";
 
 /**
@@ -23,9 +27,55 @@ export const DEFAULT_WINDOW: OpenWindow = { minYears: 5 };
  * value), so the CRM keeps its own.
  */
 export const DEFAULT_MIN_DAYS: typeof DEFAULT_MIN_OPEN_DAYS = 1826;
-/** A maximum below the minimum: shown as a validation message, and no call is made. */
-export const windowInvalid = (w: OpenWindow) =>
-  w.maxYears !== undefined && w.maxYears < w.minYears;
+/** The API's largest open duration in days (typed as the API's constant): 100 years. */
+export const MAX_DAYS: typeof MAX_OPEN_DAYS = 36_525;
+export const MAX_YEARS = 100;
+
+/** The window's fields as typed (read by readWindow when the list and the map ask for it). */
+export interface WindowText {
+  minYears: string;
+  maxYears: string;
+}
+export const DEFAULT_WINDOW_TEXT: WindowText = {
+  minYears: String(DEFAULT_WINDOW.minYears),
+  maxYears: "",
+};
+const MIN_YEARS_RULE: NumberRule = {
+  label: "Open at least (years)",
+  min: 1,
+  max: MAX_YEARS,
+  whole: true,
+};
+const MAX_YEARS_RULE: NumberRule = {
+  label: "At most (years, optional)",
+  min: 1,
+  max: MAX_YEARS,
+  whole: true,
+};
+/**
+ * The window of the typed fields, or the message to show (then no call is made and the map keeps its last
+ * valid window): an empty or invalid field, or a maximum below the minimum.
+ */
+export function readWindow(
+  t: WindowText,
+):
+  | { window: OpenWindow; error?: undefined }
+  | { window?: undefined; error: string } {
+  const min = readNumber(t.minYears, MIN_YEARS_RULE);
+  const max = readOptional(t.maxYears, MAX_YEARS_RULE);
+  const errors = [min, max].flatMap((r) => ("error" in r ? [r.error] : []));
+  if ("error" in min || "error" in max) return { error: errors.join(" ") };
+  if (max.value !== undefined && max.value < min.value)
+    return {
+      error: `The maximum (${max.value} years) is below the minimum (${min.value} years); set a larger maximum or clear it.`,
+    };
+  return {
+    window: {
+      minYears: min.value,
+      ...(max.value === undefined ? {} : { maxYears: max.value }),
+    },
+  };
+}
 /** The window in days as the API takes it (min_open_days; max_open_days only when set). */
 export const windowDays = (
   w: OpenWindow,
@@ -58,10 +108,6 @@ export const openDaysText = (min: number, max: number | null | undefined) =>
   max === null || max === undefined
     ? `open at least ${fmt(min)} days`
     : `open ${fmt(min)} to ${fmt(max)} days`;
-/** A typed whole number of years, at least 1. */
-export const wholeYears = (v: string) =>
-  Math.max(1, Math.trunc(Number(v)) || 1);
-
 /** "5 years (1,826 days)". */
 export const yearsAndDays = (years: number) =>
   `${years} ${years === 1 ? "year" : "years"} (${fmt(yearsToDays(years))} days)`;
