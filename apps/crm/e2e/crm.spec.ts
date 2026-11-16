@@ -2339,7 +2339,7 @@ test.describe("Ask the agent (answers mocked)", () => {
       "data:req",
     ]);
     await expect(page.getByTestId("agent-notice")).toHaveText(
-      "Your question, the map center, the radius and the roof age threshold, and the data the agent reads are sent to Anthropic to answer it.",
+      "Your questions in this conversation, the map center, the radius, the roof age threshold and the data the agent reads are sent to Anthropic to answer them.",
     );
     await expect(page.getByTestId("agent-center")).toContainText(
       "Center: none yet",

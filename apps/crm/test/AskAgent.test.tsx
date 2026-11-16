@@ -325,11 +325,11 @@ describe("Ask the agent: warm-up and held questions", () => {
 });
 
 describe("Ask the agent: sending and statuses", () => {
-  test("the notice under the box says the question, the map center, the radius and the roof age threshold, and the data are sent to Anthropic", async () => {
+  test("the notice under the box says the questions in this conversation, the map center, the radius, the roof age threshold and the data are sent to Anthropic", async () => {
     await openWarm();
     expect(screen.getByTestId("agent-notice").textContent).toBe(NOTICE);
     expect(NOTICE).toBe(
-      "Your question, the map center, the radius and the roof age threshold, and the data the agent reads are sent to Anthropic to answer it.",
+      "Your questions in this conversation, the map center, the radius, the roof age threshold and the data the agent reads are sent to Anthropic to answer them.",
     );
   });
 
