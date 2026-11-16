@@ -1,7 +1,8 @@
 /**
  * The panel's warm-up:
- * GET /agent/warm and DATA_WARM_REQUESTS (2) data API requests, all sent at once, so the agent's function and two
- * data API instances are initialized before the first question. A question asked while a warm-up runs is held
+ * GET /agent/warm and DATA_WARM_REQUESTS (2) data API requests (explorer.sources, about 0.8 s each, so they are in
+ * flight together), all sent at once, so the agent's function and two data API instances are initialized before
+ * the first question. A question asked while a warm-up runs is held
  * until every warm-up request has answered (any response, or a network failure) or HOLD_MAX_MS after it was
  * asked, whichever comes first. When the panel's last data API response is older than REWARM_AFTER_MS (or there
  * was none), the warm-up runs again before the question and the question is held the same way.
@@ -17,7 +18,10 @@ export const DATA_WARM_REQUESTS = 2;
 export interface WarmupDeps {
   /** GET /agent/warm. */
   warmAgent: () => Promise<unknown>;
-  /** One cheap data API request (meta.info), never batched with the other. */
+  /**
+   * One data API request (explorer.sources, about 0.8 s, so the two are in flight together and reach two
+   * instances), never batched with the other.
+   */
   warmData: () => Promise<unknown>;
   now?: () => number;
 }

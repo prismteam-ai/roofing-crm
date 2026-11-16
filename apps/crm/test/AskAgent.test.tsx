@@ -25,7 +25,11 @@ import {
   STOPPED,
 } from "../e2e/agent-fixtures.ts";
 import { ANSWER_TIMEOUT_MS, createAgentApi } from "../src/agent-api.ts";
-import type { AgentCenter, AnswerResponse } from "../src/agent-types.ts";
+import type {
+  AgentCenter,
+  AgentScreen,
+  AnswerResponse,
+} from "../src/agent-types.ts";
 import { AskAgent, NOTICE } from "../src/AskAgent.tsx";
 import { Markdown } from "../src/markdown.tsx";
 import { HOLD_MAX_MS, REWARM_AFTER_MS } from "../src/warmup.ts";
@@ -120,14 +124,20 @@ let agent: ReturnType<typeof fakeAgent>;
 let warmData: ReturnType<typeof vi.fn<() => Promise<unknown>>>;
 let onOpenParcel: ReturnType<typeof vi.fn<(id: string) => void>>;
 const PIN: AgentCenter = { lat: 34.199, lon: -118.487, label: "map pin" };
+const SCREEN: AgentScreen = { radius_miles: 1, threshold_years: 15 };
 
 /** The section, open (as after a click on its heading) unless `open` is false; `center` null: no pin. */
-function renderTab(open = true, center: AgentCenter | null = PIN) {
+function renderTab(
+  open = true,
+  center: AgentCenter | null = PIN,
+  screenValues: AgentScreen = SCREEN,
+) {
   return render(
     <AskAgent
       agent={agent.api}
       warmData={warmData}
       center={center ?? undefined}
+      screen={screenValues}
       onOpenParcel={onOpenParcel}
       initiallyOpen={open}
     />,
@@ -136,6 +146,7 @@ function renderTab(open = true, center: AgentCenter | null = PIN) {
 const box = () =>
   screen.getByRole("textbox", { name: /question/i }) as HTMLTextAreaElement;
 const send = () => screen.getByTestId("agent-send") as HTMLButtonElement;
+const newConv = () => screen.getByTestId("agent-new") as HTMLButtonElement;
 async function ask(q: string) {
   fireEvent.change(box(), { target: { value: q } });
   fireEvent.click(send());
@@ -222,7 +233,7 @@ describe("Ask the agent: warm-up and held questions", () => {
     expect(screen.getByTestId("agent-status").textContent).toMatch(
       /waking up/i,
     );
-    expect(send().disabled).toBe(false);
+    expect(send().disabled).toBe(true);
     w.resolve({ status: 200, body: { status: "warm" } });
     data[0]!.resolve({});
     await flush();
@@ -234,8 +245,10 @@ describe("Ask the agent: warm-up and held questions", () => {
     expect(agent.answerRequests()[0]!.body).toEqual({
       question: QUESTION_1,
       center: PIN,
+      screen: SCREEN,
     });
     expect(screen.getByTestId("agent-answer").dataset.status).toBe("answered");
+    expect(send().disabled).toBe(false);
   });
 
   test("a held question is sent after 20 s when the warm-ups have not answered", async () => {
@@ -319,29 +332,39 @@ describe("Ask the agent: sending and statuses", () => {
     );
   });
 
-  test("Send is never disabled: idle, waking up, working, after an answer and after a failure", async () => {
+  test("Send and New conversation are disabled from the click (warm-up hold included) until the answer, a stop or an error; enabled whenever no question is pending", async () => {
     const w = deferred<{ status: number; body: unknown }>();
     agent.holdWarm(() => w.promise);
     const a = deferred<{ status: number; body: unknown }>();
-    agent.answers.push(a.promise, {
-      status: 500,
-      body: { error: "internal error" },
-    });
+    const stop = deferred<{ status: number; body: unknown }>();
+    const fail = deferred<{ status: number; body: unknown }>();
+    agent.answers.push(a.promise, stop.promise, fail.promise);
     renderTab();
-    expect(send().disabled).toBe(false);
+    expect([send().disabled, newConv().disabled]).toEqual([false, false]);
     await ask(QUESTION_1);
     expect(screen.getByTestId("agent-status").dataset.state).toBe("waking");
-    expect(send().disabled).toBe(false);
+    expect([send().disabled, newConv().disabled]).toEqual([true, true]);
     w.resolve({ status: 200, body: {} });
     await flush();
     expect(screen.getByTestId("agent-status").dataset.state).toBe("working");
-    expect(send().disabled).toBe(false);
+    expect([send().disabled, newConv().disabled]).toEqual([true, true]);
     a.resolve({ status: 200, body: ANSWERED });
     await flush();
-    expect(send().disabled).toBe(false);
+    expect([send().disabled, newConv().disabled]).toEqual([false, false]);
+    // A stop.
     await ask(QUESTION_2);
-    expect(screen.getByTestId("agent-message")).toBeTruthy();
-    expect(send().disabled).toBe(false);
+    expect([send().disabled, newConv().disabled]).toEqual([true, true]);
+    stop.resolve({ status: 200, body: STOPPED });
+    await flush();
+    expect(screen.getByTestId("agent-message").textContent).toMatch(/stopped/);
+    expect([send().disabled, newConv().disabled]).toEqual([false, false]);
+    // An error.
+    await ask(QUESTION_2);
+    expect([send().disabled, newConv().disabled]).toEqual([true, true]);
+    fail.resolve({ status: 500, body: { error: "internal error" } });
+    await flush();
+    expect(screen.getByTestId("agent-message").textContent).toMatch(/HTTP 500/);
+    expect([send().disabled, newConv().disabled]).toEqual([false, false]);
   });
 
   test("while waiting for the answer a working status shows; it goes when the answer is in", async () => {
@@ -357,16 +380,17 @@ describe("Ask the agent: sending and statuses", () => {
     expect(box().value).toBe("");
   });
 
-  test("a second Send while an answer is pending keeps the new question in the box and sends nothing", async () => {
+  test("a second submit while an answer is pending sends nothing and shows no message; the new question stays in the box", async () => {
     const a = deferred<{ status: number; body: unknown }>();
     agent.answers.push(a.promise);
     await openWarm();
     await ask(QUESTION_1);
-    await ask(QUESTION_2);
+    expect(send().disabled).toBe(true);
+    fireEvent.change(box(), { target: { value: QUESTION_2 } });
+    fireEvent.submit(screen.getByTestId("agent-form"));
+    await flush();
     expect(agent.answerRequests()).toHaveLength(1);
-    expect(screen.getByTestId("agent-message").textContent).toMatch(
-      /still working/i,
-    );
+    expect(screen.queryByTestId("agent-message")).toBeNull();
     expect(box().value).toBe(QUESTION_2);
     a.resolve({ status: 200, body: ANSWERED });
     await flush();
@@ -390,6 +414,7 @@ describe("Ask the agent: sending and statuses", () => {
     expect(agent.answerRequests()[1]!.body).toEqual({
       question: QUESTION_1,
       center: PIN,
+      screen: SCREEN,
     });
     expect(screen.queryByTestId("agent-message")).toBeNull();
   });
@@ -470,6 +495,7 @@ describe("Ask the agent: sending and statuses", () => {
     expect(agent.answerRequests()[0]!.body).toEqual({
       question: "Roofs older than 20 years within 2 miles?",
       center: { lat: 34.199, lon: -118.487, label: "map pin" },
+      screen: SCREEN,
     });
   });
 
@@ -490,12 +516,47 @@ describe("Ask the agent: sending and statuses", () => {
         agent={agent.api}
         warmData={warmData}
         center={PIN}
+        screen={SCREEN}
         onOpenParcel={onOpenParcel}
         initiallyOpen
       />,
     );
     await ask(QUESTION_2);
     expect(agent.answerRequests()[1]!.body).toMatchObject({ center: PIN });
+  });
+
+  test("the screen's radius and threshold show under the box beside the center and go with every question, as numbers, the values at the time of Send", async () => {
+    agent.answerWith(ANSWERED);
+    agent.answerWith(FOLLOW_UP);
+    const r = renderTab(true, PIN, { radius_miles: 0.25, threshold_years: 30 });
+    await flush();
+    expect(screen.getByTestId("agent-request-line").textContent).toBe(
+      "Center: map pin (34.199000, -118.487000) Radius: 0.25 mi. Roof older than: 30 years.",
+    );
+    await ask(QUESTION_1);
+    expect(agent.answerRequests()[0]!.body).toMatchObject({
+      screen: { radius_miles: 0.25, threshold_years: 30 },
+    });
+    r.rerender(
+      <AskAgent
+        agent={agent.api}
+        warmData={warmData}
+        center={PIN}
+        screen={{ radius_miles: 10, threshold_years: 120 }}
+        onOpenParcel={onOpenParcel}
+        initiallyOpen
+      />,
+    );
+    expect(screen.getByTestId("agent-screen").textContent).toBe(
+      "Radius: 10 mi. Roof older than: 120 years.",
+    );
+    await ask(QUESTION_2);
+    const sent = agent.answerRequests()[1]!.body!;
+    expect(sent.screen).toEqual({ radius_miles: 10, threshold_years: 120 });
+    expect(Object.keys(sent.screen as object)).toEqual([
+      "radius_miles",
+      "threshold_years",
+    ]);
   });
 
   test("without a pin no center is sent, and the line under the box says how to set one", async () => {
@@ -506,7 +567,10 @@ describe("Ask the agent: sending and statuses", () => {
       /^Center: none yet\. Drop a pin on the map or use your location, or name a place in the question\.$/,
     );
     await ask(QUESTION_1);
-    expect(agent.answerRequests()[0]!.body).toEqual({ question: QUESTION_1 });
+    expect(agent.answerRequests()[0]!.body).toEqual({
+      question: QUESTION_1,
+      screen: SCREEN,
+    });
   });
 });
 
@@ -524,6 +588,7 @@ describe("Ask the agent: conversation", () => {
     expect(agent.answerRequests()[1]!.body).toEqual({
       question: QUESTION_2,
       center: PIN,
+      screen: SCREEN,
       history: ANSWERED.history,
       session: ANSWERED.session,
       signature: DUMMY_SIGNATURE_1,
@@ -565,17 +630,22 @@ describe("Ask the agent: conversation", () => {
     expect(agent.answerRequests()[1]!.body).toEqual({
       question: QUESTION_2,
       center: PIN,
+      screen: SCREEN,
     });
   });
 
-  test("an answer that arrives after New conversation is dropped", async () => {
+  test("New conversation cannot drop a pending question: it is disabled until the answer is in", async () => {
     const a = deferred<{ status: number; body: unknown }>();
     agent.answers.push(a.promise);
     await openWarm();
     await ask(QUESTION_1);
-    fireEvent.click(screen.getByTestId("agent-new"));
+    expect(newConv().disabled).toBe(true);
+    fireEvent.click(newConv());
     a.resolve({ status: 200, body: ANSWERED });
     await flush();
+    expect(screen.getAllByTestId("agent-turn")).toHaveLength(1);
+    expect(newConv().disabled).toBe(false);
+    fireEvent.click(newConv());
     expect(screen.queryByTestId("agent-turn")).toBeNull();
   });
 });

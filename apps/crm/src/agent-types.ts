@@ -14,6 +14,14 @@ export interface AgentCenter {
   label: string;
 }
 
+/** The screen's search values sent with a question: the radius and the last valid roof age threshold. */
+export interface AgentScreen {
+  /** 0.1..10 in the agent API (the CRM's slider: 0.25..10). */
+  radius_miles: number;
+  /** An integer, 1..120. */
+  threshold_years: number;
+}
+
 export type PlaceBasis = "jurisdiction" | "postal_city";
 export type AreaBasis = PlaceBasis | "request_center" | "coordinates";
 
@@ -92,6 +100,8 @@ export interface AgentRequest {
   /** 1..2000 characters. */
   question: string;
   center?: AgentCenter;
+  /** Accepted by the agent API from the redeploy that adds it (before that its strict body schema answers 400). */
+  screen?: AgentScreen;
   history?: HistoryMessage[];
   session?: SessionState;
 }

@@ -43,7 +43,7 @@ const h = vi.hoisted(() => {
   const detail = vi.fn();
   const match = vi.fn();
   const runSummary = vi.fn();
-  const metaInfo = vi.fn();
+  const sources = vi.fn();
   const longOpen = vi.fn();
   const forParcel = vi.fn();
   const easeTo = vi.fn();
@@ -63,7 +63,7 @@ const h = vi.hoisted(() => {
     detail,
     match,
     runSummary,
-    metaInfo,
+    sources,
     longOpen,
     forParcel,
     easeTo,
@@ -187,8 +187,10 @@ vi.mock("@oracle-la/api-client", () => ({
         detail: { query: h.detail },
         match: { query: h.match },
       },
-      explorer: { runSummary: { query: h.runSummary } },
-      meta: { info: { query: h.metaInfo } },
+      explorer: {
+        runSummary: { query: h.runSummary },
+        sources: { query: h.sources },
+      },
       permits: {
         longOpen: { query: h.longOpen },
         forParcel: { query: h.forParcel },
@@ -2212,7 +2214,7 @@ describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
     h.clients.length = 0;
     h.easeTo.mockReset();
     h.match.mockReset();
-    h.metaInfo.mockReset().mockResolvedValue({ api_version: "test" });
+    h.sources.mockReset().mockResolvedValue({ sources: [] });
     h.runSummary.mockReset().mockResolvedValue(RUN);
     h.longOpen.mockReset().mockResolvedValue(EMPTY_LONG_OPEN);
     h.forParcel.mockReset().mockResolvedValue(NO_PERMITS);
@@ -2326,11 +2328,11 @@ describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
       ).not.toMatch(/agent|RAG/i);
       await wait(1000);
       expect(agentRequests).toEqual([]);
-      expect(h.metaInfo).not.toHaveBeenCalled();
+      expect(h.sources).not.toHaveBeenCalled();
     },
   );
 
-  test("the section sits in the aside right below the controls, collapsed; opening it warms the agent and two data API requests, each from a client of its own", async () => {
+  test("the section sits in the aside right below the controls, collapsed; opening it warms the agent and two data API requests (explorer.sources), each from a client of its own", async () => {
     await start();
     const section = screen.getByTestId("ask-agent");
     expect(section.closest("aside")).toBeTruthy();
@@ -2342,13 +2344,13 @@ describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
     );
     await wait(1000);
     expect(agentRequests).toEqual([]);
-    expect(h.metaInfo).not.toHaveBeenCalled();
+    expect(h.sources).not.toHaveBeenCalled();
     const clientsBefore = h.clients.length;
     await openSection();
     expect(agentRequests).toEqual([
       { method: "GET", path: "/agent/warm", body: undefined },
     ]);
-    expect(h.metaInfo).toHaveBeenCalledTimes(2);
+    expect(h.sources).toHaveBeenCalledTimes(2);
     // Two new data API clients, one per warm-up request: each request goes out on its own (never batched).
     expect(h.clients.slice(clientsBefore)).toEqual([
       { apiUrl: "https://api.test", apiToken: "t" },
@@ -2403,6 +2405,36 @@ describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
     } finally {
       Reflect.deleteProperty(navigator, "geolocation");
     }
+  });
+
+  test("the screen's radius and last valid threshold go with every question and show under the box", async () => {
+    const map = await start();
+    await openSection();
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    expect(screen.getByTestId("agent-screen").textContent).toBe(
+      "Radius: 1 mi. Roof older than: 15 years.",
+    );
+    fireEvent.change(screen.getByTestId("radius"), {
+      target: { value: "2.5" },
+    });
+    fireEvent.change(screen.getByTestId("threshold"), {
+      target: { value: "25" },
+    });
+    // An invalid threshold: the search and the agent keep the last valid one (25).
+    fireEvent.change(screen.getByTestId("threshold"), {
+      target: { value: "500" },
+    });
+    await wait(300);
+    expect(screen.getByTestId("threshold-error")).toBeTruthy();
+    expect(screen.getByTestId("agent-screen").textContent).toBe(
+      "Radius: 2.5 mi. Roof older than: 25 years.",
+    );
+    answers.push(ANSWERED);
+    await ask(QUESTION_1);
+    const body = agentRequests.find((r) => r.path === "/agent/answer")!
+      .body as { screen: unknown };
+    expect(body.screen).toEqual({ radius_miles: 2.5, threshold_years: 25 });
   });
 
   test("a parcel ID in Sources opens its detail (as a map click does) and pans the map to it; the pin and the search stay", async () => {

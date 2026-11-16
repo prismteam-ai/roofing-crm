@@ -1,6 +1,6 @@
 /**
  * The CRM's client for the hosted agent API (OracleLaAgentApi, the pipeline's apps/agent-api):
- * - POST <agentApiUrl>/agent/answer with { question, center?, history?, session?, signature? }; 200 is the
+ * - POST <agentApiUrl>/agent/answer with { question, center?, screen?, history?, session?, signature? }; 200 is the
  *   agent's answer plus `signature` (the server's MAC of the returned { history, session }).
  * - GET <agentApiUrl>/agent/warm: initializes the function (configuration, both parameters), no model call.
  * Both carry the CRM's own bearer token (the shared token authorizer; the agent serves crm and explorer).

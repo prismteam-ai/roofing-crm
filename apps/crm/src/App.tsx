@@ -21,7 +21,7 @@ import {
   type LatLon,
 } from "@roofing-crm/geo";
 import { createAgentApi, type AgentApi } from "./agent-api.ts";
-import type { AgentCenter } from "./agent-types.ts";
+import type { AgentCenter, AgentScreen } from "./agent-types.ts";
 import { AskAgent } from "./AskAgent.tsx";
 import { mapStyleUrl } from "./basemap.ts";
 import { loadConfig } from "./config.ts";
@@ -261,9 +261,10 @@ export function App() {
             setAgent({
               api: createAgentApi({ agentApiUrl: cfg.agentApiUrl, apiToken }),
               // A client of its own per warm-up request: each goes out as its own HTTP request (never batched
-              // with the other), so two data API instances are warmed.
+              // with the other). explorer.sources takes about 0.8 s, so the two overlap and two data API
+              // instances are warmed.
               warmData: () =>
-                createApiClient({ apiUrl, apiToken }).meta.info.query(),
+                createApiClient({ apiUrl, apiToken }).explorer.sources.query(),
             });
           }
         }
@@ -663,6 +664,11 @@ export function App() {
     () => center && { lat: center.lat, lon: center.lon, label: pinLabel },
     [center, pinLabel],
   );
+  /** The screen's search values sent with a question: the radius and the last valid threshold. */
+  const agentScreen = useMemo<AgentScreen>(
+    () => ({ radius_miles: radius, threshold_years: threshold }),
+    [radius, threshold],
+  );
   const countText = useMemo(
     () =>
       !center
@@ -807,6 +813,7 @@ export function App() {
             agent={agent.api}
             warmData={agent.warmData}
             center={agentCenter}
+            screen={agentScreen}
             onOpenParcel={(id) => void openParcelOnMap(id)}
           />
         )}

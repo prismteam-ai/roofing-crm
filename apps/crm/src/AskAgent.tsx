@@ -6,7 +6,11 @@ import {
   type AgentApi,
   type Conversation,
 } from "./agent-api.ts";
-import type { AgentCenter, AnswerResponse } from "./agent-types.ts";
+import type {
+  AgentCenter,
+  AgentScreen,
+  AnswerResponse,
+} from "./agent-types.ts";
 import { AgentAnswerView } from "./AgentAnswer.tsx";
 import { createWarmup, HOLD_MAX_MS, type Warmup } from "./warmup.ts";
 
@@ -28,25 +32,35 @@ export function centerText(center: AgentCenter | undefined): string {
     : "Center: none yet. Drop a pin on the map or use your location, or name a place in the question.";
 }
 
+/** The screen's search values under the box: what is sent with the question beside the center. */
+export function screenText(screen: AgentScreen): string {
+  return `Radius: ${screen.radius_miles} mi. Roof older than: ${screen.threshold_years} years.`;
+}
+
 /**
  * The "Ask the agent" section of the aside. Collapsed at first; opening
  * it starts the warm-up. The body stays mounted while collapsed, so the conversation (history, session,
  * signature) lives in component state only, never in storage; "New conversation" drops it. The center is the
- * map pin as the App gives it. The Send button is never disabled: a question asked during the warm-up is held
- * with a "waking up" status; a question asked while an answer is pending stays in the box with a note.
+ * map pin as the App gives it, the screen its radius and last valid roof age threshold; both go with every
+ * question. Send is disabled from the click until the answer, a stop or an error (a question asked during the
+ * warm-up is held with a "waking up" status, Send disabled too); "New conversation" is disabled while a question
+ * is pending.
  */
 export function AskAgent({
   agent,
   warmData,
   center,
+  screen,
   onOpenParcel,
   initiallyOpen = false,
 }: {
   agent: AgentApi;
-  /** One data API request (meta.info), never batched with the other. */
+  /** One data API request (explorer.sources, about 0.8 s, so the two overlap), never batched with the other. */
   warmData: () => Promise<unknown>;
   /** The map pin ({lat, lon, label: "map pin" | "my location"}), if one is placed. */
   center: AgentCenter | undefined;
+  /** The screen's radius and last valid roof age threshold (numbers only), sent with every question. */
+  screen: AgentScreen;
   /** Opens a parcel's detail and pans the map to it (a parcel ID in Sources). */
   onOpenParcel: (parcelId: string) => void;
   initiallyOpen?: boolean;
@@ -60,14 +74,19 @@ export function AskAgent({
   const [message, setMessage] = useState<string>();
   const [turns, setTurns] = useState<Turn[]>([]);
   const conversation = useRef<Conversation | undefined>(undefined);
-  const pending = useRef(false);
-  /** Bumped by "New conversation": an answer to an older conversation is dropped. */
-  const generation = useRef(0);
-  /** The center at the time of Send (read in the async send). */
+  /** True from the click on Send until the answer, a stop or an error: Send and "New conversation" are disabled. */
+  const [pending, setPending] = useState(false);
+  /** The same, read synchronously in send (a second submit before the re-render sends nothing). */
+  const pendingRef = useRef(false);
+  /** The center and the screen at the time of Send (read in the async send). */
   const centerRef = useRef(center);
+  const screenRef = useRef(screen);
   useEffect(() => {
     centerRef.current = center;
   }, [center]);
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
 
   useEffect(() => {
     if (open && !warmup.running() && warmup.stale()) void warmup.start();
@@ -78,13 +97,11 @@ export function AskAgent({
     const asked = question;
     const q = asked.trim();
     if (!q) return setMessage("Type a question first.");
-    if (pending.current)
-      return setMessage(
-        "Still working on the previous question: this one stays in the box until that answer is in.",
-      );
+    if (pendingRef.current) return;
     const c = centerRef.current;
-    pending.current = true;
-    const gen = generation.current;
+    const sc = screenRef.current;
+    pendingRef.current = true;
+    setPending(true);
     setMessage(undefined);
     try {
       // Re-warm: the data API instances may be cold again.
@@ -98,6 +115,10 @@ export function AskAgent({
       const res = await agent.answer({
         question: q,
         ...(c ? { center: { lat: c.lat, lon: c.lon, label: c.label } } : {}),
+        screen: {
+          radius_miles: sc.radius_miles,
+          threshold_years: sc.threshold_years,
+        },
         ...(conv
           ? {
               history: conv.history,
@@ -106,7 +127,6 @@ export function AskAgent({
             }
           : {}),
       });
-      if (gen !== generation.current) return;
       if (res.status === "stopped") {
         setMessage(stoppedMessage(res));
         return;
@@ -120,25 +140,21 @@ export function AskAgent({
       setTurns((t) => [...t, { question: q, answer: res }]);
       setQuestion((cur) => (cur === asked ? "" : cur));
     } catch (err) {
-      if (gen !== generation.current) return;
       setMessage(
         err instanceof AnswerError
           ? err.message
           : failureMessage({ kind: "network" }),
       );
     } finally {
-      // After "New conversation" the newer state owns these.
-      if (gen === generation.current) {
-        pending.current = false;
-        setStatus("idle");
-      }
+      pendingRef.current = false;
+      setPending(false);
+      setStatus("idle");
     }
   };
 
+  /** Disabled while a question is pending, so no answer can arrive for a dropped conversation. */
   const newConversation = () => {
-    generation.current++;
     conversation.current = undefined;
-    pending.current = false;
     setTurns([]);
     setMessage(undefined);
     setStatus("idle");
@@ -185,19 +201,21 @@ export function AskAgent({
               placeholder="e.g. Which properties within one mile have roofs older than 15 years?"
             />
           </label>
-          <p className="notice" data-testid="agent-center">
-            {centerText(center)}
+          <p className="notice" data-testid="agent-request-line">
+            <span data-testid="agent-center">{centerText(center)}</span>{" "}
+            <span data-testid="agent-screen">{screenText(screen)}</span>
           </p>
           <p className="notice" data-testid="agent-notice">
             {NOTICE}
           </p>
           <div className="row">
-            <button type="submit" data-testid="agent-send">
+            <button type="submit" data-testid="agent-send" disabled={pending}>
               Send
             </button>
             <button
               type="button"
               data-testid="agent-new"
+              disabled={pending}
               onClick={newConversation}
             >
               New conversation

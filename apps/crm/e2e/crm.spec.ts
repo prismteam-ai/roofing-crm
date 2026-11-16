@@ -1969,12 +1969,15 @@ async function mockAnswers(page: Page, replies: Reply[], log?: string[]) {
   return bodies;
 }
 
-/** Records the warm-up traffic in order: "warm:req", "warm:res", "data:req", "data:res" (meta.info). */
+/** The screen values sent with a question on a fresh page: radius 1 mile, roof older than 15 years. */
+const SCREEN_DEFAULT = { radius_miles: 1, threshold_years: 15 };
+
+/** Records the warm-up traffic in order: "warm:req", "warm:res", "data:req", "data:res" (explorer.sources). */
 function watchWarmup(page: Page, log: string[]) {
   const kind = (url: string) =>
     /\/agent\/warm$/.test(new URL(url).pathname)
       ? "warm"
-      : /\/trpc\/meta\.info$/.test(new URL(url).pathname)
+      : /\/trpc\/explorer\.sources$/.test(new URL(url).pathname)
         ? "data"
         : null;
   page.on("request", (r) => {
@@ -2073,7 +2076,7 @@ test.describe("Ask the agent (answers mocked)", () => {
       center: { lat: number; lon: number; label: string };
     };
     expect(sent.question).toBe(QUESTION_1);
-    expect(Object.keys(sent).sort()).toEqual(["center", "question"]);
+    expect(Object.keys(sent).sort()).toEqual(["center", "question", "screen"]);
     expect(sent.center.label).toBe("map pin");
     expect(sent.center.lat.toFixed(6)).toBe(pin[0]!.toFixed(6));
     expect(sent.center.lon.toFixed(6)).toBe(pin[1]!.toFixed(6));
@@ -2160,6 +2163,7 @@ test.describe("Ask the agent (answers mocked)", () => {
     await expect(page.getByTestId("agent-turn")).toHaveCount(2);
     expect(bodies[1]).toEqual({
       question: QUESTION_2,
+      screen: SCREEN_DEFAULT,
       history: ANSWERED.history,
       session: ANSWERED.session,
       signature: ANSWERED.signature,
@@ -2171,7 +2175,7 @@ test.describe("Ask the agent (answers mocked)", () => {
     await expect(page.getByTestId("agent-turn")).toHaveCount(0);
     await ask(page, QUESTION_1);
     await expect(page.getByTestId("agent-turn")).toHaveCount(1);
-    expect(bodies[2]).toEqual({ question: QUESTION_1 });
+    expect(bodies[2]).toEqual({ question: QUESTION_1, screen: SCREEN_DEFAULT });
   });
 
   test("31. a question asked before the warm-up answered is held with a waking-up status and sent when the agent and both data requests answered", async ({
@@ -2195,7 +2199,9 @@ test.describe("Ask the agent (answers mocked)", () => {
       "waking",
     );
     await expect(page.getByTestId("agent-status")).toContainText("Waking up");
-    await expect(page.getByTestId("agent-send")).toBeEnabled();
+    // Pending from the click: Send and New conversation are disabled during the hold.
+    await expect(page.getByTestId("agent-send")).toBeDisabled();
+    await expect(page.getByTestId("agent-new")).toBeDisabled();
     await expect.poll(() => seen(log, "data:res")).toBe(2);
     expect(bodies).toEqual([]);
     release();
@@ -2206,6 +2212,8 @@ test.describe("Ask the agent (answers mocked)", () => {
     // The answer went out only after the warm-up's agent and data responses.
     expect(log.indexOf("answer")).toBeGreaterThan(log.lastIndexOf("warm:res"));
     expect(log.indexOf("answer")).toBeGreaterThan(log.lastIndexOf("data:res"));
+    await expect(page.getByTestId("agent-send")).toBeEnabled();
+    await expect(page.getByTestId("agent-new")).toBeEnabled();
   });
 
   test("32. re-warm: more than 4 minutes after the last data API response, the warm-up runs again before the question", async ({
@@ -2233,6 +2241,53 @@ test.describe("Ask the agent (answers mocked)", () => {
     expect(log.lastIndexOf("answer")).toBeGreaterThan(
       log.lastIndexOf("warm:res"),
     );
+  });
+
+  test("38. the screen's radius and last valid roof age threshold go with the question as numbers and show under the box; Send and New conversation are disabled until the answer is in", async ({
+    page,
+  }) => {
+    let release!: () => void;
+    const released = new Promise<void>((r) => (release = r));
+    const bodies: Array<Record<string, unknown>> = [];
+    await page.route("**/agent/answer", async (route) => {
+      const req = route.request();
+      if (req.method() === "OPTIONS")
+        return route.fulfill({ status: 204, headers: AGENT_CORS });
+      bodies.push(req.postDataJSON() as Record<string, unknown>);
+      await released;
+      await route.fulfill({
+        status: 200,
+        headers: { ...AGENT_CORS, "content-type": "application/json" },
+        body: JSON.stringify(ANSWERED),
+      });
+    });
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the center
+    await page.getByTestId("radius").fill("2.5");
+    await page.getByTestId("threshold").fill("25");
+    // An invalid threshold: the search and the agent keep the last valid one.
+    await page.getByTestId("threshold").fill("500");
+    await expect(page.getByTestId("threshold-error")).toBeVisible();
+    await openAgent(page);
+    await expect(page.getByTestId("agent-screen")).toHaveText(
+      "Radius: 2.5 mi. Roof older than: 25 years.",
+    );
+    await ask(page, QUESTION_1);
+    await expect(page.getByTestId("agent-send")).toBeDisabled();
+    await expect(page.getByTestId("agent-new")).toBeDisabled();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0]!.screen).toEqual({
+      radius_miles: 2.5,
+      threshold_years: 25,
+    });
+    release();
+    await expect(page.getByTestId("agent-answer")).toHaveAttribute(
+      "data-status",
+      "answered",
+    );
+    await expect(page.getByTestId("agent-send")).toBeEnabled();
+    await expect(page.getByTestId("agent-new")).toBeEnabled();
   });
 
   test("33. a parcel ID in Sources opens the parcel's detail and pans the map to it; the pin stays", async ({
