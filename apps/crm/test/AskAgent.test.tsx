@@ -31,6 +31,7 @@ import type {
   AnswerResponse,
 } from "../src/agent-types.ts";
 import { AskAgent, NOTICE } from "../src/AskAgent.tsx";
+import { dateOnly } from "../src/dates.ts";
 import { Markdown } from "../src/markdown.tsx";
 import { HOLD_MAX_MS, REWARM_AFTER_MS } from "../src/warmup.ts";
 
@@ -489,7 +490,7 @@ describe("Ask the agent: sending and statuses", () => {
     agent.answerWith(ANSWERED);
     await openWarm();
     expect(screen.getByTestId("agent-center").textContent).toBe(
-      "Center: map pin (34.199000, -118.487000)",
+      "Center: map pin (34.19900, -118.48700)",
     );
     await ask("Roofs older than 20 years within 2 miles?");
     expect(agent.answerRequests()[0]!.body).toEqual({
@@ -505,7 +506,7 @@ describe("Ask the agent: sending and statuses", () => {
     const r = renderTab(true, { lat: 34.1, lon: -118.3, label: "my location" });
     await flush();
     expect(screen.getByTestId("agent-center").textContent).toBe(
-      "Center: my location (34.100000, -118.300000)",
+      "Center: my location (34.10000, -118.30000)",
     );
     await ask(QUESTION_1);
     expect(agent.answerRequests()[0]!.body).toMatchObject({
@@ -531,7 +532,7 @@ describe("Ask the agent: sending and statuses", () => {
     const r = renderTab(true, PIN, { radius_miles: 0.25, threshold_years: 30 });
     await flush();
     expect(screen.getByTestId("agent-request-line").textContent).toBe(
-      "Center: map pin (34.199000, -118.487000) Radius: 0.25 mi. Roof older than: 30 years.",
+      "Center: map pin (34.19900, -118.48700) Radius: 0.25 mi. Roof older than: 30 years.",
     );
     await ask(QUESTION_1);
     expect(agent.answerRequests()[0]!.body).toMatchObject({
@@ -651,7 +652,7 @@ describe("Ask the agent: conversation", () => {
 });
 
 describe("Ask the agent: rendering", () => {
-  test("text as markdown, How I got this collapsed, Sources by kind, Gaps answer-first then Always true, unverified IDs flagged", async () => {
+  test("text as markdown, How I got this collapsed, Sources closed with their count and by kind, dates as YYYY-MM-DD, Gaps open, answer-first then Always true, unverified IDs flagged", async () => {
     agent.answerWith(ANSWERED);
     await openWarm();
     await ask(QUESTION_1);
@@ -677,7 +678,17 @@ describe("Ask the agent: rendering", () => {
     expect(how.querySelector("summary")!.textContent).toBe("How I got this");
     expect(how.textContent).toContain(ANSWERED.reasoning);
     expect(how.textContent).toContain(ANSWERED.assumptions[0]);
-    // Sources grouped by kind, each row ID, source, license, attribution, collected at.
+    // Sources: closed until opened, the count of cited records in the header.
+    const sources = within(a).getByTestId(
+      "agent-sources-details",
+    ) as HTMLDetailsElement;
+    expect(sources.open).toBe(false);
+    expect(sources.querySelector("summary")!.textContent).toBe(
+      `Sources (${ANSWERED.records.length})`,
+    );
+    // Gaps are not collapsed.
+    expect(within(a).getByTestId("agent-gaps").closest("details")).toBeNull();
+    // Sources grouped by kind, each row ID, source, license, attribution, collected at (the date).
     const tables = within(a).getAllByTestId("agent-sources");
     expect(tables.map((t) => t.dataset.kind)).toEqual([
       "parcel",
@@ -703,15 +714,20 @@ describe("Ask the agent: rendering", () => {
       parcel!.source_name,
       "—",
       "—",
-      parcel!.collected_at,
+      "2026-11-12",
     ]);
+    expect(parcel!.collected_at).toBe("2026-11-12T00:26:18.151Z");
     expect(cells(tables[1]!)).toEqual([
       permit!.id,
       permit!.source_name,
       permit!.license,
       permit!.attribution,
-      permit!.collected_at,
+      "2026-11-12",
     ]);
+    // A range within one day is that date once.
+    expect(permit!.collected_at).toBe(
+      "2026-11-12T13:10:47.174Z to 2026-11-12T13:14:48.715Z",
+    );
     // Gaps: this answer's first, the standing ones under "Always true".
     expect(
       [...within(a).getByTestId("agent-gaps").querySelectorAll("li")].map(
@@ -742,6 +758,18 @@ describe("Ask the agent: rendering", () => {
           .find((t) => t.dataset.kind === kind)!
           .querySelector("button"),
       ).toBeNull();
+  });
+
+  test("dates as dates: every timestamp shows as YYYY-MM-DD; a range over two days keeps both ends; other text is unchanged", () => {
+    expect(dateOnly("2026-11-12T00:26:18.151Z")).toBe("2026-11-12");
+    expect(
+      dateOnly("2026-11-11T23:59:00.000Z to 2026-11-12T00:01:00.000Z"),
+    ).toBe("2026-11-11 to 2026-11-12");
+    expect(
+      dateOnly("2026-11-12T13:10:47.174Z to 2026-11-12T13:14:48.715Z"),
+    ).toBe("2026-11-12");
+    expect(dateOnly("2026-11-12")).toBe("2026-11-12");
+    expect(dateOnly("not stated")).toBe("not stated");
   });
 
   test("markdown is rendered without raw HTML; only http(s) links become links", () => {

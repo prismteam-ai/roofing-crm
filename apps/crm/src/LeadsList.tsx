@@ -4,6 +4,7 @@ import {
   type Lead,
   type LeadStatus,
 } from "@roofing-crm/leads-client";
+import { dateOnly } from "./dates.ts";
 import type { LeadsInSearch } from "./leadsInSearch.ts";
 
 /** The list reads at most this many pages of this many leads. */
@@ -60,10 +61,7 @@ export function LeadsList({
   );
   return (
     <section className="leads" data-testid="leads">
-      <h3>
-        Leads <span data-testid="leads-count">{shown.length}</span> /{" "}
-        {leads.length}
-      </h3>
+      <h3>Leads</h3>
       <div className="row">
         <select
           aria-label="Lead status filter"
@@ -136,19 +134,28 @@ export function LeadsList({
           {error}
         </p>
       )}
-      <ul className="list">
-        {shown.map((l) => (
-          <li
-            key={l.parcel_id}
-            data-testid="lead-item"
-            data-parcel={l.parcel_id}
-            onClick={() => onOpen(l.parcel_id)}
-          >
-            <b>{l.parcel_id}</b> · {l.status} · updated{" "}
-            {l.updated_at.slice(0, 10)}
-          </li>
-        ))}
-      </ul>
+      <details className="list-details" data-testid="leads-details">
+        <summary>
+          Leads list{" "}
+          <span className="notice">
+            <span data-testid="leads-count">{shown.length}</span> /{" "}
+            {leads.length}
+          </span>
+        </summary>
+        <ul className="list">
+          {shown.map((l) => (
+            <li
+              key={l.parcel_id}
+              data-testid="lead-item"
+              data-parcel={l.parcel_id}
+              onClick={() => onOpen(l.parcel_id)}
+            >
+              <b>{l.parcel_id}</b> · {l.status} · updated{" "}
+              {dateOnly(l.updated_at)}
+            </li>
+          ))}
+        </ul>
+      </details>
     </section>
   );
 }

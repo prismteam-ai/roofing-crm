@@ -10,14 +10,14 @@ import {
 describe("search key", () => {
   test("without the ownership filter the key is pin, radius and threshold; with it, the basis is appended", () => {
     expect(searchKeyOf(34.199, -118.487, 1, 15)).toBe(
-      "34.199000,-118.487000|1|15",
+      "34.19900,-118.48700|1|15",
     );
     expect(searchKeyOf(34.199, -118.487, 1, 15, "both")).toBe(
-      "34.199000,-118.487000|1|15|both",
+      "34.19900,-118.48700|1|15|both",
     );
   });
   test("filterOfKey gives the search filter, with ownership_basis only when the key carries a known basis", () => {
-    const off = filterOfKey("34.199000,-118.487000|2.5|80");
+    const off = filterOfKey("34.19900,-118.48700|2.5|80");
     expect(off).toEqual({
       lat: 34.199,
       lon: -118.487,
@@ -26,7 +26,7 @@ describe("search key", () => {
     });
     expect("ownership_basis" in off).toBe(false);
     for (const b of ["recording", "base_year", "both"] as const)
-      expect(filterOfKey(`34.199000,-118.487000|1|15|${b}`)).toEqual({
+      expect(filterOfKey(`34.19900,-118.48700|1|15|${b}`)).toEqual({
         lat: 34.199,
         lon: -118.487,
         radius_miles: 1,
@@ -34,13 +34,13 @@ describe("search key", () => {
         ownership_basis: b,
       });
     expect(
-      "ownership_basis" in filterOfKey("34.199000,-118.487000|1|15|owner"),
+      "ownership_basis" in filterOfKey("34.19900,-118.48700|1|15|owner"),
     ).toBe(false);
   });
 });
 
 describe("parcels.match question", () => {
-  const KEY = "34.199000,-118.487000|1|15|base_year";
+  const KEY = "34.19900,-118.48700|1|15|base_year";
   test("'Leads in this search' alone: the search filter, no long-open fields", () => {
     expect(questionOf(KEY)).toBe(KEY);
     expect(matchInputOf(questionOf(KEY)!)).toEqual(filterOfKey(KEY));

@@ -59,6 +59,7 @@ import {
 } from "./permitDisplay.ts";
 import { permitsApi } from "./permitsApi.ts";
 import { PermitsList } from "./PermitsList.tsx";
+import { coordText, roundCoord, roundPin } from "./pin.ts";
 import { useDebounced } from "./useDebounced.ts";
 
 const EMPTY = { type: "FeatureCollection", features: [] } as const;
@@ -143,8 +144,8 @@ export function App() {
   /** The served run (explorer.runSummary), for the data notice. */
   const [run, setRun] = useState<{ run?: RunSummary["run"]; error?: string }>();
   // Debounce a stable primitive key (an object would change identity on every render and re-fire forever).
-  // The search key: pin rounded to 6 decimals (as in data-pin-*), radius, threshold and, when the ownership
-  // filter is on, its basis (searchKeyOf).
+  // The search key: the pin (already rounded to 5 decimals where it is placed, as in data-pin-*), radius,
+  // threshold and, when the ownership filter is on, its basis (searchKeyOf).
   const key = useDebounced(
     center
       ? searchKeyOf(
@@ -192,7 +193,7 @@ export function App() {
     }
   }, []);
 
-  /** The single writer of the map centre attributes (read by tests and tooling), called on "load" and "moveend". */
+  /** The single writer of the map center attributes (read by tests and tooling), called on "load" and "moveend". */
   const writeCenter = useCallback((m: MapLibreMap) => {
     const c = m.getCenter();
     mapEl.current!.dataset.centerLat = c.lat.toFixed(6);
@@ -206,15 +207,34 @@ export function App() {
     m?.easeTo({ center: [p.lon, p.lat], zoom: m.getZoom(), duration: 0 });
   }, []);
 
-  /** Moves the pin (a new search) and pans the map to it. */
-  const recentre = useCallback(
-    (p: LatLon, label: PinLabel = "map pin") => {
-      setCenter(p);
+  /** Fits the map to the radius circle around a point (no animation). */
+  const fitCircle = useCallback((p: LatLon, radiusMiles: number) => {
+    const ring = circleRing(p, radiusMiles);
+    const lons = ring.map((c) => c[0]!),
+      lats = ring.map((c) => c[1]!);
+    map.current?.fitBounds(
+      [
+        [Math.min(...lons), Math.min(...lats)],
+        [Math.max(...lons), Math.max(...lats)],
+      ],
+      { padding: 24, duration: 0 },
+    );
+  }, []);
+
+  /**
+   * Moves the pin (a new search), rounded to 5 decimals here, where it is placed, and pans the map to it; with
+   * `fitRadius` the map is fitted to that radius circle instead.
+   */
+  const recenter = useCallback(
+    (p: LatLon, label: PinLabel = "map pin", fitRadius?: number) => {
+      const pin = roundPin(p);
+      setCenter(pin);
       setPinLabel(label);
       setOffset(0);
-      panTo(p);
+      if (fitRadius === undefined) panTo(pin);
+      else fitCircle(pin, fitRadius);
     },
-    [panTo],
+    [panTo, fitCircle],
   );
 
   /**
@@ -268,8 +288,8 @@ export function App() {
             });
           }
         }
-        const lat = Number(params.get("lat")),
-          lon = Number(params.get("lon")),
+        const lat = roundCoord(Number(params.get("lat"))),
+          lon = roundCoord(Number(params.get("lon"))),
           z = Number(params.get("z"));
         const m = new MapLibreMap({
           container: mapEl.current!,
@@ -372,7 +392,7 @@ export function App() {
               return;
             }
           }
-          recentre({ lat: e.lngLat.lat, lon: e.lngLat.lng });
+          recenter({ lat: e.lngLat.lat, lon: e.lngLat.lng });
         });
         m.on("moveend", () => writeCenter(m));
         // Render marker, on every "idle" (everything drawn): the search key of the drawn points and the zoom.
@@ -385,7 +405,7 @@ export function App() {
       })
       .catch((e: Error) => setError(e.message));
     return () => map.current?.remove();
-  }, [openDetail, recentre, writeCenter]);
+  }, [openDetail, recenter, writeCenter]);
 
   // Pin and radius circle.
   useEffect(() => {
@@ -393,8 +413,8 @@ export function App() {
     if (!m || !center) return;
     marker.current ??= new Marker({ color: "#232b37" });
     marker.current.setLngLat([center.lon, center.lat]).addTo(m);
-    mapEl.current!.dataset.pinLat = center.lat.toFixed(6);
-    mapEl.current!.dataset.pinLon = center.lon.toFixed(6);
+    mapEl.current!.dataset.pinLat = coordText(center.lat);
+    mapEl.current!.dataset.pinLon = coordText(center.lon);
     const ring = circleRing(center, radius);
     (m.getSource("radius") as GeoJSONSource | undefined)?.setData({
       type: "Feature",
@@ -630,12 +650,16 @@ export function App() {
     setGpsMsg(undefined);
     if (!navigator.geolocation)
       return setGpsMsg("This browser has no GPS/geolocation.");
+    // The map zooms to the radius circle around the location, and the open details panel closes.
     navigator.geolocation.getCurrentPosition(
-      (p) =>
-        recentre(
+      (p) => {
+        setDetail(undefined);
+        recenter(
           { lat: p.coords.latitude, lon: p.coords.longitude },
           "my location",
-        ),
+          radius,
+        );
+      },
       (e) => setGpsMsg(`Location unavailable: ${e.message}`),
       { timeout: 10_000 },
     );
@@ -772,10 +796,13 @@ export function App() {
               then.
             </p>
           )}
-          <p className="rule" data-testid="rule">
-            {search?.rule.text ??
-              `Roof age counts from the effective roof year: the later of the assessor year built and the year of the latest finaled roofing permit. Older than ${threshold} years means an effective roof year before roll year − ${threshold}.`}
-          </p>
+          <details className="rule-details" data-testid="rule-details">
+            <summary>Roof age rule</summary>
+            <p className="rule" data-testid="rule">
+              {search?.rule.text ??
+                `Roof age counts from the effective roof year: the later of the assessor year built and the year of the latest finaled roofing permit. Older than ${threshold} years means an effective roof year before roll year − ${threshold}.`}
+            </p>
+          </details>
           <fieldset className="ownership" data-testid="ownership">
             <legend>
               <label>
@@ -810,17 +837,30 @@ export function App() {
                       />{" "}
                       {label}
                     </label>
-                    <p className="notice" data-testid="ownership-text">
-                      {OWNERSHIP_TEXTS[basis].text}
-                    </p>
-                    <p className="notice" data-testid="ownership-weakness">
-                      Weakness: {OWNERSHIP_TEXTS[basis].weakness}
-                    </p>
                   </div>
                 ))}
-                <p className="notice" data-testid="ownership-proxy-note">
-                  {PROXY_NOTE}
-                </p>
+                {/* Each basis's text and weakness and the proxy note, once in the page (the data API's own words). */}
+                <details className="rule-details" data-testid="ownership-rules">
+                  <summary>Ownership rules</summary>
+                  <div className="rule">
+                    {BASES.map(([basis, label]) => (
+                      <div
+                        key={basis}
+                        data-testid="ownership-basis-rule"
+                        data-basis={basis}
+                      >
+                        <b>{label}</b>
+                        <p data-testid="ownership-text">
+                          {OWNERSHIP_TEXTS[basis].text}
+                        </p>
+                        <p data-testid="ownership-weakness">
+                          Weakness: {OWNERSHIP_TEXTS[basis].weakness}
+                        </p>
+                      </div>
+                    ))}
+                    <p data-testid="ownership-proxy-note">{PROXY_NOTE}</p>
+                  </div>
+                </details>
               </>
             )}
           </fieldset>
@@ -840,18 +880,7 @@ export function App() {
           </p>
         )}
         {search && (
-          <section>
-            {search.ownership && (
-              <p
-                className="notice"
-                data-testid="ownership-rule"
-                data-basis={search.ownership.basis}
-              >
-                Ownership filter ({search.ownership.basis}):{" "}
-                {search.ownership.text} Weakness: {search.ownership.weakness}{" "}
-                {search.ownership.proxy_note}
-              </p>
-            )}
+          <section className="results" data-testid="results-section">
             {points?.truncated && (
               <p className="notice" data-testid="points-truncated">
                 Map shows the nearest{" "}
@@ -861,41 +890,49 @@ export function App() {
                 {points.count.toLocaleString("en-US")}.
               </p>
             )}
-            <div className="row">
-              <span className="notice">
-                Showing {search.items.length ? offset + 1 : 0}–
-                {offset + search.items.length} by distance
-              </span>
-              <button
-                disabled={offset === 0}
-                onClick={() => void page(Math.max(0, offset - 50))}
-              >
-                Prev
-              </button>
-              <button
-                disabled={search.next_offset === null}
-                onClick={() => void page(search.next_offset!)}
-              >
-                Next
-              </button>
-            </div>
-            <ul className="list" data-testid="results">
-              {search.items.map((i) => (
-                <li
-                  key={i.parcel_id}
-                  data-testid="result"
-                  data-distance={i.distance_miles}
-                  onClick={() => void openDetail(i.parcel_id)}
+            <details className="list-details" data-testid="results-details">
+              <summary>
+                Results{" "}
+                <span className="notice" data-testid="results-showing">
+                  {search.count.toLocaleString("en-US")} · showing{" "}
+                  {search.items.length ? offset + 1 : 0}–
+                  {offset + search.items.length} by distance
+                  {search.ownership &&
+                    ` · ownership filter: ${search.ownership.basis}`}
+                </span>
+              </summary>
+              <div className="row">
+                <button
+                  disabled={offset === 0}
+                  onClick={() => void page(Math.max(0, offset - 50))}
                 >
-                  <b>{i.address ?? i.parcel_id}</b>
-                  <br />
-                  {i.year_built === null
-                    ? "year built not in source"
-                    : `built ${i.year_built}`}{" "}
-                  · {roofText(i)} · {i.distance_miles} mi
-                </li>
-              ))}
-            </ul>
+                  Prev
+                </button>
+                <button
+                  disabled={search.next_offset === null}
+                  onClick={() => void page(search.next_offset!)}
+                >
+                  Next
+                </button>
+              </div>
+              <ul className="list" data-testid="results">
+                {search.items.map((i) => (
+                  <li
+                    key={i.parcel_id}
+                    data-testid="result"
+                    data-distance={i.distance_miles}
+                    onClick={() => void openDetail(i.parcel_id)}
+                  >
+                    <b>{i.address ?? i.parcel_id}</b>
+                    <br />
+                    {i.year_built === null
+                      ? "year built not in source"
+                      : `built ${i.year_built}`}{" "}
+                    · {roofText(i)} · {i.distance_miles} mi
+                  </li>
+                ))}
+              </ul>
+            </details>
           </section>
         )}
         {permits && (

@@ -6,6 +6,8 @@ import {
   type LeadStatus,
 } from "@roofing-crm/leads-client";
 
+import { dateOnly } from "./dates.ts";
+
 export const NOTES_HINT =
   "No owner names or contact details. Email addresses, phone numbers with an area code (with or without brackets, spaces, dots or hyphens) and 7 or more digits in a row (which covers parcel IDs) are refused.";
 
@@ -86,7 +88,7 @@ function LeadForm({
     >
       {lead && (
         <p className="notice" data-testid="lead-updated">
-          Updated {lead.updated_at}
+          Updated {dateOnly(lead.updated_at)}
         </p>
       )}
       <label>

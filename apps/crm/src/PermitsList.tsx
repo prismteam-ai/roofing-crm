@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { LatLon } from "@roofing-crm/geo";
 import { inputValue, typed } from "./numeric.ts";
+import { coordText } from "./pin.ts";
 import {
   joinLabel,
   longOpenTag,
@@ -72,11 +73,11 @@ export function PermitsList({
   onOpen: (parcelId: string) => void;
 }) {
   const [sort, setSort] = useState<Sort>("open_days");
-  // Key: pin (6 decimals, as the parcel search), radius, threshold, min days, max days ("" = unset), sort.
+  // Key: pin (5 decimals, as the parcel search), radius, threshold, min days, max days ("" = unset), sort.
   // The days are windowKey's, the same the map highlight sends.
   const key = useDebounced(
     center && w
-      ? `${center.lat.toFixed(6)},${center.lon.toFixed(6)}|${radius}|${threshold}|${windowKey(w)}|${sort}`
+      ? `${coordText(center.lat)},${coordText(center.lon)}|${radius}|${threshold}|${windowKey(w)}|${sort}`
       : "",
     250,
   );
@@ -173,38 +174,43 @@ export function PermitsList({
           {windowError}
         </p>
       )}
-      <p className="rule" data-testid="permits-rule">
-        Only permits with status class Open (issued) count as open. Roofing work
-        only: a permit that is not roofing work never counts; a
-        roof-coating-only permit counts and is tagged. Long-open:{" "}
-        {w ? (
-          <>
-            open at least {yearsAndDays(w.minYears)}
-            {w.maxYears !== undefined && (
-              <> and at most {yearsAndDays(w.maxYears)}</>
-            )}
-          </>
-        ) : (
-          "in the open-duration window above, once it is valid"
-        )}
-        , within {radius} miles of the pin, on parcels whose roof is older than{" "}
-        {threshold} years. Days = years × 365.25, rounded.
-        {data?.rule.text && (
-          <>
-            {" "}
-            <span data-testid="permits-api-rule">{data.rule.text}</span>
-          </>
-        )}
-      </p>
+      <details className="rule-details" data-testid="permits-rule-details">
+        <summary>Long-open rule</summary>
+        <p className="rule" data-testid="permits-rule">
+          Only permits with status class Open (issued) count as open. Roofing
+          work only: a permit that is not roofing work never counts; a
+          roof-coating-only permit counts and is tagged. Long-open:{" "}
+          {w ? (
+            <>
+              open at least {yearsAndDays(w.minYears)}
+              {w.maxYears !== undefined && (
+                <> and at most {yearsAndDays(w.maxYears)}</>
+              )}
+            </>
+          ) : (
+            "in the open-duration window above, once it is valid"
+          )}
+          , within {radius} miles of the pin, on parcels whose roof is older
+          than {threshold} years. Days = years × 365.25, rounded.
+          {data?.rule.text && (
+            <>
+              {" "}
+              <span data-testid="permits-api-rule">{data.rule.text}</span>
+            </>
+          )}
+        </p>
+      </details>
       {error && (
         <p className="error" data-testid="permits-error">
           Permits unavailable: {error}
         </p>
       )}
       {loading && <p className="notice">Searching permits…</p>}
-      {data && (
-        <>
-          <div className="row">
+      {/* Mounted while there is a pin, so an opened list stays open through new searches. */}
+      <details className="list-details" data-testid="permits-details">
+        <summary>
+          Permits{" "}
+          {data && (
             <span
               className="notice"
               data-testid="permits-count"
@@ -213,74 +219,82 @@ export function PermitsList({
               {data.count.toLocaleString("en-US")} long-open permits · showing{" "}
               {data.items.length ? offset + 1 : 0}–{offset + data.items.length}
             </span>
-            <button
-              data-testid="permits-prev"
-              disabled={offset === 0}
-              onClick={() => void page(Math.max(0, offset - PERMITS_PAGE_SIZE))}
-            >
-              Prev
-            </button>
-            <button
-              data-testid="permits-next"
-              disabled={data.next_offset === null}
-              onClick={() => void page(data.next_offset!)}
-            >
-              Next
-            </button>
-          </div>
-          {data.items.length > 0 && (
-            <p className="notice" data-testid="permits-open-hint">
-              Click a permit to open its parcel; a building-level permit opens
-              its nearest unit.
-            </p>
           )}
-          <ul className="list">
-            {data.items.map((p) => {
-              const tag = longOpenTag(p);
-              return (
-                <li
-                  key={p.permit_number}
-                  className="permit long-open"
-                  data-testid="permit-row"
-                  data-permit={p.permit_number}
-                  data-parcel={p.parcel_id}
-                  data-open-days={p.open_days ?? undefined}
-                  data-distance={p.distance_miles}
-                  data-roofing={String(p.roofing_work)}
-                  title={
-                    p.building_level
-                      ? "Open the parcel's details (the nearest unit of this building)"
-                      : "Open the parcel's details"
-                  }
-                  onClick={() => onOpen(p.parcel_id)}
-                >
-                  <b>{p.permit_number}</b>{" "}
-                  <span className="tag">long-open</span>
-                  {tag && (
-                    <>
-                      {" "}
-                      <span className="tag" data-testid="permit-roofing">
-                        {tag}
-                      </span>
-                    </>
-                  )}
-                  <br />
-                  {p.address ?? "address not published"}
-                  <br />
-                  {p.source_status_desc ?? "status not published"} ·{" "}
-                  {statusClassLabel(p.permit_status_class)} · open{" "}
-                  {p.open_days === null ? "—" : openDuration(p.open_days)}
-                  <br />
-                  issued {p.permit_issue_date ?? "—"} · {p.distance_miles} mi ·
-                  join {joinLabel(p.join_method)}
-                  {p.building_level &&
-                    ` · building-level (${p.parcel_count} units)`}
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      )}
+        </summary>
+        {data && (
+          <>
+            <div className="row">
+              <button
+                data-testid="permits-prev"
+                disabled={offset === 0}
+                onClick={() =>
+                  void page(Math.max(0, offset - PERMITS_PAGE_SIZE))
+                }
+              >
+                Prev
+              </button>
+              <button
+                data-testid="permits-next"
+                disabled={data.next_offset === null}
+                onClick={() => void page(data.next_offset!)}
+              >
+                Next
+              </button>
+            </div>
+            {data.items.length > 0 && (
+              <p className="notice" data-testid="permits-open-hint">
+                Click a permit to open its parcel; a building-level permit opens
+                its nearest unit.
+              </p>
+            )}
+            <ul className="list">
+              {data.items.map((p) => {
+                const tag = longOpenTag(p);
+                return (
+                  <li
+                    key={p.permit_number}
+                    className="permit long-open"
+                    data-testid="permit-row"
+                    data-permit={p.permit_number}
+                    data-parcel={p.parcel_id}
+                    data-open-days={p.open_days ?? undefined}
+                    data-distance={p.distance_miles}
+                    data-roofing={String(p.roofing_work)}
+                    title={
+                      p.building_level
+                        ? "Open the parcel's details (the nearest unit of this building)"
+                        : "Open the parcel's details"
+                    }
+                    onClick={() => onOpen(p.parcel_id)}
+                  >
+                    <b>{p.permit_number}</b>{" "}
+                    <span className="tag">long-open</span>
+                    {tag && (
+                      <>
+                        {" "}
+                        <span className="tag" data-testid="permit-roofing">
+                          {tag}
+                        </span>
+                      </>
+                    )}
+                    <br />
+                    {p.address ?? "address not published"}
+                    <br />
+                    {p.source_status_desc ?? "status not published"} ·{" "}
+                    {statusClassLabel(p.permit_status_class)} · open{" "}
+                    {p.open_days === null ? "—" : openDuration(p.open_days)}
+                    <br />
+                    issued {p.permit_issue_date ?? "—"} · {p.distance_miles} mi
+                    · join {joinLabel(p.join_method)}
+                    {p.building_level &&
+                      ` · building-level (${p.parcel_count} units)`}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </details>
     </section>
   );
 }

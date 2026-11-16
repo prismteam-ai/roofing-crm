@@ -19,6 +19,7 @@ import type {
 } from "@oracle-la/api-client";
 import { basisOf } from "./ownership.ts";
 import { daysOfKey } from "./permitDisplay.ts";
+import { coordText } from "./pin.ts";
 
 /** IDs per parcels.match call. Typed by the API's MAX_MATCH_IDS, so a change there fails the type check here. */
 export const MATCH_CHUNK: typeof MAX_MATCH_IDS = 72;
@@ -107,7 +108,7 @@ export interface SearchFilter {
   ownership_basis?: OwnershipBasis;
 }
 /**
- * The search key: "lat,lon|radius|threshold" (pin to 6 decimals, as in data-pin-*), plus "|<basis>" when the
+ * The search key: "lat,lon|radius|threshold" (pin to 5 decimals, as in data-pin-*), plus "|<basis>" when the
  * ownership filter is on, so a search without it keeps the same key.
  */
 export const searchKeyOf = (
@@ -117,7 +118,7 @@ export const searchKeyOf = (
   threshold: number,
   basis?: OwnershipBasis,
 ) =>
-  `${lat.toFixed(6)},${lon.toFixed(6)}|${radius}|${threshold}${basis ? `|${basis}` : ""}`;
+  `${coordText(lat)},${coordText(lon)}|${radius}|${threshold}${basis ? `|${basis}` : ""}`;
 /** The search filter of a search key (ownership_basis only when the key carries one). */
 export function filterOfKey(key: string): SearchFilter {
   const [ll, r, t, o] = key.split("|");

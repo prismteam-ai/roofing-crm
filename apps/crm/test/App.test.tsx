@@ -47,6 +47,7 @@ const h = vi.hoisted(() => {
   const longOpen = vi.fn();
   const forParcel = vi.fn();
   const easeTo = vi.fn();
+  const fitBounds = vi.fn();
   /** The arguments of every createApiClient call (one per client created). */
   const clients: unknown[] = [];
   const leads = {
@@ -67,6 +68,7 @@ const h = vi.hoisted(() => {
     longOpen,
     forParcel,
     easeTo,
+    fitBounds,
     clients,
     leads,
   };
@@ -139,6 +141,9 @@ vi.mock("../src/maplibre.ts", () => {
     }
     easeTo(o: unknown) {
       h.easeTo(o);
+    }
+    fitBounds(b: unknown, o: unknown) {
+      h.fitBounds(b, o);
     }
     remove() {}
     getCanvas() {
@@ -408,7 +413,7 @@ describe("CRM main screen", () => {
     // Render marker on "idle": the search key of the drawn points and the zoom.
     act(() => map.fire("idle"));
     expect(screen.getByTestId("map").dataset.renderedSearch).toBe(
-      "34.199000,-118.487000|1|15",
+      "34.19900,-118.48700|1|15",
     );
     expect(screen.getByTestId("map").dataset.renderedZoom).toBe("17");
     await act(async () => {
@@ -545,11 +550,14 @@ describe("the ownership filter on the search", () => {
     expect(screen.queryAllByTestId("ownership-basis")).toHaveLength(0);
     expect("ownership_basis" in last(h.search)).toBe(false);
     expect("ownership_basis" in last(h.points)).toBe(false);
-    expect(screen.queryByTestId("ownership-rule")).toBeNull();
+    expect(screen.queryByTestId("ownership-rules")).toBeNull();
+    expect(screen.getByTestId("results-showing").textContent).not.toMatch(
+      /ownership/,
+    );
     expect(screen.getByTestId("result-count").textContent).toBe("2 results");
   });
 
-  test("turned on, 'both' is preselected; the three bases show the contract's texts, weaknesses and the proxy note; search and points get the basis and the result states the API's", async () => {
+  test("turned on, 'both' is preselected; the three bases' texts, weaknesses and the proxy note are the contract's, in one collapsed details; search and points get the basis and the results state the API's basis", async () => {
     const map = await pinned();
     fireEvent.click(screen.getByTestId("ownership-on"));
     expect(
@@ -559,6 +567,14 @@ describe("the ownership filter on the search", () => {
       (screen.getByTestId("ownership-basis-both") as HTMLInputElement).checked,
     ).toBe(true);
     const bases = ["both", "recording", "base_year"] as const;
+    const rules = screen.getByTestId("ownership-rules") as HTMLDetailsElement;
+    expect(rules.tagName).toBe("DETAILS");
+    expect(rules.open).toBe(false);
+    expect(
+      within(rules)
+        .getAllByTestId("ownership-basis-rule")
+        .map((e) => e.dataset.basis),
+    ).toEqual(bases);
     expect(
       screen.getAllByTestId("ownership-text").map((e) => e.textContent),
     ).toEqual(bases.map((b) => OWNERSHIP_TEXTS[b].text));
@@ -572,16 +588,14 @@ describe("the ownership filter on the search", () => {
     expect(h.search).toHaveBeenCalledTimes(2);
     expect(last(h.search)).toMatchObject({ ownership_basis: "both" });
     expect(last(h.points)).toMatchObject({ ownership_basis: "both" });
-    const stated = screen.getByTestId("ownership-rule");
-    expect(stated.dataset.basis).toBe("both");
-    expect(stated.textContent).toBe(
-      `Ownership filter (both): ${OWNERSHIP_TEXTS.both.text} Weakness: ${OWNERSHIP_TEXTS.both.weakness} ${PROXY_NOTE}`,
+    expect(screen.getByTestId("results-showing").textContent).toMatch(
+      / · ownership filter: both$/,
     );
     expect(screen.getByTestId("result-count").textContent).toBe("1 results");
     // The search key carries the basis (the map's render marker shows it).
     act(() => map.fire("idle"));
     expect(screen.getByTestId("map").dataset.renderedSearch).toBe(
-      "34.199000,-118.487000|1|15|both",
+      "34.19900,-118.48700|1|15|both",
     );
     // Another basis: one new search, stated as the API's.
     fireEvent.click(screen.getByTestId("ownership-basis-recording"));
@@ -589,22 +603,209 @@ describe("the ownership filter on the search", () => {
     expect(h.search).toHaveBeenCalledTimes(3);
     expect(last(h.search)).toMatchObject({ ownership_basis: "recording" });
     expect(last(h.points)).toMatchObject({ ownership_basis: "recording" });
-    expect(screen.getByTestId("ownership-rule").dataset.basis).toBe(
-      "recording",
+    expect(screen.getByTestId("results-showing").textContent).toMatch(
+      / · ownership filter: recording$/,
     );
     // Off again: no basis is sent and none is stated; the key is the one without the filter.
     fireEvent.click(screen.getByTestId("ownership-on"));
     await wait(300);
     expect(h.search).toHaveBeenCalledTimes(4);
     expect("ownership_basis" in last(h.search)).toBe(false);
-    expect(screen.queryByTestId("ownership-rule")).toBeNull();
+    expect(screen.queryByTestId("ownership-rules")).toBeNull();
     act(() => map.fire("idle"));
     expect(screen.getByTestId("map").dataset.renderedSearch).toBe(
-      "34.199000,-118.487000|1|15",
+      "34.19900,-118.48700|1|15",
     );
     await wait(5000);
     expect(h.search).toHaveBeenCalledTimes(4);
   });
+});
+
+describe("layout: controls, rule texts and lists", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    h.maps.length = 0;
+    h.runSummary.mockReset().mockResolvedValue(RUN);
+    h.forParcel.mockReset().mockResolvedValue(NO_PERMITS);
+    h.longOpen.mockReset().mockResolvedValue({
+      ...EMPTY_LONG_OPEN,
+      rule: { ...EMPTY_LONG_OPEN.rule, text: "API LONG-OPEN RULE TEXT" },
+    });
+    vi.mocked(loadConfig).mockResolvedValue({
+      client: "crm",
+      apiUrl: "https://api.test",
+      apiToken: "t",
+      mapKey: "k",
+    });
+    h.search
+      .mockReset()
+      .mockImplementation(
+        async (i: { ownership_basis?: keyof typeof OWNERSHIP_TEXTS }) => ({
+          count: 2,
+          rule,
+          ownership: i.ownership_basis
+            ? {
+                basis: i.ownership_basis,
+                ...OWNERSHIP_TEXTS[i.ownership_basis],
+                proxy_note: PROXY_NOTE,
+              }
+            : null,
+          items: [item("0000000001", 0.1), item("0000000002", 0.2)],
+          next_offset: null,
+        }),
+      );
+    h.points.mockReset().mockResolvedValue({
+      count: 2,
+      encoding: "columnar-v1",
+      precision: 5,
+      id: ["0000000001", "0000000002"],
+      lat: [34.2, 34.2],
+      lon: [-118.49, -118.48],
+      truncated: false,
+      max_points: 25000,
+    });
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.mocked(loadConfig).mockReset();
+  });
+  const pinned = async () => {
+    render(<App />);
+    await flush();
+    const map = h.maps[0]!;
+    map.fire("load");
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    return map;
+  };
+  /** How many times a text occurs in the page. */
+  const occurrences = (text: string) =>
+    document.body.textContent!.split(text).length - 1;
+
+  test("each rule text is in the page once, inside a collapsed details element (roof age, ownership, long-open, the API's long-open rule)", async () => {
+    await pinned();
+    fireEvent.click(screen.getByTestId("ownership-on"));
+    await wait(300);
+    await flush();
+    const texts = [
+      rule.text,
+      ...(["both", "recording", "base_year"] as const).flatMap((b) => [
+        OWNERSHIP_TEXTS[b].text,
+        OWNERSHIP_TEXTS[b].weakness,
+      ]),
+      PROXY_NOTE,
+      "Only permits with status class Open (issued) count as open.",
+      "API LONG-OPEN RULE TEXT",
+    ];
+    for (const t of texts) {
+      expect([t, occurrences(t)]).toEqual([t, 1]);
+      // The innermost element holding the text.
+      const holder = [...document.querySelectorAll("aside *")].find(
+        (e) =>
+          e.textContent!.includes(t) &&
+          ![...e.children].some((c) => c.textContent!.includes(t)),
+      )!;
+      const details = holder.closest("details")!;
+      expect(details.classList.contains("rule-details")).toBe(true);
+      expect(details.open).toBe(false);
+    }
+    expect(
+      [...document.querySelectorAll("details.rule-details")].map(
+        (d) => (d as HTMLElement).dataset.testid,
+      ),
+    ).toEqual(["rule-details", "ownership-rules", "permits-rule-details"]);
+  });
+
+  test("the controls are one block at the top of the aside; results, permits and leads lists are closed until opened, with their counts in the summary", async () => {
+    await pinned();
+    const controls = document.querySelector("aside > section.controls")!;
+    expect(controls).toBe(document.querySelector("aside")!.firstElementChild);
+    for (const id of [
+      "gps",
+      "radius",
+      "threshold",
+      "ownership-on",
+      "data-notice",
+    ])
+      expect(controls.contains(screen.getByTestId(id))).toBe(true);
+    const results = screen.getByTestId("results-details") as HTMLDetailsElement;
+    expect(results.open).toBe(false);
+    expect(results.querySelector("summary")!.textContent).toBe(
+      "Results 2 · showing 1–2 by distance",
+    );
+    expect(results.contains(screen.getAllByTestId("result")[0]!)).toBe(true);
+    const permits = screen.getByTestId("permits-details") as HTMLDetailsElement;
+    expect(permits.open).toBe(false);
+    expect(permits.querySelector("summary")!.textContent).toBe(
+      "Permits 0 long-open permits · showing 0–0",
+    );
+    // An opened list stays open through a new search.
+    results.open = true;
+    permits.open = true;
+    fireEvent.change(screen.getByTestId("radius"), {
+      target: { value: "2" },
+    });
+    await wait(300);
+    await flush();
+    expect(h.search).toHaveBeenCalledTimes(2);
+    expect(
+      (screen.getByTestId("results-details") as HTMLDetailsElement).open,
+    ).toBe(true);
+    expect(
+      (screen.getByTestId("permits-details") as HTMLDetailsElement).open,
+    ).toBe(true);
+  });
+
+  test("after 'Use my location' the map zooms to the radius circle and the open details panel closes; the pin is rounded to 5 decimals", async () => {
+    h.detail.mockReset().mockResolvedValue({
+      property: { parcel_id: "0000000001", roll_year: 2026 },
+      provenance: { parcel_id: "0000000001", source_name: "Test Source" },
+    });
+    await pinned();
+    fireEvent.click(screen.getAllByTestId("result")[0]!);
+    await flush();
+    expect(screen.getByTestId("detail")).toBeTruthy();
+    fireEvent.change(screen.getByTestId("radius"), {
+      target: { value: "2" },
+    });
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition: (ok: (p: unknown) => void) =>
+          ok({ coords: { latitude: 34.1234567, longitude: -118.3456789 } }),
+      },
+    });
+    try {
+      h.fitBounds.mockClear();
+      h.easeTo.mockClear();
+      fireEvent.click(screen.getByTestId("gps"));
+      await wait(300);
+      expect(screen.queryByTestId("detail")).toBeNull();
+      expect(screen.getByTestId("map").dataset.pinLat).toBe("34.12346");
+      expect(screen.getByTestId("map").dataset.pinLon).toBe("-118.34568");
+      expect(last(h.search)).toMatchObject({
+        lat: 34.12346,
+        lon: -118.34568,
+        radius_miles: 2,
+      });
+      // Fitted to the circle (2 miles each way: about 0.029 degrees of latitude), not panned.
+      expect(h.easeTo).not.toHaveBeenCalled();
+      expect(h.fitBounds).toHaveBeenCalledTimes(1);
+      const [[sw, ne], opts] = h.fitBounds.mock.calls[0]! as [
+        [[number, number], [number, number]],
+        unknown,
+      ];
+      expect((sw[1] + ne[1]) / 2).toBeCloseTo(34.12346, 3);
+      expect((sw[0] + ne[0]) / 2).toBeCloseTo(-118.34568, 3);
+      expect(ne[1] - sw[1]).toBeCloseTo((2 * 2) / 69.05, 2);
+      expect(opts).toMatchObject({ duration: 0 });
+    } finally {
+      Reflect.deleteProperty(navigator, "geolocation");
+    }
+  });
+  const last = (f: typeof h.search) =>
+    f.mock.lastCall![0] as Record<string, unknown>;
 });
 
 describe("leads (with leadsApiUrl in config.json)", () => {
@@ -711,6 +912,13 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       notes: "Original roof.",
     });
     expect(screen.getByTestId("lead-save")).toBeTruthy();
+    // The stored timestamp is shown as its date (YYYY-MM-DD), in the editor and the list.
+    expect(screen.getByTestId("lead-updated").textContent).toMatch(
+      /^Updated \d{4}-\d{2}-\d{2}$/,
+    );
+    expect(screen.getAllByTestId("lead-item")[0]!.textContent).toMatch(
+      / · updated \d{4}-\d{2}-\d{2}$/,
+    );
     expect(
       screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
     ).toEqual(["0000000003"]);
@@ -2425,7 +2633,7 @@ describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
     act(() => map.clickAt(300, 100)); // drops the pin at (34.199, -118.487)
     await wait(300);
     expect(screen.getByTestId("agent-center").textContent).toBe(
-      "Center: map pin (34.199000, -118.487000)",
+      "Center: map pin (34.19900, -118.48700)",
     );
     answers.push(ANSWERED, ANSWERED);
     await ask(QUESTION_1);
@@ -2446,7 +2654,7 @@ describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
       fireEvent.click(screen.getByTestId("gps"));
       await wait(300);
       expect(screen.getByTestId("agent-center").textContent).toBe(
-        "Center: my location (34.100000, -118.300000)",
+        "Center: my location (34.10000, -118.30000)",
       );
       await ask(QUESTION_1);
       expect(
@@ -2458,7 +2666,7 @@ describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
       act(() => map.clickAt(300, 100));
       await wait(300);
       expect(screen.getByTestId("agent-center").textContent).toBe(
-        "Center: map pin (34.199000, -118.487000)",
+        "Center: map pin (34.19900, -118.48700)",
       );
     } finally {
       Reflect.deleteProperty(navigator, "geolocation");

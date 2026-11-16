@@ -12,6 +12,7 @@ import type {
   AnswerResponse,
 } from "./agent-types.ts";
 import { AgentAnswerView } from "./AgentAnswer.tsx";
+import { coordText } from "./pin.ts";
 import { createWarmup, HOLD_MAX_MS, type Warmup } from "./warmup.ts";
 
 /** The notice under the question box. */
@@ -28,7 +29,7 @@ interface Turn {
 /** The center line under the box: what will be sent with the question. */
 export function centerText(center: AgentCenter | undefined): string {
   return center
-    ? `Center: ${center.label} (${center.lat.toFixed(6)}, ${center.lon.toFixed(6)})`
+    ? `Center: ${center.label} (${coordText(center.lat)}, ${coordText(center.lon)})`
     : "Center: none yet. Drop a pin on the map or use your location, or name a place in the question.";
 }
 

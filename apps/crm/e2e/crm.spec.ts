@@ -18,6 +18,7 @@ import {
   STOPPED,
 } from "./agent-fixtures.ts";
 import { BASE_URL, CREDS, ORIGIN } from "./env.ts";
+import { dateOnly } from "../src/dates.ts";
 
 const VN = { lat: 34.199, lon: -118.487 };
 const LA = { west: -118.95, south: 33.7, east: -117.65, north: 34.82 };
@@ -49,7 +50,7 @@ const strictNum = async (
 const attrNum = (page: Page, testId: string, name: string) =>
   strictNum(page.getByTestId(testId), name, `[data-testid=${testId}]`);
 const count = (page: Page) => attrNum(page, "result-count", "data-count");
-const centre = async (page: Page) => [
+const mapCenter = async (page: Page) => [
   await attrNum(page, "map", "data-center-lat"),
   await attrNum(page, "map", "data-center-lon"),
 ];
@@ -64,7 +65,7 @@ const strictAttr = async (page: Page, name: string): Promise<string> => {
     throw new Error(`attribute ${name} missing on [data-testid=map]`);
   return v;
 };
-/** The app's search key for the inputs currently set: pin (6 decimals, as in data-pin-*), radius, threshold. */
+/** The app's search key for the inputs currently set: pin (5 decimals, as in data-pin-*), radius, threshold. */
 const currentKey = async (page: Page) =>
   `${await strictAttr(page, "data-pin-lat")},${await strictAttr(page, "data-pin-lon")}|${await page.getByTestId("radius").inputValue()}|${await page.getByTestId("threshold").inputValue()}`;
 /** Wait until the map has drawn the points of the CURRENT search at the given zoom (render marker, written on "idle"). */
@@ -75,7 +76,7 @@ const renderedFor = async (page: Page, zoom: number) => {
     key,
     { timeout: 20_000 },
   );
-  // The zoom is compared as a number to 6 decimals: MapLibre's zoom can carry float drift after a re-centre.
+  // The zoom is compared as a number to 6 decimals: MapLibre's zoom can carry float drift after a re-center.
   await expect
     .poll(async () => Number(await strictAttr(page, "data-rendered-zoom")), {
       timeout: 20_000,
@@ -97,11 +98,11 @@ const detailGets = (page: Page) => {
 /** Radius of the circle as drawn (measured by the app from the drawn ring), in miles. */
 const circleRadius = (page: Page) =>
   attrNum(page, "map", "data-circle-radius-miles");
-/** Web Mercator pixel of a point relative to the map centre (MapLibre: 512 px tiles). */
+/** Web Mercator pixel of a point relative to the map center (MapLibre: 512 px tiles). */
 const mercatorOffset = (
   lat: number,
   lon: number,
-  centre: number[],
+  center: number[],
   zoom: number,
 ) => {
   const world = 512 * 2 ** zoom;
@@ -110,7 +111,7 @@ const mercatorOffset = (
     ((1 - Math.log(Math.tan(Math.PI / 4 + (la * Math.PI) / 360)) / Math.PI) /
       2) *
     world;
-  return { dx: x(lon) - x(centre[1]!), dy: y(lat) - y(centre[0]!) };
+  return { dx: x(lon) - x(center[1]!), dy: y(lat) - y(center[0]!) };
 };
 const settle = (page: Page, n: number) =>
   expect.poll(() => count(page), { timeout: 20_000 }).toBe(n);
@@ -118,12 +119,21 @@ const ready = (page: Page) =>
   expect(page.getByTestId("map")).toHaveAttribute("data-ready", "true", {
     timeout: 30_000,
   });
-/** Centre tolerance for "re-centred" checks: 0.01 mile (about 16 m). */
-const CENTRE_TOLERANCE_MILES = 0.01;
-const recentredOn = (page: Page, p: number[]) =>
+/** Opens a details element (a list or the agent's Sources) by a click on its summary, as a user does. */
+const expand = async (details: Locator) => {
+  await expect(details).toBeAttached({ timeout: 20_000 });
+  if (!(await details.evaluate((e) => (e as HTMLDetailsElement).open)))
+    await details.locator(":scope > summary").click();
+  await expect(details).toHaveAttribute("open", "");
+};
+/** Opens the results list (closed until opened). */
+const openResults = (page: Page) => expand(page.getByTestId("results-details"));
+/** Center tolerance for "re-centered" checks: 0.01 mile (about 16 m). */
+const CENTER_TOLERANCE_MILES = 0.01;
+const recenteredOn = (page: Page, p: number[]) =>
   expect
-    .poll(async () => haversine(p, await centre(page)), { timeout: 10_000 })
-    .toBeLessThan(CENTRE_TOLERANCE_MILES);
+    .poll(async () => haversine(p, await mapCenter(page)), { timeout: 10_000 })
+    .toBeLessThan(CENTER_TOLERANCE_MILES);
 
 /**
  * The inputs of the GET requests to a data API procedure, in order (batched calls included: the path lists the
@@ -384,7 +394,7 @@ test.describe("with credentials", () => {
       })
       .toBeGreaterThan(0);
     expect(tiles.filter((t) => t.status >= 400)).toEqual([]);
-    // Wait for the centre attributes to exist (written on "load"), then check they are inside LA County.
+    // Wait for the center attributes to exist (written on "load"), then check they are inside LA County.
     await expect(page.getByTestId("map")).toHaveAttribute(
       "data-center-lat",
       /^-?\d+\.\d+$/,
@@ -395,7 +405,7 @@ test.describe("with credentials", () => {
       /^-?\d+\.\d+$/,
       { timeout: 10_000 },
     );
-    const [lat, lon] = await centre(page);
+    const [lat, lon] = await mapCenter(page);
     expect(lat!).toBeGreaterThan(LA.south);
     expect(lat!).toBeLessThan(LA.north);
     expect(lon!).toBeGreaterThan(LA.west);
@@ -418,7 +428,7 @@ test.describe("with credentials", () => {
     expect((await anon.get(tiles[0]!.url)).status()).toBe(403);
   });
 
-  test("9. a dropped pin re-centres the map; the radius changes the circle and the results; results are inside the radius", async ({
+  test("9. a dropped pin re-centers the map; the radius changes the circle and the results; results are inside the radius", async ({
     page,
   }) => {
     const cfg = await config();
@@ -428,14 +438,14 @@ test.describe("with credentials", () => {
     await page.mouse.click(
       box.x + box.width / 2 + 120,
       box.y + box.height / 2 - 80,
-    ); // off-centre drop
+    ); // off-center drop
     await expect(page.getByTestId("map")).toHaveAttribute(
       "data-pin-lat",
       /^-?\d+\.\d+$/,
     );
     const pin = await pinOf(page);
-    expect(haversine(pin, [VN.lat, VN.lon])).toBeGreaterThan(0.3); // the pin is where we clicked, not the old centre
-    await recentredOn(page, pin); // the map re-centres on the pin (within CENTRE_TOLERANCE_MILES)
+    expect(haversine(pin, [VN.lat, VN.lon])).toBeGreaterThan(0.3); // the pin is where we clicked, not the old center
+    await recenteredOn(page, pin); // the map re-centers on the pin (within CENTER_TOLERANCE_MILES)
 
     // Radius 1 mile: results and a screenshot of the map (in memory only, never stored).
     await page.getByTestId("radius").fill("1");
@@ -515,13 +525,13 @@ test.describe("with credentials", () => {
     const zoom = 17; // >= DETAIL_MIN_ZOOM (16)
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=${zoom}`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre (no points loaded yet)
+    await page.getByTestId("map").click(); // pin at the center (no points loaded yet)
     await expect(page.getByTestId("map")).toHaveAttribute(
       "data-pin-lat",
       /^-?\d+\.\d+$/,
     );
     const pin = await pinOf(page);
-    await recentredOn(page, pin);
+    await recenteredOn(page, pin);
     const pts = (
       await (
         await (
@@ -538,9 +548,9 @@ test.describe("with credentials", () => {
     ).result.data;
     await settle(page, pts.count);
     await renderedFor(page, zoom); // the points of THIS search are drawn at THIS zoom
-    const mapCentre = await centre(page);
+    const mapCenterNow = await mapCenter(page);
     const px = pts.id.map((_: string, k: number) =>
-      mercatorOffset(pts.lat[k], pts.lon[k], mapCentre, zoom),
+      mercatorOffset(pts.lat[k], pts.lon[k], mapCenterNow, zoom),
     );
     const box = (await page.getByTestId("map").boundingBox())!;
     // Nearest on-screen point with no other point within the +/-6 px tolerance (isolated at this zoom).
@@ -572,7 +582,7 @@ test.describe("with credentials", () => {
     expect(detailCalls).toHaveLength(1);
     await d.getByRole("button", { name: "Close" }).click();
     await expect(d).toHaveCount(0);
-    // 3 px off the point's centre (inside the +/-6 px tolerance).
+    // 3 px off the point's center (inside the +/-6 px tolerance).
     await page.mouse.click(
       box.x + box.width / 2 + px[i].dx + 3,
       box.y + box.height / 2 + px[i].dy - 2,
@@ -589,9 +599,9 @@ test.describe("with credentials", () => {
     const zoom = 11; // 10 miles ~ 509 px: the 5-mile circle fits on screen
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=${zoom}`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
-    await recentredOn(page, pin);
+    await recenteredOn(page, pin);
     await page.getByTestId("radius").fill("5");
     const pts = (
       await (
@@ -621,7 +631,7 @@ test.describe("with credentials", () => {
     const { dx, dy } = mercatorOffset(
       target[0],
       target[1],
-      await centre(page),
+      await mapCenter(page),
       zoom,
     );
     const box = (await page.getByTestId("map").boundingBox())!;
@@ -635,14 +645,14 @@ test.describe("with credentials", () => {
         timeout: 10_000,
       })
       .toBeLessThan(0.05);
-    await recentredOn(page, await pinOf(page));
-    // The app re-centres at the current zoom, so the zoom stays the one this test set.
+    await recenteredOn(page, await pinOf(page));
+    // The app re-centers at the current zoom, so the zoom stays the one this test set.
     await renderedFor(page, zoom); // the new search (at the clicked pin) is drawn: everything the click caused has run
     expect(detailCalls).toEqual([]);
     await expect(page.getByTestId("detail")).toHaveCount(0);
   });
 
-  test("10. GPS re-centres; the 15-year default and threshold 80 match the API and differ visibly on screen; count always visible", async ({
+  test("10. GPS re-centers; the 15-year default and threshold 80 match the API and differ visibly on screen; count always visible", async ({
     browser,
   }) => {
     const cfg = await config();
@@ -658,9 +668,9 @@ test.describe("with credentials", () => {
     await page.getByTestId("gps").click();
     await expect(page.getByTestId("map")).toHaveAttribute(
       "data-pin-lat",
-      VN.lat.toFixed(6),
+      VN.lat.toFixed(5),
     );
-    await recentredOn(page, [VN.lat, VN.lon]); // the map re-centres on the GPS point (within CENTRE_TOLERANCE_MILES)
+    await recenteredOn(page, [VN.lat, VN.lon]); // the map re-centers on the GPS point (within CENTER_TOLERANCE_MILES)
     await page.getByTestId("radius").fill("5");
     await expect(page.getByTestId("threshold")).toHaveValue("15"); // default
     const pin = await pinOf(page);
@@ -709,6 +719,7 @@ test.describe("with credentials", () => {
     expect(a80.count).toBeGreaterThan(0);
     expect(a80.count).toBeLessThan(a15.count);
     expect(`${fmt(a80.count)} results`).not.toBe(`${fmt(a15.count)} results`); // visibly different
+    await openResults(page);
     for (const y of await Promise.all(
       (await page.getByTestId("result").all()).map((i) => i.innerText()),
     ))
@@ -734,6 +745,7 @@ test.describe("with credentials", () => {
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
     await page.getByTestId("map").click();
+    await openResults(page);
     await page.getByTestId("result").first().click();
     const d = page.getByTestId("detail");
     await expect(d.locator('[data-field="parcel_id"]')).toHaveText(/^\d{10}$/);
@@ -806,7 +818,7 @@ test.describe("with credentials", () => {
     const cfg = await config();
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=12`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     await page.getByTestId("radius").fill("10");
     const get = async (proc: string, input?: unknown) =>
@@ -935,7 +947,8 @@ test.describe("with credentials", () => {
     console.log(`leads before: ${existing.size}`);
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
+    await openResults(page);
     await expect(page.getByTestId("result").first()).toBeVisible({
       timeout: 20_000,
     });
@@ -964,11 +977,12 @@ test.describe("with credentials", () => {
         parcel,
       );
     };
-    /** Reload the page, pin the centre again and reopen the parcel: the lead is read back from the API. */
+    /** Reload the page, pin the center again and reopen the parcel: the lead is read back from the API. */
     const reloadAndReopen = async () => {
       await page.reload();
       await ready(page);
       await page.getByTestId("map").click();
+      await openResults(page);
       await expect(page.getByTestId("result").first()).toBeVisible({
         timeout: 20_000,
       });
@@ -1056,7 +1070,7 @@ test.describe("with credentials", () => {
     const cfg = await config();
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     await page.getByTestId("radius").fill("5");
     await expect(page.getByTestId("radius-value")).toHaveText("5");
@@ -1171,7 +1185,8 @@ test.describe("with credentials", () => {
     };
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre (Van Nuys, City of Los Angeles)
+    await page.getByTestId("map").click(); // pin at the center (Van Nuys, City of Los Angeles)
+    await openResults(page);
     await expect(page.getByTestId("result").first()).toBeVisible({
       timeout: 20_000,
     });
@@ -1245,7 +1260,7 @@ test.describe("with credentials", () => {
     const zoom = 13;
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=${zoom}`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     await page.getByTestId("radius").fill("5");
     await expect(page.getByTestId("radius-value")).toHaveText("5");
@@ -1343,7 +1358,7 @@ test.describe("with credentials", () => {
     const cfg = await config();
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     await page.getByTestId("radius").fill("5");
     await expect(page.getByTestId("radius-value")).toHaveText("5");
@@ -1385,6 +1400,7 @@ test.describe("with credentials", () => {
       "ROW_OPENS",
       JSON.stringify({ row: i, parcel: want.parcel_id }),
     );
+    await expand(page.getByTestId("permits-details"));
     const row = page.getByTestId("permit-row").nth(i);
     await expect(row).toHaveAttribute("data-permit", want.permit_number);
     await expect(row).toHaveAttribute("data-parcel", want.parcel_id);
@@ -1432,7 +1448,7 @@ test.describe("with credentials", () => {
       "by a long-open roofing permit in the map's open-duration window",
     );
 
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     await expect(page.getByTestId("permits-heading")).toHaveText(
       "Long-open roofing permits",
@@ -1473,13 +1489,13 @@ test.describe("with credentials", () => {
     await expect(page.locator("body")).not.toContainText(/not harvested/i);
   });
 
-  test("23. the ownership filter: off by default; turned on, 'both' is preselected; each basis's count equals parcels.search with it, and the texts shown are the API's", async ({
+  test("23. the ownership filter: off by default; turned on, 'both' is preselected; each basis's count equals parcels.search with it, and the texts shown (once, in a collapsed details) are the API's", async ({
     page,
   }) => {
     const cfg = await config();
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre; radius 1 mi, 15 years (defaults)
+    await page.getByTestId("map").click(); // pin at the center; radius 1 mi, 15 years (defaults)
     const pin = await pinOf(page);
     type Rule = {
       basis: string;
@@ -1512,27 +1528,30 @@ test.describe("with credentials", () => {
     await settle(page, off.count);
     await expect(page.getByTestId("ownership-on")).not.toBeChecked();
     await expect(page.getByTestId("ownership-basis")).toHaveCount(0);
-    await expect(page.getByTestId("ownership-rule")).toHaveCount(0);
+    await expect(page.getByTestId("ownership-rules")).toHaveCount(0);
+    const showing = page.getByTestId("results-showing");
+    await expect(showing).not.toContainText("ownership filter");
 
     await page.getByTestId("ownership-on").check();
     await expect(page.getByTestId("ownership-basis-both")).toBeChecked();
+    // The rules: one collapsed details, opened here to read them.
+    const rules = page.getByTestId("ownership-rules");
+    await expect(rules).not.toHaveAttribute("open", /.*/);
+    await expand(rules);
     const counts: Record<string, number> = {};
     for (const b of ["both", "recording", "base_year"]) {
       if (b !== "both") await page.getByTestId(`ownership-basis-${b}`).check();
       const r = await search(b);
       expect(r.ownership?.basis).toBe(b);
       const rule = r.ownership!;
-      const stated = page.getByTestId("ownership-rule");
-      await expect(stated).toHaveAttribute("data-basis", b, {
-        timeout: 20_000,
-      });
-      await settle(page, r.count);
-      await expect(stated).toHaveText(
-        `Ownership filter (${b}): ${rule.text} Weakness: ${rule.weakness} ${rule.proxy_note}`,
+      await expect(showing).toHaveText(
+        new RegExp(` · ownership filter: ${b}$`),
+        { timeout: 20_000 },
       );
-      // The control shows the API's own texts for this basis.
+      await settle(page, r.count);
+      // The rules show the API's own texts for this basis, once in the page.
       const box = page.locator(
-        `[data-testid="ownership-basis"][data-basis="${b}"]`,
+        `[data-testid="ownership-basis-rule"][data-basis="${b}"]`,
       );
       await expect(box.getByTestId("ownership-text")).toHaveText(rule.text);
       await expect(box.getByTestId("ownership-weakness")).toHaveText(
@@ -1541,6 +1560,13 @@ test.describe("with credentials", () => {
       await expect(page.getByTestId("ownership-proxy-note")).toHaveText(
         rule.proxy_note,
       );
+      for (const t of [rule.text, rule.weakness, rule.proxy_note])
+        expect(
+          await page.evaluate(
+            (x) => document.body.textContent!.split(x).length - 1,
+            t,
+          ),
+        ).toBe(1);
       counts[b] = r.count;
     }
     console.log("OWNERSHIP", JSON.stringify({ off: off.count, ...counts }));
@@ -1552,7 +1578,8 @@ test.describe("with credentials", () => {
     );
 
     await page.getByTestId("ownership-on").uncheck();
-    await expect(page.getByTestId("ownership-rule")).toHaveCount(0, {
+    await expect(page.getByTestId("ownership-rules")).toHaveCount(0);
+    await expect(showing).not.toContainText("ownership filter", {
       timeout: 20_000,
     });
     await settle(page, off.count);
@@ -1611,7 +1638,7 @@ test.describe("with credentials", () => {
     };
     const pinAt = async () => {
       await ready(page);
-      await page.getByTestId("map").click(); // pin at the centre; radius 1 mi, 15 years (defaults)
+      await page.getByTestId("map").click(); // pin at the center; radius 1 mi, 15 years (defaults)
       return pinOf(page);
     };
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
@@ -1690,9 +1717,10 @@ test.describe("with credentials", () => {
       ]);
       expect([...mine].map((id) => both.has(id))).toEqual([true, false, false]);
 
-      // The page reads the leads at start: reload, pin the same centre again.
+      // The page reads the leads at start: reload, pin the same center again.
       await page.reload();
       expect(await pinAt()).toEqual(pin);
+      await openResults(page);
       await expect(page.getByTestId("result").first()).toBeVisible({
         timeout: 20_000,
       });
@@ -1751,7 +1779,7 @@ test.describe("with credentials", () => {
     const a = await api();
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     type Contractor = Record<string, unknown> & {
       contractor_identity_key: string | null;
@@ -1824,6 +1852,7 @@ test.describe("with credentials", () => {
         timeout: 20_000,
       })
       .toBe(lo.count);
+    await expand(page.getByTestId("permits-details"));
     const r = page.getByTestId("permit-row").nth(row);
     await expect(r).toHaveAttribute("data-permit", want!.permit_number);
     await r.click();
@@ -1869,7 +1898,7 @@ test.describe("with credentials", () => {
     const longOpens = trpcInputs(page, "permits.longOpen");
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     const get = async (proc: string, input: unknown) =>
       (await (await (await api()).get(trpc(cfg.apiUrl, proc, input))).json())
@@ -1958,6 +1987,7 @@ test.describe("with credentials", () => {
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
     await page.getByTestId("map").click();
+    await openResults(page);
     await page.getByTestId("result").first().click();
     const d = page.getByTestId("detail");
     const basis = d.locator('[data-field="roof_age_basis"]');
@@ -1967,6 +1997,120 @@ test.describe("with credentials", () => {
     expect(await lineCount(basis)).toBeGreaterThan(1); // it does wrap
     for (const dd of await d.locator("dd").all())
       expect(await splitWords(dd)).toEqual([]);
+  });
+
+  test("39. layout: the controls stay in place while the aside scrolls; each rule text once, collapsed; results, permits and leads closed until opened, with their counts", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the center
+    const results = page.getByTestId("results-details");
+    await expect(results).toBeAttached({ timeout: 20_000 });
+    await expect(page.getByTestId("result-count")).toHaveAttribute(
+      "data-count",
+      /^[1-9]\d*$/,
+      { timeout: 20_000 },
+    );
+    // Closed until opened, the count in the summary.
+    for (const id of ["results-details", "permits-details"])
+      await expect(page.getByTestId(id)).not.toHaveAttribute("open", /.*/);
+    await expect(page.getByTestId("result").first()).toBeHidden();
+    const n = await count(page);
+    await expect(page.getByTestId("results-showing")).toContainText(
+      `${n.toLocaleString("en-US")} · showing 1–`,
+    );
+    await expect
+      .poll(() => attrNum(page, "permits-count", "data-count"), {
+        timeout: 20_000,
+      })
+      .toBeGreaterThanOrEqual(0);
+    // Rule texts: each in a collapsed details, each once in the page.
+    for (const id of ["rule-details", "permits-rule-details"])
+      await expect(page.getByTestId(id)).not.toHaveAttribute("open", /.*/);
+    await expect(page.getByTestId("rule")).toBeHidden();
+    for (const id of ["rule", "permits-api-rule"]) {
+      const t = (await page.getByTestId(id).textContent())!.trim();
+      expect(t.length).toBeGreaterThan(0);
+      expect(
+        await page.evaluate(
+          (x) => document.body.textContent!.split(x).length - 1,
+          t,
+        ),
+      ).toBe(1);
+    }
+    // Controls in one fixed place: open the lists, scroll the aside, the controls do not move.
+    await openResults(page);
+    await expand(page.getByTestId("permits-details"));
+    const controls = page.locator("aside > section.controls");
+    const before = (await controls.boundingBox())!;
+    await page.locator("aside").evaluate((el) => el.scrollTo(0, 600));
+    await expect
+      .poll(() => page.locator("aside").evaluate((el) => el.scrollTop))
+      .toBeGreaterThan(0);
+    const after = (await controls.boundingBox())!;
+    expect(Math.abs(after.y - before.y)).toBeLessThanOrEqual(1);
+    await expect(page.getByTestId("gps")).toBeInViewport();
+    await expect(page.getByTestId("radius")).toBeInViewport();
+  });
+
+  test("40. 'Use my location' zooms the map to the radius circle and closes the open details panel; the pin is at 5 decimals everywhere", async ({
+    browser,
+  }) => {
+    const GPS = { latitude: 34.1990123, longitude: -118.4870456 };
+    const ctx = await browser.newContext({
+      httpCredentials: CREDS,
+      geolocation: GPS,
+      permissions: ["geolocation"],
+      viewport: { width: 1280, height: 800 },
+    });
+    await guardAgentAnswer(ctx);
+    const page = await ctx.newPage();
+    await page.goto(`${BASE_URL}/?lat=${VN.lat}&lon=${VN.lon}&z=15`);
+    await ready(page);
+    await page.getByTestId("map").click(); // a pin, so a result can be opened
+    await openResults(page);
+    await page.getByTestId("result").first().click();
+    await expect(page.getByTestId("detail")).toBeVisible();
+    await page.getByTestId("radius").fill("2");
+    await page.getByTestId("gps").click();
+    await expect(page.getByTestId("detail")).toHaveCount(0);
+    // The pin: rounded to 5 decimals where it is placed.
+    await expect(page.getByTestId("map")).toHaveAttribute(
+      "data-pin-lat",
+      GPS.latitude.toFixed(5),
+    );
+    await expect(page.getByTestId("map")).toHaveAttribute(
+      "data-pin-lon",
+      GPS.longitude.toFixed(5),
+    );
+    const pin = await pinOf(page);
+    await recenteredOn(page, pin);
+    // The circle fits the map and fills most of it (fitted, not merely panned at zoom 15).
+    await expect
+      .poll(async () => Number(await strictAttr(page, "data-rendered-zoom")), {
+        timeout: 20_000,
+      })
+      .toBeLessThan(15);
+    const z = Number(await strictAttr(page, "data-rendered-zoom"));
+    const size = (await page.getByTestId("map").boundingBox())!;
+    const center = await mapCenter(page);
+    const north = mercatorOffset(pin[0]! + 2 / 69.05, pin[1]!, center, z);
+    const east = mercatorOffset(
+      pin[0]!,
+      pin[1]! + 2 / (69.17 * Math.cos((pin[0]! * Math.PI) / 180)),
+      center,
+      z,
+    );
+    const fill = Math.max(
+      Math.abs(north.dy) / (size.height / 2),
+      Math.abs(east.dx) / (size.width / 2),
+    );
+    console.log("GPS_FIT", JSON.stringify({ z, fill }));
+    expect(fill).toBeLessThanOrEqual(1);
+    expect(fill).toBeGreaterThan(0.6);
+    await ctx.close();
   });
 });
 
@@ -2092,10 +2236,10 @@ test.describe("Ask the agent (answers mocked)", () => {
     await expect(page.getByTestId("agent-center")).toContainText(
       "Center: none yet",
     );
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     await expect(page.getByTestId("agent-center")).toHaveText(
-      `Center: map pin (${pin[0]!.toFixed(6)}, ${pin[1]!.toFixed(6)})`,
+      `Center: map pin (${pin[0]!.toFixed(5)}, ${pin[1]!.toFixed(5)})`,
     );
     await expect(page.getByTestId("agent-send")).toBeEnabled();
   });
@@ -2106,7 +2250,7 @@ test.describe("Ask the agent (answers mocked)", () => {
     const bodies = await mockAnswers(page, [ANSWERED]);
     await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
     await ready(page);
-    await page.getByTestId("map").click(); // pin at the centre
+    await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
     await openAgent(page);
     await ask(page, QUESTION_1);
@@ -2120,8 +2264,10 @@ test.describe("Ask the agent (answers mocked)", () => {
     expect(sent.question).toBe(QUESTION_1);
     expect(Object.keys(sent).sort()).toEqual(["center", "question", "screen"]);
     expect(sent.center.label).toBe("map pin");
-    expect(sent.center.lat.toFixed(6)).toBe(pin[0]!.toFixed(6));
-    expect(sent.center.lon.toFixed(6)).toBe(pin[1]!.toFixed(6));
+    // The pin is rounded to 5 decimals where it is placed: the center sent is exactly the pin shown.
+    expect(sent.center.lat).toBe(pin[0]);
+    expect(sent.center.lon).toBe(pin[1]);
+    expect(String(sent.center.lat)).toMatch(/^-?\d+(\.\d{1,5})?$/);
     await expect(
       a.getByTestId("agent-text").locator("strong").first(),
     ).toHaveText(
@@ -2138,6 +2284,14 @@ test.describe("Ask the agent (answers mocked)", () => {
     await expect(how.getByText(ANSWERED.reasoning)).toBeHidden();
     await how.locator("summary").click();
     await expect(how.getByText(ANSWERED.reasoning)).toBeVisible();
+    // Sources: closed, with the count of cited records in the header; Gaps are not collapsed.
+    const sources = a.getByTestId("agent-sources-details");
+    await expect(sources).not.toHaveAttribute("open", /.*/);
+    await expect(sources.locator("summary")).toHaveText(
+      `Sources (${ANSWERED.records.length})`,
+    );
+    await expect(a.getByTestId("agent-gaps")).toBeVisible();
+    await expand(sources);
     await expect(a.getByTestId("agent-sources")).toHaveCount(3);
     for (const r of ANSWERED.records) {
       const row = a.locator(
@@ -2148,7 +2302,7 @@ test.describe("Ask the agent (answers mocked)", () => {
         r.source_name,
         r.license ?? "—",
         r.attribution ?? "—",
-        r.collected_at,
+        dateOnly(r.collected_at), // dates as YYYY-MM-DD
       ]);
     }
     await expect(a.getByTestId("agent-gaps").locator("li")).toHaveText(
@@ -2350,11 +2504,12 @@ test.describe("Ask the agent (answers mocked)", () => {
       /^-?\d+\.\d+$/,
     );
     const pin = await pinOf(page);
-    await recentredOn(page, pin);
+    await recenteredOn(page, pin);
     await openAgent(page);
     await ask(page, QUESTION_1);
     await expect(page.getByTestId("agent-turn")).toHaveCount(1);
     const detailCalls = detailGets(page);
+    await expand(page.getByTestId("agent-sources-details"));
     await page.getByTestId("agent-parcel-link").click();
     const d = page.getByTestId("detail");
     await expect(d.locator('[data-field="parcel_id"]')).toHaveText(
@@ -2367,7 +2522,7 @@ test.describe("Ask the agent (answers mocked)", () => {
     ];
     expect(at.every(Number.isFinite)).toBe(true);
     expect(haversine(at, pin)).toBeGreaterThan(0.1); // the parcel is not where the map was
-    await recentredOn(page, at); // the map is centred on the parcel
+    await recenteredOn(page, at); // the map is centered on the parcel
     expect(await pinOf(page)).toEqual(pin); // the pin (and the search) did not move
     await expect(page.getByTestId("agent-turn")).toHaveCount(1);
   });
@@ -2394,6 +2549,7 @@ test.describe("Ask the agent (answers mocked)", () => {
       await ask(page, QUESTION_1);
       const a = page.getByTestId("agent-answer");
       await expect(a).toHaveAttribute("data-status", "answered");
+      await expand(a.getByTestId("agent-sources-details"));
       await a.scrollIntoViewIfNeeded();
       const answerBox = (await a.boundingBox())!;
       const tables = a.getByTestId("agent-sources");

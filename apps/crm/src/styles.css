@@ -53,6 +53,34 @@ aside {
   position: absolute;
   inset: 0;
 }
+/*
+ * The controls (data notice, Use my location, radius, threshold, ownership) stay in one place at the top of the
+ * aside; the results, permits, leads and the agent scroll below them. The aside's top padding is taken into the
+ * block so nothing shows above it while scrolling; a tall block (rules opened) scrolls on its own.
+ */
+.controls {
+  position: sticky;
+  top: -12px;
+  z-index: 4;
+  margin-top: -12px;
+  padding: 12px 0 8px;
+  background: #fff;
+  border-bottom: 1px solid #dedee3;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+details > summary {
+  cursor: pointer;
+}
+.rule-details > summary,
+.list-details > summary {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 6px 0;
+}
+.agent-sources-details > summary h4 {
+  display: inline;
+}
 .controls label {
   display: block;
   font-size: 13px;

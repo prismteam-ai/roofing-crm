@@ -1,4 +1,5 @@
 import type { AnswerResponse, Citation } from "./agent-types.ts";
+import { dateOnly } from "./dates.ts";
 import { Markdown } from "./markdown.tsx";
 
 /**
@@ -102,60 +103,73 @@ export function AgentAnswerView({
           </>
         )}
       </details>
-      <h4>Sources</h4>
-      {answer.records.length === 0 ? (
-        <p data-testid="agent-sources-none">No records cited.</p>
-      ) : (
-        KINDS.map(([kind, label]) => {
-          const rows = answer.records.filter((r) => r.kind === kind);
-          if (!rows.length) return null;
-          return (
-            <div key={kind} className="table-wrap">
-              <table
-                className="agent-sources"
-                data-testid="agent-sources"
-                data-kind={kind}
-              >
-                <caption>{label}</caption>
-                <thead>
-                  <tr>
-                    {COLUMNS.map((c) => (
-                      <th key={c}>{c}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={`${r.kind}/${r.id}`}>
-                      <td className="mono" data-label={COLUMNS[0]}>
-                        {kind === "parcel" ? (
-                          <button
-                            type="button"
-                            className="link"
-                            data-testid="agent-parcel-link"
-                            title="Open the parcel's details and show it on the map"
-                            onClick={() => onOpenParcel(r.id)}
-                          >
-                            {r.id}
-                          </button>
-                        ) : (
-                          r.id
-                        )}
-                      </td>
-                      <td data-label={COLUMNS[1]}>{r.source_name}</td>
-                      <td data-label={COLUMNS[2]}>{r.license ?? "—"}</td>
-                      <td data-label={COLUMNS[3]}>{r.attribution ?? "—"}</td>
-                      <td data-label={COLUMNS[4]}>
-                        <Unbroken text={r.collected_at} />
-                      </td>
+      {/* Closed until opened, its count in the header; the Gaps below stay open. */}
+      <details
+        className="agent-sources-details"
+        data-testid="agent-sources-details"
+      >
+        <summary>
+          <h4>
+            Sources{" "}
+            <span data-testid="agent-sources-count">
+              ({answer.records.length})
+            </span>
+          </h4>
+        </summary>
+        {answer.records.length === 0 ? (
+          <p data-testid="agent-sources-none">No records cited.</p>
+        ) : (
+          KINDS.map(([kind, label]) => {
+            const rows = answer.records.filter((r) => r.kind === kind);
+            if (!rows.length) return null;
+            return (
+              <div key={kind} className="table-wrap">
+                <table
+                  className="agent-sources"
+                  data-testid="agent-sources"
+                  data-kind={kind}
+                >
+                  <caption>{label}</caption>
+                  <thead>
+                    <tr>
+                      {COLUMNS.map((c) => (
+                        <th key={c}>{c}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          );
-        })
-      )}
+                  </thead>
+                  <tbody>
+                    {rows.map((r) => (
+                      <tr key={`${r.kind}/${r.id}`}>
+                        <td className="mono" data-label={COLUMNS[0]}>
+                          {kind === "parcel" ? (
+                            <button
+                              type="button"
+                              className="link"
+                              data-testid="agent-parcel-link"
+                              title="Open the parcel's details and show it on the map"
+                              onClick={() => onOpenParcel(r.id)}
+                            >
+                              {r.id}
+                            </button>
+                          ) : (
+                            r.id
+                          )}
+                        </td>
+                        <td data-label={COLUMNS[1]}>{r.source_name}</td>
+                        <td data-label={COLUMNS[2]}>{r.license ?? "—"}</td>
+                        <td data-label={COLUMNS[3]}>{r.attribution ?? "—"}</td>
+                        <td data-label={COLUMNS[4]}>
+                          <Unbroken text={dateOnly(r.collected_at)} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })
+        )}
+      </details>
       <h4>Gaps</h4>
       {gaps.specific.length > 0 && (
         <ul data-testid="agent-gaps">
