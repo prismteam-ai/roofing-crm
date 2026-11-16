@@ -11,10 +11,15 @@ import { dateOnly } from "./dates.ts";
 export const NOTES_HINT =
   "No owner names or contact details. Email addresses, phone numbers with an area code (with or without brackets, spaces, dots or hyphens) and 7 or more digits in a row (which covers parcel IDs) are refused.";
 
-/** The lead of the parcel in the detail panel: create it, or edit its status and notes, or delete it. */
+/**
+ * The lead of the parcel in the detail panel: create it, or edit its status and notes, or delete it. The permit it
+ * was created from is shown read only: it is set at creation (when the panel was opened from a permit row) and
+ * never changed.
+ */
 export function LeadEditor({
   parcelId,
   lead,
+  sourcePermit,
   busy,
   error,
   conflict,
@@ -26,6 +31,8 @@ export function LeadEditor({
   parcelId: string;
   /** undefined: loading; null: no lead yet. */
   lead: Lead | null | undefined;
+  /** The permit a lead created now records (the panel was opened from its row). */
+  sourcePermit?: string;
   busy: boolean;
   error?: string;
   conflict: boolean;
@@ -37,6 +44,12 @@ export function LeadEditor({
   return (
     <section className="lead" data-testid="lead" data-parcel={parcelId}>
       <h4>Lead</h4>
+      {(lead ? lead.source_permit : lead === null && sourcePermit) && (
+        <p className="notice" data-testid="lead-source-permit">
+          {lead ? "From permit " : "A lead created here records permit "}
+          <b>{lead ? lead.source_permit : sourcePermit}</b>
+        </p>
+      )}
       {lead === undefined ? (
         <p className="notice">Loading…</p>
       ) : (

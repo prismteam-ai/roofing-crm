@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   createInput,
+  lead,
   NOTES_REJECTED_MESSAGE,
   notesProblem,
   updateInput,
@@ -130,4 +131,68 @@ test("update needs the last-seen timestamp and something to change", () => {
       status: "won",
     }).success,
   ).toBe(true);
+});
+
+test("source_permit: optional at creation, only the run's one permit shape (99999-99999-99999)", () => {
+  expect(
+    createInput.parse({
+      parcel_id: "2317016013",
+      source_permit: "16016-10000-24567",
+    }),
+  ).toEqual({
+    parcel_id: "2317016013",
+    status: "new",
+    notes: "",
+    source_permit: "16016-10000-24567",
+  });
+  // Absent unless sent: no key at all.
+  expect(
+    "source_permit" in createInput.parse({ parcel_id: "2317016013" }),
+  ).toBe(false);
+  for (const bad of [
+    "",
+    "16016-10000-2456",
+    "16016-10000-245678",
+    "1601610000-24567",
+    "16016 10000 24567",
+    "A6016-10000-24567",
+    " 16016-10000-24567",
+    "16016-10000-24567\n",
+    "16016-10000-24567-1",
+  ])
+    expect(
+      createInput.safeParse({ parcel_id: "2317016013", source_permit: bad })
+        .success,
+      JSON.stringify(bad),
+    ).toBe(false);
+  expect(
+    createInput.safeParse({
+      parcel_id: "2317016013",
+      source_permit: 1601610000,
+    }).success,
+  ).toBe(false);
+});
+
+test("source_permit is never updated: the update input drops it; a stored lead reads with or without it", () => {
+  const at = "2026-11-12T10:00:00.000Z";
+  const u = updateInput.parse({
+    parcel_id: "2317016013",
+    expected_updated_at: at,
+    status: "won",
+    source_permit: "16016-10000-24567",
+  });
+  expect("source_permit" in u).toBe(false);
+  // An old lead (stored before the field existed) reads unchanged.
+  const old = {
+    parcel_id: "2317016013",
+    status: "new",
+    notes: "",
+    created_at: at,
+    updated_at: at,
+  };
+  expect(lead.parse(old)).toEqual(old);
+  expect(lead.parse({ ...old, source_permit: "16016-10000-24567" })).toEqual({
+    ...old,
+    source_permit: "16016-10000-24567",
+  });
 });

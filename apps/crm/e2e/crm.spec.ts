@@ -119,6 +119,14 @@ const ready = (page: Page) =>
   expect(page.getByTestId("map")).toHaveAttribute("data-ready", "true", {
     timeout: 30_000,
   });
+/**
+ * The notes every lead a test creates starts with. A suite edits or deletes only a lead it created: one it
+ * created itself (the create answered 200, or Create was clicked on a parcel that had no lead) and that carries
+ * these notes. Another user's lead on the same parcel never matches, so cleanup never touches it.
+ */
+const OWN_LEAD_NOTES = "Playwright test lead";
+const isOwnLead = (l: { notes: string } | null): l is { notes: string } =>
+  !!l && l.notes.startsWith(OWN_LEAD_NOTES);
 /** Opens a details element (a list or the agent's Sources) by a click on its summary, as a user does. */
 const expand = async (details: Locator) => {
   await expect(details).toBeAttached({ timeout: 20_000 });
@@ -993,7 +1001,7 @@ test.describe("with credentials", () => {
     let createClicked = false;
     try {
       await openLead();
-      await page.getByTestId("lead-notes").fill("Playwright test lead");
+      await page.getByTestId("lead-notes").fill(OWN_LEAD_NOTES);
       createClicked = true;
       await page.getByTestId("lead-create").click();
       await expect(page.getByTestId("lead-save")).toBeVisible({
@@ -1048,13 +1056,15 @@ test.describe("with credentials", () => {
       });
       expect(await get(parcel)).toBeNull();
     } finally {
-      // Always delete this test's own lead once Create was clicked, also when a step above failed.
+      // Always delete this test's own lead once Create was clicked, also when a step above failed; a lead
+      // without this test's notes is another user's (created between the check and the click) and is left alone.
       const left = createClicked ? await get(parcel) : null;
-      if (left)
+      if (isOwnLead(left))
         await leadsApi.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
           data: { parcel_id: parcel, expected_updated_at: left.updated_at },
         });
-      if (parcel) expect(await get(parcel)).toBeNull();
+      if (parcel && (!left || isOwnLead(left)))
+        expect(await get(parcel)).toBeNull();
       // Evidence that nothing was left behind; a failed read here never hides the test's own error.
       await listAll().then(
         (all) => console.log(`leads after cleanup: ${all.length}`),
@@ -1601,7 +1611,7 @@ test.describe("with credentials", () => {
       (await json(
         await a.get(trpc(cfg.leadsApiUrl, "leads.get", { parcel_id: id })),
         "leads.get",
-      )) as { updated_at: string } | null;
+      )) as { updated_at: string; notes: string } | null;
     /** The parcel IDs of all leads, read across every page via next_cursor (read-only). */
     const listAll = async () => {
       const all: string[] = [];
@@ -1684,12 +1694,13 @@ test.describe("with credentials", () => {
     const created: string[] = [];
     try {
       for (const id of mine) {
-        // The parcel had no lead when it was chosen: from here on a lead on it is this test's own.
-        created.push(id);
+        // Counted as this test's own only once the create answered 200: a create refused because another
+        // user's lead appeared on the parcel meanwhile never makes that lead this test's.
         const r = await a.post(`${cfg.leadsApiUrl}/trpc/leads.create`, {
-          data: { parcel_id: id, status: "new", notes: "" },
+          data: { parcel_id: id, status: "new", notes: OWN_LEAD_NOTES },
         });
         expect(r.status(), `leads.create ${id}`).toBe(200);
+        created.push(id);
       }
       const all = await listAll();
       const toggleOnly = await match(WINDOW, all);
@@ -1758,7 +1769,7 @@ test.describe("with credentials", () => {
       // Always delete this test's own leads, also when a step above failed.
       for (const id of created) {
         const left = await getLead(id);
-        if (left)
+        if (isOwnLead(left))
           await a.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
             data: { parcel_id: id, expected_updated_at: left.updated_at },
           });
@@ -2111,6 +2122,103 @@ test.describe("with credentials", () => {
     expect(fill).toBeLessThanOrEqual(1);
     expect(fill).toBeGreaterThan(0.6);
     await ctx.close();
+  });
+
+  test("41. a lead created from a long-open permit row keeps that permit (source_permit): shown read only in the editor and in the list's Permit column, unchanged by an update (the test's own lead is always deleted)", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    const a = await api();
+    type StoredLead = {
+      status: string;
+      notes: string;
+      updated_at: string;
+      source_permit?: string;
+    };
+    const get = async (id: string) => {
+      const r = await a.get(
+        trpc(cfg.leadsApiUrl, "leads.get", { parcel_id: id }),
+      );
+      if (r.status() !== 200) throw new Error(`leads.get: HTTP ${r.status()}`);
+      return (await r.json()).result.data as StoredLead | null;
+    };
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the center
+    await page.getByTestId("radius").fill("5");
+    await expect
+      .poll(() => attrNum(page, "permits-count", "data-count"), {
+        timeout: 20_000,
+      })
+      .toBeGreaterThan(0);
+    await expand(page.getByTestId("permits-details"));
+    const rows = page.getByTestId("permit-row");
+    const listed = await rows.evaluateAll((els) =>
+      els.map((e) => [e.dataset.permit!, e.dataset.parcel!]),
+    );
+    // The first row whose parcel has no lead (existing leads are never touched).
+    let index = -1;
+    for (let i = 0; i < listed.length && index < 0; i++)
+      if ((await get(listed[i]![1]!)) === null) index = i;
+    expect(index).toBeGreaterThanOrEqual(0);
+    const [permit, parcel] = listed[index]! as [string, string];
+    expect(permit).toMatch(/^\d{5}-\d{5}-\d{5}$/);
+    console.log("LEAD_FROM_PERMIT", JSON.stringify({ permit, parcel }));
+    let createClicked = false;
+    try {
+      await rows.nth(index).click();
+      await expect(page.getByTestId("lead")).toHaveAttribute(
+        "data-parcel",
+        parcel,
+      );
+      await expect(page.getByTestId("lead-source-permit")).toHaveText(
+        `A lead created here records permit ${permit}`,
+      );
+      await page.getByTestId("lead-notes").fill(OWN_LEAD_NOTES);
+      createClicked = true;
+      await page.getByTestId("lead-create").click();
+      await expect(page.getByTestId("lead-save")).toBeVisible({
+        timeout: 10_000,
+      });
+      expect(await get(parcel)).toMatchObject({
+        notes: OWN_LEAD_NOTES,
+        source_permit: permit,
+      });
+      // Read only in the editor; in the list's Permit column.
+      const shown = page.getByTestId("lead-source-permit");
+      await expect(shown).toHaveText(`From permit ${permit}`);
+      // No field of the editor holds it.
+      expect(
+        await page
+          .getByTestId("lead")
+          .locator("input, textarea, select")
+          .evaluateAll(
+            (els, p) => els.some((e) => (e as HTMLInputElement).value === p),
+            permit,
+          ),
+      ).toBe(false);
+      await expand(page.getByTestId("leads-details"));
+      const row = page
+        .getByTestId("lead-item")
+        .filter({ has: page.locator(`td:text-is("${parcel}")`) });
+      await expect(row.getByTestId("lead-permit")).toHaveText(permit);
+      // An update changes the status, never the permit.
+      await page.getByTestId("lead-status").selectOption("contacted");
+      await page.getByTestId("lead-save").click();
+      await expect
+        .poll(async () => (await get(parcel))?.status, { timeout: 10_000 })
+        .toBe("contacted");
+      expect((await get(parcel))?.source_permit).toBe(permit);
+      await expect(shown).toHaveText(`From permit ${permit}`);
+    } finally {
+      // Only this test's own lead (its notes) is deleted.
+      const left = createClicked ? await get(parcel) : null;
+      if (isOwnLead(left))
+        await a.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
+          data: { parcel_id: parcel, expected_updated_at: left.updated_at },
+        });
+      if (!left || isOwnLead(left)) expect(await get(parcel)).toBeNull();
+    }
   });
 });
 

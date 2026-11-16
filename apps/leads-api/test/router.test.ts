@@ -75,6 +75,65 @@ test("create writes a conditional put with server timestamps and records LeadWri
   expect(JSON.stringify(logs)).not.toContain("Original roof.");
 });
 
+test("create from a permit stores source_permit on the item; without one the item has no such attribute", async () => {
+  ddb.on(PutCommand).resolves({});
+  const lead = await caller("crm").leads.create({
+    parcel_id: "2317016013",
+    source_permit: "16016-10000-24567",
+  });
+  expect(lead).toEqual({
+    parcel_id: "2317016013",
+    status: "new",
+    notes: "",
+    source_permit: "16016-10000-24567",
+    created_at: NOW.toISOString(),
+    updated_at: NOW.toISOString(),
+  });
+  expect(ddb.commandCalls(PutCommand)[0]!.args[0].input.Item).toEqual(lead);
+  await caller("crm").leads.create({ parcel_id: "2317016014" });
+  const item = ddb.commandCalls(PutCommand)[1]!.args[0].input.Item!;
+  expect(Object.keys(item).sort()).toEqual([
+    "created_at",
+    "notes",
+    "parcel_id",
+    "status",
+    "updated_at",
+  ]);
+  // A malformed permit number is refused before any write.
+  await expect(
+    caller("crm").leads.create({
+      parcel_id: "2317016015",
+      source_permit: "16016-10000",
+    }),
+  ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  expect(ddb.commandCalls(PutCommand)).toHaveLength(2);
+});
+
+test("update never writes source_permit, even when a client sends it; the stored one comes back unchanged", async () => {
+  ddb.on(UpdateCommand).resolves({
+    Attributes: {
+      parcel_id: "2317016013",
+      status: "contacted",
+      notes: "",
+      source_permit: "16016-10000-24567",
+      created_at: "a",
+      updated_at: "b",
+    },
+  });
+  const out = await caller("crm").leads.update({
+    parcel_id: "2317016013",
+    expected_updated_at: "2026-11-12T09:00:00.000Z",
+    status: "contacted",
+    // Not part of the update input: dropped before the write.
+    ...({ source_permit: "99999-99999-99999" } as object),
+  });
+  const u = ddb.commandCalls(UpdateCommand)[0]!.args[0].input;
+  expect(u.UpdateExpression).toBe("SET updated_at = :now, #status = :status");
+  expect(JSON.stringify(u)).not.toContain("source_permit");
+  expect(JSON.stringify(u)).not.toContain("99999-99999-99999");
+  expect(out.source_permit).toBe("16016-10000-24567");
+});
+
 test("create on an existing lead is a CONFLICT, not a failure metric", async () => {
   ddb.on(PutCommand).rejects(conditionFailed());
   await expect(

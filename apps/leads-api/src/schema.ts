@@ -1,7 +1,7 @@
 /**
  * Lead contract shared by the leads API and the CRM app (browser-safe: Zod only, no server imports).
- * A lead holds the parcel ID, status, notes and timestamps only: no owner names, mailing addresses or
- * contact fields.
+ * A lead holds the parcel ID, status, notes and timestamps, and the permit it was created from when it was
+ * created from one: no owner names, mailing addresses or contact fields.
  */
 import { z } from "zod";
 
@@ -44,6 +44,10 @@ export function notesProblem(notes: string): string | undefined {
 }
 
 export const parcelId = z.string().regex(/^\d{10}$/, "parcel_id is 10 digits");
+/** A permit number in the one shape every permit of the served run has: 99999-99999-99999 (17 characters). */
+export const permitNumber = z
+  .string()
+  .regex(/^\d{5}-\d{5}-\d{5}$/, "a permit number is 99999-99999-99999");
 export const status = z.enum(LEAD_STATUSES);
 export const notes = z
   .string()
@@ -61,6 +65,11 @@ export const lead = z.object({
   notes,
   created_at: timestamp,
   updated_at: timestamp,
+  /**
+   * The permit the lead was created from (a permit row in the CRM). Set only at creation, never updated; absent
+   * on a lead created any other way and on leads stored before it existed.
+   */
+  source_permit: permitNumber.optional(),
 });
 export type Lead = z.infer<typeof lead>;
 export type LeadStatus = z.infer<typeof status>;
@@ -74,7 +83,10 @@ export const createInput = z.object({
   parcel_id: parcelId,
   status: status.default("new"),
   notes: notes.default(""),
+  /** Sent only when the lead is created from a permit; stored as it is. */
+  source_permit: permitNumber.optional(),
 });
+/** No source_permit here: it is set at creation and never changed (an extra key is dropped, as any other). */
 export const updateInput = z
   .object({
     parcel_id: parcelId,

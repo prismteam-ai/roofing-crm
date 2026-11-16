@@ -117,6 +117,14 @@ export function App() {
   const [failed, setFailed] = useState<{ key: string; message: string }>();
   const [offset, setOffset] = useState(0);
   const [detail, setDetail] = useState<Detail>();
+  /**
+   * The permit row the details panel was opened from (with its parcel), if it was: a lead created there records
+   * it as source_permit. Opening a parcel any other way clears it.
+   */
+  const [detailPermit, setDetailPermit] = useState<{
+    parcelId: string;
+    permitNumber: string;
+  }>();
   const [gpsMsg, setGpsMsg] = useState<string>();
   /** How the pin was placed: the label of the center sent to the agent. */
   const [pinLabel, setPinLabel] = useState<PinLabel>("map pin");
@@ -178,11 +186,12 @@ export function App() {
 
   /**
    * Opens the details panel with the CURRENT client (stable function, safe in map handlers); resolves with the
-   * detail shown, or undefined when it could not be read.
+   * detail shown, or undefined when it could not be read. `permitNumber`: opened from that permit's row.
    */
-  const openDetail = useCallback(async (id: string) => {
+  const openDetail = useCallback(async (id: string, permitNumber?: string) => {
     const client = apiRef.current;
     if (!client) return undefined;
+    setDetailPermit(permitNumber ? { parcelId: id, permitNumber } : undefined);
     try {
       const d = await client.parcels.detail.query({ parcel_id: id });
       setDetail(d);
@@ -599,9 +608,18 @@ export function App() {
       setLeadBusy(false);
     }
   };
+  /** The permit a lead created now records: the permit row the panel was opened from, for this parcel. */
+  const sourcePermit =
+    detailPermit && detailPermit.parcelId === detailId
+      ? detailPermit.permitNumber
+      : undefined;
   const createLead = (v: { status: LeadStatus; notes: string }) =>
     void leadWrite(() =>
-      leadsApi!.leads.create.mutate({ parcel_id: detailId!, ...v }),
+      leadsApi!.leads.create.mutate({
+        parcel_id: detailId!,
+        ...v,
+        ...(sourcePermit ? { source_permit: sourcePermit } : {}),
+      }),
     );
   const saveLead = (v: { status: LeadStatus; notes: string }) =>
     void leadWrite(() =>
@@ -945,7 +963,7 @@ export function App() {
             onWindowText={setWindowText}
             openWindow={permitWindow}
             windowError={windowRead.error}
-            onOpen={(id) => void openDetail(id)}
+            onOpen={(id, permit) => void openDetail(id, permit)}
           />
         )}
         {leadsApi && (
@@ -1020,6 +1038,7 @@ export function App() {
               <LeadEditor
                 parcelId={detailId}
                 lead={detailLead}
+                sourcePermit={sourcePermit}
                 busy={leadBusy}
                 error={msg?.error}
                 conflict={!!msg?.conflict}

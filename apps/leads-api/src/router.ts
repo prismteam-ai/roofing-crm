@@ -1,7 +1,8 @@
 /**
  * Leads router: one item per parcel in the leads table. Writes are conditional (create: the lead must not
  * exist; update and delete: `updated_at` must still be the value the client last saw), so a stale write
- * is a CONFLICT instead of a silent overwrite. Notes are never logged.
+ * is a CONFLICT instead of a silent overwrite. Notes are never logged. A lead's source_permit is written only by
+ * create (when given); update sets status, notes and updated_at only.
  */
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import {

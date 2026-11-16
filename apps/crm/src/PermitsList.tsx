@@ -69,8 +69,11 @@ export function PermitsList({
   /** The window read from them; undefined while a field is empty or invalid (windowError says why). */
   openWindow: OpenWindow | undefined;
   windowError: string | undefined;
-  /** Opens a parcel's detail (the same panel as a map click). */
-  onOpen: (parcelId: string) => void;
+  /**
+   * Opens a parcel's detail (the same panel as a map click), with the permit of the row: a lead created there
+   * records it.
+   */
+  onOpen: (parcelId: string, permitNumber: string) => void;
 }) {
   const [sort, setSort] = useState<Sort>("open_days");
   // Key: pin (5 decimals, as the parcel search), radius, threshold, min days, max days ("" = unset), sort.
@@ -265,7 +268,7 @@ export function PermitsList({
                         ? "Open the parcel's details (the nearest unit of this building)"
                         : "Open the parcel's details"
                     }
-                    onClick={() => onOpen(p.parcel_id)}
+                    onClick={() => onOpen(p.parcel_id, p.permit_number)}
                   >
                     <b>{p.permit_number}</b>{" "}
                     <span className="tag">long-open</span>

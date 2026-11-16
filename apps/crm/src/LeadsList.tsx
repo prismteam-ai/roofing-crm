@@ -17,7 +17,8 @@ export const LEADS_MAX_PAGES = 20;
  * The data API answers both of the last two through parcels.match (see leadsInSearch.ts); the long-open
  * toggle works with "Leads in this search" on (the search filter and the lead IDs) and off (the lead IDs
  * only). Nothing derived is stored with a lead, which holds the parcel only. There is no filter on other
- * permit statuses; the disabled control says so.
+ * permit statuses; the disabled control says so. The Permit column is the permit a lead was created from (a
+ * permit row), "—" for a lead created any other way.
  */
 export function LeadsList({
   leads,
@@ -142,19 +143,33 @@ export function LeadsList({
             {leads.length}
           </span>
         </summary>
-        <ul className="list">
-          {shown.map((l) => (
-            <li
-              key={l.parcel_id}
-              data-testid="lead-item"
-              data-parcel={l.parcel_id}
-              onClick={() => onOpen(l.parcel_id)}
-            >
-              <b>{l.parcel_id}</b> · {l.status} · updated{" "}
-              {dateOnly(l.updated_at)}
-            </li>
-          ))}
-        </ul>
+        <table className="leads-table">
+          <thead>
+            <tr>
+              <th>Parcel</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th>Permit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((l) => (
+              <tr
+                key={l.parcel_id}
+                data-testid="lead-item"
+                data-parcel={l.parcel_id}
+                onClick={() => onOpen(l.parcel_id)}
+              >
+                <td className="mono">{l.parcel_id}</td>
+                <td>{l.status}</td>
+                <td className="nowrap">{dateOnly(l.updated_at)}</td>
+                <td className="mono" data-testid="lead-permit">
+                  {l.source_permit ?? "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </details>
     </section>
   );

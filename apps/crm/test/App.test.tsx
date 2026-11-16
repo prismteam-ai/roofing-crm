@@ -916,12 +916,134 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     expect(screen.getByTestId("lead-updated").textContent).toMatch(
       /^Updated \d{4}-\d{2}-\d{2}$/,
     );
-    expect(screen.getAllByTestId("lead-item")[0]!.textContent).toMatch(
-      / · updated \d{4}-\d{2}-\d{2}$/,
-    );
+    expect(
+      [...screen.getAllByTestId("lead-item")[0]!.querySelectorAll("td")].map(
+        (td) => td.textContent,
+      ),
+    ).toEqual(["0000000003", "new", "2026-11-12", "—"]);
     expect(
       screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
     ).toEqual(["0000000003"]);
+  });
+
+  test("a lead created from a permit row records that permit (source_permit); the editor shows it read only and the list has a Permit column; opened any other way, none is sent", async () => {
+    const PERMIT = "16016-10000-24567";
+    h.longOpen.mockResolvedValue({
+      ...EMPTY_LONG_OPEN,
+      count: 1,
+      items: [
+        {
+          permit_number: PERMIT,
+          address: "1 ROOF ST",
+          postal_code: "91405",
+          source_permit_type: "Bldg-Alter/Repair",
+          source_permit_sub_type: "1 or 2 Family Dwelling",
+          source_status_desc: "Issued",
+          permit_status_class: "open-issued",
+          application_received_date: "2010-02-01",
+          permit_issue_date: "2010-03-01",
+          status_date: "2010-03-01",
+          open_since: "2010-03-01",
+          open_days: 6000,
+          roofing_work: true,
+          roof_coating_only: false,
+          join_method: "direct",
+          building_level: false,
+          parcel_count: 1,
+          parcel_id: "0000000003",
+          distance_miles: 0.9,
+          effective_roof_year: 1980,
+          roof_age_basis: PROXY,
+          roof_year_permit_number: null,
+        },
+      ],
+    } as LongOpenResult);
+    h.leads.list.mockResolvedValue({
+      items: [
+        { ...lead("0000000009", "won"), source_permit: "11111-22222-33333" },
+      ],
+      next_cursor: null,
+    });
+    h.leads.get.mockResolvedValue(null);
+    h.leads.create.mockImplementation(
+      async (v: { parcel_id: string; status: string; notes: string }) => ({
+        ...v,
+        created_at: T0,
+        updated_at: T0,
+      }),
+    );
+    const map = await start();
+    await flush();
+    const permitCell = (parcel: string) =>
+      screen
+        .getAllByTestId("lead-item")
+        .find((r) => r.dataset.parcel === parcel)!
+        .querySelector('[data-testid="lead-permit"]')!.textContent;
+    expect(
+      [...screen.getByTestId("leads").querySelectorAll("thead th")].map(
+        (th) => th.textContent,
+      ),
+    ).toEqual(["Parcel", "Status", "Updated", "Permit"]);
+    expect(permitCell("0000000009")).toBe("11111-22222-33333");
+    h.leads.delete.mockResolvedValue({
+      parcel_id: "0000000003",
+      deleted: true,
+    });
+    // Opened from its map point (not a permit row): no permit is shown or sent.
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    await flush();
+    await act(async () => {
+      map.clickAt(1000, -1000); // the point 0000000003
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await flush();
+    expect(screen.getByTestId("lead").dataset.parcel).toBe("0000000003");
+    expect(screen.queryByTestId("lead-source-permit")).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-create"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.leads.create).toHaveBeenCalledTimes(1);
+    expect("source_permit" in h.leads.create.mock.lastCall![0]).toBe(false);
+    expect(permitCell("0000000003")).toBe("—");
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-delete"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByTestId("lead-create")).toBeTruthy();
+    // Opened from the permit's row: the editor says the permit is recorded, and the create sends it.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("permit-row"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await flush();
+    expect(screen.getByTestId("lead").dataset.parcel).toBe("0000000003");
+    expect(screen.getByTestId("lead-source-permit").textContent).toBe(
+      `A lead created here records permit ${PERMIT}`,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-create"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.leads.create).toHaveBeenLastCalledWith({
+      parcel_id: "0000000003",
+      status: "new",
+      notes: "",
+      source_permit: PERMIT,
+    });
+    // Read only: shown as text, never a field.
+    const shown = screen.getByTestId("lead-source-permit");
+    expect(shown.textContent).toBe(`From permit ${PERMIT}`);
+    expect(shown.querySelector("input, textarea, select")).toBeNull();
+    expect(
+      screen
+        .getByTestId("lead")
+        .querySelector(
+          'input[name="source_permit"], [data-field="source_permit"]',
+        ),
+    ).toBeNull();
+    expect(permitCell("0000000003")).toBe(PERMIT);
   });
 
   test("notes with a parcel ID or a phone number are refused in the UI with the reason", async () => {

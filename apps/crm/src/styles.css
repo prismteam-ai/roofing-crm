@@ -421,3 +421,22 @@ pre.mono {
 .mono {
   font-family: ui-monospace, monospace;
 }
+/* The lead list: one row per lead (Parcel, Status, Updated, Permit); a row opens its parcel's detail. */
+.leads-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.leads-table th,
+.leads-table td {
+  border-bottom: 1px solid #ebebf0;
+  padding: 4px 2px;
+  text-align: left;
+  vertical-align: top;
+}
+.leads-table tbody tr {
+  cursor: pointer;
+}
+.leads-table tbody tr:hover {
+  background: #f3f3f7;
+}
