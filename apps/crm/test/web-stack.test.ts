@@ -4,8 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as cdk from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { APP_ID_PARAM, CrmWebStack } from "../cdk/lib/crm-web-stack.ts";
+
+// A CDK synth takes about 3 s when this file runs alone, but the first one in
+// the file exceeded the default 5 s timeout when the full suite ran under load.
+vi.setConfig({ testTimeout: 30_000 });
 
 const synth = () => {
   const siteDir = mkdtempSync(join(tmpdir(), "crm-site-"));
