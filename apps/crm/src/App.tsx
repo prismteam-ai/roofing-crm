@@ -691,6 +691,23 @@ export function App() {
         >
           {countText}
         </span>
+        {/* Beside the results: the legend's own count and window (equal to it); hidden when none is marked. */}
+        {points && result && !!longOpenDrawn && (
+          <span
+            className="count long-open-count"
+            data-testid="result-long-open"
+            data-count={longOpenDrawn}
+            data-window={result.win}
+          >
+            <span data-testid="result-long-open-count">
+              {longOpenDrawn.toLocaleString("en-US")}
+            </span>
+            {points.truncated
+              ? ` of the ${points.id.length.toLocaleString("en-US")} drawn`
+              : ""}{" "}
+            with a long-open roofing permit ({legendWindow})
+          </span>
+        )}
         {loading && (
           <span className="notice" style={{ color: "#fff" }}>
             updating…

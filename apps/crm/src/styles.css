@@ -36,6 +36,10 @@ header h1 {
   padding: 6px 12px;
   border-radius: 16px;
 }
+.count.long-open-count {
+  background: #1f5fd1;
+  color: #fff;
+}
 aside {
   overflow: auto;
   padding: 12px;

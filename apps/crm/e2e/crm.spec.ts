@@ -824,6 +824,28 @@ test.describe("with credentials", () => {
     await expect(page.getByTestId("points-truncated")).toHaveText(
       `Map shows the nearest ${n(pts.max_points)} of ${n(pts.count)} matching parcels; the count and the list cover all ${n(pts.count)}.`,
     );
+    // Beside the results badge: the legend's long-open count, "of the M drawn" (the points are truncated).
+    const ptsLongOpen = await get("parcels.points", {
+      lat: pin[0],
+      lon: pin[1],
+      radius_miles: 10,
+      threshold_years: 15,
+      min_open_days: 1826,
+    });
+    const marked = (ptsLongOpen.long_open_permit as number[]).reduce(
+      (x, y) => x + y,
+      0,
+    );
+    await expect(page.getByTestId("legend-long-open")).toHaveAttribute(
+      "data-count",
+      String(marked),
+      { timeout: 20_000 },
+    );
+    if (marked > 0)
+      await expect(page.getByTestId("result-long-open")).toHaveText(
+        `${n(marked)} of the ${n(ptsLongOpen.id.length)} drawn with a long-open roofing permit (open at least 1,826 days)`,
+      );
+    else await expect(page.getByTestId("result-long-open")).toHaveCount(0);
     const { run } = await get("explorer.runSummary");
     await expect(page.getByTestId("data-parcels")).toHaveText(
       n(run.row_counts.parquet),
@@ -1253,6 +1275,20 @@ test.describe("with credentials", () => {
     const legend = page.getByTestId("legend-long-open");
     const legendCount = () =>
       strictNum(legend, "data-count", "[data-testid=legend-long-open]");
+    const badge = page.getByTestId("result-long-open");
+    /** The count beside the results badge: the legend's number, as attribute and as text. */
+    const badgeEqualsLegend = async (n: number) => {
+      await expect
+        .poll(
+          () =>
+            strictNum(badge, "data-count", "[data-testid=result-long-open]"),
+          { timeout: 20_000 },
+        )
+        .toBe(n);
+      await expect(page.getByTestId("result-long-open-count")).toHaveText(
+        (await page.getByTestId("legend-long-open-count").textContent())!,
+      );
+    };
 
     // Default window: at least 1,826 days, no maximum (the long-open list's).
     const a = await points({ min_open_days: 1826 });
@@ -1270,6 +1306,8 @@ test.describe("with credentials", () => {
     await expect(legend).toContainText(
       `(open at least 1,826 days): ${n(nA)} of the ${n(a.id.length)} parcels drawn`,
     );
+    await badgeEqualsLegend(nA);
+    await expect(badge).toHaveAttribute("data-window", "1826|");
     await renderedFor(page, zoom); // this search is drawn
     await expect(page.getByTestId("map")).toHaveAttribute(
       "data-rendered-long-open",
@@ -1288,6 +1326,10 @@ test.describe("with credentials", () => {
     });
     await expect.poll(legendCount, { timeout: 20_000 }).toBe(nB);
     await expect(legend).toContainText("(open 1,826 to 3,653 days)");
+    if (nB > 0) {
+      await badgeEqualsLegend(nB);
+      await expect(badge).toContainText("(open 1,826 to 3,653 days)");
+    } else await expect(badge).toHaveCount(0);
     await expect(page.getByTestId("map")).toHaveAttribute(
       "data-rendered-long-open",
       "1826|3653",

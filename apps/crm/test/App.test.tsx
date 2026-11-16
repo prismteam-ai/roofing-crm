@@ -920,6 +920,46 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       expect(document.body.textContent).not.toMatch(/not harvested/i);
     });
 
+    test("the long-open count beside the results badge equals the legend; 'of the M drawn' when the points are truncated; hidden when none is marked", async () => {
+      // An API without the column: the legend says so and no badge shows.
+      const map = await start();
+      act(() => map.clickAt(300, 100));
+      await wait(300);
+      expect(screen.getByTestId("legend-long-open-unavailable")).toBeTruthy();
+      expect(screen.queryByTestId("result-long-open")).toBeNull();
+      // Marked, none in the window: the legend says 0, no badge.
+      h.points.mockResolvedValue({
+        ...capped(),
+        long_open_permit: [0, 0],
+        long_open: { min_open_days: 1826, max_open_days: null },
+      });
+      fireEvent.change(screen.getByTestId("radius"), {
+        target: { value: "9" },
+      });
+      await wait(300);
+      expect(screen.getByTestId("legend-long-open").dataset.count).toBe("0");
+      expect(screen.queryByTestId("result-long-open")).toBeNull();
+      // Truncated, one marked: "1 of the 2 drawn", the legend's number.
+      h.points.mockResolvedValue({
+        ...capped(),
+        long_open_permit: [1, 0],
+        long_open: { min_open_days: 1826, max_open_days: null },
+      });
+      fireEvent.change(screen.getByTestId("radius"), {
+        target: { value: "10" },
+      });
+      await wait(300);
+      expect(screen.getByTestId("result-long-open").textContent).toBe(
+        "1 of the 2 drawn with a long-open roofing permit (open at least 1,826 days)",
+      );
+      expect(screen.getByTestId("result-long-open-count").textContent).toBe(
+        screen.getByTestId("legend-long-open-count").textContent,
+      );
+      expect(screen.getByTestId("legend-long-open").textContent).toBe(
+        "Has a long-open roofing permit (open at least 1,826 days): 1 of the 2 parcels drawn",
+      );
+    });
+
     test("truncated points show the nearest-N-of-M notice; untruncated points do not", async () => {
       const map = await start();
       act(() => map.clickAt(300, 100));
@@ -1872,6 +1912,19 @@ describe("permits and the effective roof year", () => {
     expect(legend().textContent).toBe(
       "Has a long-open roofing permit (open at least 1,826 days): 2 of the 3 parcels drawn",
     );
+    // Beside the results badge: the legend's number and window (the points are not truncated: no "of the M").
+    const badge = () => screen.getByTestId("result-long-open");
+    const badgeEqualsLegend = () => {
+      expect(badge().dataset.count).toBe(legend().dataset.count);
+      expect(screen.getByTestId("result-long-open-count").textContent).toBe(
+        screen.getByTestId("legend-long-open-count").textContent,
+      );
+      expect(badge().dataset.window).toBe(legend().dataset.window);
+    };
+    badgeEqualsLegend();
+    expect(badge().textContent).toBe(
+      "2 with a long-open roofing permit (open at least 1,826 days)",
+    );
     act(() => map.fire("idle"));
     expect(screen.getByTestId("map").dataset.renderedLongOpen).toBe("1826|");
 
@@ -1896,6 +1949,10 @@ describe("permits and the effective roof year", () => {
     });
     expect(legend().dataset.count).toBe("1");
     expect(legend().textContent).toContain("open 1,826 to 3,653 days");
+    badgeEqualsLegend();
+    expect(badge().textContent).toBe(
+      "1 with a long-open roofing permit (open 1,826 to 3,653 days)",
+    );
     expect(features().map((f) => f[1])).toEqual([0, 0, 1]);
     act(() => map.fire("idle"));
     expect(screen.getByTestId("map").dataset.renderedLongOpen).toBe(
@@ -1912,6 +1969,7 @@ describe("permits and the effective roof year", () => {
     expect(screen.getByTestId("legend-window-invalid").textContent).toBe(
       "The open-duration window is invalid; the map keeps the last valid one.",
     );
+    badgeEqualsLegend();
     // A new search meanwhile uses the last valid window.
     setInput("radius", "2");
     await wait(300);
