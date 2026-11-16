@@ -182,6 +182,12 @@ button:disabled {
   .map {
     order: 2;
   }
+  /* One column: the aside is short (below the map), so the controls scroll with it and never cover what follows. */
+  .controls {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 .lead,
 .leads {

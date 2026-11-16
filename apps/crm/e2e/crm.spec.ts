@@ -18,6 +18,11 @@ import {
   STOPPED,
 } from "./agent-fixtures.ts";
 import { BASE_URL, CREDS, ORIGIN } from "./env.ts";
+import {
+  expectLayout,
+  LAYOUT_BREAKPOINTS,
+  openLayout,
+} from "./layout-checks.ts";
 import { dateOnly } from "../src/dates.ts";
 
 const VN = { lat: 34.199, lon: -118.487 };
@@ -2697,5 +2702,15 @@ test.describe("Ask the agent (answers mocked)", () => {
           expect(await splitWords(tds.nth(4), "\\S+")).toEqual([]);
         }
       }
+    });
+
+  // The one-column layout (max-width 760px): the sticky controls covered the content below them (test 37 at
+  // 390 px: <section class="controls"> intercepted the click on "Ask the agent"). Same steps as the local lane.
+  for (const bp of LAYOUT_BREAKPOINTS)
+    test(`42. ${bp.name} (${bp.viewport.width} px): ${bp.oneColumn ? "nothing covers the content below the controls; 'Ask the agent' opens with a plain click" : "the controls stay in place while the aside scrolls"}`, async ({
+      page,
+    }) => {
+      await openLayout(page, bp);
+      await expectLayout(page, bp);
     });
 });
