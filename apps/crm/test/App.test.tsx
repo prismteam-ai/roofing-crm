@@ -29,6 +29,13 @@ import type {
   SearchItem,
 } from "@oracle-la/api-client";
 
+/**
+ * 30 s per test instead of 5 s: on a loaded host the 2,000-lead tests (about 2 s alone) ran out of time, and a
+ * test stopped in the middle of an act() left React's act scope open, so no later test's effects ran and none of
+ * them got a map (the replay's 44 failures after the first).
+ */
+vi.setConfig({ testTimeout: 30_000 });
+
 const h = vi.hoisted(() => {
   const maps: Array<{
     handlers: Record<string, Array<(e: unknown) => void>>;
@@ -300,6 +307,25 @@ const wait = (ms: number) =>
   act(async () => {
     await vi.advanceTimersByTimeAsync(ms);
   });
+/** setTimeout as it was before any test faked the timers (a real pause while waiting for the map). */
+const realSetTimeout = globalThis.setTimeout;
+/**
+ * Renders the app and waits until it has created its map. The map is made once the config read resolves; one
+ * flush is enough on a quiet host but not always on a loaded one, so this flushes again, with a short real
+ * pause, until the map exists (at most about 2 s). Fake time never moves here.
+ */
+const renderApp = async () => {
+  render(<App />);
+  for (let i = 0; i < 200; i++) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    if (h.maps.length) break;
+    await new Promise((r) => realSetTimeout(r, 10));
+  }
+  expect(h.maps.length, "the app created its map").toBeGreaterThan(0);
+  return h.maps[0]!;
+};
 
 describe("CRM main screen", () => {
   // Stub pixels: 1 px = 1e-5 degree; 0000000001 at (0, 0), 0000000002 at (4, 0), 0000000003 at (1000, -1000).
@@ -360,8 +386,7 @@ describe("CRM main screen", () => {
 
   /** Render, load the map, drop a pin on empty map at (300, 100) and wait for the results. */
   const setup = async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     const map = h.maps[0]!;
     map.fire("load");
     act(() => map.clickAt(300, 100));
@@ -371,8 +396,7 @@ describe("CRM main screen", () => {
   };
 
   test("a pin produces rendered results with exactly one API call per input change, and none while idle", async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     const map = h.maps[0]!;
     map.fire("load");
     expect(screen.getByTestId("result-count").textContent).toContain(
@@ -531,8 +555,7 @@ describe("the ownership filter on the search", () => {
     vi.mocked(loadConfig).mockReset();
   });
   const pinned = async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     const map = h.maps[0]!;
     map.fire("load");
     act(() => map.clickAt(300, 100));
@@ -671,8 +694,7 @@ describe("layout: controls, rule texts and lists", () => {
     vi.mocked(loadConfig).mockReset();
   });
   const pinned = async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     const map = h.maps[0]!;
     map.fire("load");
     act(() => map.clickAt(300, 100));
@@ -870,8 +892,7 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     vi.mocked(loadConfig).mockReset();
   });
   const start = async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     const map = h.maps[0]!;
     map.fire("load");
     return map;
@@ -924,6 +945,242 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     expect(
       screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
     ).toEqual(["0000000003"]);
+  });
+
+  test("'Lead created' shows after Create lead succeeds, and goes with the next write", async () => {
+    h.leads.list.mockResolvedValue({ items: [], next_cursor: null });
+    h.leads.get.mockResolvedValue(null);
+    h.leads.create.mockImplementation(
+      async (v: { parcel_id: string; status: string; notes: string }) => ({
+        ...v,
+        created_at: T0,
+        updated_at: T0,
+      }),
+    );
+    h.leads.update.mockImplementation(
+      async (v: { parcel_id: string; status: string; notes: string }) => ({
+        ...v,
+        created_at: T0,
+        updated_at: T1,
+      }),
+    );
+    const map = await start();
+    await openDetail(map);
+    expect(screen.queryByTestId("lead-created")).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-create"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    const done = screen.getByTestId("lead-created");
+    expect(done.textContent).toBe("Lead created");
+    expect(done.getAttribute("role")).toBe("status");
+    // A failed create shows no confirmation (checked below with a refusal); a save removes it.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-save"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.leads.update).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("lead-created")).toBeNull();
+  });
+
+  test("a refused create shows its error and no 'Lead created'", async () => {
+    h.leads.get.mockResolvedValue(null);
+    h.leads.create.mockRejectedValue(new Error("refused"));
+    const map = await start();
+    await openDetail(map);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-create"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByTestId("lead-error").textContent).toBe("refused");
+    expect(screen.queryByTestId("lead-created")).toBeNull();
+  });
+
+  test("the leads box: one control per line (label elements, in order); the permit-status control disabled and marked not available yet; the help folded under 'How the filters work'", async () => {
+    await start();
+    await flush();
+    const box = screen.getByTestId("leads");
+    // Each control is a block label of its own, directly in the box (no row of several controls).
+    expect(
+      [...box.querySelectorAll(":scope > label")].map((l) =>
+        l.getAttribute("data-testid"),
+      ),
+    ).toEqual([
+      "leads-status-filter-label",
+      "leads-in-search-label",
+      "leads-long-open-label",
+      "leads-permit-filter",
+    ]);
+    expect(box.querySelector(".row")).toBeNull();
+    const permit = screen.getByTestId("leads-permit-filter");
+    expect(permit.textContent).toBe("permit status not available yet");
+    expect(permit.className).toBe("unavailable");
+    expect((permit.querySelector("select") as HTMLSelectElement).disabled).toBe(
+      true,
+    );
+    const help = screen.getByTestId("leads-filters-help") as HTMLDetailsElement;
+    expect(help.tagName).toBe("DETAILS");
+    expect(help.className).toBe("rule-details");
+    expect(help.open).toBe(false);
+    expect(help.querySelector("summary")!.textContent).toBe(
+      "How the filters work",
+    );
+    expect(help.textContent).toContain("Leads filter by status");
+  });
+
+  test("'Leads in this search' is greyed and says it needs a pin until there is a search", async () => {
+    const map = await start();
+    await flush();
+    const label = screen.getByTestId("leads-in-search-label");
+    expect(label.className).toBe("unavailable");
+    expect(screen.getByTestId("leads-in-search-needs-pin").textContent).toBe(
+      " (needs a pin on the map first)",
+    );
+    expect(label.textContent).toBe(
+      " Leads in this search (needs a pin on the map first)",
+    );
+    act(() => map.clickAt(300, 100));
+    await wait(300);
+    expect(label.className).toBe("");
+    expect(screen.queryByTestId("leads-in-search-needs-pin")).toBeNull();
+    expect(
+      (screen.getByTestId("leads-in-search") as HTMLInputElement).disabled,
+    ).toBe(false);
+  });
+
+  test("an empty list says how to create a lead; not before the leads are read, and not once there is one", async () => {
+    let answer: (v: unknown) => void = () => {};
+    h.leads.list.mockReturnValue(new Promise((r) => (answer = r)));
+    await start();
+    await flush();
+    expect(screen.queryByTestId("leads-empty")).toBeNull();
+    await act(async () => {
+      answer({ items: [], next_cursor: null });
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByTestId("leads-empty").textContent).toBe(
+      "No leads yet. To create one, open a parcel (a point on the map, a result or a long-open permit) and click Create lead in its panel.",
+    );
+    cleanup();
+    h.maps.length = 0;
+    h.leads.list.mockResolvedValue({
+      items: [lead("0000000003")],
+      next_cursor: null,
+    });
+    await start();
+    await flush();
+    expect(screen.getByTestId("leads-count").textContent).toBe("1");
+    expect(screen.queryByTestId("leads-empty")).toBeNull();
+  });
+
+  /** Opens the leads list (a details element) as a click on its summary does. */
+  const openLeadsList = async () => {
+    const d = screen.getByTestId("leads-details") as HTMLDetailsElement;
+    await act(async () => {
+      d.open = true;
+      d.dispatchEvent(new Event("toggle"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+  };
+
+  test("the open list shows each lead's address from parcels.detail: one read per shown lead at most, at most 4 at once, none while closed; never stored or sent with a lead", async () => {
+    const ids = Array.from({ length: 10 }, (_, i) =>
+      String(i + 1).padStart(10, "0"),
+    );
+    h.leads.list.mockResolvedValue({
+      items: ids.map((id) => lead(id)),
+      next_cursor: null,
+    });
+    let inFlight = 0,
+      most = 0;
+    const answers: Array<() => void> = [];
+    h.detail.mockImplementation(
+      ({ parcel_id }: { parcel_id: string }) =>
+        new Promise((resolve, reject) => {
+          most = Math.max(most, ++inFlight);
+          answers.push(() => {
+            inFlight--;
+            if (parcel_id === "0000000002") reject(new Error("not found"));
+            else
+              resolve({
+                property: {
+                  parcel_id,
+                  address:
+                    parcel_id === "0000000003" ? null : `${parcel_id} ST`,
+                },
+                provenance: { parcel_id },
+              });
+          });
+        }),
+    );
+    await start();
+    await flush();
+    // Closed: no read.
+    await wait(1000);
+    expect(h.detail).not.toHaveBeenCalled();
+    await openLeadsList();
+    for (let i = 0; i < 20 && answers.length; i++)
+      await act(async () => {
+        answers.shift()!();
+        await vi.advanceTimersByTimeAsync(10);
+      });
+    expect(most).toBe(4);
+    expect(h.detail).toHaveBeenCalledTimes(10);
+    expect(new Set(h.detail.mock.calls.map((c) => c[0].parcel_id)).size).toBe(
+      10,
+    );
+    const row = (id: string) =>
+      screen.getAllByTestId("lead-item").find((r) => r.dataset.parcel === id)!;
+    expect(
+      within(row("0000000001")).getByTestId("lead-parcel").textContent,
+    ).toBe("0000000001");
+    expect(
+      within(row("0000000001")).getByTestId("lead-address").textContent,
+    ).toBe("0000000001 ST");
+    // No address (none in the detail, or the read failed): the parcel ID alone.
+    expect(within(row("0000000002")).queryByTestId("lead-address")).toBeNull();
+    expect(within(row("0000000003")).queryByTestId("lead-address")).toBeNull();
+    // Closed and opened again, and a new status filter: nothing is read twice.
+    const d = screen.getByTestId("leads-details") as HTMLDetailsElement;
+    await act(async () => {
+      d.open = false;
+      d.dispatchEvent(new Event("toggle"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await openLeadsList();
+    fireEvent.change(screen.getByTestId("leads-status-filter"), {
+      target: { value: "new" },
+    });
+    await wait(100);
+    expect(h.detail).toHaveBeenCalledTimes(10);
+    // The address is never part of a lead write.
+    h.leads.get.mockResolvedValue(lead("0000000001"));
+    h.leads.update.mockImplementation(async (v: object) => ({
+      ...lead("0000000001"),
+      ...v,
+      updated_at: T1,
+    }));
+    await act(async () => {
+      fireEvent.click(row("0000000001"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    const opened = answers.shift();
+    await act(async () => {
+      opened?.();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await flush();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-save"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.leads.update).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(h.leads.update.mock.calls)).not.toMatch(
+      / ST|address/,
+    );
+    expect(JSON.stringify(h.leads.create.mock.calls)).not.toMatch(
+      / ST|address/,
+    );
   });
 
   test("a lead created from a permit row records that permit (source_permit); the editor shows it read only and the list has a Permit column; opened any other way, none is sent", async () => {
@@ -1245,7 +1502,10 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       );
       expect(screen.getByTestId("data-permit-parcels").textContent).toBe("400");
       expect(screen.getByTestId("leads-permit-filter-note").textContent).toBe(
-        "permit status Leads filter by status, by this search (radius, roof age and ownership) and by a long-open roofing permit in the map's open-duration window, which the data API checks; not by other permit statuses: open a lead to see its parcel's permits.",
+        "Leads filter by status, by this search (radius, roof age and ownership) and by a long-open roofing permit in the map's open-duration window, which the data API checks; not by other permit statuses: open a lead to see its parcel's permits.",
+      );
+      expect(screen.getByTestId("leads-permit-filter").textContent).toBe(
+        "permit status not available yet",
       );
       expect(document.body.textContent).not.toMatch(/not harvested/i);
     });
@@ -1256,6 +1516,7 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       act(() => map.clickAt(300, 100));
       await wait(300);
       expect(screen.getByTestId("legend-long-open-unavailable")).toBeTruthy();
+      expect(screen.queryByTestId("legend-building-note")).toBeNull();
       expect(screen.queryByTestId("result-long-open")).toBeNull();
       // Marked, none in the window: the legend says 0, no badge.
       h.points.mockResolvedValue({
@@ -1786,8 +2047,7 @@ describe("permits and the effective roof year", () => {
 
   /** Render, load the map, drop a pin at (300, 100) and wait past the debounce. */
   const pinned = async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     const map = h.maps[0]!;
     map.fire("load");
     act(() => map.clickAt(300, 100));
@@ -1811,8 +2071,7 @@ describe("permits and the effective roof year", () => {
     fireEvent.change(screen.getByTestId(testId), { target: { value } });
 
   test("results show the roof year with its basis; the rule before the answer describes the effective roof year", async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     expect(screen.getByTestId("rule").textContent).toBe(
       "Roof age counts from the effective roof year: the later of the assessor year built and the year of the latest finaled roofing permit. Older than 15 years means an effective roof year before roll year − 15.",
     );
@@ -2017,8 +2276,10 @@ describe("permits and the effective roof year", () => {
     );
     expect(a1.getByTestId("contractor-license").textContent).toBe("123456");
     expect(permits[0]!.textContent).toContain("license 123456");
-    expect(permits[0]!.textContent).toContain("license expires 2027-01-31");
-    expect(permits[0]!.textContent).toContain("VAN NUYS, CA");
+    // One line: name, license, class, city, and the expiry as the permit records it; one name: no variants.
+    expect(a1.getByTestId("contractor").textContent).toBe(
+      "ACME ROOFING INC · license 123456 · class C39 [C-39 ROOFING] · VAN NUYS · expiry recorded on the permit 2027-01-31",
+    );
     expect(a1.getByTestId("permit-roofing").textContent).toBe("roofing");
     expect(within(permits[1]!).queryByTestId("permit-roofing")).toBeNull();
     expect(a1.getByTestId("contractor-class").textContent).toBe(
@@ -2242,6 +2503,12 @@ describe("permits and the effective roof year", () => {
     expect(legend().textContent).toBe(
       "Has a long-open roofing permit (open at least 1,826 days): 2 of the 3 parcels drawn",
     );
+    // One line under it: why parcels with a long-open permit can exceed the permits listed.
+    const note = screen.getByTestId("legend-building-note");
+    expect(note.textContent).toBe(
+      "A building-level permit counts on each of its units, so parcels with a long-open permit can exceed the permits listed.",
+    );
+    expect(note.previousElementSibling).toBe(legend());
     // Beside the results badge: the legend's number and window (the points are not truncated: no "of the M").
     const badge = () => screen.getByTestId("result-long-open");
     const badgeEqualsLegend = () => {
@@ -2360,7 +2627,7 @@ describe("permits and the effective roof year", () => {
     );
   });
 
-  test("a long-open permit's contractors show the identity (key, canonical name, name-variant count); a license without a name shows no name; a row without a license has none; variants are never listed", async () => {
+  test("the contractor line: business name, license, class, city; name variants only when more than one; no identity or canonical-name labels; the expiry as recorded on the permit, a timestamp shown as its date", async () => {
     h.forParcel.mockResolvedValue({
       ...PARCEL_PERMITS,
       permits: [
@@ -2371,6 +2638,7 @@ describe("permits and the effective roof year", () => {
               canonical_business_name: "ACME ROOFING INC",
               name_variant_count: 3,
               identity_permit_count: 12,
+              license_expiration_date: "2027-01-31T00:00:00.000Z",
             }),
             contractor({
               contractors_business_name: null,
@@ -2379,6 +2647,8 @@ describe("permits and the effective roof year", () => {
               canonical_business_name: null,
               name_variant_count: 0,
               identity_permit_count: 2,
+              license_expiration_date: null,
+              city_name: null,
             }),
             contractor({
               contractors_business_name: null,
@@ -2391,6 +2661,8 @@ describe("permits and the effective roof year", () => {
               canonical_business_name: null,
               name_variant_count: null,
               identity_permit_count: null,
+              license_expiration_date: null,
+              city_name: null,
             }),
           ]),
           roofing_work: true,
@@ -2404,32 +2676,65 @@ describe("permits and the effective roof year", () => {
     );
     expect(permit.dataset.longOpen).toBe("true");
     const rows = within(permit).getAllByTestId("contractor");
-    expect(rows).toHaveLength(3);
-    const ids = rows.map((r) =>
-      r.querySelector('[data-testid="contractor-identity"]'),
-    );
-    expect(ids[0]!.getAttribute("data-key")).toBe("123456");
-    expect(ids[0]!.textContent).toBe(
-      " · identity 123456 · canonical name ACME ROOFING INC · name variants 3",
-    );
+    expect(rows.map((r) => r.textContent)).toEqual([
+      "ACME ROOFING · license 123456 · class C39 [C-39 ROOFING] · VAN NUYS · 3 name variants · expiry recorded on the permit 2027-01-31",
+      "business name not published · license 777777 · class C39 [C-39 ROOFING]",
+      "business name not published · license — · class — (owner-builder) · owner-builder",
+    ]);
     expect(
       within(rows[0]!).getByTestId("contractor-name-variants").dataset.count,
     ).toBe("3");
-    // A license without a name: its key and count, and no name at all (never a guessed one).
-    expect(ids[1]!.getAttribute("data-key")).toBe("777777");
-    expect(ids[1]!.textContent).toBe(" · identity 777777 · name variants 0");
-    expect(
-      within(rows[1]!).queryByTestId("contractor-canonical-name"),
-    ).toBeNull();
-    // No license number: no identity.
-    expect(ids[2]).toBeNull();
-    // Only the row's own name and the canonical name appear; no list of variants.
-    expect(rows[0]!.textContent!.match(/ACME ROOFING/g)).toHaveLength(2);
+    expect(within(rows[1]!).queryByTestId("contractor-name-variants")).toBe(
+      null,
+    );
+    // The identity key stays an attribute only; no label names an identity or a canonical name.
+    expect(rows.map((r) => r.dataset.identityKey)).toEqual([
+      "123456",
+      "777777",
+      undefined,
+    ]);
+    expect(permit.textContent).not.toMatch(/identity|canonical/i);
+    // Only the row's own name appears; the variants are counted, never listed.
+    expect(rows[0]!.textContent!.match(/ACME ROOFING/g)).toHaveLength(1);
+  });
+
+  test("the parcel panel shows yes or no for true or false, and dates without the time", async () => {
+    h.detail.mockImplementation(
+      async ({ parcel_id }: { parcel_id: string }) => ({
+        property: {
+          parcel_id,
+          roll_year: 2026,
+          last_recording_date: "2004-06-15T00:00:00.000Z",
+          owner_unchanged_10y_proxy: true,
+        },
+        provenance: {
+          parcel_id,
+          source_name: "Test Source",
+          source_retrieved_at: "2026-11-11T16:17:40.932Z",
+        },
+      }),
+    );
+    await pinned();
+    await openFirst();
+    expect(field("last_recording_date")).toBe("2004-06-15");
+    expect(field("owner_unchanged_10y_proxy")).toBe("yes");
+    expect(field("source_retrieved_at")).toBe("2026-11-11");
+    expect(field("roll_year")).toBe("2026");
+    h.detail.mockImplementation(
+      async ({ parcel_id }: { parcel_id: string }) => ({
+        property: { parcel_id, owner_unchanged_10y_proxy: false },
+        provenance: { parcel_id },
+      }),
+    );
+    await openFirst();
+    expect(field("owner_unchanged_10y_proxy")).toBe("no");
+    expect(screen.getByTestId("detail").textContent).not.toMatch(
+      /true|false|T\d{2}:\d{2}/,
+    );
   });
 
   test("the placeholders no longer list permit sections or the agent", async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     const cards = screen.getAllByTestId("future").map((c) => c.textContent);
     expect(cards).toHaveLength(2);
     expect(cards.join(" ")).not.toMatch(/permit/i);
@@ -2675,8 +2980,7 @@ describe("Ask the agent in the aside (with agentApiUrl in config.json)", () => {
     vi.mocked(loadConfig).mockReset();
   });
   const start = async () => {
-    render(<App />);
-    await flush();
+    await renderApp();
     const map = h.maps[0]!;
     map.fire("load");
     return map;

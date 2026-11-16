@@ -139,24 +139,111 @@ export async function expectLayout(page: Page, bp: LayoutBreakpoint) {
     expect(after.covered, "content covered after the agent is opened").toEqual(
       [],
     );
-    return;
+  } else {
+    // The wider layouts keep the controls' rule as it was (sticky at the aside's top, its own scroll when tall).
+    await expect(controls).toHaveCSS("position", "sticky");
+    await expect(controls).toHaveCSS("top", "-12px");
+    await expect(controls).toHaveCSS("z-index", "4");
+    await expect(controls).toHaveCSS("overflow-y", "auto");
+    await expect(controls).toHaveCSS(
+      "max-height",
+      `${0.6 * bp.viewport.height}px`,
+    );
+    const y0 = (await controls.boundingBox())!.y;
+    await aside.evaluate((el) => el.scrollTo(0, 600));
+    await expect
+      .poll(() => aside.evaluate((el) => el.scrollTop))
+      .toBeGreaterThan(0);
+    expect(
+      Math.abs((await controls.boundingBox())!.y - y0),
+    ).toBeLessThanOrEqual(1);
+    await expect(page.getByTestId("radius")).toBeInViewport();
   }
-  // The wider layouts keep the controls' rule as it was (sticky at the aside's top, its own scroll when tall).
-  await expect(controls).toHaveCSS("position", "sticky");
-  await expect(controls).toHaveCSS("top", "-12px");
-  await expect(controls).toHaveCSS("z-index", "4");
-  await expect(controls).toHaveCSS("overflow-y", "auto");
-  await expect(controls).toHaveCSS(
-    "max-height",
-    `${0.6 * bp.viewport.height}px`,
+  await expectLeadsBox(page);
+  await expectNoSideScroll(page);
+}
+
+/** The boxes that must never scroll sideways: the aside, the controls (with the ownership filter) and the leads. */
+const NO_SIDE_SCROLL = [
+  "aside",
+  "aside > section.controls",
+  "[data-testid=ownership]",
+  "[data-testid=leads]",
+];
+/** Each box of NO_SIDE_SCROLL that is wider inside than it shows (its scrollWidth beyond its clientWidth), in px. */
+const sideScroll = (page: Page) =>
+  page.evaluate(
+    (selectors) =>
+      selectors.flatMap((s) => {
+        const e = document.querySelector(s);
+        if (!e) return [`${s} missing`];
+        const extra = e.scrollWidth - e.clientWidth;
+        return extra > 0 ? [`${s} ${extra}px wider than shown`] : [];
+      }),
+    NO_SIDE_SCROLL,
   );
-  const y0 = (await controls.boundingBox())!.y;
-  await aside.evaluate((el) => el.scrollTo(0, 600));
-  await expect
-    .poll(() => aside.evaluate((el) => el.scrollTop))
-    .toBeGreaterThan(0);
-  expect(Math.abs((await controls.boundingBox())!.y - y0)).toBeLessThanOrEqual(
-    1,
+
+/**
+ * No horizontal scrollbar in the aside, the controls, the ownership filter or the leads box: with the ownership
+ * filter off, and turned on (its bases and rules shown).
+ */
+export async function expectNoSideScroll(page: Page) {
+  expect(await sideScroll(page), "ownership filter off").toEqual([]);
+  const on = page.getByTestId("ownership-on");
+  if (!(await on.isChecked())) await on.check();
+  await expect(page.getByTestId("ownership-basis")).toHaveCount(3);
+  await expand(page.getByTestId("ownership-rules"));
+  expect(await sideScroll(page), "ownership filter on").toEqual([]);
+}
+
+/** The leads box's controls, top to bottom: each on a line of its own. */
+export const LEAD_CONTROLS = [
+  "leads-status-filter-label",
+  "leads-in-search-label",
+  "leads-long-open-label",
+  "leads-permit-filter",
+];
+/** The one type size of the leads box (its heading aside). */
+export const LEADS_FONT_SIZE = "13px";
+
+/**
+ * The leads box: one control per line, in order; the permit-status control disabled and marked not available
+ * yet; the filters' help folded under "How the filters work" (closed); one type size for every text and control
+ * but the heading.
+ */
+export async function expectLeadsBox(page: Page) {
+  const leads = page.getByTestId("leads");
+  await leads.scrollIntoViewIfNeeded();
+  const boxes = [];
+  for (const id of LEAD_CONTROLS) {
+    const b = await leads.getByTestId(id).boundingBox();
+    expect(b, `${id} shown`).not.toBeNull();
+    boxes.push(b!);
+  }
+  for (let i = 1; i < boxes.length; i++)
+    expect(
+      boxes[i]!.y,
+      `${LEAD_CONTROLS[i]} on a line below ${LEAD_CONTROLS[i - 1]}`,
+    ).toBeGreaterThanOrEqual(boxes[i - 1]!.y + boxes[i - 1]!.height - 1);
+  const permit = leads.getByTestId("leads-permit-filter");
+  await expect(permit).toHaveText(/not available yet$/);
+  await expect(permit.locator("select")).toBeDisabled();
+  const help = leads.getByTestId("leads-filters-help");
+  await expect(help.locator(":scope > summary")).toHaveText(
+    "How the filters work",
   );
-  await expect(page.getByTestId("radius")).toBeInViewport();
+  await expect(help).not.toHaveAttribute("open", /.*/);
+  const sizes = await leads.evaluate((box) => {
+    const out = new Set<string>();
+    for (const e of box.querySelectorAll("*")) {
+      if (e.closest("h3")) continue;
+      const ownText = [...e.childNodes].some(
+        (n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim() !== "",
+      );
+      if (ownText || e.matches("select, input, button"))
+        out.add(getComputedStyle(e).fontSize);
+    }
+    return [...out];
+  });
+  expect(sizes, "font sizes in the leads box").toEqual([LEADS_FONT_SIZE]);
 }

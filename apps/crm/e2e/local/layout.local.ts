@@ -3,7 +3,8 @@
  * app on 127.0.0.1 with every other request answered here or aborted. No hosted call, no credentials: the
  * config.json, the data API, the leads API, the agent's warm-up and the basemap style are stubs with dummy
  * values; a request to any other host (or to /agent/answer) is aborted and fails the test.
- * CRM_LOCAL_SHOTS=<dir> saves a screenshot per breakpoint, the aside scrolled to its end, before the checks.
+ * CRM_LOCAL_SHOTS=<dir> saves two screenshots per breakpoint before the checks: the aside scrolled to its end, and
+ * the leads box scrolled to the top of the aside.
  */
 import { join } from "node:path";
 import { expect, test, type Route } from "@playwright/test";
@@ -83,6 +84,15 @@ const DATA: Record<string, (input: Record<string, unknown>) => unknown> = {
     max_points: 25000,
   }),
   "parcels.match": () => ({ parcel_ids: [] }),
+  // The leads list reads each shown lead's address at display time (never stored in the lead).
+  "parcels.detail": (input) => {
+    const parcel_id = String(input.parcel_id);
+    const i = ids.indexOf(parcel_id);
+    return {
+      property: i < 0 ? { parcel_id } : { ...item(parcel_id, i) },
+      provenance: { parcel_id, source_name: "stub" },
+    };
+  },
   "permits.longOpen": () => ({
     count: 0,
     rule: {
@@ -187,6 +197,12 @@ for (const bp of LAYOUT_BREAKPOINTS)
         .evaluate((el) => el.scrollTo(0, el.scrollHeight));
       await page.screenshot({
         path: join(shots, `${bp.viewport.width}px.png`),
+      });
+      await page
+        .getByTestId("leads")
+        .evaluate((el) => el.scrollIntoView({ block: "start" }));
+      await page.screenshot({
+        path: join(shots, `${bp.viewport.width}px-leads.png`),
       });
       await page.locator("aside").evaluate((el) => el.scrollTo(0, 0));
     }

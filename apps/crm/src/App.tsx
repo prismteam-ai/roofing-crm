@@ -34,6 +34,7 @@ import {
   NavigationControl,
 } from "./maplibre.ts";
 import { DETAIL_MIN_ZOOM, HIT_TOLERANCE_PX, nearestPoint } from "./hitTest.ts";
+import { addressOf, type AddressLookup } from "./leadAddresses.ts";
 import { LeadEditor } from "./LeadEditor.tsx";
 import { filterOfKey, searchKeyOf, useLeadsInSearch } from "./leadsInSearch.ts";
 import { LEADS_MAX_PAGES, LEADS_PAGE_SIZE, LeadsList } from "./LeadsList.tsx";
@@ -66,6 +67,9 @@ const EMPTY = { type: "FeatureCollection", features: [] } as const;
 /** The map layers that hold parcel points (a click on either opens the parcel). */
 const POINT_LAYERS = ["points", "points-long-open"];
 const params = new URLSearchParams(location.search);
+/** Under the legend's long-open line: why the parcel count can exceed the permits listed. */
+export const BUILDING_LEVEL_NOTE =
+  "A building-level permit counts on each of its units, so parcels with a long-open permit can exceed the permits listed.";
 /** How the pin was placed (the label of the center sent to the agent). */
 type PinLabel = "map pin" | "my location";
 /** tRPC error code of a failed call (e.g. "CONFLICT"), if any. */
@@ -139,6 +143,8 @@ export function App() {
   const [leadsError, setLeadsError] = useState<string>();
   /** True when the last page read still had a next cursor: more leads are stored than the list loaded. */
   const [leadsCapped, setLeadsCapped] = useState(false);
+  /** The leads were read once (until then the list does not say it is empty). */
+  const [leadsLoaded, setLeadsLoaded] = useState(false);
   const [leadBusy, setLeadBusy] = useState(false);
   /** The "Leads in this search" filter; parcels.match calls are made only while it or the toggle is on. */
   const [inSearch, setInSearch] = useState(false);
@@ -183,6 +189,16 @@ export function App() {
     apiRef.current = api;
   }, [api]);
   const permits = useMemo(() => api && permitsApi(api), [api]);
+  /** The leads list's address lookup: the parcel's detail, read for display only (never stored in a lead). */
+  const lookupAddress = useMemo<AddressLookup | undefined>(
+    () =>
+      api &&
+      (async (id) =>
+        addressOf(
+          (await api.parcels.detail.query({ parcel_id: id })).property,
+        )),
+    [api],
+  );
 
   /**
    * Opens the details panel with the CURRENT client (stable function, safe in map handlers); resolves with the
@@ -545,6 +561,7 @@ export function App() {
       if (live) {
         setLeads(all);
         setLeadsCapped(more);
+        setLeadsLoaded(true);
       }
     })().catch((e: Error) => live && setLeadsError(e.message));
     return () => {
@@ -562,6 +579,8 @@ export function App() {
     id: string;
     error?: string;
     conflict?: boolean;
+    /** The last write created the lead ("Lead created" is shown until the next write or another parcel). */
+    created?: boolean;
   }>();
   const [reloads, setReloads] = useState(0);
   const detailLead = leadFor?.id === detailId ? leadFor?.lead : undefined;
@@ -587,13 +606,17 @@ export function App() {
   };
 
   /** Runs a lead write; keeps the list in step; a CONFLICT asks for a reload. */
-  const leadWrite = async (run: () => Promise<Lead | null>) => {
+  const leadWrite = async (
+    run: () => Promise<Lead | null>,
+    creates = false,
+  ) => {
     const id = detailId!;
     setLeadBusy(true);
     setLeadMsg(undefined);
     try {
       const l = await run();
       setLeadFor({ id, lead: l });
+      if (creates && l) setLeadMsg({ id, created: true });
       setLeads((all) => {
         const rest = all.filter((x) => x.parcel_id !== id);
         return l ? [...rest, l] : rest;
@@ -614,12 +637,14 @@ export function App() {
       ? detailPermit.permitNumber
       : undefined;
   const createLead = (v: { status: LeadStatus; notes: string }) =>
-    void leadWrite(() =>
-      leadsApi!.leads.create.mutate({
-        parcel_id: detailId!,
-        ...v,
-        ...(sourcePermit ? { source_permit: sourcePermit } : {}),
-      }),
+    void leadWrite(
+      () =>
+        leadsApi!.leads.create.mutate({
+          parcel_id: detailId!,
+          ...v,
+          ...(sourcePermit ? { source_permit: sourcePermit } : {}),
+        }),
+      true,
     );
   const saveLead = (v: { status: LeadStatus; notes: string }) =>
     void leadWrite(() =>
@@ -984,6 +1009,8 @@ export function App() {
             }
             error={leadsError}
             capped={leadsCapped}
+            loaded={leadsLoaded}
+            lookupAddress={lookupAddress}
             onOpen={(id) => void openDetail(id)}
           />
         )}
@@ -1019,6 +1046,11 @@ export function App() {
                 </span>
               </div>
             )}
+            {longOpenDrawn !== undefined && (
+              <div className="notice" data-testid="legend-building-note">
+                {BUILDING_LEVEL_NOTE}
+              </div>
+            )}
             {!winKey && (
               <div className="notice" data-testid="legend-window-invalid">
                 The open-duration window is invalid; the map keeps the last
@@ -1042,6 +1074,7 @@ export function App() {
                 busy={leadBusy}
                 error={msg?.error}
                 conflict={!!msg?.conflict}
+                created={!!msg?.created}
                 onCreate={createLead}
                 onSave={saveLead}
                 onDelete={deleteLead}

@@ -86,8 +86,11 @@ details > summary {
   font-size: 13px;
   margin: 8px 0 2px;
 }
+/* Full width with no side margin: the browser's 2 px margins made the controls scroll sideways. */
 .controls input[type="range"] {
   width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 .row {
   display: flex;
@@ -194,6 +197,39 @@ button:disabled {
   border-top: 1px solid #dedee3;
   margin-top: 8px;
   padding-top: 8px;
+}
+/* The leads box: one control per line, one type size (13 px) for its texts and controls, the heading aside. */
+.leads {
+  font-size: 13px;
+}
+.leads h3 {
+  margin: 4px 0;
+  font-size: 15px;
+}
+.leads label {
+  display: block;
+  margin: 6px 0;
+}
+.leads select,
+.leads input,
+.leads .notice,
+.leads .rule,
+.leads .error,
+.leads .list-details > summary,
+.leads .rule-details > summary {
+  font-size: inherit;
+}
+/* A control that cannot be used now (no pin yet, or not built yet): greyed, with its reason in words. */
+.unavailable {
+  color: #8a8d95;
+}
+.ok {
+  color: #146c2e;
+  font-weight: 600;
+  font-size: 13px;
+}
+.lead-address {
+  display: block;
 }
 .lead label {
   display: block;
@@ -431,7 +467,6 @@ pre.mono {
 .leads-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
 }
 .leads-table th,
 .leads-table td {

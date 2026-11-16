@@ -771,6 +771,18 @@ test.describe("with credentials", () => {
     await expect(d.locator('[data-field="roof_age_basis"]')).toContainText(
       "PROXY",
     );
+    // Yes or no for true or false, and dates without the time part.
+    await expect(
+      d.locator('[data-field="owner_unchanged_10y_proxy"]'),
+    ).toHaveText(/^(yes|no|—)$/);
+    await expect(d.locator('[data-field="last_recording_date"]')).toHaveText(
+      /^(\d{4}-\d{2}-\d{2}|—)$/,
+    );
+    await expect(d.locator('[data-field="source_retrieved_at"]')).toHaveText(
+      /^\d{4}-\d{2}-\d{2}$/,
+    );
+    for (const dd of await d.locator("dd").all())
+      await expect(dd).not.toHaveText(/^(true|false)$|T\d{2}:\d{2}/);
     // The page shows no owner or contact field. Only the lead editor's notes hint ("No owner names or
     // contact details…") names them, so only that one element is left out of this check.
     const text = await page.locator("body").evaluate((b) => {
@@ -1012,11 +1024,18 @@ test.describe("with credentials", () => {
       await expect(page.getByTestId("lead-save")).toBeVisible({
         timeout: 10_000,
       });
+      await expect(page.getByTestId("lead-created")).toHaveText("Lead created");
       const created = await get(parcel);
       expect(created).toMatchObject({
         status: "new",
         notes: "Playwright test lead",
       });
+      // The stored lead holds no address: the list looks it up at display time (parcels.detail).
+      expect(Object.keys(created!)).not.toContain("address");
+      const address = (await page
+        .getByTestId("detail")
+        .locator('[data-field="address"]')
+        .textContent())!;
 
       // Reload between create and update: the lead is read back from the API, not from page state.
       await reloadAndReopen();
@@ -1027,6 +1046,14 @@ test.describe("with credentials", () => {
       await expect(
         page.getByTestId("lead-item").filter({ hasText: parcel }),
       ).toHaveCount(1);
+      // Opened, the list shows the parcel's address under its ID (when the parcel has one).
+      await expand(page.getByTestId("leads-details"));
+      const item = page.getByTestId("lead-item").filter({ hasText: parcel });
+      await expect(item.getByTestId("lead-parcel")).toHaveText(parcel);
+      if (address !== "—")
+        await expect(item.getByTestId("lead-address")).toHaveText(address, {
+          timeout: 20_000,
+        });
       await page.getByTestId("lead-status").selectOption("contacted");
       await page
         .getByTestId("lead-notes")
@@ -1336,6 +1363,10 @@ test.describe("with credentials", () => {
     await expect(legend).toContainText(
       `(open at least 1,826 days): ${n(nA)} of the ${n(a.id.length)} parcels drawn`,
     );
+    // One line under it: why parcels with a long-open permit can exceed the permits listed.
+    await expect(page.getByTestId("legend-building-note")).toHaveText(
+      "A building-level permit counts on each of its units, so parcels with a long-open permit can exceed the permits listed.",
+    );
     await badgeEqualsLegend(nA);
     await expect(badge).toHaveAttribute("data-window", "1826|");
     await renderedFor(page, zoom); // this search is drawn
@@ -1462,9 +1493,28 @@ test.describe("with credentials", () => {
     await expect(page.getByTestId("leads-permit-filter-note")).toContainText(
       "by a long-open roofing permit in the map's open-duration window",
     );
+    await expect(page.getByTestId("leads-filters-help")).not.toHaveAttribute(
+      "open",
+      /.*/,
+    );
+    await expect(page.getByTestId("leads-permit-filter")).toHaveText(
+      "permit status not available yet",
+    );
+    // Before a pin, "Leads in this search" is greyed and says it needs one.
+    await expect(page.getByTestId("leads-in-search")).toBeDisabled();
+    await expect(page.getByTestId("leads-in-search-label")).toHaveClass(
+      "unavailable",
+    );
+    await expect(page.getByTestId("leads-in-search-needs-pin")).toHaveText(
+      " (needs a pin on the map first)",
+    );
 
     await page.getByTestId("map").click(); // pin at the center
     const pin = await pinOf(page);
+    await expect(page.getByTestId("leads-in-search")).toBeEnabled({
+      timeout: 20_000,
+    });
+    await expect(page.getByTestId("leads-in-search-needs-pin")).toHaveCount(0);
     await expect(page.getByTestId("permits-heading")).toHaveText(
       "Long-open roofing permits",
     );
@@ -1788,7 +1838,7 @@ test.describe("with credentials", () => {
     }
   });
 
-  test("25. a long-open roofing permit's detail shows each contractor's identity as permits.forParcel serves it (key, canonical name, name-variant count; no name where the license has none; variants never listed)", async ({
+  test("25. a long-open roofing permit's detail shows each contractor on one line as permits.forParcel serves it (business name, license, class, city; name variants only when more than one; the expiry recorded on the permit; no identity or canonical-name label)", async ({
     page,
   }) => {
     const cfg = await config();
@@ -1799,7 +1849,10 @@ test.describe("with credentials", () => {
     const pin = await pinOf(page);
     type Contractor = Record<string, unknown> & {
       contractor_identity_key: string | null;
-      canonical_business_name: string | null;
+      contractors_business_name: string | null;
+      license_identifier: string | null;
+      city_name: string | null;
+      license_expiration_date: string | null;
       name_variant_count: number | null;
     };
     const lo = (
@@ -1882,27 +1935,41 @@ test.describe("with credentials", () => {
     await expect(rows).toHaveCount(want!.contractors.length);
     for (let j = 0; j < want!.contractors.length; j++) {
       const c = want!.contractors[j]!;
-      const id = rows.nth(j).getByTestId("contractor-identity");
-      if (c.contractor_identity_key === null) {
-        await expect(id).toHaveCount(0);
-        continue;
-      }
-      await expect(id).toHaveAttribute("data-key", c.contractor_identity_key);
-      const name =
-        c.canonical_business_name === null
-          ? ""
-          : ` · canonical name ${c.canonical_business_name}`;
-      const variants =
-        c.name_variant_count === null
-          ? ""
-          : ` · name variants ${c.name_variant_count.toLocaleString("en-US")}`;
-      await expect(id).toHaveText(
-        ` · identity ${c.contractor_identity_key}${name}${variants}`,
+      const row = rows.nth(j);
+      // The identity key stays an attribute only.
+      if (c.contractor_identity_key === null)
+        await expect(row).not.toHaveAttribute("data-identity-key", /.*/);
+      else
+        await expect(row).toHaveAttribute(
+          "data-identity-key",
+          c.contractor_identity_key,
+        );
+      await expect(row.getByTestId("contractor-name")).toHaveText(
+        c.contractors_business_name ?? "business name not published",
       );
-      // A license without a name shows no name at all.
-      await expect(id.getByTestId("contractor-canonical-name")).toHaveCount(
-        c.canonical_business_name === null ? 0 : 1,
+      await expect(row.getByTestId("contractor-license")).toHaveText(
+        c.license_identifier ?? "—",
       );
+      if (c.city_name)
+        await expect(row.getByTestId("contractor-city")).toHaveText(
+          c.city_name,
+        );
+      else await expect(row.getByTestId("contractor-city")).toHaveCount(0);
+      // Name variants only when the license carries more than one name: counted, never listed.
+      const n = c.name_variant_count;
+      if (n !== null && n > 1)
+        await expect(row.getByTestId("contractor-name-variants")).toHaveText(
+          `${n.toLocaleString("en-US")} name variants`,
+        );
+      else
+        await expect(row.getByTestId("contractor-name-variants")).toHaveCount(
+          0,
+        );
+      if (c.license_expiration_date)
+        await expect(row).toContainText(
+          `expiry recorded on the permit ${dateOnly(c.license_expiration_date)}`,
+        );
+      await expect(row).not.toContainText(/identity|canonical|expires/i);
     }
   });
 
@@ -2185,6 +2252,7 @@ test.describe("with credentials", () => {
       await expect(page.getByTestId("lead-save")).toBeVisible({
         timeout: 10_000,
       });
+      await expect(page.getByTestId("lead-created")).toHaveText("Lead created");
       expect(await get(parcel)).toMatchObject({
         notes: OWN_LEAD_NOTES,
         source_permit: permit,
@@ -2203,9 +2271,9 @@ test.describe("with credentials", () => {
           ),
       ).toBe(false);
       await expand(page.getByTestId("leads-details"));
-      const row = page
-        .getByTestId("lead-item")
-        .filter({ has: page.locator(`td:text-is("${parcel}")`) });
+      const row = page.getByTestId("lead-item").filter({
+        has: page.locator(`[data-testid=lead-parcel]:text-is("${parcel}")`),
+      });
       await expect(row.getByTestId("lead-permit")).toHaveText(permit);
       // An update changes the status, never the permit.
       await page.getByTestId("lead-status").selectOption("contacted");

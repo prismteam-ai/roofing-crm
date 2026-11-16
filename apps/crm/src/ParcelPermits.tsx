@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { dateOnly } from "./dates.ts";
 import {
   isLongOpen,
   joinLabel,
@@ -28,46 +29,18 @@ const licenseClass = (c: PermitContractor) => {
 };
 
 /**
- * The contractor's identity, one per license number (not verified against CSLB): the key, the canonical name
- * and how many names the license carries (counted, never listed). A license without a name on any of its
- * rows has no canonical name, and none is shown; a row without a license number has no identity.
+ * One contractor of a permit, on one line: the business name, the license number, the class and the city as
+ * the permit records them. The license's other spellings are counted (never listed), and only when there is
+ * more than one name. The expiry date is the one recorded on the permit, not the license's status today.
+ * The contractor identity key (one per license number, not verified against CSLB) stays in data-identity-key.
  */
-function Identity({ c }: { c: PermitContractor }) {
-  if (c.contractor_identity_key === null) return null;
+function Contractor({ c }: { c: PermitContractor }) {
   const n = c.name_variant_count;
   return (
-    <span
-      data-testid="contractor-identity"
-      data-key={c.contractor_identity_key}
+    <li
+      data-testid="contractor"
+      data-identity-key={c.contractor_identity_key ?? undefined}
     >
-      {" · identity "}
-      <span data-testid="contractor-identity-key">
-        {c.contractor_identity_key}
-      </span>
-      {c.canonical_business_name !== null && (
-        <>
-          {" · canonical name "}
-          <span data-testid="contractor-canonical-name">
-            {c.canonical_business_name}
-          </span>
-        </>
-      )}
-      {n !== null && (
-        <>
-          {" · name variants "}
-          <span data-testid="contractor-name-variants" data-count={n}>
-            {n.toLocaleString("en-US")}
-          </span>
-        </>
-      )}
-    </span>
-  );
-}
-
-function Contractor({ c }: { c: PermitContractor }) {
-  const place = [c.city_name, c.state_code].filter(Boolean).join(", ");
-  return (
-    <li data-testid="contractor">
       <span data-testid="contractor-name">
         {c.contractors_business_name ?? "business name not published"}
       </span>
@@ -75,7 +48,6 @@ function Contractor({ c }: { c: PermitContractor }) {
       <span data-testid="contractor-license">
         {c.license_identifier ?? "—"}
       </span>
-      <Identity c={c} />
       {" · class "}
       <span data-testid="contractor-class">{licenseClass(c)}</span>
       {c.is_owner_builder && (
@@ -84,10 +56,28 @@ function Contractor({ c }: { c: PermitContractor }) {
           <span data-testid="contractor-owner-builder">owner-builder</span>
         </>
       )}
-      {c.license_expiration_date && (
-        <> · license expires {c.license_expiration_date}</>
+      {c.city_name && (
+        <>
+          {" · "}
+          <span data-testid="contractor-city">{c.city_name}</span>
+        </>
       )}
-      {place && <> · {place}</>}
+      {n !== null && n > 1 && (
+        <>
+          {" · "}
+          <span data-testid="contractor-name-variants" data-count={n}>
+            {n.toLocaleString("en-US")} name variants
+          </span>
+        </>
+      )}
+      {c.license_expiration_date && (
+        <>
+          {" · expiry recorded on the permit "}
+          <span data-testid="contractor-expiry">
+            {dateOnly(c.license_expiration_date)}
+          </span>
+        </>
+      )}
     </li>
   );
 }

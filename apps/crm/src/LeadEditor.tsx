@@ -11,6 +11,8 @@ import { dateOnly } from "./dates.ts";
 export const NOTES_HINT =
   "No owner names or contact details. Email addresses, phone numbers with an area code (with or without brackets, spaces, dots or hyphens) and 7 or more digits in a row (which covers parcel IDs) are refused.";
 
+export const LEAD_CREATED_TEXT = "Lead created";
+
 /**
  * The lead of the parcel in the detail panel: create it, or edit its status and notes, or delete it. The permit it
  * was created from is shown read only: it is set at creation (when the panel was opened from a permit row) and
@@ -23,6 +25,7 @@ export function LeadEditor({
   busy,
   error,
   conflict,
+  created,
   onCreate,
   onSave,
   onDelete,
@@ -36,6 +39,8 @@ export function LeadEditor({
   busy: boolean;
   error?: string;
   conflict: boolean;
+  /** The last write here created this lead: a "Lead created" confirmation is shown. */
+  created?: boolean;
   onCreate: (v: { status: LeadStatus; notes: string }) => void;
   onSave: (v: { status: LeadStatus; notes: string }) => void;
   onDelete: () => void;
@@ -60,6 +65,11 @@ export function LeadEditor({
           onSubmit={lead ? onSave : onCreate}
           onDelete={lead ? onDelete : undefined}
         />
+      )}
+      {created && lead && (
+        <p className="ok" data-testid="lead-created" role="status">
+          {LEAD_CREATED_TEXT}
+        </p>
       )}
       {conflict && (
         <p className="error" data-testid="lead-conflict">
