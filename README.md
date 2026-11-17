@@ -1,5 +1,7 @@
 # Roofing CRM & Lead Identification UI
 
+> **Submission:** live at https://tb4l7kn2kahnystt4xxhil43zu0wdxxa.lambda-url.us-east-2.on.aws/ (AWS Lambda). What was built, how to check it and where it falls short: [`SUBMISSION.md`](./SUBMISSION.md).
+
 ## Context
 
 Roofing companies need a practical CRM for finding and qualifying residential and commercial roofing leads in their service area. The immediate requirement is a map-based CRM that helps sales teams explore local properties, surface roofs that are aging or have stalled open permits, and turn those signals into actionable outreach opportunities.

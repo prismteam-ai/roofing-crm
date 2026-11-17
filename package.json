@@ -1,0 +1,35 @@
+{
+  "name": "crm-scaffold",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^4.0.121",
+    "@ai-sdk/mcp": "^2.0.99",
+    "@aws-sdk/client-dynamodb": "^3.1170.0",
+    "@aws-sdk/client-ssm": "^3.1170.0",
+    "@aws-sdk/lib-dynamodb": "^3.1170.0",
+    "ai": "^7.0.173",
+    "leaflet": "^1.9.4",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "typescript": "^5",
+    "vitest": "^5.1.0"
+  }
+}
