@@ -13,6 +13,10 @@ export const NOTES_HINT =
 
 export const LEAD_CREATED_TEXT = "Lead created";
 
+/** Asked in the page before a lead is deleted (the browser's own confirm dialog may be blocked). */
+export const DELETE_CONFIRM_TEXT =
+  "Delete the lead for this parcel? This cannot be undone.";
+
 /**
  * The lead of the parcel in the detail panel: create it, or edit its status and notes, or delete it. The permit it
  * was created from is shown read only: it is set at creation (when the panel was opened from a permit row) and
@@ -101,6 +105,8 @@ function LeadForm({
 }) {
   const [status, setStatus] = useState<LeadStatus>(lead?.status ?? "new");
   const [notes, setNotes] = useState(lead?.notes ?? "");
+  /** Delete was clicked: the delete is sent only after "Delete lead"; Cancel leaves the lead. */
+  const [confirming, setConfirming] = useState(false);
   const problem = notesProblem(notes.trim());
   return (
     <form
@@ -152,17 +158,46 @@ function LeadForm({
         >
           {lead ? "Save" : "Create lead"}
         </button>
-        {onDelete && (
+        {onDelete && !confirming && (
           <button
             type="button"
             data-testid="lead-delete"
             disabled={busy}
-            onClick={onDelete}
+            onClick={() => setConfirming(true)}
           >
             Delete
           </button>
         )}
       </div>
+      {onDelete && confirming && (
+        <div
+          className="row lead-confirm"
+          role="group"
+          aria-label="Confirm delete"
+          data-testid="lead-delete-confirmation"
+        >
+          <p className="notice">{DELETE_CONFIRM_TEXT}</p>
+          <button
+            type="button"
+            data-testid="lead-delete-confirm"
+            disabled={busy}
+            onClick={() => {
+              setConfirming(false);
+              onDelete();
+            }}
+          >
+            Delete lead
+          </button>
+          <button
+            type="button"
+            data-testid="lead-delete-cancel"
+            autoFocus
+            onClick={() => setConfirming(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </form>
   );
 }

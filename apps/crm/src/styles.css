@@ -231,6 +231,14 @@ button:disabled {
 .lead-address {
   display: block;
 }
+/* The question takes its own line when the panel is narrow; the two buttons follow it. */
+.lead-confirm {
+  flex-wrap: wrap;
+}
+.lead-confirm .notice {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+}
 .lead label {
   display: block;
   font-size: 13px;

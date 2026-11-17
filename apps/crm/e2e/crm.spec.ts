@@ -1082,7 +1082,16 @@ test.describe("with credentials", () => {
         page.getByTestId("lead-item").filter({ hasText: parcel }),
       ).toContainText("contacted");
 
+      // Delete asks in the page first: Cancel leaves the lead; "Delete lead" deletes it.
       await page.getByTestId("lead-delete").click();
+      await expect(page.getByTestId("lead-delete-confirmation")).toContainText(
+        "Delete the lead for this parcel? This cannot be undone.",
+      );
+      await page.getByTestId("lead-delete-cancel").click();
+      await expect(page.getByTestId("lead-delete-confirmation")).toHaveCount(0);
+      expect(await get(parcel)).toMatchObject({ status: "contacted" });
+      await page.getByTestId("lead-delete").click();
+      await page.getByTestId("lead-delete-confirm").click();
       await expect(page.getByTestId("lead-create")).toBeVisible({
         timeout: 10_000,
       });

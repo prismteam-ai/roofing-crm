@@ -996,6 +996,68 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     expect(screen.queryByTestId("lead-created")).toBeNull();
   });
 
+  test("Delete asks in the page first: Cancel leaves the lead (nothing sent); 'Delete lead' deletes it", async () => {
+    h.leads.get.mockResolvedValue(lead("0000000003", "contacted"));
+    h.leads.delete.mockResolvedValue({
+      parcel_id: "0000000003",
+      deleted: true,
+    });
+    const confirmSpy = vi.spyOn(window, "confirm");
+    const map = await start();
+    await openDetail(map);
+    expect(screen.queryByTestId("lead-delete-confirmation")).toBeNull();
+    // Delete only asks.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-delete"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    const ask = screen.getByTestId("lead-delete-confirmation");
+    expect(ask.textContent).toContain(
+      "Delete the lead for this parcel? This cannot be undone.",
+    );
+    expect(screen.getByTestId("lead-delete-confirm").textContent).toBe(
+      "Delete lead",
+    );
+    expect(screen.getByTestId("lead-delete-cancel").textContent).toBe("Cancel");
+    expect(h.leads.delete).not.toHaveBeenCalled();
+    // Cancel: the question goes, the lead stays (in the editor and the list), nothing was sent.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-delete-cancel"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.queryByTestId("lead-delete-confirmation")).toBeNull();
+    expect(h.leads.delete).not.toHaveBeenCalled();
+    expect(screen.getByTestId("lead-save")).toBeTruthy();
+    expect((screen.getByTestId("lead-status") as HTMLSelectElement).value).toBe(
+      "contacted",
+    );
+    expect(
+      screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
+    ).toEqual(["0000000003", "0000000009"]);
+    // Delete, then 'Delete lead': one delete with the lead's timestamp; the lead is gone from the editor and the list.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-delete"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-delete-confirm"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(h.leads.delete).toHaveBeenCalledTimes(1);
+    expect(h.leads.delete).toHaveBeenCalledWith({
+      parcel_id: "0000000003",
+      expected_updated_at: T0,
+    });
+    expect(screen.getByTestId("lead-create")).toBeTruthy();
+    expect(screen.queryByTestId("lead-delete-confirmation")).toBeNull();
+    expect(
+      screen.getAllByTestId("lead-item").map((e) => e.dataset.parcel),
+    ).toEqual(["0000000009"]);
+    // The browser's own dialog (which may be blocked) is never used.
+    expect(confirmSpy).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
+
   test("the leads box: one control per line (label elements, in order); the permit-status control disabled and marked not available yet; the help folded under 'How the filters work'", async () => {
     await start();
     await flush();
@@ -1266,6 +1328,10 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     expect(permitCell("0000000003")).toBe("—");
     await act(async () => {
       fireEvent.click(screen.getByTestId("lead-delete"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("lead-delete-confirm"));
       await vi.advanceTimersByTimeAsync(0);
     });
     expect(screen.getByTestId("lead-create")).toBeTruthy();
