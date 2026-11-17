@@ -889,6 +889,76 @@ test.describe("with credentials", () => {
     );
     await expect(page.getByTestId("data-notice")).not.toContainText("pilot");
   });
+  test("14c. when more parcels match than are drawn, a dashed ring at the farthest drawn point says how many lie at or beyond it; no ring when all are drawn (read only: no lead is touched)", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=12`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the center
+    const pin = await pinOf(page);
+    const points = async (radius_miles: number) =>
+      (
+        await (
+          await (
+            await api()
+          ).get(
+            trpc(cfg.apiUrl, "parcels.points", {
+              lat: pin[0],
+              lon: pin[1],
+              radius_miles,
+              threshold_years: 15,
+            }),
+          )
+        ).json()
+      ).result.data as {
+        count: number;
+        id: string[];
+        lat: number[];
+        lon: number[];
+        truncated: boolean;
+      };
+    const n = (x: number) => x.toLocaleString("en-US");
+
+    // 1 mile: every match is drawn, no ring and no label.
+    await page.getByTestId("radius").fill("1");
+    const small = await points(1);
+    expect(small.truncated).toBe(false);
+    await settle(page, small.count);
+    await expect(page.getByTestId("points-beyond")).toHaveCount(0);
+    await expect(page.getByTestId("map")).not.toHaveAttribute(
+      "data-beyond-ring-miles",
+    );
+
+    // 10 miles: truncated; the ring is at the farthest drawn point, the label counts the rest.
+    await page.getByTestId("radius").fill("10");
+    const pts = await points(10);
+    expect(pts.truncated).toBe(true);
+    await settle(page, pts.count);
+    const farthest = pts.lat.reduce(
+      (m, la, i) => Math.max(m, haversine(pin, [la, pts.lon[i]!])),
+      0,
+    );
+    await expect
+      .poll(() => attrNum(page, "map", "data-beyond-ring-miles"), {
+        timeout: 20_000,
+      })
+      .toBeCloseTo(farthest, 2);
+    const notDrawn = pts.count - pts.id.length;
+    const label = page.getByTestId("points-beyond");
+    await expect(label).toHaveAttribute("data-not-drawn", String(notDrawn));
+    const text = (await label.textContent()) ?? "";
+    const m = new RegExp(
+      `^${n(notDrawn)} matching parcels? not drawn: at or beyond the dashed ring, (\\d+\\.\\d\\d) mi from the pin\\.$`,
+    ).exec(text);
+    expect(m, `label: "${text}"`).not.toBeNull();
+    // The distance shown is the ring's, rounded down (so ties at that distance are covered).
+    const shown = Number(m![1]);
+    expect(shown).toBeLessThanOrEqual(farthest);
+    expect(shown).toBeGreaterThan(farthest - 0.011);
+    console.log("BEYOND", JSON.stringify({ farthest, notDrawn, text }));
+  });
+
   test("15. leads API: no header 401, wrong token 403, CRM token 200", async () => {
     const cfg = await config();
     expect(cfg.leadsApiUrl).toMatch(

@@ -24,6 +24,7 @@ import { createAgentApi, type AgentApi } from "./agent-api.ts";
 import type { AgentCenter, AgentScreen } from "./agent-types.ts";
 import { AskAgent } from "./AskAgent.tsx";
 import { mapStyleUrl } from "./basemap.ts";
+import { beyondRingOf, beyondText } from "./beyondRing.ts";
 import { loadConfig } from "./config.ts";
 import { DataNotice } from "./DataNotice.tsx";
 import { FuturePlaceholders } from "./FuturePlaceholders.tsx";
@@ -160,21 +161,30 @@ export function App() {
   // Debounce a stable primitive key (an object would change identity on every render and re-fire forever).
   // The search key: the pin (already rounded to 5 decimals where it is placed, as in data-pin-*), radius,
   // threshold and, when the ownership filter is on, its basis (searchKeyOf).
-  const key = useDebounced(
-    center
-      ? searchKeyOf(
-          center.lat,
-          center.lon,
-          radius,
-          threshold,
-          ownership.on ? ownership.basis : undefined,
-        )
-      : "",
-    250,
-  );
+  const liveKey = center
+    ? searchKeyOf(
+        center.lat,
+        center.lon,
+        radius,
+        threshold,
+        ownership.on ? ownership.basis : undefined,
+      )
+    : "";
+  const key = useDebounced(liveKey, 250);
   const q = useMemo(() => (key ? filterOfKey(key) : undefined), [key]);
   const search = result?.search;
   const points = result?.points;
+  /**
+   * The dashed ring at the farthest drawn point when parcels.points left matching parcels out (truncated); only
+   * for the search on screen now (cleared at once when the pin, radius, roof age or ownership filter changes).
+   */
+  const beyond = useMemo(
+    () =>
+      result && result.key === liveKey
+        ? beyondRingOf(filterOfKey(result.key), result.points)
+        : undefined,
+    [result, liveKey],
+  );
   /**
    * The map highlight's window: the long-open list's (same days), debounced like it; "" while the window is
    * invalid (no call; the map keeps its last highlight).
@@ -338,6 +348,18 @@ export function App() {
             source: "radius",
             paint: { "line-color": "#d14600", "line-width": 2 },
           });
+          // The ring at the farthest drawn point when not every matching parcel is drawn (dashed).
+          m.addSource("beyond", { type: "geojson", data: EMPTY });
+          m.addLayer({
+            id: "beyond-line",
+            type: "line",
+            source: "beyond",
+            paint: {
+              "line-color": "#232b37",
+              "line-width": 2,
+              "line-dasharray": [2, 2],
+            },
+          });
           m.addSource("points", { type: "geojson", data: EMPTY });
           m.addLayer({
             id: "points",
@@ -452,6 +474,28 @@ export function App() {
       lon: ring[0]![0],
     }).toFixed(3);
   }, [center, radius]);
+
+  // The ring beyond the drawn points (drawn, or cleared, with the result or search it belongs to).
+  useEffect(() => {
+    const src = map.current?.getSource("beyond") as GeoJSONSource | undefined;
+    if (!src) return;
+    if (!beyond) {
+      src.setData(EMPTY);
+      delete mapEl.current!.dataset.beyondRingMiles;
+      return;
+    }
+    const ring = circleRing(beyond.center, beyond.radiusMiles);
+    src.setData({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "LineString", coordinates: ring },
+    });
+    // The ring's radius as drawn, measured from the ring like circleRadiusMiles (read by tests).
+    mapEl.current!.dataset.beyondRingMiles = haversineMiles(beyond.center, {
+      lat: ring[0]![1],
+      lon: ring[0]![0],
+    }).toFixed(3);
+  }, [beyond]);
 
   // Keep the last valid highlight window for the next search (declared before the query, so it runs first).
   useEffect(() => {
@@ -931,6 +975,15 @@ export function App() {
                 {points.count.toLocaleString("en-US")} matching parcels; the
                 count and the list cover all{" "}
                 {points.count.toLocaleString("en-US")}.
+              </p>
+            )}
+            {beyond && (
+              <p
+                className="notice"
+                data-testid="points-beyond"
+                data-not-drawn={beyond.notDrawn}
+              >
+                {beyondText(beyond)}
               </p>
             )}
             <details className="list-details" data-testid="results-details">

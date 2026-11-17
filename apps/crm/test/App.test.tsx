@@ -233,6 +233,8 @@ import {
   MAX_YEARS,
   yearsToDays,
 } from "../src/permitDisplay.ts";
+import { haversineMiles } from "@roofing-crm/geo";
+import { beyondRingOf, beyondText } from "../src/beyondRing.ts";
 import { loadConfig } from "../src/config.ts";
 import { MATCH_CHUNK } from "../src/leadsInSearch.ts";
 import { OWNERSHIP_TEXTS, PROXY_NOTE } from "../src/ownership.ts";
@@ -498,6 +500,109 @@ describe("CRM main screen", () => {
     });
     expect(h.detail).toHaveBeenCalledTimes(1);
     expect(h.detail).toHaveBeenCalledWith({ parcel_id: "0000000002" });
+  });
+
+  test("capped points: a dashed ring at the farthest drawn point, labelled with the matches not drawn; cleared when the result is not truncated or the search changes", async () => {
+    const map = await setup();
+    const el = screen.getByTestId("map");
+    const pin = { lat: 34.199, lon: -118.487 };
+    // The source's data as last set (undefined: still the empty collection it was added with).
+    const ringData = () =>
+      (map.sources.beyond!.data ?? {
+        type: "FeatureCollection",
+        features: [],
+      }) as {
+        type: string;
+        features?: unknown[];
+        geometry?: { type: string; coordinates: Array<[number, number]> };
+      };
+    // Its own source and dashed line layer.
+    const layer = map.layers.find((l) => l.id === "beyond-line") as {
+      source?: string;
+      type?: string;
+      paint?: Record<string, unknown>;
+    };
+    expect(layer).toMatchObject({ type: "line", source: "beyond" });
+    expect(layer.paint!["line-dasharray"]).toEqual([2, 2]);
+    // Not truncated: no ring, no label, no radius attribute.
+    expect(screen.queryByTestId("points-beyond")).toBeNull();
+    expect(el.dataset.beyondRingMiles).toBeUndefined();
+    expect(ringData().features).toEqual([]);
+
+    // Truncated: 4 of 30,000 drawn, nearest first; the last is the farthest (0.031 degrees north).
+    const lat = [34.199, 34.2, 34.21, 34.23];
+    const capped = {
+      count: 30000,
+      encoding: "columnar-v1",
+      precision: 5,
+      id: lat.map((_, i) => `000000010${i}`),
+      lat,
+      lon: lat.map(() => -118.487),
+      truncated: true,
+      max_points: 4,
+    };
+    h.points.mockResolvedValue(capped);
+    fireEvent.change(screen.getByTestId("radius"), { target: { value: "10" } });
+    await wait(300);
+    const farthest = haversineMiles(pin, { lat: 34.23, lon: -118.487 });
+    expect(el.dataset.beyondRingMiles).toBe(farthest.toFixed(3));
+    expect(el.dataset.beyondRingMiles).toBe("2.142");
+    const g = ringData().geometry!;
+    expect(g.type).toBe("LineString");
+    for (const [lon, la] of g.coordinates)
+      expect(haversineMiles(pin, { lat: la, lon })).toBeCloseTo(farthest, 6);
+    const label = screen.getByTestId("points-beyond");
+    expect(label.dataset.notDrawn).toBe("29996");
+    expect(label.textContent).toBe(
+      "29,996 matching parcels not drawn: at or beyond the dashed ring, 2.14 mi from the pin.",
+    );
+
+    // A result that is not truncated clears it.
+    h.points.mockResolvedValue({ ...capped, count: 4, truncated: false });
+    fireEvent.change(screen.getByTestId("radius"), { target: { value: "2" } });
+    await wait(300);
+    expect(screen.queryByTestId("points-beyond")).toBeNull();
+    expect(el.dataset.beyondRingMiles).toBeUndefined();
+    expect(ringData().features).toEqual([]);
+
+    // Truncated again, then the search changes: cleared at once, before the new result is in.
+    h.points.mockResolvedValue(capped);
+    fireEvent.change(screen.getByTestId("radius"), { target: { value: "10" } });
+    await wait(300);
+    expect(el.dataset.beyondRingMiles).toBe("2.142");
+    h.points.mockReturnValue(new Promise(() => {}));
+    fireEvent.change(screen.getByTestId("radius"), { target: { value: "9" } });
+    await flush();
+    expect(screen.queryByTestId("points-beyond")).toBeNull();
+    expect(el.dataset.beyondRingMiles).toBeUndefined();
+    expect(ringData().features).toEqual([]);
+  });
+});
+
+describe("the ring label (beyondText)", () => {
+  const center = { lat: 34.199, lon: -118.487 };
+  test("counts the parcels not drawn (en-US) and rounds the distance down, so 'at or beyond' holds for ties", () => {
+    expect(beyondText({ center, radiusMiles: 7.8364, notDrawn: 1234567 })).toBe(
+      "1,234,567 matching parcels not drawn: at or beyond the dashed ring, 7.83 mi from the pin.",
+    );
+    // 7.8402 would round to 7.84; less the 5-decimal coordinate rounding (0.0005 mi) it is 7.83.
+    expect(beyondText({ center, radiusMiles: 7.8402, notDrawn: 1 })).toBe(
+      "1 matching parcel not drawn: at or beyond the dashed ring, 7.83 mi from the pin.",
+    );
+  });
+  test("beyondRingOf: none unless truncated; the radius is the farthest drawn point", () => {
+    const pts = {
+      count: 10,
+      id: ["a", "b"],
+      lat: [34.2, 34.21],
+      lon: [-118.487, -118.487],
+    };
+    expect(beyondRingOf(center, { ...pts, truncated: false })).toBeUndefined();
+    expect(beyondRingOf(center, { ...pts, truncated: true })).toEqual({
+      center,
+      radiusMiles: haversineMiles(center, { lat: 34.21, lon: -118.487 }),
+      notDrawn: 8,
+    });
   });
 });
 
@@ -2543,10 +2648,11 @@ describe("permits and the effective roof year", () => {
     expect(map.layers.map((l) => l.id)).toEqual([
       "radius-fill",
       "radius-line",
+      "beyond-line",
       "points",
       "points-long-open",
     ]);
-    expect(map.layers[3]).toMatchObject({
+    expect(map.layers[4]).toMatchObject({
       source: "points",
       filter: ["==", ["get", "long_open"], 1],
     });
