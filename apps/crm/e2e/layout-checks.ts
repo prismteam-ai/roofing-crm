@@ -201,14 +201,22 @@ export const LEAD_CONTROLS = [
   "leads-status-filter-label",
   "leads-in-search-label",
   "leads-long-open-label",
-  "leads-permit-filter",
+  "leads-permit-filter-label",
+];
+/** The permit-status filter's choices as shown, in order. */
+export const PERMIT_CHOICE_TEXTS = [
+  "all permit statuses",
+  "Open (issued)",
+  "Open (application stage)",
+  "Closed",
+  "Unclear (neither open nor closed)",
+  "no permit on the lead",
 ];
 /** The one type size of the leads box (its heading aside). */
 export const LEADS_FONT_SIZE = "13px";
 
 /**
- * The leads box: one control per line, in order; the permit-status control disabled and marked not available
- * yet; the filters' help folded under "How the filters work" (closed); one type size for every text and control
+ * The leads box: one control per line, in order; the permit-status control enabled with its choices; the filters' help folded under "How the filters work" (closed); one type size for every text and control
  * but the heading.
  */
 export async function expectLeadsBox(page: Page) {
@@ -226,8 +234,8 @@ export async function expectLeadsBox(page: Page) {
       `${LEAD_CONTROLS[i]} on a line below ${LEAD_CONTROLS[i - 1]}`,
     ).toBeGreaterThanOrEqual(boxes[i - 1]!.y + boxes[i - 1]!.height - 1);
   const permit = leads.getByTestId("leads-permit-filter");
-  await expect(permit).toHaveText(/not available yet$/);
-  await expect(permit.locator("select")).toBeDisabled();
+  await expect(permit).toBeEnabled();
+  await expect(permit.locator("option")).toHaveText(PERMIT_CHOICE_TEXTS);
   const help = leads.getByTestId("leads-filters-help");
   await expect(help.locator(":scope > summary")).toHaveText(
     "How the filters work",

@@ -301,6 +301,9 @@ const NO_PERMITS: ParcelPermits = {
   permits: [],
   bbb: { available: false, reason: "no BBB data source" },
 };
+/** The leads box's "How the filters work" text. */
+const LEADS_FILTERS_NOTE =
+  "Leads filter by status, by this search (radius, roof age and ownership), by a long-open roofing permit in the map's open-duration window, which the data API checks, and by the status of the lead's own permit (the permit it was created from), read from the data API's permits for its parcel. A lead whose permit cannot be read shows \"status not available\" and stays listed. Open a lead to see all its parcel's permits.";
 const flush = () =>
   act(async () => {
     await vi.advanceTimersByTimeAsync(0);
@@ -1163,7 +1166,7 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     confirmSpy.mockRestore();
   });
 
-  test("the leads box: one control per line (label elements, in order); the permit-status control disabled and marked not available yet; the help folded under 'How the filters work'", async () => {
+  test("the leads box: one control per line (label elements, in order); the permit-status control enabled with its choices; the help folded under 'How the filters work'", async () => {
     await start();
     await flush();
     const box = screen.getByTestId("leads");
@@ -1176,15 +1179,27 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       "leads-status-filter-label",
       "leads-in-search-label",
       "leads-long-open-label",
-      "leads-permit-filter",
+      "leads-permit-filter-label",
     ]);
     expect(box.querySelector(".row")).toBeNull();
-    const permit = screen.getByTestId("leads-permit-filter");
-    expect(permit.textContent).toBe("permit status not available yet");
-    expect(permit.className).toBe("unavailable");
-    expect((permit.querySelector("select") as HTMLSelectElement).disabled).toBe(
-      true,
-    );
+    const label = screen.getByTestId("leads-permit-filter-label");
+    expect(label.className).toBe("");
+    expect(label.textContent).toMatch(/^Permit status all permit statuses/);
+    const select = screen.getByTestId(
+      "leads-permit-filter",
+    ) as HTMLSelectElement;
+    expect(select.disabled).toBe(false);
+    expect(select.getAttribute("aria-label")).toBe("Permit status filter");
+    expect(select.value).toBe("all");
+    expect([...select.options].map((o) => [o.value, o.textContent])).toEqual([
+      ["all", "all permit statuses"],
+      ["open-issued", "Open (issued)"],
+      ["open-application", "Open (application stage)"],
+      ["closed", "Closed"],
+      ["unclear", "Unclear (neither open nor closed)"],
+      ["none", "no permit on the lead"],
+    ]);
+    expect(document.body.textContent).not.toContain("not available yet");
     const help = screen.getByTestId("leads-filters-help") as HTMLDetailsElement;
     expect(help.tagName).toBe("DETAILS");
     expect(help.className).toBe("rule-details");
@@ -1592,6 +1607,289 @@ describe("leads (with leadsApiUrl in config.json)", () => {
     ).toEqual(["0000000009"]);
   });
 
+  describe("the permit-status filter: the lead's own permit (source_permit), its status class from permits.forParcel", () => {
+    type PermitClass = ParcelPermit["permit_status_class"];
+    /** A permit of a parcel as permits.forParcel serves it. */
+    const permitRow = (
+      permit_number: string,
+      permit_status_class: PermitClass,
+    ): ParcelPermit => ({
+      permit_number,
+      address: null,
+      postal_code: null,
+      source_permit_type: "Bldg-Alter/Repair",
+      source_permit_sub_type: null,
+      source_status_desc: null,
+      permit_status_class,
+      application_received_date: null,
+      permit_issue_date: null,
+      status_date: null,
+      open_since: null,
+      open_days: null,
+      roofing_work: false,
+      roof_coating_only: false,
+      join_method: "direct",
+      building_level: false,
+      parcel_count: 1,
+      contractors: [],
+    });
+    const pn = (n: number) => `16016-10000-${String(n).padStart(5, "0")}`;
+    /**
+     * Eight leads, newest first: parcels 1-4 and 8 have a permit of each class (open-issued, open-application,
+     * closed, unclear, unmapped); 5's read fails; 6's parcel answer does not list its permit; 7 has no permit.
+     * Each parcel also has another permit of a different class, which never counts.
+     */
+    const CLASS_OF: Record<string, PermitClass | "fails" | "missing"> = {
+      "0000000001": "open-issued",
+      "0000000002": "open-application",
+      "0000000003": "closed",
+      "0000000004": "unclear",
+      "0000000005": "fails",
+      "0000000006": "missing",
+      "0000000008": "unmapped",
+    };
+    const IDS = Array.from({ length: 8 }, (_, i) =>
+      String(i + 1).padStart(10, "0"),
+    );
+    const STATUSES = [
+      "new",
+      "contacted",
+      "won",
+      "new",
+      "new",
+      "contacted",
+      "new",
+      "won",
+    ];
+    const permitLeads = () =>
+      IDS.map((id, i) => ({
+        ...lead(
+          id,
+          STATUSES[i],
+          `2026-11-12T10:${String(59 - i).padStart(2, "0")}:00.000Z`,
+        ),
+        ...(CLASS_OF[id] ? { source_permit: pn(i + 1) } : {}),
+      }));
+    /** permits.forParcel as the API answers it, with each answer held until released (in order of the calls). */
+    let held: Array<() => void> = [];
+    let inFlight = 0;
+    let most = 0;
+    const forParcel = ({ parcel_id }: { parcel_id: string }) =>
+      new Promise<ParcelPermits>((resolve, reject) => {
+        most = Math.max(most, ++inFlight);
+        held.push(() => {
+          inFlight--;
+          const c = CLASS_OF[parcel_id];
+          const n = IDS.indexOf(parcel_id) + 1;
+          if (c === "fails") return reject(new Error("Service Unavailable"));
+          resolve({
+            ...NO_PERMITS,
+            parcel_id,
+            permits: [
+              permitRow(
+                "99999-00000-00001",
+                c === "closed" ? "unclear" : "closed",
+              ),
+              ...(c === "missing" || !c ? [] : [permitRow(pn(n), c)]),
+            ],
+          });
+        });
+      });
+    const releaseAll = async () => {
+      for (let i = 0; i < 50 && held.length; i++)
+        await act(async () => {
+          held.shift()!();
+          await vi.advanceTimersByTimeAsync(0);
+        });
+    };
+    const choose = async (value: string) => {
+      fireEvent.change(screen.getByTestId("leads-permit-filter"), {
+        target: { value },
+      });
+      await flush();
+    };
+    const listed = () =>
+      screen
+        .queryAllByTestId("lead-item")
+        .map((e) => e.dataset.parcel)
+        .sort();
+    const statusText = (id: string) =>
+      screen
+        .getAllByTestId("lead-item")
+        .find((r) => r.dataset.parcel === id)!
+        .querySelector("[data-testid=lead-permit-status]")?.textContent;
+    beforeEach(() => {
+      held = [];
+      inFlight = 0;
+      most = 0;
+      h.forParcel.mockImplementation(forParcel);
+      h.leads.list.mockResolvedValue({
+        items: permitLeads(),
+        next_cursor: null,
+      });
+    });
+
+    test("each choice keeps the leads whose own permit has that class; an unreadable permit shows 'status not available' and stays; 'no permit on the lead' needs no read; one read per lead, at most 4 at once, nothing listed until all answered", async () => {
+      await start();
+      await flush();
+      // All permit statuses: every lead, no read.
+      expect(screen.getByTestId("leads-count").textContent).toBe("8");
+      await choose("none");
+      expect(listed()).toEqual(["0000000007"]);
+      expect(h.forParcel).not.toHaveBeenCalled();
+      // A status class: the seven leads with a permit are read, nothing listed until every read answered.
+      await choose("open-issued");
+      expect(listed()).toEqual([]);
+      expect(screen.getByTestId("leads-count").textContent).toBe("0");
+      expect(screen.getByTestId("leads-permit-checking").textContent).toBe(
+        "checking the permits of 7 leads…",
+      );
+      expect(h.forParcel).toHaveBeenCalledTimes(4);
+      await releaseAll();
+      expect(most).toBe(4);
+      expect(h.forParcel).toHaveBeenCalledTimes(7);
+      expect(
+        h.forParcel.mock.calls
+          .map((c) => (c[0] as { parcel_id: string }).parcel_id)
+          .sort(),
+      ).toEqual(IDS.filter((id) => CLASS_OF[id]).sort());
+      expect(screen.queryByTestId("leads-permit-checking")).toBeNull();
+      expect(listed()).toEqual(["0000000001", "0000000005", "0000000006"]);
+      await openLeadsList();
+      await releaseAll(); // the open list's address reads
+      expect(statusText("0000000001")).toBe("Open (issued)");
+      expect(statusText("0000000005")).toBe("status not available");
+      expect(statusText("0000000006")).toBe("status not available");
+      for (const [choice, own] of [
+        ["open-application", "0000000002"],
+        ["closed", "0000000003"],
+        ["unclear", "0000000004"],
+      ] as const) {
+        await choose(choice);
+        expect(listed()).toEqual([own, "0000000005", "0000000006"].sort());
+        if (choice === "closed")
+          expect(statusText("0000000003")).toBe("Closed");
+      }
+      // "unmapped" is no choice: that lead is listed under all permit statuses only, with its label.
+      await choose("all");
+      expect(listed()).toEqual(IDS);
+      expect(statusText("0000000008")).toBe("Unmapped status");
+      expect(statusText("0000000007")).toBeUndefined();
+      expect(
+        within(
+          screen
+            .getAllByTestId("lead-item")
+            .find((r) => r.dataset.parcel === "0000000007")!,
+        ).getByTestId("lead-permit").textContent,
+      ).toBe("—");
+      // Nothing is read twice; nothing derived is written to a lead.
+      expect(h.forParcel).toHaveBeenCalledTimes(7);
+      expect(h.leads.update).not.toHaveBeenCalled();
+      expect(h.leads.create).not.toHaveBeenCalled();
+    });
+
+    test("combines with the lead status filter and 'Has a long-open roofing permit'; only the leads they keep are read", async () => {
+      h.match.mockImplementation(
+        async (v: { parcel_ids: string[]; min_open_days?: number }) => ({
+          parcel_ids: v.parcel_ids.filter((id) =>
+            ["0000000001", "0000000003", "0000000005", "0000000007"].includes(
+              id,
+            ),
+          ),
+          long_open: {
+            min_open_days: v.min_open_days ?? 1826,
+            max_open_days: null,
+          },
+          ownership: null,
+        }),
+      );
+      await start();
+      await flush();
+      // Status "new": leads 1, 4, 5 and 7; of them, 1, 4 and 5 have a permit and are read.
+      fireEvent.change(screen.getByTestId("leads-status-filter"), {
+        target: { value: "new" },
+      });
+      await choose("open-issued");
+      await releaseAll();
+      expect(
+        h.forParcel.mock.calls
+          .map((c) => (c[0] as { parcel_id: string }).parcel_id)
+          .sort(),
+      ).toEqual(["0000000001", "0000000004", "0000000005"]);
+      expect(listed()).toEqual(["0000000001", "0000000005"]);
+      await choose("none");
+      expect(listed()).toEqual(["0000000007"]);
+      // And the long-open toggle (parcels.match keeps 1, 3, 5, 7): "new" and long-open and no permit.
+      fireEvent.click(screen.getByTestId("leads-long-open"));
+      await wait(300);
+      expect(listed()).toEqual(["0000000007"]);
+      await choose("unclear");
+      expect(listed()).toEqual(["0000000005"]);
+      // Status back to all: lead 3 (won) joins the reads; under "closed" it is listed with the unreadable 5.
+      fireEvent.change(screen.getByTestId("leads-status-filter"), {
+        target: { value: "all" },
+      });
+      await choose("closed");
+      expect(screen.getByTestId("leads-permit-checking").textContent).toBe(
+        "checking the permits of 1 lead…",
+      );
+      await releaseAll();
+      expect(listed()).toEqual(["0000000003", "0000000005"]);
+      expect(h.forParcel).toHaveBeenCalledTimes(4);
+      // The leads API was only read.
+      expect(h.leads.update).not.toHaveBeenCalled();
+    });
+
+    test("combines with 'Leads in this search'; when no lead matches, the list is empty with a count of 0", async () => {
+      const map = await start();
+      await flush();
+      act(() => map.clickAt(300, 100));
+      await wait(300);
+      // The search's drawn points hold 0000000003 only.
+      fireEvent.click(screen.getByTestId("leads-in-search"));
+      await flush();
+      expect(listed()).toEqual(["0000000003"]);
+      await choose("closed");
+      await releaseAll();
+      // Only the lead the search keeps is read.
+      expect(h.forParcel).toHaveBeenCalledTimes(1);
+      expect(listed()).toEqual(["0000000003"]);
+      // No lead matches: nothing listed, the count says 0, no notice of a check in progress.
+      await choose("open-issued");
+      expect(listed()).toEqual([]);
+      expect(screen.getByTestId("leads-count").textContent).toBe("0");
+      expect(screen.queryByTestId("leads-permit-checking")).toBeNull();
+      await choose("none");
+      expect(listed()).toEqual([]);
+      // Search off: every lead's permit is read for the same choice.
+      fireEvent.click(screen.getByTestId("leads-in-search"));
+      await choose("open-issued");
+      await releaseAll();
+      expect(h.forParcel).toHaveBeenCalledTimes(7);
+      expect(listed()).toEqual(["0000000001", "0000000005", "0000000006"]);
+    });
+
+    test("every permit unreadable (the data API down): each lead with a permit is listed under every status choice with 'status not available'; none is dropped", async () => {
+      h.forParcel.mockRejectedValue(new Error("Failed to fetch"));
+      await start();
+      await flush();
+      await choose("closed");
+      await flush();
+      const withPermit = IDS.filter((id) => CLASS_OF[id]);
+      expect(listed()).toEqual(withPermit);
+      await openLeadsList();
+      for (const id of withPermit)
+        expect(statusText(id)).toBe("status not available");
+      await choose("open-application");
+      expect(listed()).toEqual(withPermit);
+      await choose("none");
+      expect(listed()).toEqual(["0000000007"]);
+      // A failed read is not retried.
+      expect(h.forParcel).toHaveBeenCalledTimes(withPermit.length);
+      expect(screen.queryByTestId("leads-search-error")).toBeNull();
+    });
+  });
+
   describe("county notices and 'Leads in this search' when the points are capped", () => {
     /** 25,000 drawn of 30,000 matching; the drawn IDs are 0000000003 and 0000000004. */
     const capped = (ids = ["0000000003", "0000000004"]) => ({
@@ -1673,11 +1971,12 @@ describe("leads (with leadsApiUrl in config.json)", () => {
       );
       expect(screen.getByTestId("data-permit-parcels").textContent).toBe("400");
       expect(screen.getByTestId("leads-permit-filter-note").textContent).toBe(
-        "Leads filter by status, by this search (radius, roof age and ownership) and by a long-open roofing permit in the map's open-duration window, which the data API checks; not by other permit statuses: open a lead to see its parcel's permits.",
+        LEADS_FILTERS_NOTE,
       );
-      expect(screen.getByTestId("leads-permit-filter").textContent).toBe(
-        "permit status not available yet",
-      );
+      expect(
+        (screen.getByTestId("leads-permit-filter") as HTMLSelectElement)
+          .disabled,
+      ).toBe(false);
       expect(document.body.textContent).not.toMatch(/not harvested/i);
     });
 

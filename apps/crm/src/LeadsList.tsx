@@ -5,7 +5,21 @@ import {
   type LeadStatus,
 } from "@roofing-crm/leads-client";
 import { dateOnly } from "./dates.ts";
-import { useLeadAddresses, type AddressLookup } from "./leadAddresses.ts";
+import {
+  newLeadReadPacer,
+  useLeadAddresses,
+  type AddressLookup,
+} from "./leadAddresses.ts";
+import {
+  choiceReads,
+  PERMIT_CHOICES,
+  passesPermitChoice,
+  permitKey,
+  permitReadText,
+  useLeadPermits,
+  type PermitChoice,
+  type PermitStatusLookup,
+} from "./leadPermits.ts";
 import type { LeadsInSearch } from "./leadsInSearch.ts";
 
 /** The list reads at most this many pages of this many leads. */
@@ -20,10 +34,12 @@ export const NO_LEADS_TEXT =
  * roof-age and ownership result) and by "Has a long-open roofing permit" (the map's open-duration window).
  * The data API answers both of the last two through parcels.match (see leadsInSearch.ts); the long-open
  * toggle works with "Leads in this search" on (the search filter and the lead IDs) and off (the lead IDs
- * only). Nothing derived is stored with a lead, which holds the parcel only. There is no filter on other
- * permit statuses; the disabled control says it is not available yet. The Parcel column adds the parcel's
- * address once the open list has looked it up (leadAddresses.ts). The Permit column is the permit a lead was
- * created from (a permit row), "—" for a lead created any other way.
+ * only). The permit-status filter uses the lead's own permit (source_permit): a status class read from
+ * permits.forParcel while a status choice is set (leadPermits.ts), or "no permit on the lead"; a permit that
+ * cannot be read shows "status not available" and the lead stays listed. Nothing derived is stored with a lead,
+ * which holds the parcel and the permit it was created from only. The Parcel column adds the parcel's address
+ * once the open list has looked it up (leadAddresses.ts). The Permit column is the permit a lead was created
+ * from (a permit row), "—" for a lead created any other way, with its status once read.
  */
 export function LeadsList({
   leads,
@@ -37,6 +53,7 @@ export function LeadsList({
   capped,
   loaded,
   lookupAddress,
+  lookupPermit,
   onOpen,
 }: {
   leads: Lead[];
@@ -57,13 +74,16 @@ export function LeadsList({
   loaded?: boolean;
   /** Reads a parcel's address for the open list (parcels.detail); kept in memory only, never in a lead. */
   lookupAddress?: AddressLookup;
+  /** Reads the status class of a lead's own permit (permits.forParcel); kept in memory only, never in a lead. */
+  lookupPermit?: PermitStatusLookup;
   onOpen: (parcelId: string) => void;
 }) {
   const [status, setStatus] = useState<LeadStatus | "all">("all");
+  const [permitChoice, setPermitChoice] = useState<PermitChoice>("all");
   const searchIds = search.ids;
   const asked = inSearch || longOpen;
   // With a filter on, nothing is listed until the answer is complete (never a partial result).
-  const shown = useMemo(
+  const kept = useMemo(
     () =>
       leads
         .filter((l) => status === "all" || l.status === status)
@@ -71,9 +91,27 @@ export function LeadsList({
         .sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
     [leads, status, asked, searchIds],
   );
+  // One pacer for the address and permit reads: at most 4 data API reads at once, both together.
+  const [pacer] = useState(newLeadReadPacer);
+  // Only the leads the other filters keep are read, and only while a status choice is set.
+  const reads = useLeadPermits(
+    lookupPermit,
+    kept,
+    choiceReads(permitChoice),
+    pacer,
+  );
+  // As the other filters: nothing is listed until every kept lead's permit read has answered.
+  const { shown, checkingPermits } = useMemo(() => {
+    const pass = kept.map((l) => passesPermitChoice(l, permitChoice, reads));
+    const checking = pass.filter((v) => v === undefined).length;
+    return {
+      shown: checking > 0 ? [] : kept.filter((_, i) => pass[i] === true),
+      checkingPermits: checking,
+    };
+  }, [kept, permitChoice, reads]);
   const [listOpen, setListOpen] = useState(false);
   const shownIds = useMemo(() => shown.map((l) => l.parcel_id), [shown]);
-  const addresses = useLeadAddresses(lookupAddress, shownIds, listOpen);
+  const addresses = useLeadAddresses(lookupAddress, shownIds, listOpen, pacer);
   return (
     <section className="leads" data-testid="leads">
       <h3>Leads</h3>
@@ -122,19 +160,35 @@ export function LeadsList({
           <span data-testid="leads-long-open-window"> ({windowText})</span>
         )}
       </label>
-      <label className="unavailable" data-testid="leads-permit-filter">
-        <select disabled aria-label="Permit status filter">
-          <option>permit status</option>
-        </select>{" "}
-        not available yet
+      <label
+        data-testid="leads-permit-filter-label"
+        className={lookupPermit ? undefined : "unavailable"}
+      >
+        Permit status{" "}
+        <select
+          aria-label="Permit status filter"
+          data-testid="leads-permit-filter"
+          disabled={!lookupPermit}
+          value={permitChoice}
+          onChange={(e) => setPermitChoice(e.target.value as PermitChoice)}
+        >
+          {PERMIT_CHOICES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.text}
+            </option>
+          ))}
+        </select>
       </label>
       <details className="rule-details" data-testid="leads-filters-help">
         <summary>How the filters work</summary>
         <p className="rule" data-testid="leads-permit-filter-note">
           Leads filter by status, by this search (radius, roof age and
-          ownership) and by a long-open roofing permit in the map&apos;s
-          open-duration window, which the data API checks; not by other permit
-          statuses: open a lead to see its parcel&apos;s permits.
+          ownership), by a long-open roofing permit in the map&apos;s
+          open-duration window, which the data API checks, and by the status of
+          the lead&apos;s own permit (the permit it was created from), read from
+          the data API&apos;s permits for its parcel. A lead whose permit cannot
+          be read shows &quot;status not available&quot; and stays listed. Open
+          a lead to see all its parcel&apos;s permits.
         </p>
       </details>
       {longOpen && search.windowInvalid && (
@@ -146,6 +200,12 @@ export function LeadsList({
       {asked && search.checking !== undefined && (
         <p className="notice" data-testid="leads-checking">
           checking {search.checking.toLocaleString("en-US")} leads…
+        </p>
+      )}
+      {checkingPermits > 0 && (
+        <p className="notice" data-testid="leads-permit-checking">
+          checking the permits of {checkingPermits.toLocaleString("en-US")}{" "}
+          {checkingPermits === 1 ? "lead" : "leads"}…
         </p>
       )}
       {asked && search.error && (
@@ -213,6 +273,15 @@ export function LeadsList({
                 <td className="nowrap">{dateOnly(l.updated_at)}</td>
                 <td className="mono" data-testid="lead-permit">
                   {l.source_permit ?? "—"}
+                  {l.source_permit && reads.has(permitKey(l)) && (
+                    <span
+                      className="lead-permit-status"
+                      data-testid="lead-permit-status"
+                      data-class={reads.get(permitKey(l))}
+                    >
+                      {permitReadText(reads.get(permitKey(l))!)}
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

@@ -231,6 +231,11 @@ button:disabled {
 .lead-address {
   display: block;
 }
+/* The status of a lead's own permit, under its number, in the list's text face. */
+.lead-permit-status {
+  display: block;
+  font-family: system-ui, sans-serif;
+}
 /* The question takes its own line when the panel is narrow; the two buttons follow it. */
 .lead-confirm {
   flex-wrap: wrap;

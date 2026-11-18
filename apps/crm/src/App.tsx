@@ -36,6 +36,7 @@ import {
 } from "./maplibre.ts";
 import { DETAIL_MIN_ZOOM, HIT_TOLERANCE_PX, nearestPoint } from "./hitTest.ts";
 import { addressOf, type AddressLookup } from "./leadAddresses.ts";
+import { statusOfPermit, type PermitStatusLookup } from "./leadPermits.ts";
 import { LeadEditor } from "./LeadEditor.tsx";
 import { filterOfKey, searchKeyOf, useLeadsInSearch } from "./leadsInSearch.ts";
 import { LEADS_MAX_PAGES, LEADS_PAGE_SIZE, LeadsList } from "./LeadsList.tsx";
@@ -208,6 +209,20 @@ export function App() {
           (await api.parcels.detail.query({ parcel_id: id })).property,
         )),
     [api],
+  );
+  /**
+   * The leads list's permit-status lookup: the status class of a lead's own permit among its parcel's permits
+   * (permits.forParcel), read for display only (never stored in a lead).
+   */
+  const lookupPermit = useMemo<PermitStatusLookup | undefined>(
+    () =>
+      permits &&
+      (async (id, permitNumber) =>
+        statusOfPermit(
+          await permits.forParcel({ parcel_id: id }),
+          permitNumber,
+        )),
+    [permits],
   );
 
   /**
@@ -1064,6 +1079,7 @@ export function App() {
             capped={leadsCapped}
             loaded={leadsLoaded}
             lookupAddress={lookupAddress}
+            lookupPermit={lookupPermit}
             onOpen={(id) => void openDetail(id)}
           />
         )}

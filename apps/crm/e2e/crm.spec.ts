@@ -22,6 +22,7 @@ import {
   expectLayout,
   LAYOUT_BREAKPOINTS,
   openLayout,
+  PERMIT_CHOICE_TEXTS,
 } from "./layout-checks.ts";
 import { dateOnly } from "../src/dates.ts";
 
@@ -1576,9 +1577,10 @@ test.describe("with credentials", () => {
       "open",
       /.*/,
     );
-    await expect(page.getByTestId("leads-permit-filter")).toHaveText(
-      "permit status not available yet",
-    );
+    await expect(page.getByTestId("leads-permit-filter")).toBeEnabled();
+    await expect(
+      page.getByTestId("leads-permit-filter-label"),
+    ).not.toContainText("not available yet");
     // Before a pin, "Leads in this search" is greyed and says it needs one.
     await expect(page.getByTestId("leads-in-search")).toBeDisabled();
     await expect(page.getByTestId("leads-in-search-label")).toHaveClass(
@@ -2370,6 +2372,177 @@ test.describe("with credentials", () => {
           data: { parcel_id: parcel, expected_updated_at: left.updated_at },
         });
       if (!left || isOwnLead(left)) expect(await get(parcel)).toBeNull();
+    }
+  });
+  test("43. the lead list's permit-status filter uses each lead's own permit (source_permit): its class as permits.forParcel serves it, 'no permit on the lead' for a lead without one, combined with the status filter; an unreadable permit shows 'status not available' and stays listed (the test's own leads are always deleted)", async ({
+    page,
+  }) => {
+    const cfg = await config();
+    const a = await api();
+    const json = async (
+      r: Awaited<ReturnType<typeof a.get>>,
+      what: string,
+    ): Promise<unknown> => {
+      if (r.status() !== 200) throw new Error(`${what}: HTTP ${r.status()}`);
+      return ((await r.json()) as { result: { data: unknown } }).result.data;
+    };
+    const getLead = async (id: string) =>
+      (await json(
+        await a.get(trpc(cfg.leadsApiUrl, "leads.get", { parcel_id: id })),
+        "leads.get",
+      )) as { updated_at: string; notes: string } | null;
+    await page.goto(`/?lat=${VN.lat}&lon=${VN.lon}&z=13`);
+    await ready(page);
+    await page.getByTestId("map").click(); // pin at the center
+    await page.getByTestId("radius").fill("5");
+    await expect
+      .poll(() => attrNum(page, "permits-count", "data-count"), {
+        timeout: 20_000,
+      })
+      .toBeGreaterThan(0);
+    await expand(page.getByTestId("permits-details"));
+    const rows = await page
+      .getByTestId("permit-row")
+      .evaluateAll((els) =>
+        els.map((e) => [e.dataset.permit!, e.dataset.parcel!] as const),
+      );
+    // Two parcels without a lead (existing leads are never touched): one for a lead created from its permit
+    // row, one for a lead without a permit.
+    const free: Array<readonly [string, string]> = [];
+    for (const r of rows) {
+      if (free.length === 2) break;
+      if (free.some((f) => f[1] === r[1])) continue;
+      if ((await getLead(r[1])) === null) free.push(r);
+    }
+    expect(free).toHaveLength(2);
+    const [[permit, withPermit], [, noPermit]] = free as [
+      readonly [string, string],
+      readonly [string, string],
+    ];
+    // The class the API serves for that permit on that parcel.
+    const own = (
+      (await json(
+        await a.get(
+          trpc(cfg.apiUrl, "permits.forParcel", { parcel_id: withPermit }),
+        ),
+        "permits.forParcel",
+      )) as {
+        permits: Array<{ permit_number: string; permit_status_class: string }>;
+      }
+    ).permits.find((p) => p.permit_number === permit);
+    expect(own, `${permit} among ${withPermit}'s permits`).toBeTruthy();
+    const cls = own!.permit_status_class;
+    console.log(
+      "PERMIT_FILTER_LEADS",
+      JSON.stringify({ permit, withPermit, cls, noPermit }),
+    );
+    const LABEL: Record<string, string> = {
+      "open-issued": "Open (issued)",
+      "open-application": "Open (application stage)",
+      closed: "Closed",
+      unclear: "Unclear (neither open nor closed)",
+      unmapped: "Unmapped status",
+    };
+    const created: string[] = [];
+    try {
+      for (const data of [
+        {
+          parcel_id: withPermit,
+          status: "new",
+          notes: OWN_LEAD_NOTES,
+          source_permit: permit,
+        },
+        { parcel_id: noPermit, status: "new", notes: OWN_LEAD_NOTES },
+      ]) {
+        const r = await a.post(`${cfg.leadsApiUrl}/trpc/leads.create`, {
+          data,
+        });
+        expect(r.status(), `leads.create ${data.parcel_id}`).toBe(200);
+        created.push(data.parcel_id);
+      }
+      const reads = trpcInputs(page, "permits.forParcel");
+      await page.reload();
+      await ready(page);
+      const filter = page.getByTestId("leads-permit-filter");
+      await expect(filter).toBeEnabled();
+      await expect(filter.locator("option")).toHaveText(PERMIT_CHOICE_TEXTS);
+      await expand(page.getByTestId("leads-details"));
+      const row = (id: string) =>
+        page
+          .getByTestId("lead-item")
+          .and(page.locator(`[data-parcel="${id}"]`));
+      await expect(row(withPermit)).toHaveCount(1, { timeout: 20_000 });
+      // Before a status choice, no permit is read for the filter.
+      expect(reads.filter((v) => v.parcel_id === withPermit)).toHaveLength(0);
+      const choose = async (value: string) => {
+        await filter.selectOption(value);
+        await expect(page.getByTestId("leads-permit-checking")).toHaveCount(0, {
+          timeout: 60_000,
+        });
+      };
+      for (const choice of [
+        "open-issued",
+        "open-application",
+        "closed",
+        "unclear",
+        "none",
+      ]) {
+        await choose(choice);
+        await expect(row(withPermit), `${choice}: the permit lead`).toHaveCount(
+          choice === cls ? 1 : 0,
+        );
+        await expect(
+          row(noPermit),
+          `${choice}: the lead without a permit`,
+        ).toHaveCount(choice === "none" ? 1 : 0);
+      }
+      // The lead's permit is read once, from its own parcel; at most once per parcel overall.
+      expect(reads.filter((v) => v.parcel_id === withPermit)).toHaveLength(1);
+      const parcels = reads.map((v) => v.parcel_id);
+      expect(new Set(parcels).size).toBe(parcels.length);
+      expect(parcels).not.toContain(noPermit);
+      // All permit statuses: both leads, the permit lead with its status beside its number.
+      await choose("all");
+      await expect(row(noPermit)).toHaveCount(1);
+      await expect(
+        row(withPermit).getByTestId("lead-permit-status"),
+      ).toHaveText(LABEL[cls] ?? cls);
+      // Combined with the lead status filter: both leads are "new".
+      if (cls in LABEL && cls !== "unmapped") {
+        await choose(cls);
+        await page.getByTestId("leads-status-filter").selectOption("contacted");
+        await expect(row(withPermit)).toHaveCount(0);
+        await page.getByTestId("leads-status-filter").selectOption("new");
+        await expect(row(withPermit)).toHaveCount(1);
+        await page.getByTestId("leads-status-filter").selectOption("all");
+      }
+      // Unreadable: with permits.forParcel failing (aborted in the page), the lead stays under every status
+      // choice with "status not available".
+      await page.route(
+        (u) => u.pathname.includes("permits.forParcel"),
+        (route) => route.abort("failed"),
+      );
+      await page.reload();
+      await ready(page);
+      await expand(page.getByTestId("leads-details"));
+      for (const choice of ["closed", "open-application"]) {
+        await choose(choice);
+        await expect(row(withPermit)).toHaveCount(1);
+        await expect(
+          row(withPermit).getByTestId("lead-permit-status"),
+        ).toHaveText("status not available");
+        await expect(row(noPermit)).toHaveCount(0);
+      }
+    } finally {
+      // Always delete this test's own leads, also when a step above failed.
+      for (const id of created) {
+        const left = await getLead(id);
+        if (isOwnLead(left))
+          await a.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
+            data: { parcel_id: id, expected_updated_at: left.updated_at },
+          });
+      }
+      for (const id of created) expect(await getLead(id)).toBeNull();
     }
   });
 });
