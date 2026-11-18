@@ -1,0 +1,47 @@
+{
+  "leads": [
+    {
+      "id": "956b0b3b-d75c-4ae1-ada1-04b417900572",
+      "propertyId": "p1",
+      "address": "1204 Barton Springs Rd",
+      "city": "Austin",
+      "latitude": 30.2634,
+      "longitude": -97.7712,
+      "roofAgeYears": 22,
+      "permitOpen": true,
+      "permitOpenYears": 6,
+      "permitStatus": "Open",
+      "contractorName": "Lone Star Roofing LLC",
+      "bbbRating": "B\u002B",
+      "leadSignals": [
+        "aging",
+        "permit"
+      ],
+      "status": 0,
+      "notes": "some examlpe not",
+      "createdAt": "2026-11-17T04:53:40.9267987+00:00",
+      "updatedAt": "2026-11-17T04:53:51.2744037+00:00"
+    },
+    {
+      "id": "4ddb6454-2277-4225-97db-2dbab1612e2b",
+      "propertyId": "p4",
+      "address": "2300 E 7th St",
+      "city": "Austin",
+      "latitude": 30.2612,
+      "longitude": -97.7148,
+      "roofAgeYears": 25,
+      "permitOpen": false,
+      "permitOpenYears": 0,
+      "permitStatus": "\u2014",
+      "contractorName": "\u2014",
+      "bbbRating": "\u2014",
+      "leadSignals": [
+        "aging"
+      ],
+      "status": 0,
+      "notes": "and another note",
+      "createdAt": "2026-11-17T04:56:37.3845164+00:00",
+      "updatedAt": "2026-11-17T04:56:49.4275721+00:00"
+    }
+  ]
+}

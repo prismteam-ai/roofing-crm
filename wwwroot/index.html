@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roofing CRM</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <nav class="module-nav" aria-label="CRM modules">
+        <span class="module-tab is-active" aria-current="page">Lead identification</span>
+        <span class="module-tab is-disabled" aria-disabled="true" title="Coming soon — not in this release">Pipeline</span>
+        <span class="module-tab is-disabled" aria-disabled="true" title="Coming soon — not in this release">Tasks</span>
+        <span class="module-tab is-disabled" aria-disabled="true" title="Coming soon — not in this release">Quotes</span>
+        <span class="module-tab is-disabled" aria-disabled="true" title="Coming soon — not in this release">Outreach</span>
+        <span class="module-tab is-disabled" aria-disabled="true" title="Coming soon — not in this release">Reports</span>
+        <span class="module-tab is-disabled" aria-disabled="true" title="Coming soon — not in this release">AI assistant</span>
+      </nav>
+    </header>
+
+    <div class="module-view">
+    <section class="filters-top" aria-label="Search and lead filters">
+      <p id="status" class="sr-only" aria-live="polite">Loading map…</p>
+      <span id="coords" class="sr-only" aria-hidden="true">—</span>
+      <div class="filters-bar">
+        <button type="button" id="locate-me" class="btn-primary btn-compact" title="Center property search on your current location">Use My GPS</button>
+        <span class="filter-divider" aria-hidden="true"></span>
+        <label class="filter-chip" for="radius">
+          <span class="chip-label">Search radius</span>
+          <input type="range" id="radius" class="chip-range" min="1" max="25" value="5" step="1" aria-describedby="radius-value" />
+          <span id="radius-value" class="chip-value">5 mi</span>
+        </label>
+        <span class="filter-divider" aria-hidden="true"></span>
+        <label class="filter-chip check-chip" for="filter-aging-roof">
+          <input type="checkbox" id="filter-aging-roof" checked />
+          <span class="chip-label">Include aging roofs</span>
+        </label>
+        <label class="filter-chip" for="min-roof-age">
+          <span class="chip-label">Min. roof age</span>
+          <input type="range" id="min-roof-age" class="chip-range" min="5" max="40" value="15" step="1" aria-labelledby="min-roof-age-value" />
+          <span id="min-roof-age-value" class="chip-value">15 yr</span>
+        </label>
+        <span class="filter-divider" aria-hidden="true"></span>
+        <label class="filter-chip check-chip" for="filter-open-permit">
+          <input type="checkbox" id="filter-open-permit" checked />
+          <span class="chip-label">Open roofing permits</span>
+        </label>
+        <label class="filter-chip" for="min-permit-years">
+          <span class="chip-label">Min. years open</span>
+          <input type="range" id="min-permit-years" class="chip-range" min="0" max="15" value="0" step="1" aria-labelledby="min-permit-years-value" />
+          <span id="min-permit-years-value" class="chip-value">0 yr</span>
+        </label>
+        <span class="filter-divider" aria-hidden="true"></span>
+        <button type="button" id="clear-filters" class="btn-ghost">Clear filters</button>
+        <span class="filter-divider" aria-hidden="true"></span>
+        <div class="ask-ai-filter" id="ask-ai-filter">
+          <span class="chip-label ask-ai-filter__label">Ask AI</span>
+          <form id="search-prompt-form" class="prompt-panel__row ask-ai-filter__form" aria-label="Ask AI search">
+            <input
+              type="text"
+              id="search-prompt"
+              name="prompt"
+              class="prompt-field"
+              autocomplete="off"
+              aria-label="Ask AI"
+              placeholder="e.g. open roofing permits older than five years"
+            />
+            <button type="submit" id="search-prompt-submit" class="btn-primary btn-compact prompt-panel__submit">
+              Search
+            </button>
+          </form>
+        </div>
+      </div>
+      <p id="search-prompt-status" class="prompt-panel__status filters-top__ai-hint" hidden aria-live="polite"></p>
+    </section>
+    <div class="main">
+      <aside class="leads-panel" aria-label="Lead candidates">
+        <h2 class="filter-label leads-heading">Lead candidates</h2>
+        <p id="property-empty" class="panel-hint" hidden>
+          No leads match. Adjust filters or move the pin.
+        </p>
+        <ul id="property-list" class="property-list"></ul>
+      </aside>
+      <div class="map-stage">
+        <button
+          type="button"
+          id="crm-drawer-open"
+          class="crm-drawer-tab"
+          aria-expanded="false"
+          aria-controls="crm-panel"
+          title="Open saved CRM leads"
+        >
+          <span class="crm-drawer-tab__icon" aria-hidden="true">◂</span>
+          <span class="crm-drawer-tab__label">CRM leads</span>
+          <span id="crm-drawer-count" class="crm-drawer-tab__badge" hidden>0</span>
+        </button>
+        <aside id="crm-panel" class="crm-panel" aria-label="CRM leads">
+          <div class="crm-panel__toolbar">
+            <h2 class="filter-label leads-heading">CRM leads</h2>
+            <button type="button" id="crm-drawer-close" class="btn-icon" aria-label="Close CRM leads panel">×</button>
+          </div>
+          <p id="crm-empty" class="panel-hint" hidden>No saved leads yet. Use “Save to CRM” on a map popup.</p>
+          <ul id="crm-lead-list" class="crm-lead-list"></ul>
+        </aside>
+        <div id="map" role="region" aria-label="Travis County map"></div>
+      </div>
+    </div>
+    </div>
+
+  </div>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="app.js"></script>
+  <script src="crm.js"></script>
+  <script src="search-prompt.js?v=4"></script>
+</body>
+</html>
