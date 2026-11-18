@@ -2486,8 +2486,9 @@ test.describe("with credentials", () => {
     ownLeads,
   }) => {
     // Its own limit, not the suite's 60 s: three page loads (each up to 30 s to ready), up to fifty leads.get while
-    // looking for two parcels without a lead (about 0.5 s each when warm, so about 25 s), and eleven filter choices
-    // that each wait for their permit reads (at most 4 in flight). That is about 90 s on a slow day; 180 s is twice
+    // looking for two parcels without a lead (about 0.5 s each when warm, so about 25 s), and nine permit-status
+    // choices that each wait for their permit reads (only the first choice of each page load starts reads, since a
+    // permit is read once per page; at most 4 in flight). That is about 90 s on a slow day; 180 s is twice
     // that and still ends a hang. The cleanup is not counted in it (`ownLeads` has its own budget).
     test.setTimeout(180_000);
     const cfg = await config();
