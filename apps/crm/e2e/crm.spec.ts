@@ -1,7 +1,9 @@
+import { randomInt } from "node:crypto";
 import {
   expect,
   request,
-  test,
+  test as base,
+  type APIResponse,
   type BrowserContext,
   type Locator,
   type Page,
@@ -151,17 +153,23 @@ const recenteredOn = (page: Page, p: number[]) =>
 
 /**
  * The inputs of the GET requests to a data API procedure, in order (batched calls included: the path lists the
- * procedures and the input is keyed by position).
+ * procedures and the input is keyed by position). By default only the procedure's first position in a batched
+ * request is kept; `everyRead: true` keeps every position, so a batch of several reads of the same procedure
+ * (the client batches calls started in the same tick) gives one input per read.
  */
-const trpcInputs = (page: Page, proc: string) => {
+const trpcInputs = (page: Page, proc: string, { everyRead = false } = {}) => {
   const inputs: Array<Record<string, unknown>> = [];
   page.on("request", (r) => {
     const u = new URL(r.url());
     if (r.method() !== "GET" || !u.pathname.startsWith("/trpc/")) return;
-    const i = u.pathname.slice("/trpc/".length).split(",").indexOf(proc);
-    if (i < 0) return;
+    const at = u.pathname
+      .slice("/trpc/".length)
+      .split(",")
+      .flatMap((p, i) => (p === proc ? [i] : []));
+    if (at.length === 0) return;
     const input = JSON.parse(u.searchParams.get("input") ?? "{}");
-    inputs.push(u.searchParams.has("batch") ? input[i] : input);
+    for (const i of everyRead ? at : at.slice(0, 1))
+      inputs.push(u.searchParams.has("batch") ? input[i] : input);
   });
   return inputs;
 };
@@ -212,6 +220,105 @@ const lineCount = (el: Locator) =>
         .map((x) => Math.round(x.top)),
     ).size;
   });
+
+/** Test 43's own leads: created through `create`, deleted by the fixture's teardown (see `test` below). */
+type OwnLeads = {
+  /** The notes every lead of this run carries: OWN_LEAD_NOTES and a token of letters unique to this run. */
+  notes: string;
+  /** Records the parcel, then sends leads.create with this run's notes; the parcel stays recorded whatever the answer. */
+  create: (data: {
+    parcel_id: string;
+    status: string;
+    source_permit?: string;
+  }) => Promise<APIResponse>;
+};
+/** Budget of one leads API request in the `ownLeads` create and cleanup. */
+const OWN_LEAD_REQUEST_MS = 10_000;
+/**
+ * The fixture's own budget, shared by its setup and its teardown: the hosted config.json (up to 30 s, once per
+ * worker), then a create still in flight (10 s) and, per parcel (two), a read, a delete and a read again (30 s).
+ */
+const OWN_LEADS_CLEANUP_MS = 120_000;
+/**
+ * The suite's `test`, with an `ownLeads` fixture (not automatic: only a test that names it, test 43, sets it up).
+ * Its teardown deletes the leads the test created and runs whatever ends the body, a body timeout included:
+ * Playwright stops waiting for a timed-out body, then tears the test's fixtures down, and a fixture declared with
+ * its own `timeout` runs in a time slot of its own that the body's limit does not use up (Playwright docs,
+ * Fixtures, "Fixture timeout").
+ *
+ * - The parcel is recorded before leads.create is sent: a create that wrote the lead and then failed or did not
+ *   answer 200 still leaves its parcel to the cleanup.
+ * - The cleanup deletes a lead only when its notes are this run's own (a lead it created) and tries every recorded
+ *   parcel: a read or delete that fails is noted and the loop goes on; the failures are reported together at the
+ *   end, which fails the test.
+ * - Once the cleanup has started, `create` refuses (a timed-out body may still be running), and the cleanup first
+ *   waits for the creates in flight, so no lead is written after it has read its parcel.
+ */
+const test = base.extend<{ ownLeads: OwnLeads }>({
+  ownLeads: [
+    // eslint-disable-next-line no-empty-pattern -- Playwright requires a destructured first argument.
+    async ({}, use) => {
+      const cfg = await config();
+      const a = await api();
+      const token = Array.from({ length: 12 }, () =>
+        String.fromCharCode(97 + randomInt(26)),
+      ).join("");
+      const notes = `${OWN_LEAD_NOTES} (test 43, run ${token})`;
+      const parcels: string[] = [];
+      const inFlight: Array<Promise<unknown>> = [];
+      let cleaning = false;
+      await use({
+        notes,
+        create: (data) => {
+          if (cleaning)
+            throw new Error("no lead is created once the cleanup started");
+          if (!parcels.includes(data.parcel_id)) parcels.push(data.parcel_id);
+          const sent = a.post(`${cfg.leadsApiUrl}/trpc/leads.create`, {
+            data: { ...data, notes },
+            timeout: OWN_LEAD_REQUEST_MS,
+          });
+          inFlight.push(sent.catch(() => undefined));
+          return sent;
+        },
+      });
+      cleaning = true;
+      await Promise.all(inFlight);
+      const read = async (id: string) => {
+        const r = await a.get(
+          trpc(cfg.leadsApiUrl, "leads.get", { parcel_id: id }),
+          { timeout: OWN_LEAD_REQUEST_MS },
+        );
+        if (r.status() !== 200)
+          throw new Error(`leads.get: HTTP ${r.status()}`);
+        return ((await r.json()) as { result: { data: unknown } }).result
+          .data as { updated_at: string; notes: string } | null;
+      };
+      const failures: string[] = [];
+      for (const id of parcels) {
+        try {
+          const left = await read(id);
+          if (left?.notes !== notes) continue; // no lead, or not one this run created
+          const d = await a.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
+            data: { parcel_id: id, expected_updated_at: left.updated_at },
+            timeout: OWN_LEAD_REQUEST_MS,
+          });
+          if (d.status() !== 200)
+            throw new Error(`leads.delete: HTTP ${d.status()}`);
+          if ((await read(id))?.notes === notes)
+            throw new Error("the lead is still there after leads.delete");
+        } catch (e) {
+          failures.push(`${id}: ${(e as Error).message}`);
+        }
+      }
+      await a.dispose();
+      if (failures.length > 0)
+        throw new Error(
+          `own leads not all deleted (every parcel was tried): ${failures.join("; ")}`,
+        );
+    },
+    { timeout: OWN_LEADS_CLEANUP_MS },
+  ],
+});
 
 // Serial by default (a failure stops the run); PW_SERIAL=0 runs tests independently (each loads its own config).
 test.describe.configure({
@@ -2376,7 +2483,13 @@ test.describe("with credentials", () => {
   });
   test("43. the lead list's permit-status filter uses each lead's own permit (source_permit): its class as permits.forParcel serves it, 'no permit on the lead' for a lead without one, combined with the status filter; an unreadable permit shows 'status not available' and stays listed (the test's own leads are always deleted)", async ({
     page,
+    ownLeads,
   }) => {
+    // Its own limit, not the suite's 60 s: three page loads (each up to 30 s to ready), up to fifty leads.get while
+    // looking for two parcels without a lead (about 0.5 s each when warm, so about 25 s), and eleven filter choices
+    // that each wait for their permit reads (at most 4 in flight). That is about 90 s on a slow day; 180 s is twice
+    // that and still ends a hang. The cleanup is not counted in it (`ownLeads` has its own budget).
+    test.setTimeout(180_000);
     const cfg = await config();
     const a = await api();
     const json = async (
@@ -2443,106 +2556,87 @@ test.describe("with credentials", () => {
       unclear: "Unclear (neither open nor closed)",
       unmapped: "Unmapped status",
     };
-    const created: string[] = [];
-    try {
-      for (const data of [
-        {
-          parcel_id: withPermit,
-          status: "new",
-          notes: OWN_LEAD_NOTES,
-          source_permit: permit,
-        },
-        { parcel_id: noPermit, status: "new", notes: OWN_LEAD_NOTES },
-      ]) {
-        const r = await a.post(`${cfg.leadsApiUrl}/trpc/leads.create`, {
-          data,
-        });
-        expect(r.status(), `leads.create ${data.parcel_id}`).toBe(200);
-        created.push(data.parcel_id);
-      }
-      const reads = trpcInputs(page, "permits.forParcel");
-      await page.reload();
-      await ready(page);
-      const filter = page.getByTestId("leads-permit-filter");
-      await expect(filter).toBeEnabled();
-      await expect(filter.locator("option")).toHaveText(PERMIT_CHOICE_TEXTS);
-      await expand(page.getByTestId("leads-details"));
-      const row = (id: string) =>
-        page
-          .getByTestId("lead-item")
-          .and(page.locator(`[data-parcel="${id}"]`));
-      await expect(row(withPermit)).toHaveCount(1, { timeout: 20_000 });
-      // Before a status choice, no permit is read for the filter.
-      expect(reads.filter((v) => v.parcel_id === withPermit)).toHaveLength(0);
-      const choose = async (value: string) => {
-        await filter.selectOption(value);
-        await expect(page.getByTestId("leads-permit-checking")).toHaveCount(0, {
-          timeout: 60_000,
-        });
-      };
-      for (const choice of [
-        "open-issued",
-        "open-application",
-        "closed",
-        "unclear",
-        "none",
-      ]) {
-        await choose(choice);
-        await expect(row(withPermit), `${choice}: the permit lead`).toHaveCount(
-          choice === cls ? 1 : 0,
-        );
-        await expect(
-          row(noPermit),
-          `${choice}: the lead without a permit`,
-        ).toHaveCount(choice === "none" ? 1 : 0);
-      }
-      // The lead's permit is read once, from its own parcel; at most once per parcel overall.
-      expect(reads.filter((v) => v.parcel_id === withPermit)).toHaveLength(1);
-      const parcels = reads.map((v) => v.parcel_id);
-      expect(new Set(parcels).size).toBe(parcels.length);
-      expect(parcels).not.toContain(noPermit);
-      // All permit statuses: both leads, the permit lead with its status beside its number.
-      await choose("all");
-      await expect(row(noPermit)).toHaveCount(1);
+    // Created through `ownLeads`, which records each parcel before the request and deletes this run's leads when
+    // the test ends, however it ends.
+    for (const data of [
+      { parcel_id: withPermit, status: "new", source_permit: permit },
+      { parcel_id: noPermit, status: "new" },
+    ]) {
+      const r = await ownLeads.create(data);
+      expect(r.status(), `leads.create ${data.parcel_id}`).toBe(200);
+    }
+    // Every permits.forParcel read, the second and later reads of a batched request included.
+    const reads = trpcInputs(page, "permits.forParcel", { everyRead: true });
+    await page.reload();
+    await ready(page);
+    const filter = page.getByTestId("leads-permit-filter");
+    await expect(filter).toBeEnabled();
+    await expect(filter.locator("option")).toHaveText(PERMIT_CHOICE_TEXTS);
+    await expand(page.getByTestId("leads-details"));
+    const row = (id: string) =>
+      page.getByTestId("lead-item").and(page.locator(`[data-parcel="${id}"]`));
+    await expect(row(withPermit)).toHaveCount(1, { timeout: 20_000 });
+    // Before a status choice, no permit is read for the filter.
+    expect(reads.filter((v) => v.parcel_id === withPermit)).toHaveLength(0);
+    const choose = async (value: string) => {
+      await filter.selectOption(value);
+      await expect(page.getByTestId("leads-permit-checking")).toHaveCount(0, {
+        timeout: 60_000,
+      });
+    };
+    for (const choice of [
+      "open-issued",
+      "open-application",
+      "closed",
+      "unclear",
+      "none",
+    ]) {
+      await choose(choice);
+      await expect(row(withPermit), `${choice}: the permit lead`).toHaveCount(
+        choice === cls ? 1 : 0,
+      );
+      await expect(
+        row(noPermit),
+        `${choice}: the lead without a permit`,
+      ).toHaveCount(choice === "none" ? 1 : 0);
+    }
+    // The lead's permit is read once, from its own parcel; at most once per parcel overall (every read counted,
+    // batched or not).
+    expect(reads.filter((v) => v.parcel_id === withPermit)).toHaveLength(1);
+    const parcels = reads.map((v) => v.parcel_id);
+    expect(new Set(parcels).size).toBe(parcels.length);
+    expect(parcels).not.toContain(noPermit);
+    // All permit statuses: both leads, the permit lead with its status beside its number.
+    await choose("all");
+    await expect(row(noPermit)).toHaveCount(1);
+    await expect(row(withPermit).getByTestId("lead-permit-status")).toHaveText(
+      LABEL[cls] ?? cls,
+    );
+    // Combined with the lead status filter: both leads are "new".
+    if (cls in LABEL && cls !== "unmapped") {
+      await choose(cls);
+      await page.getByTestId("leads-status-filter").selectOption("contacted");
+      await expect(row(withPermit)).toHaveCount(0);
+      await page.getByTestId("leads-status-filter").selectOption("new");
+      await expect(row(withPermit)).toHaveCount(1);
+      await page.getByTestId("leads-status-filter").selectOption("all");
+    }
+    // Unreadable: with permits.forParcel failing (aborted in the page), the lead stays under every status
+    // choice with "status not available".
+    await page.route(
+      (u) => u.pathname.includes("permits.forParcel"),
+      (route) => route.abort("failed"),
+    );
+    await page.reload();
+    await ready(page);
+    await expand(page.getByTestId("leads-details"));
+    for (const choice of ["closed", "open-application"]) {
+      await choose(choice);
+      await expect(row(withPermit)).toHaveCount(1);
       await expect(
         row(withPermit).getByTestId("lead-permit-status"),
-      ).toHaveText(LABEL[cls] ?? cls);
-      // Combined with the lead status filter: both leads are "new".
-      if (cls in LABEL && cls !== "unmapped") {
-        await choose(cls);
-        await page.getByTestId("leads-status-filter").selectOption("contacted");
-        await expect(row(withPermit)).toHaveCount(0);
-        await page.getByTestId("leads-status-filter").selectOption("new");
-        await expect(row(withPermit)).toHaveCount(1);
-        await page.getByTestId("leads-status-filter").selectOption("all");
-      }
-      // Unreadable: with permits.forParcel failing (aborted in the page), the lead stays under every status
-      // choice with "status not available".
-      await page.route(
-        (u) => u.pathname.includes("permits.forParcel"),
-        (route) => route.abort("failed"),
-      );
-      await page.reload();
-      await ready(page);
-      await expand(page.getByTestId("leads-details"));
-      for (const choice of ["closed", "open-application"]) {
-        await choose(choice);
-        await expect(row(withPermit)).toHaveCount(1);
-        await expect(
-          row(withPermit).getByTestId("lead-permit-status"),
-        ).toHaveText("status not available");
-        await expect(row(noPermit)).toHaveCount(0);
-      }
-    } finally {
-      // Always delete this test's own leads, also when a step above failed.
-      for (const id of created) {
-        const left = await getLead(id);
-        if (isOwnLead(left))
-          await a.post(`${cfg.leadsApiUrl}/trpc/leads.delete`, {
-            data: { parcel_id: id, expected_updated_at: left.updated_at },
-          });
-      }
-      for (const id of created) expect(await getLead(id)).toBeNull();
+      ).toHaveText("status not available");
+      await expect(row(noPermit)).toHaveCount(0);
     }
   });
 });
