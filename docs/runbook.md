@@ -20,7 +20,7 @@ Related: [kit-deviations.md](kit-deviations.md), [access-rules.md](access-rules.
 - The AWS CDK CLI comes from the workspace (`aws-cdk` 2.1146.1 in `apps/crm/package.json`); run it as
   `pnpm exec cdk` from `apps/crm`.
 - The AWS CLI v2 with a profile for the target account. Commands below take `--profile <your profile>`; you
-  can set `AWS_PROFILE` instead. Set `AWS_PROFILE` in any case (`export AWS_PROFILE=<your profile>`): `scripts/write-config.ts` requires it. The region is fixed in code to eu-north-1 (`apps/crm/cdk/bin/app.ts` (`env`)).
+  can set `AWS_PROFILE` instead. Set `AWS_PROFILE` in any case (`export AWS_PROFILE=<your profile>`): `scripts/write-config.ts` requires it. The region is set in code, in `apps/crm/cdk/bin/app.ts` (`env`), and `<region>` below stands for it (kit-deviations.md, row 1).
 - The CDK app reads the account from `CDK_DEFAULT_ACCOUNT`, which the CDK CLI sets, and fails if it is unset
   (`apps/crm/cdk/bin/app.ts` (`account`)). The account must be bootstrapped once (see the pipeline runbook).
 - The CDK app reads `.secrets/crm.json` on every synth, for every stack (`apps/crm/cdk/bin/app.ts` (`secrets`)).
@@ -54,7 +54,7 @@ from Amazon Location and add it to the file without printing it:
 
 ```
 KEY=$(aws location describe-key --key-name <MapKeyName output of RoofingCrmMapKey> --query Key --output text \
-  --region eu-north-1 --profile <your profile>) \
+  --region <region> --profile <your profile>) \
 node -e 'const fs=require("fs"),f=".secrets/crm.json",s=JSON.parse(fs.readFileSync(f));s.mapKey=process.env.KEY;fs.writeFileSync(f,JSON.stringify(s,null,2))'
 ```
 
@@ -200,8 +200,8 @@ The leads table is not deleted by step 3. It is RETAIN with deletion protection
 on purpose, with the name noted in step 3:
 
 ```
-aws dynamodb update-table --table-name <TableName> --no-deletion-protection-enabled --region eu-north-1 --profile <your profile>
-aws dynamodb delete-table --table-name <TableName> --region eu-north-1 --profile <your profile>
+aws dynamodb update-table --table-name <TableName> --no-deletion-protection-enabled --region <region> --profile <your profile>
+aws dynamodb delete-table --table-name <TableName> --region <region> --profile <your profile>
 ```
 
 The stack RoofingCrmLeadsDestroyCheck exists only with `-c destroyCheck=true`. It is a proof that the table
