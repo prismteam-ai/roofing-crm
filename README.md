@@ -62,7 +62,7 @@ The leads list's "Permit status" filter offers "all permit statuses", "Open (iss
 
 The "Long-open roofing permits" list counts only long-open roofing permits on parcels whose roof is older than the roof-age threshold (a parcel with no roof year never passes it), while the agent counts every long-open roofing permit in the radius whatever the roof age, so at the same pin and radius the agent's number can be larger.
 
-Not done: BBB ratings (no source is loaded; the details say they are not available, and no code path shows a score), and permits outside the City of Los Angeles (parcels there show "No permit data"). The data holds no owner names or contact details, so none are shown. A next step, not built: a density view on the map.
+Not done: BBB ratings (no source is loaded; the details say they are not available, and no code path shows a score), and permits outside the City of Los Angeles (the other jurisdictions keep their permits in separate systems, so coverage was traded for time; parcels there show "No permit data"). The data holds no owner names or contact details, by choice, so none are shown. A next step, not built: a density view on the map (the count and the list already cover every match).
 
 The hosted site runs RoofingCrmWeb from b5f7b14 (the leads API's code from 284cfba) against the pipeline's data API and agent. The addresses of the two hosted sites (this CRM and the pipeline's Explorer) are given in the pull request, and their basic-auth passwords and the API token privately; none of them is in the repository. The CRM's hosted test suite (51 tests) passed 51 of 51 on 18 Nov 2026 on its third run, started right after warming the data API to three instances; that day two runs stopped before it, the first at test 37 at tablet width (no cold start was seen) and the second at test 28. Tests that wait 5 s for a mocked agent answer are shorter than the page's hold of a question (up to 20 s by design), and a data API instance starting cold took 6.6-6.9 s per request, against about 1 s warm. The cause of the two stops is not proven; this is not changed. Details in [docs/runbook.md](docs/runbook.md), section 4.
 
@@ -70,7 +70,7 @@ The hosted site runs RoofingCrmWeb from b5f7b14 (the leads API's code from 284cf
 
 Status is delivered or partial; what is not done at all is in the "Not done" paragraph above.
 
-| Criterion | Status | What is missing, and where to see it |
+| Criterion | Status | Details, and where to see it |
 | --- | --- | --- |
 | Default the map and search experience to a particular county, with support for exploring properties in the user’s selected area. | delivered | The map opens on Los Angeles County; a pin anywhere in the county moves the search |
 | Allow users to center property search on current GPS location and/or a pin dropped on the map. | delivered | "Use my location" and a click on the map |
