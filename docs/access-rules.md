@@ -150,7 +150,7 @@ Known limits of the section:
    before any data call, so its refusal reads no data and lists no contractor window (2013-01-02 to 2023-05-19);
    a bare personal name with no such word passes it, and no owner data exists to be read.
 3. **The spend limits come late:** the agent's two spend alarms ($2 in a UTC day, $1 within 5 minutes) fire up
-   to about 24 hours and about 10 minutes after the spend; the Anthropic workspace's $20 monthly limit may lag,
+   to about 24 hours and about 10 minutes after the spend; the Anthropic workspace's $50 monthly limit may lag,
    and the final stop is the credit balance (no payment method is attached).
 4. **"RAG-backed" means retrieval by tool calls** over the data API, with the records cited; there are no
    embeddings and no vector index (no free-text corpus is served, and Bedrock is not available in the account).
