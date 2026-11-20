@@ -1,0 +1,12 @@
+node_modules/
+# Build outputs and secrets (never committed; a test checks this)
+cdk.out/
+cdk-outputs*.json
+dist/
+build/
+.secrets/
+test-results/
+playwright-report/
+.turbo/
+.env
+.env.*

@@ -1,0 +1,6 @@
+# Generated or byte-preserved files: formatting them would change recorded digests or upstream text.
+pnpm-lock.yaml
+runs/
+docs/evidence/
+README.md
+vendor/

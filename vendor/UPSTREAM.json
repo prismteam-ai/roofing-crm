@@ -1,0 +1,10 @@
+{
+  "package": "@oracle-la/api-client",
+  "version": "0.1.0",
+  "tarball": "oracle-la-api-client-0.1.0.tgz",
+  "sha256": "5682cf3409b541f66bbfca8dbf69e5e147cb13dfe21021b4ef8039819c2712df",
+  "source_repo": "oracle-property-intelligence-platform-pipeline-los-angeles-ca",
+  "source_commit": "fdba9b58a488497a7a829e9fde3deae9b0cb0855",
+  "source_uncommitted_changes": false,
+  "built_at": "2026-11-15T10:42:48.823Z"
+}

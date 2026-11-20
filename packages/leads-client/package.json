@@ -1,0 +1,13 @@
+{
+  "name": "@roofing-crm/leads-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@roofing-crm/leads-api": "workspace:*",
+    "@trpc/client": "11.19.0"
+  }
+}

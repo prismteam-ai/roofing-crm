@@ -1,0 +1,496 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #1b232d;
+  background: #f9f9fb;
+}
+body {
+  margin: 0;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+header {
+  grid-column: 1 / -1;
+  background: #232b37;
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+header h1 {
+  font-size: 17px;
+  margin: 0;
+}
+.count {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #ffbb45;
+  color: #1b232d;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 16px;
+}
+.count.long-open-count {
+  background: #1f5fd1;
+  color: #fff;
+}
+aside {
+  overflow: auto;
+  padding: 12px;
+  border-right: 1px solid #dedee3;
+  background: #fff;
+}
+.map {
+  position: relative;
+}
+#map {
+  position: absolute;
+  inset: 0;
+}
+/*
+ * The controls (data notice, Use my location, radius, threshold, ownership) stay in one place at the top of the
+ * aside; the results, permits, leads and the agent scroll below them. The aside's top padding is taken into the
+ * block so nothing shows above it while scrolling; a tall block (rules opened) scrolls on its own.
+ */
+.controls {
+  position: sticky;
+  top: -12px;
+  z-index: 4;
+  margin-top: -12px;
+  padding: 12px 0 8px;
+  background: #fff;
+  border-bottom: 1px solid #dedee3;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+details > summary {
+  cursor: pointer;
+}
+.rule-details > summary,
+.list-details > summary {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 6px 0;
+}
+.agent-sources-details > summary h4 {
+  display: inline;
+}
+.controls label {
+  display: block;
+  font-size: 13px;
+  margin: 8px 0 2px;
+}
+/* Full width with no side margin: the browser's 2 px margins made the controls scroll sideways. */
+.controls input[type="range"] {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+button {
+  border: 1px solid #b4b4bb;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.rule {
+  background: #fff7e6;
+  border: 1px solid #ffd78a;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  margin: 8px 0;
+}
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+}
+.list li {
+  border-bottom: 1px solid #ebebf0;
+  padding: 6px 2px;
+  cursor: pointer;
+}
+.list li:hover {
+  background: #f3f3f7;
+}
+.detail {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 340px;
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #ccccd1;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  z-index: 3;
+}
+.detail dt {
+  font-weight: 600;
+  margin-top: 4px;
+}
+.detail dd {
+  margin: 0;
+  /* Words wrap whole; only a token longer than the line (a URL, a sha256) breaks inside. */
+  overflow-wrap: anywhere;
+}
+.future {
+  margin-top: 16px;
+}
+.future .card {
+  background: #f3f3f7;
+  border: 1px dashed #b4b4bb;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 6px 0;
+  color: #656871;
+  font-size: 12px;
+}
+.error {
+  color: #c20000;
+  font-size: 13px;
+}
+.notice {
+  font-size: 12px;
+  color: #656871;
+}
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 45vh 1fr;
+  }
+  aside {
+    order: 3;
+    border-right: 0;
+  }
+  .map {
+    order: 2;
+  }
+  /* One column: the aside is short (below the map), so the controls scroll with it and never cover what follows. */
+  .controls {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+.lead,
+.leads {
+  border-top: 1px solid #dedee3;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+/* The leads box: one control per line, one type size (13 px) for its texts and controls, the heading aside. */
+.leads {
+  font-size: 13px;
+}
+.leads h3 {
+  margin: 4px 0;
+  font-size: 15px;
+}
+.leads label {
+  display: block;
+  margin: 6px 0;
+}
+.leads select,
+.leads input,
+.leads .notice,
+.leads .rule,
+.leads .error,
+.leads .list-details > summary,
+.leads .rule-details > summary {
+  font-size: inherit;
+}
+/* A control that cannot be used now (no pin yet, or not built yet): greyed, with its reason in words. */
+.unavailable {
+  color: #8a8d95;
+}
+.ok {
+  color: #146c2e;
+  font-weight: 600;
+  font-size: 13px;
+}
+.lead-address {
+  display: block;
+}
+/* The status of a lead's own permit, under its number, in the list's text face. */
+.lead-permit-status {
+  display: block;
+  font-family: system-ui, sans-serif;
+}
+/* The question takes its own line when the panel is narrow; the two buttons follow it. */
+.lead-confirm {
+  flex-wrap: wrap;
+}
+.lead-confirm .notice {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+}
+.lead label {
+  display: block;
+  font-size: 13px;
+  margin: 6px 0;
+}
+.lead textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.permits,
+.parcel-permits {
+  border-top: 1px solid #dedee3;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.permits label {
+  flex: 1;
+  font-size: 13px;
+}
+.permits input[type="number"] {
+  width: 5em;
+}
+.permits .row {
+  margin: 4px 0;
+}
+/* A long-open row opens its parcel's detail. */
+.permits .list li {
+  cursor: pointer;
+}
+.parcel-permits .list li {
+  cursor: default;
+  padding: 6px;
+}
+.contractors {
+  margin: 0;
+  padding-left: 16px;
+}
+.long-open {
+  border-left: 3px solid #d14600;
+  background: #fff4ec;
+}
+.permits .list li.long-open:hover {
+  background: #ffe9d9;
+}
+.tag {
+  display: inline-block;
+  background: #d14600;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.legend {
+  position: absolute;
+  left: 12px;
+  bottom: 28px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #ccccd1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  max-width: 300px;
+}
+.legend div {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 2px 0;
+}
+.swatch {
+  flex: none;
+  display: inline-block;
+  border-radius: 50%;
+}
+.swatch.parcel {
+  width: 8px;
+  height: 8px;
+  background: #c20030;
+  opacity: 0.75;
+}
+.swatch.long-open-permit {
+  width: 10px;
+  height: 10px;
+  background: #1f5fd1;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #1f5fd1;
+}
+.ask-agent {
+  border-top: 1px solid #dedee3;
+  margin-top: 8px;
+  padding-top: 4px;
+}
+.ask-agent h3 {
+  margin: 4px 0;
+  font-size: 15px;
+}
+.ask-agent button.disclosure {
+  border: 0;
+  padding: 2px 0;
+  font: inherit;
+  font-weight: 700;
+  background: none;
+}
+.ask-agent label.agent-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.ask-agent textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+.ask-agent .status {
+  background: #eef4ff;
+  border: 1px solid #b8cdf5;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.agent-turns {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+.agent-turns > li {
+  border: 1px solid #ebebf0;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.agent-question {
+  margin-top: 0;
+}
+.agent-answer h4 {
+  margin: 8px 0 4px;
+}
+.agent-answer table {
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.agent-answer th,
+.agent-answer td {
+  border-bottom: 1px solid #ebebf0;
+  padding: 2px 4px;
+  text-align: left;
+  vertical-align: top;
+}
+.agent-answer table caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.table-wrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+/*
+ * The answer's Sources in the aside (about 300 px wide on a desktop, under 760 px in the one-column layout): five
+ * columns of long text came out one word per line and "Collected at" was cut off. While the answer is narrower
+ * than 760 px, each record is stacked instead: one line per field, labelled with its column's name
+ * (data-label). Wider, it stays a table.
+ */
+.agent-answer {
+  container-type: inline-size;
+}
+@container (max-width: 760px) {
+  .agent-answer table.agent-sources,
+  .agent-answer table.agent-sources caption,
+  .agent-answer table.agent-sources tbody,
+  .agent-answer table.agent-sources tr {
+    display: block;
+  }
+  .agent-answer table.agent-sources thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .agent-answer table.agent-sources tr {
+    border-bottom: 1px solid #ebebf0;
+    padding: 4px 0;
+  }
+  .agent-answer table.agent-sources td {
+    display: grid;
+    grid-template-columns: 6.5em minmax(0, 1fr);
+    gap: 6px;
+    border: 0;
+    padding: 1px 0;
+    overflow-wrap: anywhere;
+  }
+  .agent-answer table.agent-sources td::before {
+    content: attr(data-label);
+    font-family: system-ui, sans-serif;
+    font-weight: 600;
+    color: #656871;
+  }
+  .agent-answer table.agent-sources td > button.link {
+    justify-self: start;
+    text-align: left;
+  }
+}
+.nowrap {
+  white-space: nowrap;
+}
+.agent-answer button.link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #1f5fd1;
+  text-decoration: underline;
+  font: inherit;
+}
+mark.unverified {
+  background: #ffe1e1;
+  border-bottom: 1px dashed #c20000;
+}
+pre.mono {
+  white-space: pre-wrap;
+  background: #f3f3f7;
+  padding: 8px;
+  border-radius: 6px;
+}
+.mono {
+  font-family: ui-monospace, monospace;
+}
+/* The lead list: one row per lead (Parcel, Status, Updated, Permit); a row opens its parcel's detail. */
+.leads-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.leads-table th,
+.leads-table td {
+  border-bottom: 1px solid #ebebf0;
+  padding: 4px 2px;
+  text-align: left;
+  vertical-align: top;
+}
+.leads-table tbody tr {
+  cursor: pointer;
+}
+.leads-table tbody tr:hover {
+  background: #f3f3f7;
+}
