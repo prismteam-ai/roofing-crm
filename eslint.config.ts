@@ -8,7 +8,15 @@ import tseslint from 'typescript-eslint';
  * typescript-eslint "strict": no `any`, no non-null assertions, no unused code.
  */
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/cdk.out/**', '**/.turbo/**', '**/coverage/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/cdk.out/**',
+      '**/.turbo/**',
+      '**/coverage/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strict,
   ...tseslint.configs.stylistic,

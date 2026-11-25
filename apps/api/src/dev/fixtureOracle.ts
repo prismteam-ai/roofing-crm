@@ -106,10 +106,31 @@ function contractor(
 
 const CONTRACTORS: readonly Contractor[] = [
   contractor('Fixture Roofing Co', '900101', 'Active', 'C-39 Roofing', '(619) 555-0101', 'A+'),
-  contractor('Sample Summit Roofing Inc', '900102', 'Active', 'C-39 Roofing', '(858) 555-0102', null),
+  contractor(
+    'Sample Summit Roofing Inc',
+    '900102',
+    'Active',
+    'C-39 Roofing',
+    '(858) 555-0102',
+    null,
+  ),
   contractor('Placeholder Tile & Shingle', '900103', 'Expired', 'C-39 Roofing', null, null),
-  contractor('Demo Coastal Exteriors', '900104', 'Active', 'B General; C-39 Roofing', '(760) 555-0104', 'B'),
-  contractor('Example Solar & Roof LLC', '900105', 'Suspended', 'C-46 Solar; C-39 Roofing', null, null),
+  contractor(
+    'Demo Coastal Exteriors',
+    '900104',
+    'Active',
+    'B General; C-39 Roofing',
+    '(760) 555-0104',
+    'B',
+  ),
+  contractor(
+    'Example Solar & Roof LLC',
+    '900105',
+    'Suspended',
+    'C-46 Solar; C-39 Roofing',
+    null,
+    null,
+  ),
   contractor('Test Ridge Builders', '900106', 'Active', 'B General Building', null, null),
   contractor(
     'Mockingbird Roofing',
@@ -269,7 +290,11 @@ function buildProperties(now: Date): PropertyDetail[] {
         roofAgeYears: roofYear === null ? null : thisYear - roofYear,
         roofBasis,
         roofConfidence:
-          roofBasis === 'last_roofing_permit' ? 'high' : roofBasis === 'year_built' ? 'medium' : null,
+          roofBasis === 'last_roofing_permit'
+            ? 'high'
+            : roofBasis === 'year_built'
+              ? 'medium'
+              : null,
         useType: pick(USE_TYPES, rand()),
         ownerOccupied: occupancy < 0.55 ? true : occupancy < 0.85 ? false : null,
         ownerName: ownerKnown ? pick(OWNERS, rand()) : null,

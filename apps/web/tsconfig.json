@@ -1,0 +1,10 @@
+{
+  "extends": "@roofing-crm/tsconfig/react.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node", "vite/client", "geojson"]
+  },
+  "include": ["src", "vite.config.ts"]
+}

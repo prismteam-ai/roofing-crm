@@ -63,5 +63,7 @@ const server = createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  process.stdout.write(`\n[dev-server] tRPC on http://localhost:${String(PORT)}  data: ${mode}\n\n`);
+  process.stdout.write(
+    `\n[dev-server] tRPC on http://localhost:${String(PORT)}  data: ${mode}\n\n`,
+  );
 });
