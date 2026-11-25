@@ -7,13 +7,13 @@ import { buildContext, logger, metrics, tracer, type Services } from './context.
 import { appRouter } from './routers/index.js';
 import { buildServices } from './services.js';
 
-let services: Services | null = null;
+let services: Promise<Services> | null = null;
 
 const trpcHandler = awsLambdaRequestHandler({
   router: appRouter,
-  createContext: ({ event }: CreateAWSLambdaContextOptions<APIGatewayProxyEventV2>) => {
+  createContext: async ({ event }: CreateAWSLambdaContextOptions<APIGatewayProxyEventV2>) => {
     services ??= buildServices(process.env);
-    return buildContext(services, event.headers['x-workspace-id']);
+    return buildContext(await services, event.headers['x-workspace-id']);
   },
   onError: ({ error, path }) => {
     if (error.code === 'INTERNAL_SERVER_ERROR') {
