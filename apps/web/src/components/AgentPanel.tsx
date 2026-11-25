@@ -1,6 +1,7 @@
 import type { AgentAnswer, Point } from '@roofing-crm/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useId, useState } from 'react';
+import { parseAnswer, resultColumns } from '../lib/agentFormat.js';
 import { useTRPC } from '../lib/api.js';
 import { describeError } from '../lib/format.js';
 import { Notice } from './fields.js';
@@ -28,11 +29,31 @@ export const EXAMPLE_QUESTIONS = [
 const MAX_QUESTION = 600;
 const ROWS_SHOWN = 25;
 
-function cellText(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  return JSON.stringify(value);
+/** The plain-text answer laid out as paragraphs, a list and labelled notes. Still text only. */
+function AnswerText({ answer }: { answer: string }) {
+  return (
+    <div className="agent-text" data-testid="agent-text">
+      {parseAnswer(answer).map((block, index) => {
+        if (block.kind === 'list') {
+          return (
+            <ul key={index}>
+              {block.items.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          );
+        }
+        if (block.kind === 'note') {
+          return (
+            <p key={index} className="agent-note">
+              <strong>{block.label}:</strong> {block.text}
+            </p>
+          );
+        }
+        return <p key={index}>{block.text}</p>;
+      })}
+    </div>
+  );
 }
 
 function ResultTable({
@@ -46,7 +67,7 @@ function ResultTable({
   onOpenProperty: (apn: string) => void;
 }) {
   const [showAll, setShowAll] = useState(false);
-  const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+  const columns = resultColumns(rows);
   const shown = showAll ? rows : rows.slice(0, ROWS_SHOWN);
   return (
     <section aria-labelledby="agent-rows-title" data-testid="agent-rows">
@@ -58,13 +79,13 @@ function ResultTable({
             : `(${String(rows.length)})`}
         </span>
       </h4>
-      <div className="table-scroll">
-        <table className="mini-table">
+      <div className="table-scroll result-scroll">
+        <table className="mini-table result-table">
           <thead>
             <tr>
               {columns.map((column) => (
-                <th key={column} scope="col">
-                  {column}
+                <th key={column.key} scope="col" className={column.numeric ? 'num' : undefined}>
+                  {column.label}
                 </th>
               ))}
             </tr>
@@ -73,10 +94,14 @@ function ResultTable({
             {shown.map((row, index) => (
               <tr key={index}>
                 {columns.map((column) => {
-                  const text = cellText(row[column]);
+                  const text = column.text(row);
+                  const wrap = !column.numeric && text.length > 28;
                   return (
-                    <td key={column}>
-                      {column === 'apn' && /^[A-Za-z0-9-]{3,32}$/.test(text) ? (
+                    <td
+                      key={column.key}
+                      className={column.numeric ? 'num' : wrap ? 'wrap' : undefined}
+                    >
+                      {column.key === 'apn' && /^[A-Za-z0-9-]{3,32}$/.test(text) ? (
                         <button
                           type="button"
                           className="link-btn"
@@ -122,10 +147,8 @@ function Answer({ answer, props }: { answer: AgentAnswer; props: AgentPanelProps
           <strong>Agent not configured.</strong> {answer.answer}
         </Notice>
       ) : (
-        // Rendered as text: React escapes it, and CSS keeps the line breaks.
-        <p className="agent-text" data-testid="agent-text">
-          {answer.answer}
-        </p>
+        // Rendered as text: React escapes every piece.
+        <AnswerText answer={answer.answer} />
       )}
 
       {answer.points.length > 0 && (

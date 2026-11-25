@@ -187,6 +187,7 @@ export function App() {
   const [highlightLeadId, setHighlightLeadId] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [mobilePane, setMobilePane] = useState<'map' | 'panel'>('map');
+  const [widePanel, setWidePanel] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locationMessage, setLocationMessage] = useState<string | null>(() =>
@@ -491,7 +492,7 @@ export function App() {
             </button>
           </div>
 
-          <div className="split" data-mobile-pane={mobilePane}>
+          <div className="split" data-mobile-pane={mobilePane} data-wide={widePanel}>
             <div className="split-map">
               <MapView
                 pin={pin}
@@ -521,32 +522,46 @@ export function App() {
             </div>
 
             <div className="split-panel">
-              <div className="tabs" role="tablist" aria-label="Side panel">
+              <div className="tabs-row">
+                <div className="tabs" role="tablist" aria-label="Side panel">
+                  <button
+                    type="button"
+                    role="tab"
+                    id="tab-list"
+                    aria-selected={panel === 'list'}
+                    aria-controls="tabpanel-list"
+                    data-testid="tab-list"
+                    onClick={() => {
+                      setPanel('list');
+                    }}
+                  >
+                    Candidates{result ? ` (${formatCount(result.total)})` : ''}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    id="tab-agent"
+                    aria-selected={panel === 'agent'}
+                    aria-controls="tabpanel-agent"
+                    data-testid="tab-agent"
+                    onClick={() => {
+                      setPanel('agent');
+                    }}
+                  >
+                    Ask the agent
+                  </button>
+                </div>
                 <button
                   type="button"
-                  role="tab"
-                  id="tab-list"
-                  aria-selected={panel === 'list'}
-                  aria-controls="tabpanel-list"
-                  data-testid="tab-list"
+                  className="panel-expand"
+                  data-testid="panel-expand"
+                  aria-pressed={widePanel}
+                  title={widePanel ? 'Make the panel narrower' : 'Make the panel wider'}
                   onClick={() => {
-                    setPanel('list');
+                    setWidePanel((wide) => !wide);
                   }}
                 >
-                  Candidates{result ? ` (${formatCount(result.total)})` : ''}
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  id="tab-agent"
-                  aria-selected={panel === 'agent'}
-                  aria-controls="tabpanel-agent"
-                  data-testid="tab-agent"
-                  onClick={() => {
-                    setPanel('agent');
-                  }}
-                >
-                  Ask the agent
+                  {widePanel ? 'Collapse ›' : '‹ Expand'}
                 </button>
               </div>
               <div

@@ -570,7 +570,11 @@ describe('Ask the agent', () => {
       radiusMiles: 5,
     });
     // The answer is text: markup in it is shown, not interpreted.
-    expect(within(answer).getByTestId('agent-text').textContent).toBe(AGENT_ANSWER.answer);
+    const text = within(answer).getByTestId('agent-text');
+    expect(text).toHaveTextContent('Two permits match.');
+    expect(within(text).getByRole('listitem')).toHaveTextContent('12 PERMIT LN');
+    expect(text).toHaveTextContent('<b>not bold</b>');
+    expect(within(answer).getByRole('columnheader', { name: 'Years open' })).toBeInTheDocument();
     expect(within(answer).getByTestId('agent-text').querySelector('b')).toBeNull();
     expect(within(answer).getByTestId('agent-assumptions')).toHaveTextContent(
       'open at least 5 years',

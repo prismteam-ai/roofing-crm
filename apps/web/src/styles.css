@@ -845,6 +845,42 @@ select:disabled {
   border-bottom: 1px solid var(--border);
 }
 
+.tabs-row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs-row .tabs {
+  flex: 1;
+  border-bottom: 0;
+}
+
+.panel-expand {
+  padding: 0 12px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.panel-expand:hover {
+  color: var(--accent);
+}
+
+.split[data-wide='true'] {
+  grid-template-columns: minmax(0, 1fr) min(980px, 68%);
+}
+
+@media (max-width: 900px) {
+  .panel-expand {
+    display: none;
+  }
+}
+
 .tabs [role='tab'] {
   flex: 1;
   padding: 10px 12px;
@@ -1190,7 +1226,6 @@ input[type='checkbox'] {
 }
 
 .agent-text {
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
@@ -1278,6 +1313,76 @@ table > tbody:last-of-type tr:last-child > * {
 
 .mini-table td {
   overflow-wrap: anywhere;
+}
+
+/* Agent result rows: one line per record, scrolls sideways instead of squeezing columns. */
+.result-scroll {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.result-table {
+  width: max-content;
+  min-width: 100%;
+  font-size: 12.5px;
+}
+
+.result-table th,
+.result-table td {
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.result-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.result-table td.wrap {
+  min-width: 170px;
+  max-width: 260px;
+  white-space: normal;
+}
+
+.result-table tbody tr:nth-child(even) {
+  background: var(--surface-2);
+}
+
+.result-table tbody tr:hover {
+  background: var(--accent-soft, var(--surface-2));
+}
+
+.agent-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agent-text p {
+  margin: 0;
+}
+
+.agent-text ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.agent-note {
+  padding: 8px 10px;
+  border-left: 3px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.agent-note strong {
+  color: var(--text, inherit);
 }
 
 /* ---------- Pages (Leads, Data) ---------- */
