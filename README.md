@@ -1,7 +1,7 @@
 # Roofing CRM & Lead Identification UI
 
 **Live app (public, no login):** https://main.d3dhgfb9bfhbhb.amplifyapp.com
-**Credentials:** none needed. The app gives each browser its own lead book (a random workspace id it sends with every call).
+**Credentials:** none needed. The app gives each browser its own lead book (a random workspace id it sends with every call; lead and agent calls without one are refused).
 **Demo video:** _link added with the Ready for Review PR_
 **Companion PR (data pipeline):** `oracle-property-intelligence-platform-pipeline-san-diego-ca`, whose MCP endpoint this app reads from: https://mywcppj2yl.execute-api.us-east-2.amazonaws.com/mcp
 
@@ -12,7 +12,7 @@ A map-based CRM that finds roofing leads in San Diego County, CA: drop a pin, se
 ```
 Outcome: a salesperson picks a point and a radius and leaves with a ranked, explained list of
          roofing leads saved as CRM records. Measured by the demo transcript below, on real
-         county-scale data (1,087,462 parcels, 1,756,884 permits in three jurisdictions), on a hosted URL.
+         county-scale data (1,087,462 parcels, 1,726,127 permits in three jurisdictions), on a hosted URL.
 Input:   the Oracle pipeline's published dataset, reached only through its MCP endpoint.
 Steps:   1 Connect   call the Oracle MCP (findRoofingLeads, getOracleProperty, queryAtlas)   move-data   code
          2 Transform validate every response against one shared schema                       check       code

@@ -83,7 +83,6 @@ function scriptedModel(
 ): MockLanguageModelV4 {
   let step = 0;
   return new MockLanguageModelV4({
-     
     doGenerate: async () => {
       const call = calls[step];
       step += 1;
@@ -188,7 +187,6 @@ describe('agent.ask daily caps', () => {
   it('stops at the per-workspace limit before calling the model, and leaves other workspaces alone', async () => {
     let modelCalls = 0;
     const model = new MockLanguageModelV4({
-       
       doGenerate: async () => {
         modelCalls += 1;
         return {

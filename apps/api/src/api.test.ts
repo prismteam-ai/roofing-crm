@@ -190,6 +190,15 @@ describe('leads', () => {
     expect(workspaceFromHeader(undefined)).toBe('public');
   });
 
+  it('refuses lead calls that carry no workspace id instead of sharing one lead book', async () => {
+    const { caller } = setup();
+    await expect(caller('x').leads.list()).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    await expect(caller('x').leads.create(leadInput)).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+    await expect(caller('x').search.radius({ center: pin })).resolves.toMatchObject({ total: 3 });
+  });
+
   it('returns NOT_FOUND when updating a lead that does not exist', async () => {
     const { caller } = setup();
     await expect(caller().leads.update({ leadId: 'nope', status: 'won' })).rejects.toMatchObject({

@@ -1,11 +1,11 @@
 import { agentAskSchema } from '@roofing-crm/shared';
 import { TRPCError } from '@trpc/server';
 import { askAgent } from '../agent/agent.js';
-import { publicProcedure, router } from '../trpc.js';
+import { workspaceProcedure, router } from '../trpc.js';
 
 export const agentRouter = router({
   /** Natural-language question about roofing opportunities, answered from retrieved rows. */
-  ask: publicProcedure.input(agentAskSchema).mutation(async ({ input, ctx }) => {
+  ask: workspaceProcedure.input(agentAskSchema).mutation(async ({ input, ctx }) => {
     // The endpoint is public and each answer costs model tokens, so calls are capped per day,
     // per browser workspace and for the whole deployment, before any model call is made.
     if (ctx.model) {

@@ -30,6 +30,9 @@ export interface Context extends Services {
   metrics: Metrics;
 }
 
+/** Placeholder for calls that carry no workspace id. Read-only data calls accept it; lead and agent calls do not. */
+export const PUBLIC_WORKSPACE = 'public';
+
 const WORKSPACE_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
 
 /**
@@ -37,7 +40,7 @@ const WORKSPACE_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
  * malformed id falls back to a shared "public" workspace so a first click still works.
  */
 export function workspaceFromHeader(value: string | undefined): string {
-  return value !== undefined && WORKSPACE_PATTERN.test(value) ? value : 'public';
+  return value !== undefined && WORKSPACE_PATTERN.test(value) ? value : PUBLIC_WORKSPACE;
 }
 
 export function buildContext(services: Services, workspaceHeader: string | undefined): Context {

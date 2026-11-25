@@ -8,7 +8,7 @@ import {
 } from '@roofing-crm/shared';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { publicProcedure, router } from '../trpc.js';
+import { workspaceProcedure, router } from '../trpc.js';
 
 export function filterLeads(leads: Lead[], filter: LeadFilter): Lead[] {
   return leads.filter((lead) => {
@@ -40,13 +40,13 @@ export function filterLeads(leads: Lead[], filter: LeadFilter): Lead[] {
 }
 
 export const leadsRouter = router({
-  list: publicProcedure.input(leadFilterSchema.default({})).query(async ({ input, ctx }) => {
+  list: workspaceProcedure.input(leadFilterSchema.default({})).query(async ({ input, ctx }) => {
     const all = await ctx.leads.list(ctx.workspaceId);
     return { total: all.length, leads: filterLeads(all, input) };
   }),
 
   /** Converts a map match into a lead. One lead per property: a second click returns the first. */
-  create: publicProcedure.input(leadCreateSchema).mutation(async ({ input, ctx }) => {
+  create: workspaceProcedure.input(leadCreateSchema).mutation(async ({ input, ctx }) => {
     // The lead id is derived from the parcel, so "one lead per property" is enforced by the
     // store's conditional write, not by a read-then-write that a double click can race.
     const now = ctx.now().toISOString();
@@ -56,13 +56,13 @@ export const leadsRouter = router({
     return { lead: existing ?? lead, created: false };
   }),
 
-  update: publicProcedure.input(leadUpdateSchema).mutation(async ({ input, ctx }) => {
+  update: workspaceProcedure.input(leadUpdateSchema).mutation(async ({ input, ctx }) => {
     const lead = await ctx.leads.update(ctx.workspaceId, input, ctx.now().toISOString());
     if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found' });
     return lead;
   }),
 
-  remove: publicProcedure
+  remove: workspaceProcedure
     .input(z.object({ leadId: z.string().min(1).max(64) }))
     .mutation(async ({ input, ctx }) => {
       await ctx.leads.remove(ctx.workspaceId, input.leadId);

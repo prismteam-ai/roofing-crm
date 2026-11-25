@@ -1,6 +1,6 @@
 import { MetricUnit } from '@aws-lambda-powertools/metrics';
 import { initTRPC, TRPCError } from '@trpc/server';
-import type { Context } from './context.js';
+import { PUBLIC_WORKSPACE, type Context } from './context.js';
 import { OracleUnavailableError } from './data/mcpOraclePort.js';
 
 const t = initTRPC.context<Context>().create();
@@ -30,3 +30,17 @@ const observed = t.middleware(async ({ ctx, path, next }) => {
 
 export const router = t.router;
 export const publicProcedure = t.procedure.use(observed);
+
+/**
+ * For anything that reads or writes per-browser state (leads, agent quota). A call without a
+ * valid `x-workspace-id` header is refused, so nobody lands in a shared lead book by accident.
+ */
+export const workspaceProcedure = publicProcedure.use(({ ctx, next }) => {
+  if (ctx.workspaceId === PUBLIC_WORKSPACE) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'Missing or malformed x-workspace-id header (8 to 64 letters, digits, "-" or "_").',
+    });
+  }
+  return next();
+});
