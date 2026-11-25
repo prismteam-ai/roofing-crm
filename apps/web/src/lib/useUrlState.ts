@@ -1,3 +1,4 @@
+import type { Point } from '@roofing-crm/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseUrlState, serializeUrlState, type UrlState } from './urlState.js';
 
@@ -7,8 +8,15 @@ export type UrlStatePatch = Partial<UrlState> | ((current: UrlState) => Partial<
  * App state that lives in the query string, so any search can be reproduced from its link.
  * Switching view adds a history entry (Back works); everything else replaces the current one.
  */
-export function useUrlState(): [UrlState, (patch: UrlStatePatch) => void] {
-  const [state, setState] = useState<UrlState>(() => parseUrlState(window.location.search));
+export function useUrlState(
+  /** Pin to start from when the link carries none, so the first screen already shows data. */
+  defaultPin: Point | null = null,
+): [UrlState, (patch: UrlStatePatch) => void] {
+  const [state, setState] = useState<UrlState>(() => {
+    const parsed = parseUrlState(window.location.search);
+    if (parsed.pin || !defaultPin) return parsed;
+    return { ...parsed, pin: { lat: defaultPin.lat, lon: defaultPin.lon } };
+  });
   const lastView = useRef(state.view);
 
   useEffect(() => {

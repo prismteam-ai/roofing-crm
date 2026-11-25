@@ -1,4 +1,9 @@
-import type { Candidate, Lead, SearchResult } from '@roofing-crm/shared';
+import {
+  MAX_RADIUS_MILES,
+  type Candidate,
+  type Lead,
+  type SearchResult,
+} from '@roofing-crm/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   addressLine,
@@ -7,9 +12,13 @@ import {
   formatMiles,
   formatOpenDuration,
   isLongOpen,
+  isPossiblyStale,
+  STALE_HINT,
+  tidyContractor,
   roofAgeText,
   roofBasisText,
 } from '../lib/format.js';
+import type { SearchFilters } from '../lib/urlState.js';
 import { Notice, Spinner } from './fields.js';
 
 export const PAGE_SIZE = 50;
@@ -29,6 +38,21 @@ export interface CandidateListProps {
   onAddLeads: (candidates: Candidate[]) => void;
   onOpenLead: (lead: Lead) => void;
   onRetry: () => void;
+  filters: SearchFilters;
+  radiusMiles: number;
+  onShowAged: () => void;
+  onWidenRadius: (miles: number) => void;
+  onResetFilters: () => void;
+}
+
+/** True when the current filters can only match properties that have permit records. */
+export function permitFilterActive(filters: SearchFilters): boolean {
+  return (
+    filters.signal === 'open_permit' ||
+    filters.signal === 'both' ||
+    filters.permitStatus !== 'any' ||
+    filters.minOpenYears > 0
+  );
 }
 
 interface RowProps {
@@ -109,6 +133,24 @@ function CandidateRow(props: RowProps) {
                 : 'Open roofing permit'}
               {' · '}
               {formatOpenDuration(c.longestOpenDays)}
+            </span>
+          )}
+          {c.openRoofPermits > 0 && (c.topOpenPermitId || isPossiblyStale(c.longestOpenDays)) && (
+            <span className="cand-permit-line muted" data-testid="candidate-permit-detail">
+              {c.topOpenPermitId && (
+                <>
+                  Permit {c.topOpenPermitId} &middot;{' '}
+                  {c.topOpenContractor
+                    ? tidyContractor(c.topOpenContractor)
+                    : 'no contractor listed'}
+                  {c.topOpenLicenseNo ? ` · Lic. ${c.topOpenLicenseNo}` : ''}
+                </>
+              )}
+              {isPossiblyStale(c.longestOpenDays) && (
+                <span className="stale-hint" title={STALE_HINT} data-testid="candidate-stale">
+                  possibly a stale record
+                </span>
+              )}
             </span>
           )}
         </div>
@@ -265,13 +307,60 @@ export function CandidateList(props: CandidateListProps) {
   }
 
   if (candidates.length === 0) {
+    if (result.coverageNote && permitFilterActive(props.filters)) {
+      return (
+        <div className="empty" data-testid="list-empty-coverage">
+          <h3>No permit matches here, and that is expected</h3>
+          <p>Your filters only match properties with permit records. {result.coverageNote}</p>
+          <p>Roof age is still known for these properties.</p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            data-testid="empty-show-aged"
+            onClick={props.onShowAged}
+          >
+            Show aged roofs here instead
+          </button>
+        </div>
+      );
+    }
+    const wider = Math.min(MAX_RADIUS_MILES, Math.max(props.radiusMiles * 2, 1));
     return (
       <div className="empty" data-testid="list-empty">
         <h3>No matches in this area</h3>
-        <p>
-          Nothing inside the radius meets the current filters. Try a larger radius, a lower roof-age
-          threshold, or set Signal to &ldquo;Any&rdquo;.
-        </p>
+        <p>Nothing inside the {props.radiusMiles}-mile radius meets the current filters.</p>
+        <div className="empty-actions">
+          {wider > props.radiusMiles && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              data-testid="empty-widen"
+              onClick={() => {
+                props.onWidenRadius(wider);
+              }}
+            >
+              Widen radius to {wider} mi
+            </button>
+          )}
+          {permitFilterActive(props.filters) && (
+            <button
+              type="button"
+              className="btn"
+              data-testid="empty-show-aged"
+              onClick={props.onShowAged}
+            >
+              Show aged roofs here instead
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn"
+            data-testid="empty-reset"
+            onClick={props.onResetFilters}
+          >
+            Reset filters
+          </button>
+        </div>
       </div>
     );
   }
@@ -316,8 +405,10 @@ export function CandidateList(props: CandidateListProps) {
 
       {result.total > candidates.length && (
         <p className="cand-cap" data-testid="list-capped">
-          Showing the top {formatCount(candidates.length)} of {formatCount(result.total)} matches.
-          Narrow the radius or filters to see the rest.
+          <strong>
+            Top {formatCount(candidates.length)} of {formatCount(result.total)} shown
+          </strong>{' '}
+          (list and map). Narrow the radius or filters to see the rest.
         </p>
       )}
 

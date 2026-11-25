@@ -85,6 +85,9 @@ export const CANDIDATES: Candidate[] = [
     roofConfidence: 'high',
     openRoofPermits: 1,
     longestOpenDays: 2265,
+    topOpenPermitId: 'RF-2020-0042',
+    topOpenContractor: 'Acme Roofing',
+    topOpenLicenseNo: '123456',
     score: 88,
     scoreReasons: ['Roofing permit open 6.2 years (+55)', 'Roof about 22 years old (+21)'],
   }),
@@ -205,12 +208,14 @@ export interface Backend {
   last: <T>(path: string) => T | undefined;
 }
 
-function searchResult(): SearchResult {
+export function searchResult(over: Partial<SearchResult> = {}): SearchResult {
   return {
     total: CANDIDATES.length,
     agedRoofCount: 3,
     openPermitCount: 1,
     candidates: CANDIDATES,
+    coverageNote: null,
+    ...over,
     asOf: '2026-11-20',
     elapsedMs: 12,
   };

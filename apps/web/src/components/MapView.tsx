@@ -27,6 +27,8 @@ export interface MapViewProps {
   roofAgeThreshold: number;
   selected: MapSelection | null;
   agentPoints: readonly AgentPoint[];
+  /** One line shown over the map, e.g. how to move the pin on first load. */
+  hint?: string | null;
   onPinChange: (point: Point) => void;
   onSelect: (selection: MapSelection) => void;
 }
@@ -395,9 +397,9 @@ export function MapView(props: MapViewProps) {
           &ldquo;Jump to&rdquo; places still work.
         </p>
       )}
-      {!pin && !failed && (
+      {!failed && (!pin || props.hint) && (
         <p className="map-overlay map-hint" data-testid="map-hint">
-          Click the map to drop a search pin
+          {pin ? props.hint : 'Click the map to drop a search pin'}
         </p>
       )}
       <MapLegend roofAgeThreshold={roofAgeThreshold} showAgent={agentPoints.length > 0} />

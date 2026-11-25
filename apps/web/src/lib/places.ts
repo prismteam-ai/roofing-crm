@@ -6,8 +6,16 @@ export interface Place extends Point {
 }
 
 /** Well-known spots in the default county, so a search can be started with one click. */
+/** Where the first search runs when a link carries no pin. */
+export const DEFAULT_PIN: Place = {
+  id: 'downtown',
+  name: 'Downtown San Diego',
+  lat: 32.7157,
+  lon: -117.1611,
+};
+
 export const PLACES: readonly Place[] = [
-  { id: 'downtown', name: 'Downtown San Diego', lat: 32.7157, lon: -117.1611 },
+  DEFAULT_PIN,
   { id: 'la-jolla', name: 'La Jolla', lat: 32.8328, lon: -117.2713 },
   { id: 'chula-vista', name: 'Chula Vista', lat: 32.6401, lon: -117.0842 },
   { id: 'oceanside', name: 'Oceanside', lat: 33.1959, lon: -117.3795 },

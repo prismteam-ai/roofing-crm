@@ -904,10 +904,61 @@ input[type='checkbox'] {
 }
 
 .cand-cap {
-  padding: 6px 12px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
   background: var(--warn-soft);
   color: var(--warn-text);
   font-size: 12.5px;
+}
+
+.summary-cap {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn-text);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cand-permit-line {
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.stale-hint {
+  display: inline-block;
+  justify-self: start;
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  color: var(--warn-text);
+  font-size: 11.5px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.permits .stale-hint {
+  margin: 3px 0 0;
+}
+
+.permits .badge,
+.permits .stale-hint {
+  white-space: normal;
+}
+
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mapscreen > .notice {
+  margin: 8px 16px;
+  padding: 6px 12px;
+  font-size: 13px;
 }
 
 .cand-list {
@@ -1467,7 +1518,41 @@ table > tbody:last-of-type tr:last-child > * {
 
 .permits {
   min-width: 700px;
+  table-layout: fixed;
   font-size: 13px;
+}
+
+.permits th,
+.permits td {
+  overflow-wrap: anywhere;
+}
+
+.permits thead th {
+  white-space: normal;
+}
+
+.permits thead th:nth-child(1) {
+  width: 14%;
+}
+
+.permits thead th:nth-child(2) {
+  width: 19%;
+}
+
+.permits thead th:nth-child(3) {
+  width: 16%;
+}
+
+.permits thead th:nth-child(4) {
+  width: 18%;
+}
+
+.permits thead th:nth-child(5) {
+  width: 17%;
+}
+
+.permits thead th:nth-child(6) {
+  width: 16%;
 }
 
 .permits tbody tr:first-child > * {
@@ -1480,9 +1565,9 @@ table > tbody:last-of-type tr:last-child > * {
 }
 
 .permit-id {
+  overflow-wrap: anywhere;
   font-family: 'Cascadia Mono', Consolas, ui-monospace, monospace;
   font-size: 12.5px;
-  white-space: nowrap;
 }
 
 .permit-dates {

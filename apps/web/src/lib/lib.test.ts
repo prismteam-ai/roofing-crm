@@ -5,8 +5,11 @@ import {
   formatDate,
   formatDateTime,
   formatOpenDuration,
+  isPossiblyStale,
+  roofAgeText,
   roofBasisText,
   signalKind,
+  tidyContractor,
 } from './format.js';
 import { circlePolygon } from './geo.js';
 import { leadFromProperty, priorityForScore } from './leadDraft.js';
@@ -74,6 +77,15 @@ describe('formatting', () => {
     expect(formatDate('2026-11-23')).toBe('Nov 23, 2026');
     expect(formatDateTime('2026-11-23')).toBe('Nov 23, 2026');
     expect(formatDate(null)).toBe('-');
+  });
+
+  it('shows a repeated contractor name once and flags very old open permits', () => {
+    expect(tidyContractor('Newel Fasttrack Inc, Newel Fasttrack Inc')).toBe('Newel Fasttrack Inc');
+    expect(tidyContractor('Luna Lounge, Denise Luna')).toBe('Luna Lounge, Denise Luna');
+    expect(isPossiblyStale(16 * 366)).toBe(true);
+    expect(isPossiblyStale(14 * 365)).toBe(false);
+    expect(isPossiblyStale(null)).toBe(false);
+    expect(roofAgeText(1)).toBe('Roof ~1 yr');
   });
 
   it('classifies the signal against the chosen threshold', () => {

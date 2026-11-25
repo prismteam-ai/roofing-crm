@@ -16,7 +16,10 @@ import {
   formatDateTime,
   formatOpenDuration,
   isLongOpen,
+  isPossiblyStale,
   roofBasisText,
+  STALE_HINT,
+  tidyContractor,
 } from '../lib/format.js';
 import { leadFromProperty } from '../lib/leadDraft.js';
 import { Notice, Spinner } from './fields.js';
@@ -134,10 +137,17 @@ function PermitRows({
           <div className="muted" data-testid="permit-duration">
             {permit.isOpen
               ? formatOpenDuration(permit.daysOpen)
-              : permit.daysOpen !== null
+              : permit.closedDate && permit.daysOpen !== null
                 ? `closed after ${String(permit.daysOpen)} days`
-                : 'closed'}
+                : permit.closedDate
+                  ? 'closed'
+                  : 'not counted as open; no close date in source'}
           </div>
+          {permit.isOpen && isPossiblyStale(permit.daysOpen) && (
+            <div className="stale-hint" title={STALE_HINT} data-testid="permit-stale">
+              possibly a stale record
+            </div>
+          )}
         </td>
         <td className="permit-dates" data-label="Dates">
           <div>
@@ -154,7 +164,7 @@ function PermitRows({
         <td data-testid="permit-contractor" data-label="Contractor">
           {c ? (
             <>
-              <div>{c.name ?? 'Name not recorded'}</div>
+              <div>{c.name ? tidyContractor(c.name) : 'Name not recorded'}</div>
               <div className="muted">
                 {c.licenseNumber ? `Lic. ${c.licenseNumber}` : 'No licence number on permit'}
                 {c.licenseStatus ? ` · ${c.licenseStatus}` : ''}

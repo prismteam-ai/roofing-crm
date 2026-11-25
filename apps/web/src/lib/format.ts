@@ -34,8 +34,19 @@ export function roofBasisText(basis: RoofBasis, roofYear: number | null): string
 }
 
 export function roofAgeText(years: number | null): string {
-  return years === null ? 'Roof age unknown' : `Roof ~${String(years)} yrs`;
+  if (years === null) return 'Roof age unknown';
+  return `Roof ~${String(years)} ${years === 1 ? 'yr' : 'yrs'}`;
 }
+
+/** County records hold permits that were issued decades ago and never finalled. */
+export const STALE_OPEN_YEARS = 15;
+
+export const isPossiblyStale = (days: number | null): boolean =>
+  days !== null && openYears(days) > STALE_OPEN_YEARS;
+
+export const STALE_HINT =
+  `Open for more than ${String(STALE_OPEN_YEARS)} years. The permit may simply never have been ` +
+  'finalled in the county records, so check before treating it as an unfinished job.';
 
 const DATE = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
@@ -96,6 +107,24 @@ export function signalKind(
 
 export const candidateKind = (c: Candidate, roofAgeThreshold: number): SignalKind =>
   signalKind(c.roofAgeYears, c.openRoofPermits, roofAgeThreshold);
+
+/**
+ * Permit records often repeat one party as both firm and contact ("Acme Inc, Acme Inc").
+ * Show each distinct name once.
+ */
+export function tidyContractor(name: string): string {
+  const seen = new Set<string>();
+  return name
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => {
+      const key = part.toLowerCase();
+      if (part === '' || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .join(', ');
+}
 
 export function addressLine(address: string | null, apn: string): string {
   return address ?? `APN ${apn} (no address in source data)`;

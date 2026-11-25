@@ -29,7 +29,8 @@ import {
 } from './lib/format.js';
 import { roundCoord } from './lib/geo.js';
 import { leadFromCandidate } from './lib/leadDraft.js';
-import { DEFAULT_FILTERS, inCounty, type Panel, type View } from './lib/urlState.js';
+import { DEFAULT_PIN } from './lib/places.js';
+import { DEFAULT_FILTERS, inCounty, parseUrlState, type Panel, type View } from './lib/urlState.js';
 import { useDebouncedValue } from './lib/useDebouncedValue.js';
 import { useLeadBook, type NoticeKind } from './lib/useLeadBook.js';
 import { useUrlState } from './lib/useUrlState.js';
@@ -57,6 +58,11 @@ function SummaryStrip({ result, stale }: { result: SearchResult | undefined; sta
       <div>
         <dt>Matches</dt>
         <dd data-testid="summary-total">{cell(result && formatCount(result.total))}</dd>
+        {result && result.total > result.candidates.length && (
+          <span className="summary-cap" data-testid="summary-capped">
+            top {formatCount(result.candidates.length)} shown
+          </span>
+        )}
       </div>
       <div>
         <dt>Aged roofs</dt>
@@ -131,7 +137,11 @@ function SelectedCard({
 }
 
 export function App() {
-  const [url, setUrl] = useUrlState();
+  // No pin in the link: start at a well-known place so the first screen already shows leads.
+  const [showMoveHint, setShowMoveHint] = useState(
+    () => parseUrlState(window.location.search).pin === null,
+  );
+  const [url, setUrl] = useUrlState(DEFAULT_PIN);
   const { view, panel, pin, radiusMiles, filters } = url;
   const trpc = useTRPC();
 
@@ -203,6 +213,7 @@ export function App() {
       }
       setLocationMessage(null);
       setSelected(null);
+      setShowMoveHint(false);
       setUrl({ pin: next });
       return true;
     },
@@ -231,6 +242,7 @@ export function App() {
           return;
         }
         setLocationMessage(null);
+        setShowMoveHint(false);
         setUrl({ pin: here });
         notify('success', 'Pin moved to your location.');
       },
@@ -412,6 +424,12 @@ export function App() {
 
           <SummaryStrip result={result} stale={waiting} />
 
+          {result?.coverageNote && (
+            <Notice kind="info" testId="coverage-note">
+              <strong>Permit coverage:</strong> {result.coverageNote}
+            </Notice>
+          )}
+
           <div className="mobile-tabs" role="group" aria-label="Show">
             <button
               type="button"
@@ -454,6 +472,9 @@ export function App() {
                 roofAgeThreshold={filters.minRoofAgeYears}
                 selected={selected}
                 agentPoints={agentPoints}
+                hint={
+                  showMoveHint ? `Showing ${DEFAULT_PIN.name}. Click the map to move the pin` : null
+                }
                 onPinChange={placePin}
                 onSelect={setSelected}
               />
@@ -529,6 +550,24 @@ export function App() {
                   onOpenLead={openLead}
                   onRetry={() => {
                     void search.refetch();
+                  }}
+                  filters={filters}
+                  radiusMiles={radiusMiles}
+                  onShowAged={() => {
+                    setUrl((current) => ({
+                      filters: {
+                        ...current.filters,
+                        signal: 'aged_roof',
+                        permitStatus: 'any',
+                        minOpenYears: 0,
+                      },
+                    }));
+                  }}
+                  onWidenRadius={(miles) => {
+                    setUrl({ radiusMiles: miles });
+                  }}
+                  onResetFilters={() => {
+                    setUrl({ filters: DEFAULT_FILTERS });
                   }}
                 />
               </div>

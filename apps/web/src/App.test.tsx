@@ -5,9 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { FakeMap } from './test/fakeMapLibre.js';
 import {
   AGENT_ANSWER,
+  candidate,
+  CANDIDATES,
   DOWNTOWN_URL,
   makeBackend,
   renderApp,
+  searchResult,
   type Backend,
   type SearchInput,
 } from './test/harness.js';
@@ -31,32 +34,52 @@ const lastSearch = (backend: Backend): SearchInput | undefined =>
   backend.last<SearchInput>('search.radius');
 
 describe('Lead Map search', () => {
-  it('opens on the default county with no search until a pin exists', async () => {
+  it('opens on the default county and already shows leads around a default pin', async () => {
     const backend = makeBackend();
     renderApp(backend);
     expect(screen.getByTestId('county-name')).toHaveTextContent('San Diego County, CA');
     expect(screen.getByTestId('view-title')).toHaveTextContent('Lead Map');
-    expect(screen.getByTestId('list-empty-nopin')).toBeInTheDocument();
+    expect(await rowsLoaded()).toHaveLength(3);
+    expect(lastSearch(backend)).toMatchObject({
+      center: { lat: 32.7157, lon: -117.1611 },
+      radiusMiles: 1,
+    });
     await theMap();
-    expect(backend.inputs('search.radius')).toHaveLength(0);
+    expect(screen.getByTestId('map-hint')).toHaveTextContent('Click the map to move the pin');
+    expect(window.location.search).toBe('?lat=32.7157&lon=-117.1611');
+  });
+
+  it('drops the first-run hint once the pin is placed, and never shows it for a shared link', async () => {
+    const backend = makeBackend();
+    const first = renderApp(backend);
+    (await theMap()).click(32.8, -117.2);
+    await waitFor(() => {
+      expect(screen.queryByTestId('map-hint')).not.toBeInTheDocument();
+    });
+    first.unmount();
+
+    renderApp(makeBackend(), DOWNTOWN_URL);
+    await theMap();
+    expect(screen.queryByTestId('map-hint')).not.toBeInTheDocument();
   });
 
   it('searches with the defaults when a pin is dropped on the map', async () => {
     const backend = makeBackend();
     renderApp(backend);
     (await theMap()).click(32.8, -117.2);
-    await rowsLoaded();
-    expect(lastSearch(backend)).toEqual({
-      center: { lat: 32.8, lon: -117.2 },
-      radiusMiles: 1,
-      minRoofAgeYears: 15,
-      minOpenYears: 0,
-      signal: 'any',
-      permitStatus: 'any',
-      sort: 'score',
-      limit: 500,
-      offset: 0,
-    });
+    await waitFor(() => {
+      expect(lastSearch(backend)).toEqual({
+        center: { lat: 32.8, lon: -117.2 },
+        radiusMiles: 1,
+        minRoofAgeYears: 15,
+        minOpenYears: 0,
+        signal: 'any',
+        permitStatus: 'any',
+        sort: 'score',
+        limit: 500,
+        offset: 0,
+      });
+    }, DEBOUNCE);
   });
 
   it('refuses a pin outside the county and says why', async () => {
@@ -64,7 +87,9 @@ describe('Lead Map search', () => {
     renderApp(backend);
     (await theMap()).click(40.7, -74);
     expect(await screen.findByTestId('toast')).toHaveTextContent(/outside San Diego County, CA/);
-    expect(backend.inputs('search.radius')).toHaveLength(0);
+    await rowsLoaded();
+    const centres = backend.inputs<SearchInput>('search.radius').map((s) => s.center.lat);
+    expect(centres.every((lat) => lat === 32.7157)).toBe(true);
   });
 
   it('turns every filter control into the matching search.radius input', async () => {
@@ -150,7 +175,134 @@ describe('Lead Map search', () => {
   });
 });
 
+const COVERAGE =
+  'Permit records cover the City of San Diego and the unincorporated county only; El Cajon has none.';
+const NOTHING = { total: 0, agedRoofCount: 0, openPermitCount: 0, candidates: [] };
+
+describe('Permit coverage and empty results', () => {
+  it('shows the coverage note under the summary whenever the API sends one', async () => {
+    const backend = makeBackend({
+      'search.radius': () => searchResult({ coverageNote: COVERAGE }),
+    });
+    renderApp(backend, DOWNTOWN_URL);
+    await rowsLoaded();
+    expect(screen.getByTestId('coverage-note')).toHaveTextContent(COVERAGE);
+    expect(screen.getByTestId('coverage-note')).toHaveAttribute('role', 'status');
+  });
+
+  it('shows no coverage banner when the note is null', async () => {
+    renderApp(makeBackend(), DOWNTOWN_URL);
+    await rowsLoaded();
+    expect(screen.queryByTestId('coverage-note')).not.toBeInTheDocument();
+  });
+
+  it('explains an empty permit search in an uncovered area and switches to aged roofs', async () => {
+    const user = userEvent.setup();
+    const backend = makeBackend({
+      'search.radius': (input) => {
+        const search = input as SearchInput;
+        return search.signal === 'aged_roof' && search.permitStatus === 'any'
+          ? searchResult({ coverageNote: COVERAGE })
+          : searchResult({ ...NOTHING, coverageNote: COVERAGE });
+      },
+    });
+    renderApp(backend, '/?lat=32.7948&lon=-116.9625&status=open&open=2');
+
+    const empty = await screen.findByTestId('list-empty-coverage', undefined, DEBOUNCE);
+    expect(empty).toHaveTextContent('that is expected');
+    expect(empty).toHaveTextContent(COVERAGE);
+    expect(screen.queryByTestId('empty-widen')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('empty-show-aged'));
+    expect(await rowsLoaded()).toHaveLength(3);
+    expect(lastSearch(backend)).toMatchObject({
+      center: { lat: 32.7948, lon: -116.9625 },
+      signal: 'aged_roof',
+      permitStatus: 'any',
+      minOpenYears: 0,
+    });
+    expect(screen.getByTestId('coverage-note')).toBeInTheDocument();
+  });
+
+  it('keeps the plain empty state when no permit filter is active, with widen and reset', async () => {
+    const user = userEvent.setup();
+    const backend = makeBackend({
+      'search.radius': () => searchResult({ ...NOTHING, coverageNote: COVERAGE }),
+    });
+    renderApp(backend, '/?lat=32.7948&lon=-116.9625&r=2&age=90&sort=distance');
+
+    await screen.findByTestId('list-empty', undefined, DEBOUNCE);
+    expect(screen.queryByTestId('empty-show-aged')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('list-empty-coverage')).not.toBeInTheDocument();
+    await user.click(screen.getByTestId('empty-widen'));
+    await waitFor(() => {
+      expect(lastSearch(backend)).toMatchObject({ radiusMiles: 4, minRoofAgeYears: 90 });
+    }, DEBOUNCE);
+    await user.click(screen.getByTestId('empty-reset'));
+    await waitFor(() => {
+      expect(lastSearch(backend)).toMatchObject({
+        radiusMiles: 4,
+        minRoofAgeYears: 15,
+        sort: 'score',
+      });
+    }, DEBOUNCE);
+  });
+
+  it('still offers aged roofs when a permit filter finds nothing and no note was sent', async () => {
+    const user = userEvent.setup();
+    const backend = makeBackend({
+      'search.radius': (input) =>
+        (input as SearchInput).signal === 'aged_roof' ? searchResult() : searchResult(NOTHING),
+    });
+    renderApp(backend, '/?lat=32.7948&lon=-116.9625&signal=open_permit');
+    await screen.findByTestId('list-empty', undefined, DEBOUNCE);
+    expect(screen.queryByTestId('coverage-note')).not.toBeInTheDocument();
+    await user.click(screen.getByTestId('empty-show-aged'));
+    expect(await rowsLoaded()).toHaveLength(3);
+    expect(screen.getByTestId('signal-aged_roof')).toBeChecked();
+  });
+
+  it('says plainly when only the top of a larger result is shown', async () => {
+    const backend = makeBackend({ 'search.radius': () => searchResult({ total: 16014 }) });
+    renderApp(backend, DOWNTOWN_URL);
+    await rowsLoaded();
+    expect(screen.getByTestId('list-capped')).toHaveTextContent('Top 3 of 16,014 shown');
+    expect(screen.getByTestId('summary-capped')).toHaveTextContent('top 3 shown');
+    expect(screen.getByTestId('summary-total')).toHaveTextContent('16,014');
+  });
+});
+
 describe('Candidate list', () => {
+  it('names the longest-open permit and its contractor under the permit badge', async () => {
+    const stale = candidate('100-000-07-00', {
+      address: '7 STALE WAY',
+      openRoofPermits: 1,
+      longestOpenDays: 11000,
+      topOpenPermitId: '294814',
+      topOpenContractor: null,
+      topOpenLicenseNo: null,
+    });
+    const backend = makeBackend({
+      'search.radius': () => searchResult({ candidates: [...CANDIDATES, stale], total: 4 }),
+    });
+    renderApp(backend, DOWNTOWN_URL);
+    const rows = await rowsLoaded();
+    const [first, second, , last] = rows;
+    if (!first || !second || !last) throw new Error('rows missing');
+    expect(within(first).getByTestId('candidate-permit-detail')).toHaveTextContent(
+      'Permit RF-2020-0042 · Acme Roofing · Lic. 123456',
+    );
+    expect(within(first).queryByTestId('candidate-stale')).not.toBeInTheDocument();
+    expect(within(second).queryByTestId('candidate-permit-detail')).not.toBeInTheDocument();
+    expect(within(last).getByTestId('candidate-permit-detail')).toHaveTextContent(
+      'Permit 294814 · no contractor listed',
+    );
+    expect(within(last).getByTestId('candidate-permit')).toHaveTextContent('open 30.1 yrs');
+    const hint = within(last).getByTestId('candidate-stale');
+    expect(hint).toHaveTextContent('possibly a stale record');
+    expect(hint.getAttribute('title')).toMatch(/never have been finalled/);
+  });
+
   it('renders roof age with its basis and confidence, and the open-permit duration', async () => {
     renderApp(makeBackend(), DOWNTOWN_URL);
     const [first, second] = await rowsLoaded();
@@ -397,7 +549,7 @@ describe('Navigation', () => {
     );
     expect(screen.getByTestId('data-counts')).toHaveTextContent('1,200');
     expect(screen.getByTestId('data-sources')).toHaveTextContent('No owner names.');
-    expect(window.location.search).toBe('?view=data');
+    expect(window.location.search).toBe('?view=data&lat=32.7157&lon=-117.1611');
   });
 });
 
@@ -459,6 +611,8 @@ describe('Ask the agent', () => {
     expect(await screen.findByTestId('agent-not-configured')).toHaveTextContent('not configured');
     expect(backend.last<AgentAsk>('agent.ask')).toEqual({
       question: 'Any long-open permits near Escondido?',
+      center: { lat: 32.7157, lon: -117.1611 },
+      radiusMiles: 1,
     });
   });
 
