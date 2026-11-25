@@ -41,6 +41,25 @@ describe('FixtureOracle (dev only)', () => {
     expect((await oracle.datasetSummary()).county).toContain('DEV FIXTURE');
   });
 
+  it('reports missing permit coverage and names the longest-open permit', async () => {
+    const oracle = new FixtureOracle(now);
+    const elCajon = await oracle.searchLeads(
+      searchInputSchema.parse({
+        center: { lat: 32.7948, lon: -116.9625 },
+        radiusMiles: 1,
+        permitStatus: 'open',
+      }),
+    );
+    expect(elCajon.total).toBe(0);
+    expect(elCajon.coverageNote).toContain('El Cajon');
+
+    const city = await oracle.searchLeads(
+      searchInputSchema.parse({ center: downtown, radiusMiles: 3, signal: 'open_permit' }),
+    );
+    expect(city.coverageNote).toBeNull();
+    for (const row of city.rows) expect(row.topOpenPermitId).toMatch(/^RF-/);
+  });
+
   it('serves the detail record for a search hit, with provenance on every permit', async () => {
     const oracle = new FixtureOracle(now);
     const found = await oracle.searchLeads(

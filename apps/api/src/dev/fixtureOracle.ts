@@ -34,17 +34,64 @@ interface Place {
   lon: number;
   /** Coastal places only scatter inland, so no parcel lands in the ocean. */
   coastal: boolean;
+  /**
+   * Mirrors the real dataset: permits exist only for the City of San Diego and the
+   * unincorporated county, so some cities have parcels but no permit records at all.
+   */
+  hasPermits: boolean;
 }
 
 const PLACES: readonly Place[] = [
-  { city: 'SAN DIEGO', zip: '92101', lat: 32.7157, lon: -117.1611, coastal: true },
-  { city: 'LA JOLLA', zip: '92037', lat: 32.8328, lon: -117.2713, coastal: true },
-  { city: 'CHULA VISTA', zip: '91910', lat: 32.6401, lon: -117.0842, coastal: false },
-  { city: 'OCEANSIDE', zip: '92054', lat: 33.1959, lon: -117.3795, coastal: true },
-  { city: 'ESCONDIDO', zip: '92025', lat: 33.1192, lon: -117.0864, coastal: false },
-  { city: 'EL CAJON', zip: '92020', lat: 32.7948, lon: -116.9625, coastal: false },
-  { city: 'CARLSBAD', zip: '92008', lat: 33.1581, lon: -117.3506, coastal: true },
-  { city: 'ENCINITAS', zip: '92024', lat: 33.037, lon: -117.292, coastal: true },
+  {
+    city: 'SAN DIEGO',
+    zip: '92101',
+    lat: 32.7157,
+    lon: -117.1611,
+    coastal: true,
+    hasPermits: true,
+  },
+  { city: 'LA JOLLA', zip: '92037', lat: 32.8328, lon: -117.2713, coastal: true, hasPermits: true },
+  {
+    city: 'CHULA VISTA',
+    zip: '91910',
+    lat: 32.6401,
+    lon: -117.0842,
+    coastal: false,
+    hasPermits: false,
+  },
+  {
+    city: 'OCEANSIDE',
+    zip: '92054',
+    lat: 33.1959,
+    lon: -117.3795,
+    coastal: true,
+    hasPermits: true,
+  },
+  {
+    city: 'ESCONDIDO',
+    zip: '92025',
+    lat: 33.1192,
+    lon: -117.0864,
+    coastal: false,
+    hasPermits: true,
+  },
+  {
+    city: 'EL CAJON',
+    zip: '92020',
+    lat: 32.7948,
+    lon: -116.9625,
+    coastal: false,
+    hasPermits: false,
+  },
+  {
+    city: 'CARLSBAD',
+    zip: '92008',
+    lat: 33.1581,
+    lon: -117.3506,
+    coastal: true,
+    hasPermits: false,
+  },
+  { city: 'ENCINITAS', zip: '92024', lat: 33.037, lon: -117.292, coastal: true, hasPermits: true },
 ];
 
 const STREETS = [
@@ -161,6 +208,13 @@ function pick<T>(items: readonly T[], r: number): T {
   return item;
 }
 
+const titleCase = (text: string): string =>
+  text
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
 const isoDate = (d: Date): string => d.toISOString().slice(0, 10);
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 
@@ -197,7 +251,8 @@ function buildProperties(now: Date): PropertyDetail[] {
 
       let roofYear: number | null = yearBuilt;
       let roofBasis: PropertyDetail['roofBasis'] = yearBuilt === null ? 'unknown' : 'year_built';
-      if (yearBuilt !== null && thisYear - yearBuilt > 18 && rand() < 0.4) {
+      const reroofed = rand() < 0.4;
+      if (place.hasPermits && reroofed && yearBuilt !== null && thisYear - yearBuilt > 18) {
         const span = thisYear - 2 - (yearBuilt + 15);
         const year = yearBuilt + 15 + Math.floor(rand() * Math.max(1, span));
         roofYear = year;
@@ -222,9 +277,13 @@ function buildProperties(now: Date): PropertyDetail[] {
         });
       }
 
-      if (rand() < 0.16) {
+      // A few never-finalled permits run to decades, as in the real county records.
+      const openRoll = rand();
+      const ancient = rand() < 0.12;
+      if (place.hasPermits && openRoll < 0.16) {
         const longOpen = rand() < 0.55;
-        const openDays = longOpen ? 730 + Math.floor(rand() * 3300) : 30 + Math.floor(rand() * 690);
+        const baseDays = longOpen ? 730 + Math.floor(rand() * 3300) : 30 + Math.floor(rand() * 690);
+        const openDays = ancient ? 6200 + baseDays : baseDays;
         const applied = new Date(now.getTime() - openDays * DAY_MS);
         const issued = new Date(applied.getTime() + 9 * DAY_MS);
         const id = nextPermitId('RF');
@@ -248,7 +307,8 @@ function buildProperties(now: Date): PropertyDetail[] {
         });
       }
 
-      if (rand() < 0.2) {
+      const solarRoll = rand();
+      if (place.hasPermits && solarRoll < 0.2) {
         const year = String(2012 + Math.floor(rand() * 13));
         const id = nextPermitId('PV');
         permits.push({
@@ -316,11 +376,11 @@ function buildProperties(now: Date): PropertyDetail[] {
 
 function toRow(p: PropertyDetail, distanceMiles: number): OracleLeadRow {
   const open = p.permits.filter((permit) => permit.isRoofing && permit.isOpen);
-  const longest = open.reduce<number | null>(
-    (max, permit) =>
-      permit.daysOpen !== null && (max === null || permit.daysOpen > max) ? permit.daysOpen : max,
+  const top = open.reduce<Permit | null>(
+    (best, permit) => ((permit.daysOpen ?? -1) > (best?.daysOpen ?? -1) ? permit : best),
     null,
   );
+  const longest = top?.daysOpen ?? null;
   return {
     apn: p.apn,
     address: p.address,
@@ -335,6 +395,9 @@ function toRow(p: PropertyDetail, distanceMiles: number): OracleLeadRow {
     roofConfidence: p.roofConfidence,
     openRoofPermits: open.length,
     longestOpenDays: longest,
+    topOpenPermitId: top?.permitId ?? null,
+    topOpenContractor: top?.contractor?.name ?? null,
+    topOpenLicenseNo: top?.contractor?.licenseNumber ?? null,
     ownerOccupied: p.ownerOccupied,
     lastTransferDate: p.lastTransferDate,
     useType: p.useType,
@@ -370,11 +433,21 @@ export class FixtureOracle implements OraclePort {
   }
 
   searchLeads(input: SearchInput): Promise<OracleSearch> {
+    const uncovered = PLACES.filter(
+      (place) =>
+        !place.hasPermits && haversineMiles(input.center, place) <= input.radiusMiles + 2.5,
+    ).map((place) => titleCase(place.city));
     const result: OracleSearch = {
       total: 0,
       agedRoofCount: 0,
       openPermitCount: 0,
       asOf: this.asOf,
+      coverageNote:
+        uncovered.length > 0
+          ? `Permit records cover the City of San Diego and the unincorporated county only. ` +
+            `This search area includes ${uncovered.join(' and ')}, which has no permit data, ` +
+            `so open-permit filters find nothing there.`
+          : null,
       rows: [],
     };
     if (!inBBox(input.center, DEFAULT_COUNTY.bbox)) return Promise.resolve(result);
