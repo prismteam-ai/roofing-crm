@@ -66,6 +66,10 @@ export const candidateSchema = z.object({
   roofConfidence: z.string().nullable(),
   openRoofPermits: z.number().int(),
   longestOpenDays: z.number().int().nullable(),
+  /** The longest-open roofing permit on the property, when there is one. */
+  topOpenPermitId: z.string().nullish(),
+  topOpenContractor: z.string().nullish(),
+  topOpenLicenseNo: z.string().nullish(),
   ownerOccupied: z.boolean().nullable(),
   lastTransferDate: z.string().nullable(),
   useType: z.string().nullable(),

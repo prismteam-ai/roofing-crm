@@ -201,6 +201,8 @@ describe('agent guards', () => {
     const retrieved = new Set(['5330000100', '533-000-02-00']);
     const answer = 'Top matches: 533-000-01-00, 5330000200 and 999-999-99-99.';
     expect(findUnsupportedApns(answer, retrieved)).toEqual(['999-999-99-99']);
+    const withPermit = 'permit PDS1992-C-9204551999 on APN 5330000100';
+    expect(findUnsupportedApns(withPermit, retrieved)).toEqual([]);
   });
 
   it('says plainly when no model is configured instead of inventing an answer', async () => {

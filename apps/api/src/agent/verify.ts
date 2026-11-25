@@ -1,5 +1,6 @@
 /** San Diego APNs: 10 digits, written 123-456-78-90 or 1234567890. */
-const APN_PATTERN = /\b(\d{3}-\d{3}-\d{2}-\d{2}|\d{10})\b/g;
+// Not part of a longer token: permit numbers such as PDS1992-C-9204551999 also contain 10 digits.
+const APN_PATTERN = /(?<![\w-])(\d{3}-\d{3}-\d{2}-\d{2}|\d{10})(?![\w-])/g;
 
 export const normalizeApn = (apn: string): string => apn.replace(/\D/g, '');
 
