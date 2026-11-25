@@ -119,7 +119,7 @@ packages/api-client  the single tRPC client
 | 16:50 | Web app live                                                                                          |
 | 17:05 | Deployed app first verified in a browser against the demo transcript                                  |
 | 17:31 | Kit-reviewer fixes deployed (tracked data port, atomic leads, agent caps, alarm, CI)                  |
-| 19:10 | Independent evaluation of the live site (kit `slowking` definition); its defects fixed and redeployed |
+| 18:45 | Independent evaluation of the live site (kit `slowking` definition); its defects fixed and redeployed |
 
 ---
 
