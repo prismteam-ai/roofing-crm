@@ -79,7 +79,10 @@ function buildTools(oracle: OraclePort, trace: Trace) {
         'Resolve a city, community or ZIP code in the county to its centre coordinates. Returns up to 5 matches with the number of parcels in each.',
       inputSchema: z.object({ name: z.string().min(2).max(60) }),
       execute: async ({ name }) => {
-        const clean = name.replace(/[^A-Za-z0-9 .-]/g, '').trim().toUpperCase();
+        const clean = name
+          .replace(/[^A-Za-z0-9 .-]/g, '')
+          .trim()
+          .toUpperCase();
         const sql =
           `SELECT name, kind, lat, lon, parcels FROM place ` +
           `WHERE upper(name) = '${clean}' OR upper(name) LIKE '${clean}%' ` +

@@ -4,7 +4,7 @@ import { askAgent } from './agent/agent.js';
 import { findUnsupportedApns } from './agent/verify.js';
 import { buildContext, workspaceFromHeader, type Services } from './context.js';
 import { OracleUnavailableError } from './data/mcpOraclePort.js';
-import { MemoryLeadStore } from './leads/leadStores.js';
+import { MemoryLeadStore, MemoryUsageStore } from './leads/leadStores.js';
 import type { OracleLeadRow, OraclePort, OracleQuery, OracleSearch } from './ports.js';
 import { appRouter } from './routers/index.js';
 
@@ -81,6 +81,8 @@ function setup(workspace = 'workspace-aaaa') {
   const services: Services = {
     oracle,
     leads: new MemoryLeadStore(),
+    usage: new MemoryUsageStore(),
+    agentLimits: { perWorkspace: 2, total: 3 },
     model: null,
     modelName: 'none',
     now: () => new Date('2026-11-25T18:00:00Z'),

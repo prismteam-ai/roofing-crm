@@ -51,11 +51,18 @@ export interface OraclePort {
   query(sql: string): Promise<OracleQuery>;
 }
 
+/** Counts paid agent calls so a public endpoint cannot run up the model bill. */
+export interface UsageStore {
+  /** Adds one to the counter and returns the new value. */
+  increment(key: string, day: string): Promise<number>;
+}
+
 /** CRM-owned state. Leads are the one thing this product writes. */
 export interface LeadStore {
   list(workspaceId: string): Promise<Lead[]>;
   get(workspaceId: string, leadId: string): Promise<Lead | null>;
-  put(workspaceId: string, lead: Lead): Promise<void>;
+  /** Atomic create: returns false, and writes nothing, when the lead id already exists. */
+  putIfAbsent(workspaceId: string, lead: Lead): Promise<boolean>;
   update(workspaceId: string, patch: LeadUpdate, now: string): Promise<Lead | null>;
   remove(workspaceId: string, leadId: string): Promise<void>;
 }

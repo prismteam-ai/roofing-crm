@@ -144,14 +144,7 @@ export const propertyDetailSchema = z.object({
 });
 export type PropertyDetail = z.infer<typeof propertyDetailSchema>;
 
-export const leadStatusSchema = z.enum([
-  'new',
-  'contacted',
-  'qualified',
-  'quoted',
-  'won',
-  'lost',
-]);
+export const leadStatusSchema = z.enum(['new', 'contacted', 'qualified', 'quoted', 'won', 'lost']);
 export type LeadStatus = z.infer<typeof leadStatusSchema>;
 
 export const leadPrioritySchema = z.enum(['low', 'medium', 'high']);

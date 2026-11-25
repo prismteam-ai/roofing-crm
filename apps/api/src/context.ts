@@ -2,7 +2,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import { Metrics } from '@aws-lambda-powertools/metrics';
 import { Tracer } from '@aws-lambda-powertools/tracer';
 import type { LanguageModel } from 'ai';
-import type { LeadStore, OraclePort } from './ports.js';
+import type { LeadStore, OraclePort, UsageStore } from './ports.js';
 
 export const SERVICE_NAME = 'roofing-crm-api';
 
@@ -14,6 +14,9 @@ export const metrics = new Metrics({ serviceName: SERVICE_NAME, namespace: 'Roof
 export interface Services {
   oracle: OraclePort;
   leads: LeadStore;
+  usage: UsageStore;
+  /** Daily ceilings on paid agent calls: per browser workspace and for the whole deployment. */
+  agentLimits: { perWorkspace: number; total: number };
   /** Null when no model is configured; the agent then says so and never fakes an answer. */
   model: LanguageModel | null;
   modelName: string;

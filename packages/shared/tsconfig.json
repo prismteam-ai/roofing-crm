@@ -1,1 +1,5 @@
-{ "extends": "@roofing-crm/tsconfig/base.json", "compilerOptions": { "noEmit": true }, "include": ["src"] }
+{
+  "extends": "@roofing-crm/tsconfig/base.json",
+  "compilerOptions": { "noEmit": true },
+  "include": ["src"]
+}

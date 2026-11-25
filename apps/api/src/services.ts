@@ -3,9 +3,14 @@ import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { GetParameterCommand, SSMClient } from '@aws-sdk/client-ssm';
 import type { LanguageModel } from 'ai';
-import type { Services } from './context.js';
+import { logger, type Services } from './context.js';
 import { McpOraclePort } from './data/mcpOraclePort.js';
-import { DynamoLeadStore, MemoryLeadStore } from './leads/leadStores.js';
+import {
+  DynamoLeadStore,
+  DynamoUsageStore,
+  MemoryLeadStore,
+  MemoryUsageStore,
+} from './leads/leadStores.js';
 
 export interface Env {
   ORACLE_MCP_URL?: string;
@@ -15,6 +20,8 @@ export interface Env {
   /** Local development only. In AWS the key is read from SSM (AGENT_KEY_PARAMETER). */
   ANTHROPIC_API_KEY?: string;
   AGENT_KEY_PARAMETER?: string;
+  AGENT_DAILY_LIMIT_PER_WORKSPACE?: string;
+  AGENT_DAILY_LIMIT_TOTAL?: string;
   AWS_REGION?: string;
 }
 
@@ -45,7 +52,10 @@ export function resolveModel(env: Env, apiKey: string | undefined): ModelChoice 
 }
 
 /** Reads the model key from SSM SecureString. The key never sits in code, env files or logs. */
-export async function loadAgentKey(env: Env, ssm: SSMClient = new SSMClient({})): Promise<string | undefined> {
+export async function loadAgentKey(
+  env: Env,
+  ssm: SSMClient = new SSMClient({}),
+): Promise<string | undefined> {
   if (env.ANTHROPIC_API_KEY) return env.ANTHROPIC_API_KEY;
   if (!env.AGENT_KEY_PARAMETER || env.AGENT_PROVIDER === 'bedrock') return undefined;
   try {
@@ -53,8 +63,13 @@ export async function loadAgentKey(env: Env, ssm: SSMClient = new SSMClient({}))
       new GetParameterCommand({ Name: env.AGENT_KEY_PARAMETER, WithDecryption: true }),
     );
     return out.Parameter?.Value;
-  } catch {
-    // Missing parameter: the agent reports "not configured"; the rest of the CRM keeps working.
+  } catch (error) {
+    // The agent then reports "not configured" and the rest of the CRM keeps working, but the
+    // failure is logged so it cannot pass unnoticed.
+    logger.error('agent key parameter could not be read', {
+      parameter: env.AGENT_KEY_PARAMETER,
+      error: error instanceof Error ? error.name : 'unknown',
+    });
     return undefined;
   }
 }
@@ -66,6 +81,11 @@ export async function buildServices(env: Env): Promise<Services> {
   return {
     oracle: new McpOraclePort(env.ORACLE_MCP_URL),
     leads: env.LEADS_TABLE ? new DynamoLeadStore(env.LEADS_TABLE) : new MemoryLeadStore(),
+    usage: env.LEADS_TABLE ? new DynamoUsageStore(env.LEADS_TABLE) : new MemoryUsageStore(),
+    agentLimits: {
+      perWorkspace: Number(env.AGENT_DAILY_LIMIT_PER_WORKSPACE ?? 40),
+      total: Number(env.AGENT_DAILY_LIMIT_TOTAL ?? 400),
+    },
     ...resolveModel(env, await loadAgentKey(env)),
     now: () => new Date(),
     newId: () => randomUUID(),

@@ -21,7 +21,8 @@ Steps:   1 Connect   call the Oracle MCP (findRoofingLeads, getOracleProperty, q
          5 Inference answer natural-language questions from retrieved rows                   stare-and-compare   agent
          6 Enact     map, list, drawer, lead actions, CSV export                             move-data   code
 Gates:   inputs checked at the API door by the same schemas the UI uses; MCP responses checked
-         before use; agent answers checked against the rows its tools returned.
+         before use; every parcel number in an agent answer checked against the rows its
+         tools returned (counts and wording are not machine-checked).
 Owner:   one tRPC API (apps/api), one web app (apps/web); the only model call is step 5.
 ```
 
@@ -29,17 +30,17 @@ Shortest path: the CRM does not ingest, clean or store property data. That is th
 
 ## Demo transcript, and where each line happens
 
-| Transcript line | In the app |
-| --- | --- |
-| Open the CRM centered on a particular county | Lead Map opens on San Diego County, CA with a first search already run |
-| Drop a pin (or use GPS) and set a search radius | Click the map, drag the pin, "Use my location", eight "Jump to" places, or type lat/lon; radius slider and number |
-| Show roofs older than the age threshold | Signal "Aged roof", threshold box (default 15); orange markers; roof age with its basis and confidence on each row |
-| Highlight open roofing permits, prioritizing long-open | Signal "Open roofing permit"; ringed markers for 2+ years; "Permit open at least"; sort by open duration |
-| Open a property/permit; contractor details and BBB rating | "Details" opens the drawer: permits table with status, open duration, contractor, CSLB licence, BBB rating or the stated reason it is missing, and a source link per record |
-| Convert one or more matches into CRM lead records | "Add lead" per row, "Convert selected to leads", or "Create lead from this property / permit" |
-| Ask the RAG agent a natural-language query | "Ask the agent" tab: answer, assumptions, evidence (tool calls and SQL), result table, "Show on map" |
-| Filter leads by roof age, permit status/open duration, radius | Leads view: status, roof age, has open permit, minimum open years, within X miles of the pin |
-| Show disabled/placeholder sections | Left nav, "Planned, not built yet": seven sections marked "Coming soon" |
+| Transcript line                                               | In the app                                                                                                                                                                  |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open the CRM centered on a particular county                  | Lead Map opens on San Diego County, CA with a first search already run                                                                                                      |
+| Drop a pin (or use GPS) and set a search radius               | Click the map, drag the pin, "Use my location", eight "Jump to" places, or type lat/lon; radius slider and number                                                           |
+| Show roofs older than the age threshold                       | Signal "Aged roof", threshold box (default 15); orange markers; roof age with its basis and confidence on each row                                                          |
+| Highlight open roofing permits, prioritizing long-open        | Signal "Open roofing permit"; ringed markers for 2+ years; "Permit open at least"; sort by open duration                                                                    |
+| Open a property/permit; contractor details and BBB rating     | "Details" opens the drawer: permits table with status, open duration, contractor, CSLB licence, BBB rating or the stated reason it is missing, and a source link per record |
+| Convert one or more matches into CRM lead records             | "Add lead" per row, "Convert selected to leads", or "Create lead from this property / permit"                                                                               |
+| Ask the RAG agent a natural-language query                    | "Ask the agent" tab: answer, assumptions, evidence (tool calls and SQL), result table, "Show on map"                                                                        |
+| Filter leads by roof age, permit status/open duration, radius | Leads view: status, roof age, has open permit, minimum open years, within X miles of the pin                                                                                |
+| Show disabled/placeholder sections                            | Left nav, "Planned, not built yet": seven sections marked "Coming soon"                                                                                                     |
 
 ## Run it
 
@@ -79,7 +80,7 @@ packages/api-client  the single tRPC client
 
 - **Data boundary.** `apps/api/src/data/mcpOraclePort.ts` is the only code that touches property data, and it does so through the pipeline's MCP tools. No scraping, no private copy, no direct database access.
 - **Lead score.** `packages/shared/src/scoring.ts`: 0 to 100 from open-permit duration (heaviest), roof age over the threshold, roof age known from a permit, and owner occupancy. Every point has a reason the UI shows. Same input, same score.
-- **Agent.** `apps/api/src/agent`: Vercel AI SDK with four Zod-typed tools (place lookup, radius lead search, property detail, one guarded read-only SELECT). "RAG" here is retrieval through typed tools and SQL, not vector search: the questions are filters over typed columns, where SQL is exact and embeddings are not. After the model answers, a deterministic check flags any parcel number that no tool returned.
+- **Agent.** `apps/api/src/agent`: Vercel AI SDK with four Zod-typed tools (place lookup, radius lead search, property detail, one guarded read-only SELECT). "RAG" here is retrieval through typed tools and SQL, not vector search: the questions are filters over typed columns, where SQL is exact and embeddings are not. The SELECT guard lives in the pipeline (single statement, read-only, row-capped, engine file access off). After the model answers, a deterministic check flags any parcel number that no tool returned; it does not verify counts or prose. Agent calls are capped per day, per browser workspace and overall, because the endpoint is public and each answer costs tokens.
 - **Leads.** DynamoDB on-demand, keyed by a random per-browser workspace id, so the app needs no login and one reviewer cannot disturb another's leads.
 - **Cost when idle.** Lambda, HTTP API, DynamoDB on-demand and Amplify hosting only: nothing runs between requests.
 
@@ -97,7 +98,7 @@ packages/api-client  the single tRPC client
 - **Owner name and mailing address** are not in any public San Diego source; the drawer says so.
 - **Decades-open permits** in county records are probably permits that were never finalled; the UI marks them as possibly stale.
 - **Outbound messaging** and the seven "Coming soon" sections are placeholders, as the story asks.
-- **Kit deviations.** No custom API domain (personal exercise account); PagerDuty is represented by an SNS alarm topic with no subscriber; the agent call also goes through a Lambda function URL because API Gateway stops requests at 30 seconds.
+- **Kit deviations, each deliberate.** No custom API domain or base-path mapping (those are tied to company accounts). PagerDuty is represented by CloudWatch alarms on function errors and on failed procedures, fanned out through an SNS topic with an email subscriber set at deploy time. The model is reached through the Vercel AI SDK with the Anthropic provider and a key in SSM, not Bedrock (a new personal AWS account has no Bedrock model access by default; the Bedrock path is one config flag: `-c agentProvider=bedrock`). The agent is a single-turn `generateText` tool loop: no Asana ingress, AgentCore memory, LangSmith or prompt caching, which the kit asks of long-lived Asana agents. Retrieval is typed tools and SQL, not OpenSearch embeddings, because the questions are filters over typed columns. The Amplify app takes a manual upload of the built bundle instead of a Git-connected build, so no GitHub token is stored. The agent call also goes through a Lambda function URL because API Gateway stops requests at 30 seconds. Interactive reads of the Oracle MCP are synchronous with a 12-second timeout and a visible retry; nothing has side effects to queue.
 
 ## AI work log (what I accepted, changed or rejected)
 
@@ -107,14 +108,14 @@ packages/api-client  the single tRPC client
 
 ## Timeline (UTC, 25 Nov 2026)
 
-| Time | Milestone |
-| --- | --- |
-| 14:26 | Assignment received |
-| 15:36 | Work started |
-| 15:48 | Contract and API committed, tests passing |
-| 16:35 | CRM running locally on the real county data through MCP |
-| 16:47 | API deployed |
-| 16:50 | Web app live |
+| Time  | Milestone                                                      |
+| ----- | -------------------------------------------------------------- |
+| 14:26 | Assignment received                                            |
+| 15:36 | Work started                                                   |
+| 15:48 | Contract and API committed, tests passing                      |
+| 16:35 | CRM running locally on the real county data through MCP        |
+| 16:47 | API deployed                                                   |
+| 16:50 | Web app live                                                   |
 | 17:05 | Deployed app verified in a browser against the demo transcript |
 
 ---
@@ -136,6 +137,7 @@ Create a map-based roofing lead CRM that enables users to locate properties from
 The UI should present property and permit details, including contractor information and BBB rating scores where available. Users should also be able to query the platform in natural language through a RAG-backed agent to discover roofing opportunities (for example, “show me open roofing permits older than five years within five miles of [city xyz]”).
 
 ### Acceptance Criteria
+
 - Default the map and search experience to a particular county, with support for exploring properties in the user’s selected area.
 - Allow users to center property search on current GPS location and/or a pin dropped on the map.
 - Allow users to set a configurable search radius around the selected location.
@@ -149,6 +151,7 @@ The UI should present property and permit details, including contractor informat
 - Show (disabled) sections on the CRM that would expand the product beyond the initial lead-identification workflow.
 
 ### Demo Transcript
+
 - Open the CRM centered on a particular county.
 - Drop a pin (or use GPS) and set a search radius.
 - Show roofs older than the age threshold (e.g., 15 years) within the radius.
@@ -160,10 +163,12 @@ The UI should present property and permit details, including contractor informat
 - Show disabled/placeholder sections for future CRM expansions beyond lead identification.
 
 ### Out of Scope
+
 - Property, permit, ownership, or enrichment data collection and ingestion pipelines (separate story).
 - Live BBB API integration beyond displaying scores already present in available data.
 - Actual outbound messaging to property owners (can be mocked or deferred).
 
 ### Reference
+
 - [Soofi XYZ Team Kit](https://github.com/soofi-xyz/soofi-xyz-team-kit)
 - [Elephant Oracle Skills](https://github.com/elephant-xyz/skills)

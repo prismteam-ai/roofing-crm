@@ -16,7 +16,8 @@ describe('geo', () => {
       const rad = (bearing * Math.PI) / 180;
       const p = {
         lat: downtown.lat + (4.99 / 69) * Math.cos(rad),
-        lon: downtown.lon + (4.99 / (69 * Math.cos((downtown.lat * Math.PI) / 180))) * Math.sin(rad),
+        lon:
+          downtown.lon + (4.99 / (69 * Math.cos((downtown.lat * Math.PI) / 180))) * Math.sin(rad),
       };
       expect(inBBox(p, box)).toBe(true);
     }

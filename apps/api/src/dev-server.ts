@@ -14,7 +14,7 @@ import { createServer } from 'node:http';
 import { createHTTPHandler } from '@trpc/server/adapters/standalone';
 import { buildContext, type Services } from './context.js';
 import { FixtureOracle, FIXTURE_LABEL } from './dev/fixtureOracle.js';
-import { MemoryLeadStore } from './leads/leadStores.js';
+import { MemoryLeadStore, MemoryUsageStore } from './leads/leadStores.js';
 import { appRouter } from './routers/index.js';
 import { buildServices } from './services.js';
 
@@ -30,6 +30,8 @@ async function devServices(): Promise<{ services: Services; mode: string }> {
     services: {
       oracle: new FixtureOracle(),
       leads: new MemoryLeadStore(),
+      usage: new MemoryUsageStore(),
+      agentLimits: { perWorkspace: 1000, total: 10000 },
       model: null,
       modelName: 'none',
       now: () => new Date(),

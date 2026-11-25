@@ -4,7 +4,7 @@ dist/
 cdk.out/
 *.duckdb
 *.duckdb.wal
-data/
+/data/
 .env
 .env.*
 !.env.example

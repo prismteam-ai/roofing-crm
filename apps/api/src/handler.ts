@@ -2,7 +2,11 @@ import {
   awsLambdaRequestHandler,
   type CreateAWSLambdaContextOptions,
 } from '@trpc/server/adapters/aws-lambda';
-import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, Context } from 'aws-lambda';
+import type {
+  APIGatewayProxyEventV2,
+  APIGatewayProxyStructuredResultV2,
+  Context,
+} from 'aws-lambda';
 import { buildContext, logger, metrics, tracer, type Services } from './context.js';
 import { appRouter } from './routers/index.js';
 import { buildServices } from './services.js';

@@ -1,13 +1,14 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { ConditionalCheckFailedException, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DeleteCommand,
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
   QueryCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { leadSchema, type Lead, type LeadUpdate } from '@roofing-crm/shared';
-import type { LeadStore } from '../ports.js';
+import type { LeadStore, UsageStore } from '../ports.js';
 
 function applyPatch(lead: Lead, patch: LeadUpdate, now: string): Lead {
   return {
@@ -43,8 +44,10 @@ export class MemoryLeadStore implements LeadStore {
     return this.bucket(workspaceId).get(leadId) ?? null;
   }
 
-  async put(workspaceId: string, lead: Lead): Promise<void> {
+  async putIfAbsent(workspaceId: string, lead: Lead): Promise<boolean> {
+    if (this.bucket(workspaceId).has(lead.leadId)) return false;
     this.bucket(workspaceId).set(lead.leadId, lead);
+    return true;
   }
 
   async update(workspaceId: string, patch: LeadUpdate, now: string): Promise<Lead | null> {
@@ -101,17 +104,41 @@ export class DynamoLeadStore implements LeadStore {
     return out.Item ? leadSchema.parse(out.Item) : null;
   }
 
-  async put(workspaceId: string, lead: Lead): Promise<void> {
-    await this.doc.send(
-      new PutCommand({ TableName: this.tableName, Item: { workspaceId, ...lead } }),
-    );
+  async putIfAbsent(workspaceId: string, lead: Lead): Promise<boolean> {
+    try {
+      await this.doc.send(
+        new PutCommand({
+          TableName: this.tableName,
+          Item: { workspaceId, ...lead },
+          ConditionExpression: 'attribute_not_exists(leadId)',
+        }),
+      );
+      return true;
+    } catch (error) {
+      if (error instanceof ConditionalCheckFailedException) return false;
+      throw error;
+    }
   }
 
   async update(workspaceId: string, patch: LeadUpdate, now: string): Promise<Lead | null> {
     const current = await this.get(workspaceId, patch.leadId);
     if (!current) return null;
     const next = applyPatch(current, patch, now);
-    await this.put(workspaceId, next);
+    // Optimistic lock: the write only lands if nobody changed the lead since we read it.
+    try {
+      await this.doc.send(
+        new PutCommand({
+          TableName: this.tableName,
+          Item: { workspaceId, ...next },
+          ConditionExpression: 'updatedAt = :seen',
+          ExpressionAttributeValues: { ':seen': current.updatedAt },
+        }),
+      );
+    } catch (error) {
+      if (error instanceof ConditionalCheckFailedException)
+        return this.update(workspaceId, patch, now);
+      throw error;
+    }
     return next;
   }
 
@@ -119,5 +146,42 @@ export class DynamoLeadStore implements LeadStore {
     await this.doc.send(
       new DeleteCommand({ TableName: this.tableName, Key: { workspaceId, leadId } }),
     );
+  }
+}
+
+export class MemoryUsageStore implements UsageStore {
+  private readonly counts = new Map<string, number>();
+
+  async increment(key: string, day: string): Promise<number> {
+    const id = `${key}#${day}`;
+    const next = (this.counts.get(id) ?? 0) + 1;
+    this.counts.set(id, next);
+    return next;
+  }
+}
+
+/** Atomic counters in the leads table, under a reserved partition, expiring after two days. */
+export class DynamoUsageStore implements UsageStore {
+  private readonly doc: DynamoDBDocumentClient;
+
+  constructor(
+    private readonly tableName: string,
+    client: DynamoDBClient = new DynamoDBClient({}),
+  ) {
+    this.doc = DynamoDBDocumentClient.from(client);
+  }
+
+  async increment(key: string, day: string): Promise<number> {
+    const out = await this.doc.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { workspaceId: `usage#${key}`, leadId: day },
+        UpdateExpression: 'ADD #n :one SET expiresAt = :ttl',
+        ExpressionAttributeNames: { '#n': 'calls' },
+        ExpressionAttributeValues: { ':one': 1, ':ttl': Math.floor(Date.now() / 1000) + 172_800 },
+        ReturnValues: 'UPDATED_NEW',
+      }),
+    );
+    return Number(out.Attributes?.['calls'] ?? 1);
   }
 }

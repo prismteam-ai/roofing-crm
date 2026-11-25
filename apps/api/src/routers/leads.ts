@@ -47,12 +47,13 @@ export const leadsRouter = router({
 
   /** Converts a map match into a lead. One lead per property: a second click returns the first. */
   create: publicProcedure.input(leadCreateSchema).mutation(async ({ input, ctx }) => {
-    const existing = (await ctx.leads.list(ctx.workspaceId)).find((l) => l.apn === input.apn);
-    if (existing) return { lead: existing, created: false };
+    // The lead id is derived from the parcel, so "one lead per property" is enforced by the
+    // store's conditional write, not by a read-then-write that a double click can race.
     const now = ctx.now().toISOString();
-    const lead: Lead = { ...input, leadId: ctx.newId(), createdAt: now, updatedAt: now };
-    await ctx.leads.put(ctx.workspaceId, lead);
-    return { lead, created: true };
+    const lead: Lead = { ...input, leadId: `apn-${input.apn}`, createdAt: now, updatedAt: now };
+    if (await ctx.leads.putIfAbsent(ctx.workspaceId, lead)) return { lead, created: true };
+    const existing = await ctx.leads.get(ctx.workspaceId, lead.leadId);
+    return { lead: existing ?? lead, created: false };
   }),
 
   update: publicProcedure.input(leadUpdateSchema).mutation(async ({ input, ctx }) => {

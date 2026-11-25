@@ -12,6 +12,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import type { Construct } from 'constructs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -26,6 +27,8 @@ export interface RoofingCrmStackProps extends cdk.StackProps {
   agentModel?: string;
   /** SSM SecureString parameter name holding the model API key (anthropic provider only). */
   agentKeyParameter?: string;
+  /** Address that receives alarm notifications. Passed at deploy time, never committed. */
+  alarmEmail?: string;
 }
 
 /**
@@ -44,6 +47,7 @@ export class RoofingCrmStack extends cdk.Stack {
       partitionKey: { name: 'workspaceId', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'leadId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: 'expiresAt',
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
@@ -56,7 +60,7 @@ export class RoofingCrmStack extends cdk.Stack {
       memorySize: 1024,
       timeout: cdk.Duration.seconds(120),
       tracing: lambda.Tracing.ACTIVE,
-      logRetention: logs.RetentionDays.ONE_MONTH,
+      logRetention: logs.RetentionDays.THREE_MONTHS,
       environment: {
         NODE_OPTIONS: '--enable-source-maps',
         POWERTOOLS_SERVICE_NAME: props.basePath,
@@ -73,8 +77,7 @@ export class RoofingCrmStack extends cdk.Stack {
         target: 'node22',
         format: nodejs.OutputFormat.ESM,
         mainFields: ['module', 'main'],
-        banner:
-          "import{createRequire}from'module';const require=createRequire(import.meta.url);",
+        banner: "import{createRequire}from'module';const require=createRequire(import.meta.url);",
       },
     });
     leads.grantReadWriteData(handler);
@@ -151,7 +154,8 @@ export class RoofingCrmStack extends cdk.Stack {
       platform: 'WEB',
       customRules: [
         {
-          source: '</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>',
+          source:
+            '</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>',
           target: '/index.html',
           status: '200',
         },
@@ -162,6 +166,31 @@ export class RoofingCrmStack extends cdk.Stack {
       branchName: 'main',
       stage: 'PRODUCTION',
     });
+
+    // Procedure failures come back as HTTP responses, so the Lambda Errors metric never sees
+    // them. This alarm watches the RequestsFailed count the API itself emits.
+    const failed = new cloudwatch.Alarm(this, 'ProcedureFailures', {
+      metric: new cloudwatch.Metric({
+        namespace: 'RoofingCrm',
+        metricName: 'RequestsFailed',
+        dimensionsMap: { service: 'roofing-crm-api' },
+        period: cdk.Duration.minutes(5),
+        statistic: 'Sum',
+      }),
+      threshold: 5,
+      evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      alarmDescription: 'roofing-crm API returned 5 or more failed procedures in 5 minutes',
+    });
+    failed.addAlarmAction(new cwActions.SnsAction(alarmTopic));
+    failed.addOkAction(new cwActions.SnsAction(alarmTopic));
+    if (props.alarmEmail) {
+      alarmTopic.addSubscription(new subscriptions.EmailSubscription(props.alarmEmail));
+    }
+
+    // Throttle the public API so a script cannot hammer it.
+    const stage = httpApi.defaultStage?.node.defaultChild as apigwv2.CfnStage | undefined;
+    if (stage) stage.defaultRouteSettings = { throttlingBurstLimit: 40, throttlingRateLimit: 20 };
 
     new cdk.CfnOutput(this, 'ApiUrl', { value: httpApi.apiEndpoint });
     new cdk.CfnOutput(this, 'AgentUrl', { value: agentUrl.url });
