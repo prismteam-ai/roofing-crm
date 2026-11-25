@@ -60,6 +60,19 @@ describe('FixtureOracle (dev only)', () => {
     for (const row of city.rows) expect(row.topOpenPermitId).toMatch(/^RF-/);
   });
 
+  it('returns a condo tower as consecutive rows that share one address', async () => {
+    const oracle = new FixtureOracle(now);
+    const found = await oracle.searchLeads(
+      searchInputSchema.parse({ center: downtown, radiusMiles: 1, signal: 'aged_roof' }),
+    );
+    const tower = found.rows
+      .map((row, index) => ({ row, index }))
+      .filter(({ row }) => row.address === '700 FIXTURE TOWER ST');
+    expect(tower).toHaveLength(14);
+    expect((tower.at(-1)?.index ?? 0) - (tower[0]?.index ?? 0)).toBe(13);
+    expect(new Set(tower.map(({ row }) => row.apn)).size).toBe(14);
+  });
+
   it('serves the detail record for a search hit, with provenance on every permit', async () => {
     const oracle = new FixtureOracle(now);
     const found = await oracle.searchLeads(
@@ -71,6 +84,7 @@ describe('FixtureOracle (dev only)', () => {
     expect(detail?.permits.some((p) => p.isRoofing && p.isOpen)).toBe(true);
     for (const permit of detail?.permits ?? []) {
       expect(permit.provenance.sourceUrl).toContain('dev-fixture');
+      expect(['open', 'pending', 'completed', 'expired']).toContain(permit.statusGroup);
     }
   });
 });

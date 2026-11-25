@@ -26,6 +26,7 @@ export const FIXTURE_LABEL = 'DEV FIXTURE (synthetic, not real records)';
 const FIXTURE_URL = 'https://example.org/dev-fixture';
 const DAY_MS = 86_400_000;
 const PER_PLACE = 80;
+const CONDO_UNITS = 14;
 
 interface Place {
   city: string;
@@ -232,7 +233,7 @@ function buildProperties(now: Date): PropertyDetail[] {
   const permitProvenance = (id: string): Provenance => ({
     source: `${FIXTURE_LABEL}: building permits`,
     sourceRecordId: id,
-    sourceUrl: `${FIXTURE_URL}/permit/${id}`,
+    sourceUrl: `${FIXTURE_URL}/permits_bulk_export.csv`,
     fetchedAt,
   });
 
@@ -266,6 +267,7 @@ function buildProperties(now: Date): PropertyDetail[] {
           roofingClass: 'reroof',
           isRoofing: true,
           status: 'Finaled',
+          statusGroup: 'completed',
           isOpen: false,
           appliedDate: `${String(year)}-${month}-03`,
           issuedDate: `${String(year)}-${month}-10`,
@@ -289,16 +291,20 @@ function buildProperties(now: Date): PropertyDetail[] {
         const id = nextPermitId('RF');
         const ownerBuilder = rand() < 0.15;
         const repair = rand() < 0.3;
+        const statusRoll = rand();
+        const expired = statusRoll > 0.75;
+        const pending = statusRoll < 0.12;
         permits.push({
           permitId: id,
           apn,
           permitType: repair ? 'Building - Roof Repair' : 'Building - Re-Roof',
           roofingClass: repair ? 'repair' : 'reroof',
           isRoofing: true,
-          status: rand() < 0.75 ? 'Issued' : 'Expired - not finaled',
+          status: pending ? 'Applied' : expired ? 'Expired - not finaled' : 'Issued',
+          statusGroup: pending ? 'pending' : expired ? 'expired' : 'open',
           isOpen: true,
           appliedDate: isoDate(applied),
-          issuedDate: isoDate(issued),
+          issuedDate: pending ? null : isoDate(issued),
           closedDate: null,
           daysOpen: openDays,
           description: 'Re-roof over existing sheathing; final inspection not recorded.',
@@ -318,6 +324,7 @@ function buildProperties(now: Date): PropertyDetail[] {
           roofingClass: null,
           isRoofing: false,
           status: 'Finaled',
+          statusGroup: 'completed',
           isOpen: false,
           appliedDate: `${year}-05-02`,
           issuedDate: `${year}-05-06`,
@@ -371,6 +378,37 @@ function buildProperties(now: Date): PropertyDetail[] {
       });
     }
   });
+  // One condo tower downtown: separate parcels that share a street address and a centroid,
+  // as the real assessor roll has, so the list's address grouping can be exercised.
+  for (let unit = 0; unit < CONDO_UNITS; unit += 1) {
+    const apn = `599-100-${pad2(unit)}-00`;
+    out.push({
+      apn,
+      address: '700 FIXTURE TOWER ST',
+      city: 'SAN DIEGO',
+      zip: '92101',
+      lat: 32.7131,
+      lon: -117.1652,
+      yearBuilt: 1986,
+      roofYear: 1986,
+      roofAgeYears: thisYear - 1986,
+      roofBasis: 'year_built',
+      roofConfidence: 'medium',
+      useType: 'Assessor use code 217',
+      ownerOccupied: unit % 3 !== 0,
+      ownerName: null,
+      ownerMailing: null,
+      lastTransferDate: null,
+      yearsSinceTransfer: null,
+      permits: [],
+      provenance: {
+        source: `${FIXTURE_LABEL}: assessor parcels`,
+        sourceRecordId: apn,
+        sourceUrl: `${FIXTURE_URL}/parcel/${apn}`,
+        fetchedAt,
+      },
+    });
+  }
   return out;
 }
 
