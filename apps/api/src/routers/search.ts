@@ -51,6 +51,7 @@ export const searchRouter = router({
         agedRoofCount: found.agedRoofCount,
         openPermitCount: found.openPermitCount,
         candidates,
+        coverageNote: found.coverageNote ?? null,
         asOf: found.asOf,
         elapsedMs: Date.now() - started,
       };

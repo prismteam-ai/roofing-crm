@@ -83,6 +83,8 @@ export const searchResultSchema = z.object({
   agedRoofCount: z.number().int(),
   openPermitCount: z.number().int(),
   candidates: z.array(candidateSchema),
+  /** Set when part of the search area has no permit data; the UI must show it. */
+  coverageNote: z.string().nullable(),
   asOf: z.string(),
   elapsedMs: z.number(),
 });
