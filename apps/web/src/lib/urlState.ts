@@ -93,6 +93,14 @@ export function clampRadius(miles: number): number {
 
 export const inCounty = (point: Point): boolean => inBBox(point, DEFAULT_COUNTY.bbox);
 
+/** True when the link names a point that is a real coordinate but lies outside the county. */
+export function linkPinOutsideCounty(search: string): boolean {
+  const q = new URLSearchParams(search);
+  const lat = numberIn(q.get('lat'), -90, 90);
+  const lon = numberIn(q.get('lon'), -180, 180);
+  return lat !== null && lon !== null && !inCounty({ lat, lon });
+}
+
 /** Reads state from a query string. Anything missing or invalid falls back to its default. */
 export function parseUrlState(search: string): UrlState {
   const q = new URLSearchParams(search);

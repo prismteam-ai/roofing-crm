@@ -15,6 +15,8 @@ interface NumberFieldProps {
   testId: string;
   className?: string;
   onCommit: (value: number | null) => void;
+  /** Told whenever the typed text stops or starts being a valid value. */
+  onValidity?: (invalid: boolean) => void;
 }
 
 function parse(
@@ -50,6 +52,11 @@ export function NumberField(props: NumberFieldProps) {
 
   const parsed = parse(text, props);
   const invalid = text.trim() === '' ? !allowEmpty : parsed === null;
+  const errorId = `${id}-error`;
+  const { onValidity } = props;
+  useEffect(() => {
+    onValidity?.(invalid);
+  }, [invalid, onValidity]);
 
   return (
     <div className={`field ${props.className ?? ''}`}>
@@ -68,6 +75,7 @@ export function NumberField(props: NumberFieldProps) {
           disabled={disabled}
           placeholder={placeholder}
           aria-invalid={invalid || undefined}
+          aria-describedby={invalid ? errorId : undefined}
           data-testid={testId}
           onChange={(event) => {
             const next = event.target.value;
@@ -82,6 +90,11 @@ export function NumberField(props: NumberFieldProps) {
         />
         {suffix && <span className="field-suffix">{suffix}</span>}
       </div>
+      {invalid && (
+        <span className="field-error" id={errorId} role="alert" data-testid={`${testId}-error`}>
+          Enter {props.integer ? 'a whole number' : 'a number'} from {min} to {max}
+        </span>
+      )}
     </div>
   );
 }

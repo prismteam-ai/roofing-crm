@@ -126,6 +126,83 @@ export function tidyContractor(name: string): string {
     .join(', ');
 }
 
+/** `unit` is being added to the contract; read it without depending on the schema version. */
+interface MaybeUnit {
+  unit?: string | null;
+}
+
+export function unitOf(record: object): string | null {
+  const unit = (record as MaybeUnit).unit;
+  return typeof unit === 'string' && unit.trim() !== '' ? unit.trim() : null;
+}
+
+/** "700 FRONT ST #1204" when the record carries a unit, otherwise the street address. */
+export function titleWithUnit(address: string | null, apn: string, record: object): string {
+  const unit = unitOf(record);
+  const base = addressLine(address, apn);
+  if (!unit) return base;
+  return `${base} ${/^(#|unit|apt|ste|suite)/i.test(unit) ? unit : `#${unit}`}`;
+}
+
+export const USE_CODE_HINT = 'County assessor land-use code';
+
+/**
+ * The source gives land use as a bare assessor code. Show it as a code, with a hint, rather
+ * than inventing a name for it.
+ */
+export function useTypeLabel(useType: string | null): { text: string; hint: string | null } | null {
+  if (!useType) return null;
+  const code = /^assessor use code\s+(\S+)$/i.exec(useType.trim());
+  return code
+    ? { text: `Use code ${code[1] ?? ''}`, hint: USE_CODE_HINT }
+    : { text: useType, hint: null };
+}
+
+/** True for links that download a whole dataset (hundreds of MB) rather than open one record. */
+export function isBulkFileUrl(url: string): boolean {
+  try {
+    return /\.(csv|tsv|zip|gz|xlsx?|parquet|geojson)$/i.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
+
+export function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
+export function bbbSearchUrl(contractorName: string): string {
+  const firm = contractorName.split(',')[0]?.trim() ?? contractorName;
+  const query = new URLSearchParams({ find_text: firm, find_loc: 'San Diego, CA' });
+  return `https://www.bbb.org/search?${query.toString().replaceAll('+', '%20')}`;
+}
+
+export type PermitStatusGroup =
+  'open' | 'pending' | 'completed' | 'expired' | 'cancelled' | 'other';
+
+const STATUS_GROUP_LABEL: Record<PermitStatusGroup, string> = {
+  open: 'Open',
+  pending: 'Pending (applied, not issued)',
+  completed: 'Completed',
+  expired: 'Expired',
+  cancelled: 'Cancelled',
+  other: 'Other',
+};
+
+/** The pipeline's status group for a permit; unknown or missing values read as "other". */
+export function permitStatusGroup(statusGroup: string | null | undefined): PermitStatusGroup {
+  const value = statusGroup?.toLowerCase();
+  return value !== undefined && value in STATUS_GROUP_LABEL
+    ? (value as PermitStatusGroup)
+    : 'other';
+}
+
+export const statusGroupLabel = (group: PermitStatusGroup): string => STATUS_GROUP_LABEL[group];
+
 export function addressLine(address: string | null, apn: string): string {
   return address ?? `APN ${apn} (no address in source data)`;
 }

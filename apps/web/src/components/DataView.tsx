@@ -6,6 +6,15 @@ import { Notice, Spinner } from './fields.js';
 const isHttpUrl = (url: string | null): url is string => url !== null && /^https?:\/\//i.test(url);
 const isCid = (cid: string): boolean => /^[A-Za-z0-9]{32,120}$/.test(cid);
 
+/** Public gateways for the manifest. Plain-HTTP ones first: they also work from scripts. */
+const GATEWAYS: readonly { host: string; kind: string }[] = [
+  { host: 'latam.orbitor.dev', kind: 'independent gateway, plain HTTP' },
+  { host: 'gateway.pinata.cloud', kind: 'pinning vendor, plain HTTP' },
+  { host: 'ipfs.filebase.io', kind: 'pinning vendor, plain HTTP' },
+  { host: 'ipfs.io', kind: 'interactive browsers only' },
+  { host: 'dweb.link', kind: 'interactive browsers only' },
+];
+
 /** What the CRM is standing on: record counts, sources and their limits, published manifest. */
 export function DataView() {
   const trpc = useTRPC();
@@ -143,25 +152,29 @@ export function DataView() {
           <section aria-labelledby="data-manifest">
             <h3 id="data-manifest">Published manifest</h3>
             {data.manifestCid && isCid(data.manifestCid) ? (
-              <p data-testid="data-manifest">
-                Content ID <code>{data.manifestCid}</code>
-                <br />
-                <a
-                  href={`https://ipfs.io/ipfs/${data.manifestCid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open on ipfs.io
-                </a>{' '}
-                &middot;{' '}
-                <a
-                  href={`https://dweb.link/ipfs/${data.manifestCid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open on dweb.link
-                </a>
-              </p>
+              <div data-testid="data-manifest">
+                <p>
+                  Content ID <code>{data.manifestCid}</code>
+                </p>
+                <ul className="gateways">
+                  {GATEWAYS.map((gateway) => (
+                    <li key={gateway.host}>
+                      <a
+                        href={`https://${gateway.host}/ipfs/${data.manifestCid ?? ''}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open on {gateway.host}
+                      </a>{' '}
+                      <span className="muted">({gateway.kind})</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="muted" data-testid="data-manifest-note">
+                  ipfs.io and dweb.link serve only interactive browsers (they show a bot check to
+                  scripts); the first three gateways return the file over plain HTTP.
+                </p>
+              </div>
             ) : (
               <p className="muted" data-testid="data-manifest-none">
                 No manifest has been published for this dataset.

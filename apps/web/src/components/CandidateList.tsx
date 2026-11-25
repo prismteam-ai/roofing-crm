@@ -4,9 +4,8 @@ import {
   type Lead,
   type SearchResult,
 } from '@roofing-crm/shared';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  addressLine,
   candidateKind,
   formatCount,
   formatMiles,
@@ -17,6 +16,8 @@ import {
   tidyContractor,
   roofAgeText,
   roofBasisText,
+  titleWithUnit,
+  useTypeLabel,
 } from '../lib/format.js';
 import type { SearchFilters } from '../lib/urlState.js';
 import { Notice, Spinner } from './fields.js';
@@ -78,7 +79,8 @@ function CandidateRow(props: RowProps) {
   if (lead && leadSeenAt.current === null) leadSeenAt.current = Date.now();
   if (!lead) leadSeenAt.current = null;
   const kind = candidateKind(c, props.roofAgeThreshold);
-  const address = addressLine(c.address, c.apn);
+  const address = titleWithUnit(c.address, c.apn, c);
+  const useType = useTypeLabel(c.useType);
   const long = isLongOpen(c.longestOpenDays);
   const reasons =
     c.scoreReasons.length > 0 ? c.scoreReasons : ['No scoring signals at this threshold'];
@@ -111,8 +113,20 @@ function CandidateRow(props: RowProps) {
           {address}
         </button>
         <div className="cand-sub">
-          {[c.city, c.zip].filter(Boolean).join(' ')} &middot; {formatMiles(c.distanceMiles)}
-          {c.useType ? <> &middot; {c.useType}</> : null}
+          {[c.city, c.zip].filter(Boolean).join(' ')} &middot; {formatMiles(c.distanceMiles)}{' '}
+          &middot;{' '}
+          <span className="cand-apn" data-testid="candidate-apn">
+            APN {c.apn}
+          </span>
+          {useType && (
+            <>
+              {' '}
+              &middot;{' '}
+              <span className="cand-use" title={useType.hint ?? undefined}>
+                {useType.text}
+              </span>
+            </>
+          )}
         </div>
         <div className="cand-signals">
           <span className="cand-roof" data-testid="candidate-roof">
@@ -215,6 +229,169 @@ function CandidateRow(props: RowProps) {
   );
 }
 
+export interface CandidateGroup {
+  /** APN of the first member: stable for a given result order. */
+  key: string;
+  address: string | null;
+  members: Candidate[];
+}
+
+/**
+ * Condo towers come back as one row per unit with the same street address. Consecutive rows
+ * that share an address become one group, best score first, so 40 identical-looking rows read
+ * as "700 FRONT ST · 40 units". Rows without an address are never grouped.
+ */
+export function groupCandidates(candidates: readonly Candidate[]): CandidateGroup[] {
+  const groups: CandidateGroup[] = [];
+  for (const c of candidates) {
+    const last = groups.at(-1);
+    const first = last?.members[0];
+    if (
+      last &&
+      first &&
+      c.address !== null &&
+      first.address === c.address &&
+      first.city === c.city
+    ) {
+      last.members.push(c);
+    } else {
+      groups.push({ key: c.apn, address: c.address, members: [c] });
+    }
+  }
+  for (const group of groups) {
+    if (group.members.length > 1) {
+      group.members.sort((a, b) => b.score - a.score || a.apn.localeCompare(b.apn));
+    }
+  }
+  return groups;
+}
+
+interface GroupRowProps {
+  group: CandidateGroup;
+  roofAgeThreshold: number;
+  expanded: boolean;
+  checkedCount: number;
+  leadCount: number;
+  pending: boolean;
+  onToggle: () => void;
+  onCheckAll: (checked: boolean) => void;
+  onAddAll: () => void;
+  children: ReactNode;
+}
+
+function GroupRow(props: GroupRowProps) {
+  const { group, expanded } = props;
+  const units = group.members;
+  const best = units[0];
+  const checkRef = useRef<HTMLInputElement | null>(null);
+  const some = props.checkedCount > 0 && props.checkedCount < units.length;
+  useEffect(() => {
+    if (checkRef.current) checkRef.current.indeterminate = some;
+  }, [some]);
+  if (!best) return null;
+
+  const address = group.address ?? `APN ${best.apn}`;
+  const ages = units.flatMap((c) => (c.roofAgeYears === null ? [] : [c.roofAgeYears]));
+  const minAge = Math.min(...ages);
+  const maxAge = Math.max(...ages);
+  const withPermit = units.filter((c) => c.openRoofPermits > 0).length;
+  const toAdd = units.length - props.leadCount;
+
+  return (
+    <li
+      className={`cand-group${expanded ? ' is-open' : ''}`}
+      data-testid="candidate-group"
+      data-address={address}
+      data-units={units.length}
+    >
+      <div className={`cand kind-${candidateKind(best, props.roofAgeThreshold)}`}>
+        <input
+          type="checkbox"
+          className="cand-check"
+          ref={checkRef}
+          checked={props.checkedCount === units.length}
+          aria-label={`Select all ${String(units.length)} units at ${address} for bulk convert`}
+          data-testid="group-check"
+          onChange={(event) => {
+            props.onCheckAll(event.target.checked);
+          }}
+        />
+        <div className="cand-main">
+          <button
+            type="button"
+            className="cand-title"
+            aria-expanded={expanded}
+            data-testid="group-toggle"
+            onClick={props.onToggle}
+          >
+            {address} <span className="group-count">&middot; {units.length} units</span>
+          </button>
+          <div className="cand-sub">
+            {[best.city, best.zip].filter(Boolean).join(' ')} &middot;{' '}
+            {formatMiles(best.distanceMiles)} &middot; {units.length} separate parcels at this
+            address
+          </div>
+          <div className="cand-signals">
+            <span className="cand-roof">
+              <strong>
+                {ages.length === 0
+                  ? 'Roof age unknown'
+                  : minAge === maxAge
+                    ? roofAgeText(minAge)
+                    : `Roofs ~${String(minAge)} to ${String(maxAge)} yrs`}
+              </strong>
+            </span>
+            {withPermit > 0 && (
+              <span className="badge badge-permit">{withPermit} with an open roofing permit</span>
+            )}
+            {props.leadCount > 0 && (
+              <span className="muted">
+                {props.leadCount} of {units.length} already leads
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="cand-side">
+          <span
+            className={`score score-static score-${best.score >= 60 ? 'high' : best.score >= 30 ? 'mid' : 'low'}`}
+          >
+            <span className="score-label">Best</span> {best.score}
+          </span>
+          <div className="cand-actions">
+            <button
+              type="button"
+              className="btn btn-small"
+              aria-expanded={expanded}
+              data-testid="group-expand"
+              onClick={props.onToggle}
+            >
+              {expanded ? 'Hide units' : 'Show units'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-small btn-primary"
+              data-testid="group-add-all"
+              disabled={toAdd === 0 || props.pending}
+              onClick={props.onAddAll}
+            >
+              {toAdd === 0
+                ? 'All are leads \u2713'
+                : props.pending
+                  ? 'Adding\u2026'
+                  : `Add all ${String(toAdd)} as leads`}
+            </button>
+          </div>
+        </div>
+      </div>
+      {expanded && (
+        <ul className="cand-units" aria-label={`Units at ${address}`} data-testid="group-units">
+          {props.children}
+        </ul>
+      )}
+    </li>
+  );
+}
+
 /** Browsable list of the properties the current pin, radius and filters matched. */
 export function CandidateList(props: CandidateListProps) {
   const { result, selectedApn, leadByApn } = props;
@@ -223,10 +400,15 @@ export function CandidateList(props: CandidateListProps) {
   const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
   const listRef = useRef<HTMLUListElement | null>(null);
 
-  const pageCount = Math.max(1, Math.ceil(candidates.length / PAGE_SIZE));
+  const groups = useMemo(() => groupCandidates(candidates), [candidates]);
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(new Set());
+
+  // Paging counts rows on screen (a group is one row), not properties.
+  const pageCount = Math.max(1, Math.ceil(groups.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const start = safePage * PAGE_SIZE;
-  const visible = candidates.slice(start, start + PAGE_SIZE);
+  const visibleGroups = groups.slice(start, start + PAGE_SIZE);
+  const visible = visibleGroups.flatMap((group) => group.members);
 
   // New result set: back to the first page, and forget ticks for rows that are gone.
   useEffect(() => {
@@ -241,9 +423,16 @@ export function CandidateList(props: CandidateListProps) {
   // Selection from the map: turn to the row's page, then scroll it into view.
   useEffect(() => {
     if (!selectedApn) return;
-    const index = candidates.findIndex((c) => c.apn === selectedApn);
-    if (index < 0) return;
+    const index = groups.findIndex((group) => group.members.some((c) => c.apn === selectedApn));
+    const group = groups[index];
+    if (!group) return;
     setPage(Math.floor(index / PAGE_SIZE));
+    // A unit picked on the map sits inside a collapsed group: open it so the row exists.
+    if (group.members.length > 1) {
+      setOpenGroups((current) =>
+        current.has(group.key) ? current : new Set([...current, group.key]),
+      );
+    }
     const frame = window.requestAnimationFrame(() => {
       const row = listRef.current?.querySelector(`[data-apn="${CSS.escape(selectedApn)}"]`);
       row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -251,16 +440,18 @@ export function CandidateList(props: CandidateListProps) {
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [selectedApn, candidates]);
+  }, [selectedApn, groups]);
 
   const convertible = candidates.filter((c) => checked.has(c.apn) && !leadByApn.has(c.apn));
   const pageAllChecked = visible.length > 0 && visible.every((c) => checked.has(c.apn));
 
-  const toggle = (apn: string, on: boolean): void => {
+  const toggle = (apns: readonly string[], on: boolean): void => {
     setChecked((current) => {
       const next = new Set(current);
-      if (on) next.add(apn);
-      else next.delete(apn);
+      for (const apn of apns) {
+        if (on) next.add(apn);
+        else next.delete(apn);
+      }
       return next;
     });
   };
@@ -418,30 +609,60 @@ export function CandidateList(props: CandidateListProps) {
         data-testid="candidate-list"
         aria-label="Lead candidates"
       >
-        {visible.map((c) => (
-          <CandidateRow
-            key={c.apn}
-            candidate={c}
-            roofAgeThreshold={props.roofAgeThreshold}
-            selected={c.apn === selectedApn}
-            checked={checked.has(c.apn)}
-            lead={leadByApn.get(c.apn)}
-            pending={props.pendingApns.has(c.apn)}
-            onCheck={(on) => {
-              toggle(c.apn, on);
-            }}
-            onSelect={() => {
-              props.onSelect(c);
-            }}
-            onDetails={() => {
-              props.onDetails(c.apn);
-            }}
-            onAddLead={() => {
-              props.onAddLeads([c]);
-            }}
-            onOpenLead={props.onOpenLead}
-          />
-        ))}
+        {visibleGroups.map((group) => {
+          const rows = group.members.map((c) => (
+            <CandidateRow
+              key={c.apn}
+              candidate={c}
+              roofAgeThreshold={props.roofAgeThreshold}
+              selected={c.apn === selectedApn}
+              checked={checked.has(c.apn)}
+              lead={leadByApn.get(c.apn)}
+              pending={props.pendingApns.has(c.apn)}
+              onCheck={(on) => {
+                toggle([c.apn], on);
+              }}
+              onSelect={() => {
+                props.onSelect(c);
+              }}
+              onDetails={() => {
+                props.onDetails(c.apn);
+              }}
+              onAddLead={() => {
+                props.onAddLeads([c]);
+              }}
+              onOpenLead={props.onOpenLead}
+            />
+          ));
+          if (group.members.length === 1) return rows;
+          const apns = group.members.map((c) => c.apn);
+          return (
+            <GroupRow
+              key={`group-${group.key}`}
+              group={group}
+              roofAgeThreshold={props.roofAgeThreshold}
+              expanded={openGroups.has(group.key)}
+              checkedCount={apns.filter((apn) => checked.has(apn)).length}
+              leadCount={apns.filter((apn) => leadByApn.has(apn)).length}
+              pending={apns.some((apn) => props.pendingApns.has(apn))}
+              onToggle={() => {
+                setOpenGroups((current) => {
+                  const next = new Set(current);
+                  if (!next.delete(group.key)) next.add(group.key);
+                  return next;
+                });
+              }}
+              onCheckAll={(on) => {
+                toggle(apns, on);
+              }}
+              onAddAll={() => {
+                props.onAddLeads(group.members.filter((c) => !leadByApn.has(c.apn)));
+              }}
+            >
+              {rows}
+            </GroupRow>
+          );
+        })}
       </ul>
 
       <nav className="pager" aria-label="Candidate pages">
@@ -457,8 +678,11 @@ export function CandidateList(props: CandidateListProps) {
           Previous
         </button>
         <span data-testid="page-status">
-          {formatCount(start + 1)}&ndash;{formatCount(start + visible.length)} of{' '}
-          {formatCount(candidates.length)}
+          {formatCount(start + 1)}&ndash;{formatCount(start + visibleGroups.length)} of{' '}
+          {formatCount(groups.length)}
+          {groups.length !== candidates.length
+            ? ` rows (${formatCount(candidates.length)} properties)`
+            : ''}
         </span>
         <button
           type="button"

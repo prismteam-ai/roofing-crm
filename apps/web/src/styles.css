@@ -748,6 +748,7 @@ select:disabled {
 
 .split-map {
   position: relative;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -772,11 +773,14 @@ select:disabled {
 
 .map-hint {
   top: 12px;
-  left: 50%;
+  left: 12px;
+  right: 64px;
+  width: fit-content;
+  max-width: calc(100% - 76px);
+  margin-inline: auto;
   padding: 6px 12px;
-  transform: translateX(-50%);
   font-weight: 600;
-  white-space: nowrap;
+  text-align: center;
 }
 
 .map-failed {
@@ -1888,4 +1892,123 @@ table > tbody:last-of-type tr:last-child > * {
   .toast-wrap {
     top: 4px;
   }
+}
+
+/* ---------- Validation, grouped rows, status groups ---------- */
+
+.field {
+  position: relative;
+}
+
+.field-error {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  z-index: 6;
+  width: max-content;
+  max-width: min(340px, 86vw);
+  padding: 3px 8px;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  background: var(--danger-soft);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  box-shadow: var(--shadow);
+}
+
+.summary-invalid {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cand-apn {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cand-use {
+  font-size: 11.5px;
+  cursor: help;
+}
+
+.cand-group {
+  border-bottom: 1px solid var(--border);
+}
+
+.cand-group > .cand {
+  border-bottom: 0;
+}
+
+.cand-group.is-open > .cand {
+  background: var(--surface-2);
+}
+
+.cand-units {
+  margin-left: 18px;
+  border-top: 1px solid var(--border);
+  border-left: 2px solid var(--border-strong);
+}
+
+.cand-units > .cand:last-child {
+  border-bottom: 0;
+}
+
+.group-count {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.score-static {
+  cursor: default;
+}
+
+.badge-status-open {
+  background: var(--permit-soft);
+  color: var(--permit-text);
+}
+
+.badge-status-pending {
+  background: var(--warn-soft);
+  color: var(--warn-text);
+  box-shadow: inset 0 0 0 1px currentcolor;
+}
+
+.badge-status-completed {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+.badge-status-expired,
+.badge-status-cancelled,
+.badge-status-other {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.badge-status-expired {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.bbb-lookup {
+  display: block;
+  margin-top: 3px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gateways {
+  margin: 6px 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.rows-count {
+  color: var(--muted);
+  font-weight: 500;
 }

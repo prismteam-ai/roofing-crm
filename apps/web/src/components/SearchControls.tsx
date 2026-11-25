@@ -1,9 +1,16 @@
-import { MAX_RADIUS_MILES, type Point, type Signal, type Sort } from '@roofing-crm/shared';
-import { useEffect, useId, useState } from 'react';
+import {
+  DEFAULT_COUNTY,
+  MAX_RADIUS_MILES,
+  type Point,
+  type Signal,
+  type Sort,
+} from '@roofing-crm/shared';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { roundCoord } from '../lib/geo.js';
 import { PLACES } from '../lib/places.js';
 import {
   clampRadius,
+  inCounty,
   MIN_OPEN_YEAR_CHOICES,
   MIN_RADIUS_MILES,
   type PermitStatus,
@@ -23,6 +30,8 @@ export interface SearchControlsProps {
   onUseLocation: () => void;
   onSearch: () => void;
   onReset: () => void;
+  /** True while any box holds a value that cannot be searched with. */
+  onValidity: (invalid: boolean) => void;
 }
 
 const SIGNALS: readonly { value: Signal; label: string }[] = [
@@ -56,10 +65,32 @@ function parseCoord(text: string, limit: number): number | null {
   return Number.isFinite(n) && Math.abs(n) <= limit ? n : null;
 }
 
-/** Latitude and longitude boxes: a third way to place the pin, usable from the keyboard alone. */
-function LatLonFields({ pin, onPin }: { pin: Point | null; onPin: (point: Point) => void }) {
+function coordError(text: string, limit: number, name: string): string | null {
+  if (text.trim() === '') return null;
+  return parseCoord(text, limit) === null
+    ? `${name} must be a number from -${String(limit)} to ${String(limit)}.`
+    : null;
+}
+
+const COUNTY = DEFAULT_COUNTY.name.replace(/, [A-Z]{2}$/, '');
+const { bbox: BOX } = DEFAULT_COUNTY;
+
+/**
+ * Latitude and longitude boxes: a third way to place the pin, usable from the keyboard alone.
+ * A value that cannot be used is explained next to the box and never moves the pin.
+ */
+function LatLonFields({
+  pin,
+  onPin,
+  onValidity,
+}: {
+  pin: Point | null;
+  onPin: (point: Point) => void;
+  onValidity: (invalid: boolean) => void;
+}) {
   const latId = useId();
   const lonId = useId();
+  const errorId = useId();
   const [lat, setLat] = useState(pin ? String(pin.lat) : '');
   const [lon, setLon] = useState(pin ? String(pin.lon) : '');
 
@@ -69,10 +100,31 @@ function LatLonFields({ pin, onPin }: { pin: Point | null; onPin: (point: Point)
     setLon((current) => (parseCoord(current, 180) === pin.lon ? current : String(pin.lon)));
   }, [pin]);
 
+  const a = parseCoord(lat, 90);
+  const b = parseCoord(lon, 180);
+  const latError =
+    coordError(lat, 90, 'Latitude') ?? (pin && lat.trim() === '' ? 'Enter a latitude.' : null);
+  const lonError =
+    coordError(lon, 180, 'Longitude') ?? (pin && lon.trim() === '' ? 'Enter a longitude.' : null);
+  const outside = a !== null && b !== null && !inCounty({ lat: a, lon: b });
+  const error =
+    latError ??
+    lonError ??
+    (outside
+      ? `That point is outside ${COUNTY} (latitude ${String(BOX.minLat)} to ${String(BOX.maxLat)}, longitude ${String(BOX.minLon)} to ${String(BOX.maxLon)}). The pin was not moved.`
+      : null);
+  const invalid = error !== null;
+
+  useEffect(() => {
+    onValidity(invalid);
+  }, [invalid, onValidity]);
+
   const commit = (nextLat: string, nextLon: string): void => {
-    const a = parseCoord(nextLat, 90);
-    const b = parseCoord(nextLon, 180);
-    if (a !== null && b !== null) onPin({ lat: roundCoord(a), lon: roundCoord(b) });
+    const y = parseCoord(nextLat, 90);
+    const x = parseCoord(nextLon, 180);
+    if (y === null || x === null) return;
+    const point = { lat: roundCoord(y), lon: roundCoord(x) };
+    if (inCounty(point)) onPin(point);
   };
 
   return (
@@ -88,12 +140,19 @@ function LatLonFields({ pin, onPin }: { pin: Point | null; onPin: (point: Point)
           step="any"
           placeholder="32.7157"
           value={lat}
+          aria-invalid={latError !== null || outside || undefined}
+          aria-describedby={invalid ? errorId : undefined}
           data-testid="lat-input"
           onChange={(event) => {
             setLat(event.target.value);
             commit(event.target.value, lon);
           }}
         />
+        {error && (
+          <span className="field-error" id={errorId} role="alert" data-testid="latlon-error">
+            {error}
+          </span>
+        )}
       </div>
       <div className="field field-coord">
         <label htmlFor={lonId} className="field-label">
@@ -106,6 +165,8 @@ function LatLonFields({ pin, onPin }: { pin: Point | null; onPin: (point: Point)
           step="any"
           placeholder="-117.1611"
           value={lon}
+          aria-invalid={lonError !== null || outside || undefined}
+          aria-describedby={invalid ? errorId : undefined}
           data-testid="lon-input"
           onChange={(event) => {
             setLon(event.target.value);
@@ -121,6 +182,39 @@ function LatLonFields({ pin, onPin }: { pin: Point | null; onPin: (point: Point)
 export function SearchControls(props: SearchControlsProps) {
   const { pin, radiusMiles, filters } = props;
   const sliderId = useId();
+  const [badFields, setBadFields] = useState<ReadonlySet<string>>(new Set());
+  const { onValidity } = props;
+  const mark = useCallback((field: string, invalid: boolean) => {
+    setBadFields((current) => {
+      if (current.has(field) === invalid) return current;
+      const next = new Set(current);
+      if (invalid) next.add(field);
+      else next.delete(field);
+      return next;
+    });
+  }, []);
+  const markCoords = useCallback(
+    (invalid: boolean) => {
+      mark('coords', invalid);
+    },
+    [mark],
+  );
+  const markRadius = useCallback(
+    (invalid: boolean) => {
+      mark('radius', invalid);
+    },
+    [mark],
+  );
+  const markAge = useCallback(
+    (invalid: boolean) => {
+      mark('age', invalid);
+    },
+    [mark],
+  );
+  const anyInvalid = badFields.size > 0;
+  useEffect(() => {
+    onValidity(anyInvalid);
+  }, [anyInvalid, onValidity]);
   const activePlace = pin
     ? PLACES.find((place) => place.lat === pin.lat && place.lon === pin.lon)?.id
     : undefined;
@@ -167,7 +261,7 @@ export function SearchControls(props: SearchControlsProps) {
       </div>
 
       <div className="controls-row">
-        <LatLonFields pin={pin} onPin={props.onPin} />
+        <LatLonFields pin={pin} onPin={props.onPin} onValidity={markCoords} />
 
         <div className="field field-radius">
           <label htmlFor={sliderId} className="field-label">
@@ -194,6 +288,7 @@ export function SearchControls(props: SearchControlsProps) {
               max={MAX_RADIUS_MILES}
               step={0.25}
               testId="radius-input"
+              onValidity={markRadius}
               onCommit={(value) => {
                 if (value !== null) props.onRadius(clampRadius(value));
               }}
@@ -234,6 +329,7 @@ export function SearchControls(props: SearchControlsProps) {
           integer
           suffix="yrs"
           testId="roof-age-input"
+          onValidity={markAge}
           onCommit={(value) => {
             if (value !== null) props.onFilters({ minRoofAgeYears: value });
           }}
@@ -271,8 +367,10 @@ export function SearchControls(props: SearchControlsProps) {
             type="submit"
             className="btn btn-primary"
             data-testid="search-button"
-            disabled={!pin}
-            title={pin ? undefined : 'Drop a pin first'}
+            disabled={!pin || anyInvalid}
+            title={
+              anyInvalid ? 'Fix the highlighted input first' : pin ? undefined : 'Drop a pin first'
+            }
           >
             {props.searching ? 'Searching…' : 'Search this area'}
           </button>

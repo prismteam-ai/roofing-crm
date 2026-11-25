@@ -10,16 +10,23 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useTRPC } from '../lib/api.js';
 import {
-  addressLine,
+  bbbSearchUrl,
   describeError,
   formatDate,
   formatDateTime,
   formatOpenDuration,
+  hostOf,
+  isBulkFileUrl,
   isLongOpen,
   isPossiblyStale,
+  permitStatusGroup,
   roofBasisText,
   STALE_HINT,
+  statusGroupLabel,
   tidyContractor,
+  titleWithUnit,
+  unitOf,
+  useTypeLabel,
 } from '../lib/format.js';
 import { leadFromProperty } from '../lib/leadDraft.js';
 import { Notice, Spinner } from './fields.js';
@@ -41,17 +48,35 @@ function isHttpUrl(url: string | null): url is string {
   return url !== null && /^https?:\/\//i.test(url);
 }
 
-/** Where a record came from. Always rendered, so no figure on screen is unattributed. */
+/**
+ * Where a record came from. Always rendered, so no figure on screen is unattributed. A link to
+ * a whole-dataset download is labelled as such, so nobody starts a 400 MB download by accident.
+ */
 function SourceLine({ provenance, testId }: { provenance: Provenance; testId: string }) {
+  const url = isHttpUrl(provenance.sourceUrl) ? provenance.sourceUrl : null;
+  const bulk = url !== null && isBulkFileUrl(url);
   return (
     <p className="source" data-testid={testId}>
       <span className="source-tag">Source</span>{' '}
-      {isHttpUrl(provenance.sourceUrl) ? (
-        <a href={provenance.sourceUrl} target="_blank" rel="noopener noreferrer">
+      {url === null ? (
+        provenance.source
+      ) : bulk ? (
+        <>
+          {provenance.source}:{' '}
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Opens the whole published dataset, which can be several hundred MB. Find this record in it by the record id."
+            data-testid="source-bulk"
+          >
+            Source dataset (bulk file, {hostOf(url)})
+          </a>
+        </>
+      ) : (
+        <a href={url} target="_blank" rel="noopener noreferrer">
           {provenance.source}
         </a>
-      ) : (
-        provenance.source
       )}
       {provenance.sourceRecordId ? ` · record ${provenance.sourceRecordId}` : ''}
       {provenance.fetchedAt ? ` · fetched ${formatDateTime(provenance.fetchedAt)}` : ''}
@@ -94,7 +119,60 @@ function BbbCell({ permit }: { permit: Permit }) {
       </>
     );
   }
-  return <span className="muted">{c.bbbNote ?? 'No BBB rating in the source data.'}</span>;
+  return (
+    <>
+      <span className="muted">{c.bbbNote ?? 'No BBB rating in the source data.'}</span>
+      {c.name && (
+        <a
+          className="bbb-lookup"
+          href={bbbSearchUrl(c.name)}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Searches bbb.org for this contractor name. A profile or rating may not exist."
+          data-testid="bbb-lookup"
+        >
+          Look up on BBB
+        </a>
+      )}
+    </>
+  );
+}
+
+/** Status badge and duration line, from the pipeline's status group. */
+function PermitStatus({ permit }: { permit: Permit }) {
+  const group = permitStatusGroup(
+    (permit as { statusGroup?: string | null }).statusGroup ?? (permit.isOpen ? 'open' : null),
+  );
+  const running = permit.isOpen || group === 'open' || group === 'pending';
+  const label = statusGroupLabel(group);
+  return (
+    <>
+      <span
+        className={`badge badge-status-${group}${running && isLongOpen(permit.daysOpen) ? ' badge-long' : ''}`}
+        data-testid="permit-status-badge"
+        data-status-group={group}
+      >
+        {label}
+      </span>
+      {permit.status && permit.status.toLowerCase() !== label.toLowerCase() && (
+        <div className="muted">Source status: {permit.status}</div>
+      )}
+      <div className="muted" data-testid="permit-duration">
+        {running
+          ? formatOpenDuration(permit.daysOpen)
+          : permit.closedDate && permit.daysOpen !== null
+            ? `closed after ${String(permit.daysOpen)} days`
+            : permit.closedDate
+              ? 'closed'
+              : 'no close date in source'}
+      </div>
+      {running && isPossiblyStale(permit.daysOpen) && (
+        <div className="stale-hint" title={STALE_HINT} data-testid="permit-stale">
+          possibly a stale record
+        </div>
+      )}
+    </>
+  );
 }
 
 function PermitRows({
@@ -129,25 +207,7 @@ function PermitRows({
           </div>
         </td>
         <td data-label="Status">
-          <span
-            className={`badge ${permit.isOpen ? 'badge-permit' : 'badge-closed'}${permit.isOpen && isLongOpen(permit.daysOpen) ? ' badge-long' : ''}`}
-          >
-            {permit.status ?? (permit.isOpen ? 'Open' : 'Closed')}
-          </span>
-          <div className="muted" data-testid="permit-duration">
-            {permit.isOpen
-              ? formatOpenDuration(permit.daysOpen)
-              : permit.closedDate && permit.daysOpen !== null
-                ? `closed after ${String(permit.daysOpen)} days`
-                : permit.closedDate
-                  ? 'closed'
-                  : 'not counted as open; no close date in source'}
-          </div>
-          {permit.isOpen && isPossiblyStale(permit.daysOpen) && (
-            <div className="stale-hint" title={STALE_HINT} data-testid="permit-stale">
-              possibly a stale record
-            </div>
-          )}
+          <PermitStatus permit={permit} />
         </td>
         <td className="permit-dates" data-label="Dates">
           <div>
@@ -213,6 +273,7 @@ function sortPermits(permits: readonly Permit[]): Permit[] {
 function DetailBody(props: PropertyDrawerProps & { detail: PropertyDetail }) {
   const { detail, lead } = props;
   const permits = sortPermits(detail.permits);
+  const useType = useTypeLabel(detail.useType);
   const occupied =
     detail.ownerOccupied === null
       ? NOT_IN_SOURCE
@@ -283,7 +344,14 @@ function DetailBody(props: PropertyDrawerProps & { detail: PropertyDetail }) {
           </Fact>
           <Fact label="Confidence">{detail.roofConfidence ?? 'Not rated'}</Fact>
           <Fact label="Year built">{detail.yearBuilt ?? NOT_IN_SOURCE}</Fact>
-          <Fact label="Use type">{detail.useType ?? NOT_IN_SOURCE}</Fact>
+          <Fact label="Use type">
+            {useType ? (
+              <span title={useType.hint ?? undefined}>{useType.text}</span>
+            ) : (
+              NOT_IN_SOURCE
+            )}
+          </Fact>
+          {unitOf(detail) && <Fact label="Unit">{unitOf(detail)}</Fact>}
           <Fact label="Coordinates">
             {detail.lat.toFixed(5)}, {detail.lon.toFixed(5)}
           </Fact>
@@ -378,7 +446,7 @@ export function PropertyDrawer(props: PropertyDrawerProps) {
         <div>
           <p className="eyebrow">Property</p>
           <h2 id="drawer-title" data-testid="drawer-title">
-            {detail ? addressLine(detail.address, detail.apn) : `APN ${props.apn}`}
+            {detail ? titleWithUnit(detail.address, detail.apn, detail) : `APN ${props.apn}`}
           </h2>
           {detail && (
             <p className="muted">{[detail.city, 'CA', detail.zip].filter(Boolean).join(' ')}</p>

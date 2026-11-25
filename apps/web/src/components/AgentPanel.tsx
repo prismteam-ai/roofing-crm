@@ -37,9 +37,12 @@ function cellText(value: unknown): string {
 
 function ResultTable({
   rows,
+  retrieved,
   onOpenProperty,
 }: {
   rows: AgentAnswer['rows'];
+  /** How many rows the tools returned in all; the table may hold fewer. */
+  retrieved: number;
   onOpenProperty: (apn: string) => void;
 }) {
   const [showAll, setShowAll] = useState(false);
@@ -47,7 +50,14 @@ function ResultTable({
   const shown = showAll ? rows : rows.slice(0, ROWS_SHOWN);
   return (
     <section aria-labelledby="agent-rows-title" data-testid="agent-rows">
-      <h4 id="agent-rows-title">Result rows ({rows.length})</h4>
+      <h4 id="agent-rows-title">
+        Result rows{' '}
+        <span className="rows-count" data-testid="agent-rows-count">
+          {retrieved > shown.length
+            ? `(showing ${String(shown.length)} of ${String(retrieved)} retrieved)`
+            : `(${String(rows.length)})`}
+        </span>
+      </h4>
       <div className="table-scroll">
         <table className="mini-table">
           <thead>
@@ -178,7 +188,11 @@ function Answer({ answer, props }: { answer: AgentAnswer; props: AgentPanelProps
       )}
 
       {answer.rows.length > 0 && (
-        <ResultTable rows={answer.rows} onOpenProperty={props.onOpenProperty} />
+        <ResultTable
+          rows={answer.rows}
+          retrieved={Math.max(answer.rows.length, ...answer.evidence.map((item) => item.rowCount))}
+          onOpenProperty={props.onOpenProperty}
+        />
       )}
 
       {!notConfigured && (

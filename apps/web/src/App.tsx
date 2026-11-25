@@ -30,7 +30,14 @@ import {
 import { roundCoord } from './lib/geo.js';
 import { leadFromCandidate } from './lib/leadDraft.js';
 import { DEFAULT_PIN } from './lib/places.js';
-import { DEFAULT_FILTERS, inCounty, parseUrlState, type Panel, type View } from './lib/urlState.js';
+import {
+  DEFAULT_FILTERS,
+  inCounty,
+  linkPinOutsideCounty,
+  parseUrlState,
+  type Panel,
+  type View,
+} from './lib/urlState.js';
 import { useDebouncedValue } from './lib/useDebouncedValue.js';
 import { useLeadBook, type NoticeKind } from './lib/useLeadBook.js';
 import { useUrlState } from './lib/useUrlState.js';
@@ -38,6 +45,8 @@ import { useUrlState } from './lib/useUrlState.js';
 /** One request returns everything the list pages through; the API caps it at 500. */
 export const SEARCH_LIMIT = 500;
 const SEARCH_DEBOUNCE_MS = 350;
+
+const COUNTY_SHORT = DEFAULT_COUNTY.name.replace(/, [A-Z]{2}$/, '');
 
 const VIEW_TITLE: Record<View, string> = { map: 'Lead Map', leads: 'Leads', data: 'Data' };
 
@@ -47,7 +56,15 @@ interface Toast {
   text: string;
 }
 
-function SummaryStrip({ result, stale }: { result: SearchResult | undefined; stale: boolean }) {
+function SummaryStrip({
+  result,
+  stale,
+  invalid,
+}: {
+  result: SearchResult | undefined;
+  stale: boolean;
+  invalid: boolean;
+}) {
   const cell = (value: string | undefined): string => value ?? '–';
   return (
     <dl
@@ -82,6 +99,11 @@ function SummaryStrip({ result, stale }: { result: SearchResult | undefined; sta
           {cell(result && `${String(Math.round(result.elapsedMs))} ms`)}
         </dd>
       </div>
+      {invalid && (
+        <div className="summary-invalid" role="status" data-testid="results-stale">
+          Not updated: these results are for the last valid search. Fix the highlighted input.
+        </div>
+      )}
     </dl>
   );
 }
@@ -167,7 +189,12 @@ export function App() {
   const [mobilePane, setMobilePane] = useState<'map' | 'panel'>('map');
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [locating, setLocating] = useState(false);
-  const [locationMessage, setLocationMessage] = useState<string | null>(null);
+  const [locationMessage, setLocationMessage] = useState<string | null>(() =>
+    linkPinOutsideCounty(window.location.search)
+      ? `That point is outside ${COUNTY_SHORT}; showing ${DEFAULT_PIN.name} instead.`
+      : null,
+  );
+  const [inputInvalid, setInputInvalid] = useState(false);
 
   const searchInput = useMemo<SearchInput | null>(
     () =>
@@ -398,6 +425,7 @@ export function App() {
               onReset={() => {
                 setUrl({ filters: DEFAULT_FILTERS });
               }}
+              onValidity={setInputInvalid}
             />
           </div>
 
@@ -422,7 +450,7 @@ export function App() {
             </Notice>
           )}
 
-          <SummaryStrip result={result} stale={waiting} />
+          <SummaryStrip result={result} stale={waiting || inputInvalid} invalid={inputInvalid} />
 
           {result?.coverageNote && (
             <Notice kind="info" testId="coverage-note">
@@ -532,7 +560,7 @@ export function App() {
                   hasPin={pin !== null}
                   result={result}
                   isLoading={search.isLoading}
-                  isFetching={waiting}
+                  isFetching={waiting || inputInvalid}
                   error={searchError}
                   roofAgeThreshold={filters.minRoofAgeYears}
                   selectedApn={selected?.apn ?? null}
