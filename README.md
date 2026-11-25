@@ -1,7 +1,7 @@
 # Roofing CRM & Lead Identification UI
 
 **Live app (public, no login):** https://main.d3dhgfb9bfhbhb.amplifyapp.com
-**Credentials:** none needed. Each browser gets its own lead book.
+**Credentials:** none needed. The app gives each browser its own lead book (a random workspace id it sends with every call).
 **Demo video:** _link added with the Ready for Review PR_
 **Companion PR (data pipeline):** `oracle-property-intelligence-platform-pipeline-san-diego-ca`, whose MCP endpoint this app reads from: https://mywcppj2yl.execute-api.us-east-2.amazonaws.com/mcp
 
@@ -12,7 +12,7 @@ A map-based CRM that finds roofing leads in San Diego County, CA: drop a pin, se
 ```
 Outcome: a salesperson picks a point and a radius and leaves with a ranked, explained list of
          roofing leads saved as CRM records. Measured by the demo transcript below, on real
-         county-scale data (1,087,462 parcels, 1,744,902 permits), on a hosted URL.
+         county-scale data (1,087,462 parcels, 1,756,884 permits in three jurisdictions), on a hosted URL.
 Input:   the Oracle pipeline's published dataset, reached only through its MCP endpoint.
 Steps:   1 Connect   call the Oracle MCP (findRoofingLeads, getOracleProperty, queryAtlas)   move-data   code
          2 Transform validate every response against one shared schema                       check       code
@@ -30,17 +30,17 @@ Shortest path: the CRM does not ingest, clean or store property data. That is th
 
 ## Demo transcript, and where each line happens
 
-| Transcript line                                               | In the app                                                                                                                                                                  |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Open the CRM centered on a particular county                  | Lead Map opens on San Diego County, CA with a first search already run                                                                                                      |
-| Drop a pin (or use GPS) and set a search radius               | Click the map, drag the pin, "Use my location", eight "Jump to" places, or type lat/lon; radius slider and number                                                           |
-| Show roofs older than the age threshold                       | Signal "Aged roof", threshold box (default 15); orange markers; roof age with its basis and confidence on each row                                                          |
-| Highlight open roofing permits, prioritizing long-open        | Signal "Open roofing permit"; ringed markers for 2+ years; "Permit open at least"; sort by open duration                                                                    |
-| Open a property/permit; contractor details and BBB rating     | "Details" opens the drawer: permits table with status, open duration, contractor, CSLB licence, BBB rating or the stated reason it is missing, and a source link per record |
-| Convert one or more matches into CRM lead records             | "Add lead" per row, "Convert selected to leads", or "Create lead from this property / permit"                                                                               |
-| Ask the RAG agent a natural-language query                    | "Ask the agent" tab: answer, assumptions, evidence (tool calls and SQL), result table, "Show on map"                                                                        |
-| Filter leads by roof age, permit status/open duration, radius | Leads view: status, roof age, has open permit, minimum open years, within X miles of the pin                                                                                |
-| Show disabled/placeholder sections                            | Left nav, "Planned, not built yet": seven sections marked "Coming soon"                                                                                                     |
+| Transcript line                                               | In the app                                                                                                                                                                                                                   |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open the CRM centered on a particular county                  | Lead Map opens on San Diego County, CA with a first search already run                                                                                                                                                       |
+| Drop a pin (or use GPS) and set a search radius               | Click the map, drag the pin, "Use my location", eight "Jump to" places, or type lat/lon; radius slider and number                                                                                                            |
+| Show roofs older than the age threshold                       | Signal "Aged roof", threshold box (default 15); orange markers; roof age with its basis and confidence on each row                                                                                                           |
+| Highlight open roofing permits, prioritizing long-open        | Signal "Open roofing permit"; ringed markers for 2+ years; "Permit open at least"; sort by open duration                                                                                                                     |
+| Open a property/permit; contractor details and BBB rating     | "Details" opens the drawer: permits table with status, open duration, contractor, CSLB licence, BBB rating or the stated reason it is missing with a BBB look-up link, and the source dataset and record id for every record |
+| Convert one or more matches into CRM lead records             | "Add lead" per row, "Convert selected to leads", or "Create lead from this property / permit"                                                                                                                                |
+| Ask the RAG agent a natural-language query                    | "Ask the agent" tab: answer, assumptions, evidence (tool calls and SQL), result table, "Show on map"                                                                                                                         |
+| Filter leads by roof age, permit status/open duration, radius | Leads view: status, roof age, has open permit, minimum open years, within X miles of the pin                                                                                                                                 |
+| Show disabled/placeholder sections                            | Left nav, "Planned, not built yet": seven sections marked "Coming soon"                                                                                                                                                      |
 
 ## Run it
 
@@ -92,7 +92,7 @@ packages/api-client  the single tRPC client
 
 ## Known limits, stated plainly
 
-- **Permit coverage.** Permit data exists for the City of San Diego and the unincorporated county (and any further city the pipeline lists under Data). Elsewhere the app shows aged roofs and says that permits are not published for that city, instead of a silent zero.
+- **Permit coverage.** Permit data exists for three of the county's 19 jurisdictions: the City of San Diego, the unincorporated county and Carlsbad (a frozen 2022-2023 snapshot); the Data page lists them with counts. Elsewhere the app shows aged roofs and says that permits are not published for that city, instead of a silent zero.
 - **Roof age is a proxy.** The last completed roofing permit where one exists, otherwise the assessor's effective year. Each row says which, with a confidence.
 - **BBB ratings are not in the data.** There is no bulk source and BBB's terms limit copying; the UI shows the reason instead of a blank. The story puts live BBB integration out of scope.
 - **Owner name and mailing address** are not in any public San Diego source; the drawer says so.
@@ -104,19 +104,22 @@ packages/api-client  the single tRPC client
 
 - Built with Claude Code driving sub-agents; I set the contract (`packages/shared`), the data boundary and the gates, and reviewed what came back.
 - **Rejected:** a Python data layer (the kit standard is TypeScript; switched before code existed). A first agent draft that passed `temperature: 0` (the model rejects it; found by running against the live model, not by reading). An answer check that flagged permit numbers as unknown parcels (10 digits inside `PDS1992-C-9204551999`; fixed with a test).
+- **Kit agents as reviewers.** The kit's `metagross` definition reviewed this repository read-only (66/100 before fixes) and its `slowking` definition drove the live site line by line (under Claude, not the model the definitions name). The most useful finding: `.gitignore` had `data/`, which silently excluded `apps/api/src/data/mcpOraclePort.ts`, the data boundary itself, so a clean clone would not have built while every local check passed. Fixed, and CI now runs on a clean checkout.
 - **Caught on the live site:** a search in El Cajon with "Permit status: Open" returned zero. The data was right (that city publishes no permit feed) but the screen looked broken. The result now carries a coverage note and the empty state explains itself.
 
 ## Timeline (UTC, 25 Nov 2026)
 
-| Time  | Milestone                                                      |
-| ----- | -------------------------------------------------------------- |
-| 14:26 | Assignment received                                            |
-| 15:36 | Work started                                                   |
-| 15:48 | Contract and API committed, tests passing                      |
-| 16:35 | CRM running locally on the real county data through MCP        |
-| 16:47 | API deployed                                                   |
-| 16:50 | Web app live                                                   |
-| 17:05 | Deployed app verified in a browser against the demo transcript |
+| Time  | Milestone                                                                                             |
+| ----- | ----------------------------------------------------------------------------------------------------- |
+| 14:26 | Assignment received                                                                                   |
+| 15:36 | Work started                                                                                          |
+| 15:48 | Contract and API committed, tests passing                                                             |
+| 16:35 | CRM running locally on the real county data through MCP                                               |
+| 16:47 | API deployed                                                                                          |
+| 16:50 | Web app live                                                                                          |
+| 17:05 | Deployed app first verified in a browser against the demo transcript                                  |
+| 17:31 | Kit-reviewer fixes deployed (tracked data port, atomic leads, agent caps, alarm, CI)                  |
+| 19:10 | Independent evaluation of the live site (kit `slowking` definition); its defects fixed and redeployed |
 
 ---
 

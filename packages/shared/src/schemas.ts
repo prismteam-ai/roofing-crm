@@ -55,6 +55,8 @@ export type Provenance = z.infer<typeof provenanceSchema>;
 export const candidateSchema = z.object({
   apn: z.string(),
   address: z.string().nullable(),
+  /** Unit or suite number, so condo units at one street address can be told apart. */
+  unit: z.string().nullish(),
   city: z.string().nullable(),
   zip: z.string().nullable(),
   lat: z.number(),
@@ -110,6 +112,8 @@ export const permitSchema = z.object({
   roofingClass: z.string().nullable(),
   isRoofing: z.boolean(),
   status: z.string().nullable(),
+  /** open, pending (applied but not issued), completed, expired, cancelled or other. */
+  statusGroup: z.string().nullish(),
   isOpen: z.boolean(),
   appliedDate: z.string().nullable(),
   issuedDate: z.string().nullable(),
@@ -124,6 +128,7 @@ export type Permit = z.infer<typeof permitSchema>;
 export const propertyDetailSchema = z.object({
   apn: z.string(),
   address: z.string().nullable(),
+  unit: z.string().nullish(),
   city: z.string().nullable(),
   zip: z.string().nullable(),
   lat: z.number(),
