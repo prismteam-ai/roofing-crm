@@ -14,5 +14,6 @@ export function apiUrl(): string | null {
 }
 
 export function makeApiClient(url: string): ApiClient {
-  return createApiClient({ url });
+  const agentUrl = import.meta.env.VITE_AGENT_URL;
+  return createApiClient(agentUrl ? { url, agentUrl } : { url });
 }
