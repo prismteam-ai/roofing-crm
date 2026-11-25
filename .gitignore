@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.turbo/
+cdk.out/
+*.duckdb
+*.duckdb.wal
+data/
+.env
+.env.*
+!.env.example
+*.log
+coverage/
