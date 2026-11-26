@@ -27,7 +27,9 @@ export function roofBasisText(basis: RoofBasis, roofYear: number | null): string
         ? 'from last re-roof permit'
         : `from ${String(roofYear)} re-roof permit`;
     case 'year_built':
-      return roofYear === null ? 'from year built' : `year built ${String(roofYear)}`;
+      return roofYear === null
+        ? 'from assessor effective year'
+        : `assessor effective year ${String(roofYear)}`;
     case 'unknown':
       return 'no roof or build year in source data';
   }

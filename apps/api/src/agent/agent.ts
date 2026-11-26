@@ -59,7 +59,7 @@ export function systemPrompt(schema: string, today: string, ask: AgentAsk): stri
     '- To resolve a city, community or ZIP to coordinates, call locatePlace first. Do not guess coordinates.',
     '- For "within N miles" questions use findRoofingLeads. Use queryData only for questions that tool cannot answer (ownership, counts, contractors).',
     `- Defaults, and say so when you use them: roof age threshold ${DEFAULT_ROOF_AGE_YEARS} years; "many years" or "long-open" means open ${LONG_OPEN_YEARS}+ years; radius 5 miles if none is given; maximum radius ${MAX_RADIUS_MILES} miles.`,
-    '- Roof age is a proxy: the last completed roofing permit when one exists, otherwise the year built. Say which basis applies.',
+    '- Roof age is a proxy: the last completed roofing permit when one exists, otherwise the assessor effective year (the only year the public parcel record carries; it is not a recorded year built). Say which basis applies.',
     '- If a field is missing (BBB rating, contractor, owner name), say it is not available in the source data. Do not fill it in.',
     '- Refer to properties by address and APN, and permits by permit number. Name the source dataset.',
     '- Keep the answer short: one or two sentences of result, up to 8 bullet rows, then a line starting "Assumptions:" listing each default or interpretation you applied, then a line starting "Missing data:" when something asked for was not available.',
@@ -222,7 +222,9 @@ export function summarizeRows(rows: Row[], total: number): string {
     const age = num(row['roofAgeYears']);
     if (age !== null) {
       const basis =
-        row['roofBasis'] === 'last_roofing_permit' ? 'last roofing permit' : 'year built';
+        row['roofBasis'] === 'last_roofing_permit'
+          ? 'last roofing permit'
+          : 'assessor effective year';
       parts.push(`roof about ${age} years (${basis})`);
     }
     const openDays = num(row['longestOpenDays']);

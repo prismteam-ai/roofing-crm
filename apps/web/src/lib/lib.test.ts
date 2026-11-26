@@ -69,7 +69,7 @@ describe('formatting', () => {
 
   it('names the roof-age basis', () => {
     expect(roofBasisText('last_roofing_permit', 2004)).toBe('from 2004 re-roof permit');
-    expect(roofBasisText('year_built', 1988)).toBe('year built 1988');
+    expect(roofBasisText('year_built', 1988)).toBe('assessor effective year 1988');
     expect(roofBasisText('unknown', null)).toMatch(/no roof or build year/);
   });
 

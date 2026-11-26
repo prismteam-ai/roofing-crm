@@ -343,7 +343,7 @@ function DetailBody(props: PropertyDrawerProps & { detail: PropertyDetail }) {
             {roofBasisText(detail.roofBasis, detail.roofYear)}
           </Fact>
           <Fact label="Confidence">{detail.roofConfidence ?? 'Not rated'}</Fact>
-          <Fact label="Year built">{detail.yearBuilt ?? NOT_IN_SOURCE}</Fact>
+          <Fact label="Assessor effective year">{detail.yearBuilt ?? NOT_IN_SOURCE}</Fact>
           <Fact label="Use type">
             {useType ? (
               <span title={useType.hint ?? undefined}>{useType.text}</span>

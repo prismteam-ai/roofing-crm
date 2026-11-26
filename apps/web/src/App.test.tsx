@@ -314,7 +314,7 @@ describe('Candidate list', () => {
       'Open roofing permit · open 6.2 yrs',
     );
     expect(within(second).getByTestId('candidate-roof')).toHaveTextContent(
-      'Roof ~38 yrs year built 1988 · medium confidence',
+      'Roof ~38 yrs assessor effective year 1988 · medium confidence',
     );
     expect(within(second).queryByTestId('candidate-permit')).not.toBeInTheDocument();
   });

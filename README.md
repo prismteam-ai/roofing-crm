@@ -93,7 +93,7 @@ packages/api-client  the single tRPC client
 ## Known limits, stated plainly
 
 - **Permit coverage.** Permit data exists for three of the county's 19 jurisdictions: the City of San Diego, the unincorporated county and Carlsbad (a frozen 2022-2023 snapshot); the Data page lists them with counts. Elsewhere the app shows aged roofs and says that permits are not published for that city, instead of a silent zero.
-- **Roof age is a proxy.** The last completed roofing permit where one exists, otherwise the assessor's effective year. Each row says which, with a confidence.
+- **Roof age is a proxy.** The last completed roofing permit where one exists, otherwise the assessor's effective year. Each row says which, with a confidence. The county's own definition of that field says it is the year an assessor document took effect, is two digits, and should not be used to determine a property's age; it is the only year the public parcel layer carries (no year built is published), so it is used as the weakest proxy, labelled as such on every row, and a permit date always replaces it.
 - **BBB ratings are not in the data.** There is no bulk source and BBB's terms limit copying; the UI shows the reason instead of a blank. The story puts live BBB integration out of scope.
 - **Owner name and mailing address** are not in any public San Diego source; the drawer says so.
 - **Decades-open permits** in county records are probably permits that were never finalled; the UI marks them as possibly stale.
