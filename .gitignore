@@ -11,3 +11,4 @@ cdk.out/
 *.log
 coverage/
 cdk-outputs.json
+apps/web/public/*.mp4

@@ -155,7 +155,7 @@ export class RoofingCrmStack extends cdk.Stack {
       customRules: [
         {
           source:
-            '</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>',
+            '</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|html|mp4)$)([^.]+$)/>',
           target: '/index.html',
           status: '200',
         },
