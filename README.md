@@ -2,7 +2,7 @@
 
 **Live app (public, no login):** https://main.d3dhgfb9bfhbhb.amplifyapp.com
 **Credentials:** none needed. The app gives each browser its own lead book (a random workspace id it sends with every call; lead and agent calls without one are refused).
-**Demo video:** _link added with the Ready for Review PR_
+**Demo video (4 min 25 s, narrated):** https://github.com/rvadapally-synexar/roofing-crm/releases/download/demo/roofing-crm-demo.mp4 ([release page](https://github.com/rvadapally-synexar/roofing-crm/releases/tag/demo))
 **Companion PR (data pipeline):** `oracle-property-intelligence-platform-pipeline-san-diego-ca`, whose MCP endpoint this app reads from: https://mywcppj2yl.execute-api.us-east-2.amazonaws.com/mcp
 
 A map-based CRM that finds roofing leads in San Diego County, CA: drop a pin, set a radius, see roofs older than a threshold and properties with open roofing permits (long-open first), open a property for permit, contractor and licence detail, turn matches into lead records, and ask an agent in plain English.
