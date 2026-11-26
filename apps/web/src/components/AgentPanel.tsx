@@ -30,10 +30,14 @@ const MAX_QUESTION = 600;
 const ROWS_SHOWN = 25;
 
 /** The plain-text answer laid out as paragraphs, a list and labelled notes. Still text only. */
-function AnswerText({ answer }: { answer: string }) {
+function AnswerText({ answer, hideAssumptions }: { answer: string; hideAssumptions: boolean }) {
+  // The assumptions get their own section below; do not print them twice.
+  const blocks = parseAnswer(answer).filter(
+    (block) => !(hideAssumptions && block.kind === 'note' && /^assumptions$/i.test(block.label)),
+  );
   return (
     <div className="agent-text" data-testid="agent-text">
-      {parseAnswer(answer).map((block, index) => {
+      {blocks.map((block, index) => {
         if (block.kind === 'list') {
           return (
             <ul key={index}>
@@ -148,7 +152,7 @@ function Answer({ answer, props }: { answer: AgentAnswer; props: AgentPanelProps
         </Notice>
       ) : (
         // Rendered as text: React escapes every piece.
-        <AnswerText answer={answer.answer} />
+        <AnswerText answer={answer.answer} hideAssumptions={answer.assumptions.length > 0} />
       )}
 
       {answer.points.length > 0 && (

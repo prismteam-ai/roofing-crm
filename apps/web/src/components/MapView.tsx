@@ -173,6 +173,22 @@ function addOverlayLayers(map: MapLibreMap): void {
   });
 }
 
+/** The box around a set of points, or null when there are none. */
+function boundsOf(points: readonly AgentPoint[]): LngLatBox | null {
+  const first = points[0];
+  if (!first) return null;
+  return points.reduce<LngLatBox>(
+    (acc, p) => [
+      [Math.min(acc[0][0], p.lon), Math.min(acc[0][1], p.lat)],
+      [Math.max(acc[1][0], p.lon), Math.max(acc[1][1], p.lat)],
+    ],
+    [
+      [first.lon, first.lat],
+      [first.lon, first.lat],
+    ],
+  );
+}
+
 /**
  * The lead map. React owns the data; MapLibre draws it. Markers are one GeoJSON circle layer
  * (not DOM nodes), so 500 candidates stay smooth.
@@ -314,7 +330,11 @@ export function MapView(props: MapViewProps) {
       timer = window.setTimeout(() => {
         if (container.clientWidth === 0 || container.clientHeight === 0) return;
         map.resize();
-        if (pinLat !== undefined && pinLon !== undefined) {
+        // Agent results on the map win: they are usually outside the search circle.
+        const agentBox = boundsOf(agentPoints);
+        if (agentBox) {
+          map.fitBounds(agentBox, { padding: 64, maxZoom: 15, duration: 0 });
+        } else if (pinLat !== undefined && pinLon !== undefined) {
           map.fitBounds(circleBounds({ lat: pinLat, lon: pinLon }, radiusMiles), {
             padding: 48,
             maxZoom: 15.5,
@@ -328,7 +348,7 @@ export function MapView(props: MapViewProps) {
       window.clearTimeout(timer);
       observer.disconnect();
     };
-  }, [map, pinLat, pinLon, radiusMiles]);
+  }, [map, pinLat, pinLon, radiusMiles, agentPoints]);
 
   useEffect(() => {
     if (!map) return;
@@ -355,19 +375,8 @@ export function MapView(props: MapViewProps) {
         pointFeature(p, { apn: p.apn, lat: p.lat, lon: p.lon, label: p.label }),
       ),
     });
-    const first = agentPoints[0];
-    if (!first) return;
-    const box = agentPoints.reduce<LngLatBox>(
-      (acc, p) => [
-        [Math.min(acc[0][0], p.lon), Math.min(acc[0][1], p.lat)],
-        [Math.max(acc[1][0], p.lon), Math.max(acc[1][1], p.lat)],
-      ],
-      [
-        [first.lon, first.lat],
-        [first.lon, first.lat],
-      ],
-    );
-    map.fitBounds(box, { padding: 64, maxZoom: 15, duration: 600 });
+    const box = boundsOf(agentPoints);
+    if (box) map.fitBounds(box, { padding: 64, maxZoom: 15, duration: 600 });
   }, [map, agentPoints]);
 
   useEffect(() => {
