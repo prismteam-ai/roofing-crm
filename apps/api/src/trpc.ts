@@ -3,7 +3,10 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import { PUBLIC_WORKSPACE, type Context } from './context.js';
 import { OracleUnavailableError } from './data/mcpOraclePort.js';
 
-const t = initTRPC.context<Context>().create();
+// Stack traces stay in the logs; a public caller gets the message and code only.
+const t = initTRPC.context<Context>().create({
+  errorFormatter: ({ shape }) => ({ ...shape, data: { ...shape.data, stack: undefined } }),
+});
 
 /** Times every call, counts failures, and turns a data-service outage into one clear error. */
 const observed = t.middleware(async ({ ctx, path, next }) => {

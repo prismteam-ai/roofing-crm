@@ -57,7 +57,6 @@ const usage = {
 function model(texts: string[]): { model: MockLanguageModelV4; calls: () => number } {
   let step = 0;
   const mock = new MockLanguageModelV4({
-     
     doGenerate: async () => {
       step += 1;
       if (step === 1) {
