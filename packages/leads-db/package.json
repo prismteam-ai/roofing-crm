@@ -1,0 +1,21 @@
+{
+  "name": "@crm/leads-db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.840.0",
+    "@aws-sdk/lib-dynamodb": "^3.840.0",
+    "@crm/shared": "workspace:*",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "testcontainers": "^11.2.0"
+  }
+}
