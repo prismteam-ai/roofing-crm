@@ -120,6 +120,20 @@ export function fakeOracle(data: {
         manifestCid: data.manifestCid === undefined ? CID : data.manifestCid,
       });
     }
+    if (url.pathname === "/api/dataset") {
+      return json({
+        manifestCid: data.manifestCid === undefined ? CID : data.manifestCid,
+        published: true,
+        runId: "20261127T223244Z-incremental",
+        asOf: "2026-11-27",
+        builtAt: "2026-11-27T14:55:45Z",
+        viewsVersion: "roofing-views.v1",
+        counts: { v_property: props.length, v_roof_permit: permits.length },
+        coverage: null,
+        permitCoverage: [],
+        limitations: [],
+      });
+    }
     if (url.pathname === "/api/query/aged-roofs") {
       const min = Number(url.searchParams.get("minRoofAgeYears") ?? 15);
       const rows = props.filter((p) => (p.roof_age_years ?? -1) >= min);
@@ -142,7 +156,25 @@ export function fakeOracle(data: {
         roof_age: { basis: p.roof_age_basis, confidence: null, permit_key: null, policy: null },
         sales: [],
         tax: [],
-        permits: [],
+        permits: permits
+          .filter((x) => x.parcel_identifier === p.parcel_identifier)
+          .map((x) => ({
+            permit_key: x.permit_key,
+            permit_number: x.permit_number,
+            permit_type: x.permit_type,
+            description: x.description,
+            status: x.status,
+            raw_status: x.raw_status,
+            is_roofing: true,
+            roof_work_class: x.roof_work_class,
+            issue_date: x.issue_date,
+            completion_date: x.completion_date,
+            open_days: x.open_days,
+            contractor_name: x.contractor_name,
+            contractor_license: x.contractor_license,
+            parcel_match_method: "folio",
+            source_url: x.source_url,
+          })),
         entities: [],
         appraiser_url: "https://bcpa.net",
       });

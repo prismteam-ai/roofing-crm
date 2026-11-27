@@ -7,6 +7,7 @@ import {
   type SearchResult,
 } from "@crm/shared";
 import {
+  DatasetInfo,
   PermitDetail as PermitDetailSchema,
   PermitLead,
   PropertyDetail as PropertyDetailSchema,
@@ -15,7 +16,7 @@ import {
 } from "oracle-broward/contract";
 import { z } from "zod";
 import { isInsideCoverage } from "./coverage.ts";
-import { OracleManifestMismatch, oracleGet, type HttpOpts } from "./http.ts";
+import { OracleContractError, OracleManifestMismatch, oracleGet, type HttpOpts } from "./http.ts";
 import { scoreCandidate } from "./score.ts";
 
 export { isInsideCoverage } from "./coverage.ts";
@@ -36,6 +37,8 @@ const ROW_LIMIT = 2000;
 export interface OracleData {
   readonly manifestCid: string;
   health(): Promise<{ ok: boolean; manifestCid: string | null; mismatch: boolean }>;
+  /** Run facts for the snapshot banner: views version, run id, as-of date and view row counts. */
+  dataset(): Promise<{ viewsVersion: string; runId: string; asOf: string; counts: Record<string, number> }>;
   search(input: SearchInput): Promise<SearchResult>;
   property(id: string): Promise<PropertyDetail | null>;
   permit(id: string): Promise<PermitDetail | null>;
@@ -77,6 +80,13 @@ export function createOracleData(opts: {
       const h = await oracleGet(http, "/api/health", Health);
       const manifestCid = h?.manifestCid ?? null;
       return { ok: Boolean(h?.ok), manifestCid, mismatch: manifestCid !== expected };
+    },
+
+    async dataset() {
+      const d = await oracleGet(http, "/api/dataset", DatasetInfo);
+      if (!d) throw new OracleContractError("Oracle has no /api/dataset");
+      if (d.manifestCid !== expected) throw new OracleManifestMismatch(expected, d.manifestCid);
+      return { viewsVersion: d.viewsVersion, runId: d.runId, asOf: d.asOf, counts: d.counts };
     },
 
     async search(input) {

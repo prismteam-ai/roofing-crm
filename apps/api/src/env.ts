@@ -7,6 +7,7 @@ const Env = z.object({
   ORACLE_MANIFEST_CID: z.string().regex(/^b[a-z2-7]{20,}$/, "a CIDv1 (base32)"),
   LEADS_TABLE: z.string().min(1).default("roofing-crm-leads"),
   DYNAMODB_ENDPOINT: z.url().optional(),
+  LEAD_CREATES_PER_DAY: z.coerce.number().int().positive().default(200),
   PORT: z.coerce.number().int().positive().default(4318),
 });
 export type Env = z.infer<typeof Env>;
