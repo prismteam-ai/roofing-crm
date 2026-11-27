@@ -1,5 +1,6 @@
 import { MetricUnit } from '@aws-lambda-powertools/metrics';
 import { initTRPC, TRPCError } from '@trpc/server';
+import { getHTTPStatusCodeFromError } from '@trpc/server/http';
 import { PUBLIC_WORKSPACE, type Context } from './context.js';
 import { OracleUnavailableError } from './data/mcpOraclePort.js';
 
@@ -7,6 +8,11 @@ import { OracleUnavailableError } from './data/mcpOraclePort.js';
 const t = initTRPC.context<Context>().create({
   errorFormatter: ({ shape }) => ({ ...shape, data: { ...shape.data, stack: undefined } }),
 });
+
+/** True for 4xx errors: the request was refused, the service did not fail. */
+export function isCallerMistake(error: TRPCError): boolean {
+  return getHTTPStatusCodeFromError(error) < 500;
+}
 
 /** Times every call, counts failures, and turns a data-service outage into one clear error. */
 const observed = t.middleware(async ({ ctx, path, next }) => {
@@ -17,6 +23,13 @@ const observed = t.middleware(async ({ ctx, path, next }) => {
   if (result.ok) {
     ctx.metrics.addMetric('RequestsProcessed', MetricUnit.Count, 1);
     ctx.logger.info('request ok', { path, ms });
+    return result;
+  }
+  // A refused request (bad input, unknown record, missing header) is the caller's mistake, not
+  // an outage. Counted apart, so the failure alarm only fires when the service itself breaks.
+  if (isCallerMistake(result.error)) {
+    ctx.metrics.addMetric('RequestsRejected', MetricUnit.Count, 1);
+    ctx.logger.warn('request rejected', { path, ms, error: result.error.message });
     return result;
   }
   ctx.metrics.addMetric('RequestsFailed', MetricUnit.Count, 1);

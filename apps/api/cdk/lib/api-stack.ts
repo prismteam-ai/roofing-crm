@@ -168,7 +168,8 @@ export class RoofingCrmStack extends cdk.Stack {
     });
 
     // Procedure failures come back as HTTP responses, so the Lambda Errors metric never sees
-    // them. This alarm watches the RequestsFailed count the API itself emits.
+    // them. This alarm watches the RequestsFailed count the API itself emits. Refused requests
+    // (bad input, 4xx) go to RequestsRejected and do not count here.
     const failed = new cloudwatch.Alarm(this, 'ProcedureFailures', {
       metric: new cloudwatch.Metric({
         namespace: 'RoofingCrm',

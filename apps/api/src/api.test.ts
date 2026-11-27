@@ -1,4 +1,5 @@
 import type { DatasetSummary, PropertyDetail, SearchInput } from '@roofing-crm/shared';
+import { TRPCError } from '@trpc/server';
 import { describe, expect, it } from 'vitest';
 import { askAgent } from './agent/agent.js';
 import { findUnsupportedApns } from './agent/verify.js';
@@ -7,6 +8,7 @@ import { OracleUnavailableError } from './data/mcpOraclePort.js';
 import { MemoryLeadStore, MemoryUsageStore } from './leads/leadStores.js';
 import type { OracleLeadRow, OraclePort, OracleQuery, OracleSearch } from './ports.js';
 import { appRouter } from './routers/index.js';
+import { isCallerMistake } from './trpc.js';
 
 const pin = { lat: 32.7157, lon: -117.1611 };
 
@@ -225,5 +227,15 @@ describe('agent guards', () => {
     expect(out.model).toBe('none');
     expect(out.rows).toHaveLength(0);
     expect(out.answer).toMatch(/not configured/);
+  });
+});
+
+describe('failure metric', () => {
+  it('treats refused requests as caller mistakes and outages as failures', () => {
+    expect(isCallerMistake(new TRPCError({ code: 'BAD_REQUEST' }))).toBe(true);
+    expect(isCallerMistake(new TRPCError({ code: 'NOT_FOUND' }))).toBe(true);
+    expect(isCallerMistake(new TRPCError({ code: 'TOO_MANY_REQUESTS' }))).toBe(true);
+    expect(isCallerMistake(new TRPCError({ code: 'INTERNAL_SERVER_ERROR' }))).toBe(false);
+    expect(isCallerMistake(new TRPCError({ code: 'SERVICE_UNAVAILABLE' }))).toBe(false);
   });
 });
