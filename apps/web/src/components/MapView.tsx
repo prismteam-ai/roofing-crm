@@ -71,6 +71,12 @@ const LAYER = { candidates: 'crm-candidates-dot', agent: 'crm-agent-dot' };
 type Features = GeoJSON.FeatureCollection<GeoJSON.Geometry>;
 const EMPTY: Features = { type: 'FeatureCollection', features: [] };
 
+/** The county's box as [[west, south], [east, north]]. */
+const countyBounds = (): [[number, number], [number, number]] => [
+  [DEFAULT_COUNTY.bbox.minLon, DEFAULT_COUNTY.bbox.minLat],
+  [DEFAULT_COUNTY.bbox.maxLon, DEFAULT_COUNTY.bbox.maxLat],
+];
+
 function pointFeature(
   point: Point,
   properties: Record<string, string | number | boolean | null>,
@@ -305,6 +311,8 @@ export function MapView(props: MapViewProps) {
     if (!map) return;
     if (pinLat === undefined || pinLon === undefined) {
       setData(map, SRC.radius, EMPTY);
+      // No pin: frame the whole county, whatever size the map box is.
+      map.fitBounds(countyBounds(), { padding: 24, duration: 600 });
       return;
     }
     const center = { lat: pinLat, lon: pinLon };
@@ -340,6 +348,8 @@ export function MapView(props: MapViewProps) {
             maxZoom: 15.5,
             duration: 0,
           });
+        } else {
+          map.fitBounds(countyBounds(), { padding: 24, duration: 0 });
         }
       }, 150);
     });

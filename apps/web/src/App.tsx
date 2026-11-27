@@ -160,10 +160,14 @@ function SelectedCard({
 
 export function App() {
   // No pin in the link: start at a well-known place so the first screen already shows leads.
-  const [showMoveHint, setShowMoveHint] = useState(
-    () => parseUrlState(window.location.search).pin === null,
+  // `?start=blank` opens on the whole county with no pin, for a demo that starts from nothing.
+  const [startBlank] = useState(
+    () => new URLSearchParams(window.location.search).get('start') === 'blank',
   );
-  const [url, setUrl] = useUrlState(DEFAULT_PIN);
+  const [showMoveHint, setShowMoveHint] = useState(
+    () => !startBlank && parseUrlState(window.location.search).pin === null,
+  );
+  const [url, setUrl] = useUrlState(startBlank ? null : DEFAULT_PIN);
   const { view, panel, pin, radiusMiles, filters } = url;
   const trpc = useTRPC();
 
@@ -425,6 +429,13 @@ export function App() {
               }}
               onReset={() => {
                 setUrl({ filters: DEFAULT_FILTERS });
+              }}
+              onClearMap={() => {
+                setUrl({ pin: null, apn: null });
+                setSelected(null);
+                setAgentPoints([]);
+                setShowMoveHint(false);
+                setLocationMessage(null);
               }}
               onValidity={setInputInvalid}
             />

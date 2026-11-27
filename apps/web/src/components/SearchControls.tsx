@@ -30,6 +30,8 @@ export interface SearchControlsProps {
   onUseLocation: () => void;
   onSearch: () => void;
   onReset: () => void;
+  /** Removes the pin and its results and shows the whole county. */
+  onClearMap: () => void;
   /** True while any box holds a value that cannot be searched with. */
   onValidity: (invalid: boolean) => void;
 }
@@ -95,7 +97,12 @@ function LatLonFields({
   const [lon, setLon] = useState(pin ? String(pin.lon) : '');
 
   useEffect(() => {
-    if (!pin) return;
+    if (!pin) {
+      // The pin was cleared: empty the boxes too, so they do not show the old point.
+      setLat('');
+      setLon('');
+      return;
+    }
     setLat((current) => (parseCoord(current, 90) === pin.lat ? current : String(pin.lat)));
     setLon((current) => (parseCoord(current, 180) === pin.lon ? current : String(pin.lon)));
   }, [pin]);
@@ -381,6 +388,15 @@ export function SearchControls(props: SearchControlsProps) {
             onClick={props.onReset}
           >
             Reset filters
+          </button>
+          <button
+            type="button"
+            className="btn btn-quiet"
+            data-testid="clear-map"
+            disabled={!pin}
+            onClick={props.onClearMap}
+          >
+            Clear map
           </button>
         </div>
       </div>
