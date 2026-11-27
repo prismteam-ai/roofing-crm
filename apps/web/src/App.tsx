@@ -1,5 +1,7 @@
 import {
   DEFAULT_COUNTY,
+  coverageGap,
+  permitGapNote,
   type Candidate,
   type Lead,
   type LeadCreate,
@@ -66,6 +68,7 @@ function SummaryStrip({
   invalid: boolean;
 }) {
   const cell = (value: string | undefined): string => value ?? '–';
+  const gap = coverageGap(result?.coverage);
   return (
     <dl
       className={`summary${stale ? ' is-stale' : ''}`}
@@ -88,6 +91,11 @@ function SummaryStrip({
       <div>
         <dt>Open roofing permits</dt>
         <dd data-testid="summary-permits">{cell(result && formatCount(result.openPermitCount))}</dd>
+        {gap && (
+          <span className="summary-cap" data-testid="summary-permits-scope">
+            where permits are published ({gap.publishedShare}% of parcels)
+          </span>
+        )}
       </div>
       <div>
         <dt>Data as of</dt>
@@ -228,6 +236,7 @@ export function App() {
   const dataset = useQuery(trpc.meta.dataset.queryOptions());
 
   const result = pin ? search.data : undefined;
+  const resultGap = coverageGap(result?.coverage);
   const candidates = useMemo(() => result?.candidates ?? [], [result]);
   const waiting = pin !== null && (search.isFetching || settledInput !== searchInput);
   const searchError =
@@ -464,10 +473,16 @@ export function App() {
 
           <SummaryStrip result={result} stale={waiting || inputInvalid} invalid={inputInvalid} />
 
-          {result?.coverageNote && (
+          {resultGap ? (
             <Notice kind="info" testId="coverage-note">
-              <strong>Permit coverage:</strong> {result.coverageNote}
+              <strong>Permit coverage:</strong> {permitGapNote(resultGap)}
             </Notice>
+          ) : (
+            result?.coverageNote && (
+              <Notice kind="info" testId="coverage-note">
+                <strong>Permit coverage:</strong> {result.coverageNote}
+              </Notice>
+            )
           )}
 
           <div className="mobile-tabs" role="group" aria-label="Show">
@@ -512,6 +527,7 @@ export function App() {
                 roofAgeThreshold={filters.minRoofAgeYears}
                 selected={selected}
                 agentPoints={agentPoints}
+                noDataCodes={resultGap?.codes ?? []}
                 hint={
                   showMoveHint ? `Showing ${DEFAULT_PIN.name}. Click the map to move the pin` : null
                 }

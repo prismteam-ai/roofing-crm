@@ -1,6 +1,7 @@
 import {
   candidateSchema,
   datasetSummarySchema,
+  jurisdictionCoverageSchema,
   propertyDetailSchema,
   type DatasetSummary,
   type Lead,
@@ -23,6 +24,7 @@ export const oracleSearchSchema = z.object({
   openPermitCount: z.number().int(),
   asOf: z.string(),
   coverageNote: z.string().nullish(),
+  coverage: z.array(jurisdictionCoverageSchema).optional(),
   rows: z.array(oracleLeadRowSchema),
 });
 export type OracleSearch = z.infer<typeof oracleSearchSchema>;

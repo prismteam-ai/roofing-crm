@@ -29,6 +29,8 @@ export interface MapViewProps {
   agentPoints: readonly AgentPoint[];
   /** One line shown over the map, e.g. how to move the pin on first load. */
   hint?: string | null;
+  /** Jurisdiction codes whose city limits are shaded grey: they publish no permit data. */
+  noDataCodes?: readonly string[];
   onPinChange: (point: Point) => void;
   onSelect: (selection: MapSelection) => void;
 }
@@ -67,6 +69,15 @@ const SRC = {
   agent: 'crm-agent',
 };
 const LAYER = { candidates: 'crm-candidates-dot', agent: 'crm-agent-dot' };
+/** City limits from SANDAG Municipal_Boundaries, served beside the page (see the pipeline's scripts/fetch-city-limits.ts). */
+const CITIES_URL = `${import.meta.env.BASE_URL}cities.geojson`;
+const CITIES_SRC = 'crm-cities';
+const NO_DATA_LAYERS = ['crm-nodata-fill', 'crm-nodata-line'] as const;
+const codeFilter = (codes: readonly string[]): maplibregl.FilterSpecification => [
+  'in',
+  ['get', 'code'],
+  ['literal', [...codes]],
+];
 
 type Features = GeoJSON.FeatureCollection<GeoJSON.Geometry>;
 const EMPTY: Features = { type: 'FeatureCollection', features: [] };
@@ -117,6 +128,26 @@ function setData(map: MapLibreMap, source: string, data: Features): void {
 function addOverlayLayers(map: MapLibreMap): void {
   const ink = overlayInk();
   for (const id of Object.values(SRC)) map.addSource(id, { type: 'geojson', data: EMPTY });
+  const dark = prefersDark();
+  map.addSource(CITIES_SRC, { type: 'geojson', data: CITIES_URL });
+  map.addLayer({
+    id: NO_DATA_LAYERS[0],
+    type: 'fill',
+    source: CITIES_SRC,
+    filter: codeFilter([]),
+    paint: { 'fill-color': dark ? '#9ca3af' : '#4b5563', 'fill-opacity': 0.28 },
+  });
+  map.addLayer({
+    id: NO_DATA_LAYERS[1],
+    type: 'line',
+    source: CITIES_SRC,
+    filter: codeFilter([]),
+    paint: {
+      'line-color': dark ? '#d1d5db' : '#374151',
+      'line-width': 1.2,
+      'line-dasharray': [2, 2],
+    },
+  });
 
   map.addLayer({
     id: 'crm-radius-fill',
@@ -201,6 +232,7 @@ function boundsOf(points: readonly AgentPoint[]): LngLatBox | null {
  */
 export function MapView(props: MapViewProps) {
   const { pin, radiusMiles, candidates, roofAgeThreshold, selected, agentPoints } = props;
+  const noDataKey = (props.noDataCodes ?? []).join(',');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
@@ -379,6 +411,14 @@ export function MapView(props: MapViewProps) {
 
   useEffect(() => {
     if (!map) return;
+    const codes = noDataKey ? noDataKey.split(',') : [];
+    for (const layer of NO_DATA_LAYERS) {
+      if (map.getLayer(layer)) map.setFilter(layer, codeFilter(codes));
+    }
+  }, [map, noDataKey]);
+
+  useEffect(() => {
+    if (!map) return;
     setData(map, SRC.agent, {
       type: 'FeatureCollection',
       features: agentPoints.map((p) =>
@@ -407,6 +447,7 @@ export function MapView(props: MapViewProps) {
         className="map-canvas"
         data-testid="map"
         data-map-ready={map ? 'true' : 'false'}
+        data-no-data-codes={noDataKey}
         role="application"
         aria-label={`Map of ${DEFAULT_COUNTY.name}. Click to drop the search pin.`}
       />
@@ -421,7 +462,11 @@ export function MapView(props: MapViewProps) {
           {pin ? props.hint : 'Click the map to drop a search pin'}
         </p>
       )}
-      <MapLegend roofAgeThreshold={roofAgeThreshold} showAgent={agentPoints.length > 0} />
+      <MapLegend
+        roofAgeThreshold={roofAgeThreshold}
+        showAgent={agentPoints.length > 0}
+        showNoData={noDataKey !== ''}
+      />
     </div>
   );
 }
@@ -439,9 +484,11 @@ function Dot({ color, long = false }: { color: string; long?: boolean }) {
 export function MapLegend({
   roofAgeThreshold,
   showAgent,
+  showNoData = false,
 }: {
   roofAgeThreshold: number;
   showAgent: boolean;
+  showNoData?: boolean;
 }) {
   return (
     <ul className="map-overlay map-legend" aria-label="Map legend" data-testid="map-legend">
@@ -460,6 +507,12 @@ export function MapLegend({
       {showAgent && (
         <li>
           <Dot color={MARKER_COLORS.agent} /> Agent result
+        </li>
+      )}
+      {showNoData && (
+        <li data-testid="legend-no-data">
+          <span className="legend-swatch-nodata" aria-hidden="true" /> City limits with no permit
+          data
         </li>
       )}
     </ul>

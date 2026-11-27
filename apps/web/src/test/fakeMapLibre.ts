@@ -60,6 +60,15 @@ export class FakeMap {
     this.layers.push(layer.id);
     return this;
   }
+  getLayer(id: string): { id: string } | undefined {
+    return this.layers.includes(id) ? { id } : undefined;
+  }
+  /** Last filter set per layer, so tests can see which cities are shaded. */
+  readonly filters = new Map<string, unknown>();
+  setFilter(id: string, filter: unknown): this {
+    this.filters.set(id, filter);
+    return this;
+  }
   queryRenderedFeatures(): unknown[] {
     return [];
   }

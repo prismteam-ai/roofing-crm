@@ -806,6 +806,15 @@ select:disabled {
   gap: 8px;
 }
 
+.legend-swatch-nodata {
+  flex: none;
+  width: 14px;
+  height: 11px;
+  margin: 0 1px;
+  border: 1.2px dashed #374151;
+  background: rgb(75 85 99 / 28%);
+}
+
 .legend-dot {
   flex: none;
   width: 11px;

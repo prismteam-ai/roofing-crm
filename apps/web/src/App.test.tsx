@@ -190,6 +190,28 @@ describe('Permit coverage and empty results', () => {
     expect(screen.getByTestId('coverage-note')).toHaveAttribute('role', 'status');
   });
 
+  it('shades city limits with no permit data and says the count covers only published areas', async () => {
+    const backend = makeBackend({
+      'search.radius': () =>
+        searchResult({
+          coverageNote: COVERAGE,
+          coverage: [
+            { code: 'CN', name: 'unincorporated county', parcels: 460, permitFeed: true },
+            { code: 'EC', name: 'El Cajon', parcels: 540, permitFeed: false },
+          ],
+        }),
+    });
+    renderApp(backend, DOWNTOWN_URL);
+    await rowsLoaded();
+    expect(screen.getByTestId('summary-permits-scope')).toHaveTextContent(
+      'where permits are published (46% of parcels)',
+    );
+    expect(screen.getByTestId('coverage-note')).toHaveTextContent('Shaded grey on the map');
+    expect(screen.getByTestId('coverage-note')).toHaveTextContent('mailing city');
+    expect(screen.getByTestId('legend-no-data')).toBeInTheDocument();
+    expect(screen.getByTestId('map')).toHaveAttribute('data-no-data-codes', 'EC');
+  });
+
   it('shows no coverage banner when the note is null', async () => {
     renderApp(makeBackend(), DOWNTOWN_URL);
     await rowsLoaded();

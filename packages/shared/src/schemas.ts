@@ -80,6 +80,14 @@ export const candidateSchema = z.object({
 });
 export type Candidate = z.infer<typeof candidateSchema>;
 
+/** One jurisdiction inside a search radius, and whether it publishes permits. */
+export const jurisdictionCoverageSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  parcels: z.number(),
+  permitFeed: z.boolean(),
+});
+
 export const searchResultSchema = z.object({
   total: z.number().int(),
   agedRoofCount: z.number().int(),
@@ -87,6 +95,8 @@ export const searchResultSchema = z.object({
   candidates: z.array(candidateSchema),
   /** Set when part of the search area has no permit data; the UI must show it. */
   coverageNote: z.string().nullable(),
+  /** Per jurisdiction in the radius; the map shades the ones without permit data. */
+  coverage: z.array(jurisdictionCoverageSchema).optional(),
   asOf: z.string(),
   elapsedMs: z.number(),
 });
