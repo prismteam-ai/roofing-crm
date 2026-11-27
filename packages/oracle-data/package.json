@@ -1,0 +1,17 @@
+{
+  "name": "@crm/oracle-data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@crm/shared": "workspace:*",
+    "oracle-broward": "link:../../../oracle-property-intelligence-platform-pipeline-broward-fl",
+    "zod": "^4.1.0"
+  }
+}

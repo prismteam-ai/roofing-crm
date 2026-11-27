@@ -80,6 +80,18 @@ importers:
         specifier: ^7.3.8
         version: 7.3.8(@types/node@22.20.7)(tsx@4.23.15)
 
+  packages/oracle-data:
+    dependencies:
+      '@crm/shared':
+        specifier: workspace:*
+        version: link:../shared
+      oracle-broward:
+        specifier: link:../../../oracle-property-intelligence-platform-pipeline-broward-fl
+        version: link:../../../oracle-property-intelligence-platform-pipeline-broward-fl
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.7
+
   packages/shared:
     dependencies:
       zod:

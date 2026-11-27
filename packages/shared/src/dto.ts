@@ -25,6 +25,8 @@ export const OpenRoofPermit = z.object({
   openDays: z.number().nullable(),
   status: PermitStatus,
   contractorName: z.string().nullable(),
+  /** DBPR license status of the permit's contractor (e.g. "Current,Active"), when linked. */
+  contractorLicenseStatus: z.string().nullable(),
   bbbGrade: z.string().nullable(),
 });
 export type OpenRoofPermit = z.infer<typeof OpenRoofPermit>;
