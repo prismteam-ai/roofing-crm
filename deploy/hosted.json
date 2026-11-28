@@ -4,7 +4,7 @@
   "oracleManifestCid": "bafkreiaw4jf6xzwtgpcfadnu7vbwpwpshbv7qz2hflapksf5m4rzl4dsby",
   "anthropicKeyParam": "/roofing/anthropic-key",
   "agentModel": "claude-sonnet-5-5",
-  "agentDailyTokens": 500000,
+  "agentDailyTokens": 2000000,
   "agentPerIpPerMinute": 10,
   "leadCreatesPerDay": 200,
   "monthlyBudgetUsd": 5

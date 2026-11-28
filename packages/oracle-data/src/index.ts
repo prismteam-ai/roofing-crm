@@ -110,7 +110,8 @@ export function createOracleData(opts: {
         input.layers.includes("aged_roofs")
           ? oracleGet(
               http,
-              `/api/query/aged-roofs?${qs({ ...base, minRoofAgeYears: input.minRoofAgeYears })}`,
+              // Nearest first: a capped layer still covers the area, and the threshold changes it.
+              `/api/query/aged-roofs?${qs({ ...base, minRoofAgeYears: input.minRoofAgeYears, order: "nearest" })}`,
               AgedRoofs,
             )
           : null,
@@ -160,8 +161,9 @@ export function createOracleData(opts: {
           city: r.city,
           lat: r.lat,
           lon: r.lon,
-          roofAgeYears: null,
-          roofAgeBasis: "unknown",
+          // The Oracle joins the property's roof age onto each permit row.
+          roofAgeYears: r.roof_age_years ?? null,
+          roofAgeBasis: r.roof_age_basis ?? "unknown",
           openRoofPermits: [],
         };
         c.openRoofPermits.push(permit);
@@ -214,6 +216,7 @@ export function createOracleData(opts: {
         roofAgeYears: p.roof_age_years,
         roofAgeBasis: p.roof_age_basis ?? "unknown",
         maxOpenDays: p.max_open_days,
+        // Property detail carries no BBB grade; the pinned run has none (BBB answered 403).
         bbbGrade: null,
         ownerLocationClass: p.owner_location_class ?? "unknown",
       };

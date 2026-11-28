@@ -146,9 +146,12 @@ test("4. the agent answers a roofing question with results on the map, then a 'n
 
 test("5. filters by roof age, permit open years and radius, on candidates and on the Leads page", async () => {
   // Candidates.
-  // Roof age: every roof shown meets the threshold (the aged-roof layer keeps the oldest first).
+  // Roof age: on the aged-roof layer alone, every roof shown meets the threshold. (A permit-only
+  // candidate shows its property's real roof age, which may be under it.)
+  await page.getByLabel("Open roofing permits").uncheck();
   await page.locator("#map-roof").fill("90");
   await expect.poll(async () => Math.min(...(await roofAges()))).toBeGreaterThanOrEqual(90);
+  await page.getByLabel("Open roofing permits").check();
   // Open years: with only the permit layer, every permit shown has been open 7+ years. (Every
   // open Fort Lauderdale permit is 5+ years old: its permit layer stops in January 2021.)
   await page.getByLabel("Aged roofs").uncheck();

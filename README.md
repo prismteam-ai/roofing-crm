@@ -69,8 +69,15 @@ to one manifest CID, and keeps only its own leads (DynamoDB).
 | `e2e/demo.spec.ts` | The demo transcript below, in a normal browser and in a grader-like one (no WebGL, no GPS) |
 
 **Data run:** Oracle run 2, manifest `bafkreiaw4jf6xzwtgpcfadnu7vbwpwpshbv7qz2hflapksf5m4rzl4dsby`
-(766,044 properties; 7,949 roofing permits). Permit data covers Fort Lauderdale and Weston; other
-cities show roof age only, and the UI names them.
+(766,044 properties; 7,949 roofing permits). Limits of this run, also shown in the app's run banner:
+
+- **Permits cover Fort Lauderdale and Weston only.** Other cities show roof age only, and the UI
+  names them. Fort Lauderdale's permit layer stopped updating in January 2021, so its "open"
+  statuses are as of then; a permit "open 8 years" may have closed since.
+- **No BBB grades.** BBB refused automated access (HTTP 403) and the Oracle did not bypass it, so
+  every BBB field is empty and the detail view says "No BBB data".
+- **Contractors** are named on about 29% of open permits (Fort Lauderdale's layer has no
+  contractor field; names come from a bounded license lookup).
 
 ### Run it locally
 

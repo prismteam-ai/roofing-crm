@@ -34,6 +34,20 @@ describe("search", () => {
     expect(r.manifestCid).toBe(CID);
   });
 
+  test("a permit-only candidate keeps its property's roof age; the aged layer asks nearest-first", async () => {
+    const f = fakeOracle({
+      permits: [
+        permit({ permit_key: "p", parcel_identifier: "P", roof_age_years: 64, roof_age_basis: "year_built" }),
+      ],
+    });
+    const r = await oracle(f).search(search({ layers: ["open_permits", "aged_roofs"] }));
+    expect(r.candidates.find((c) => c.propertyId === "P")).toMatchObject({
+      roofAgeYears: 64,
+      roofAgeBasis: "year_built",
+    });
+    expect(f.calls.find((c) => c.startsWith("/api/query/aged-roofs"))).toContain("order=nearest");
+  });
+
   test("candidates sort by score, long-open permits first among ties", async () => {
     const f = fakeOracle({
       permits: [

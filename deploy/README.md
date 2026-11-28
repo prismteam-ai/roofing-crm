@@ -60,4 +60,5 @@ BASE_URL=$W pnpm e2e                                # the demo transcript, both 
 
 Idle: about $0.50–1/month (four alarms $0.40, logs; Lambda, API Gateway, DynamoDB and Amplify
 stay inside the free tier at demo traffic). The agent is billed by Anthropic, capped at 500k
-tokens a day.
+tokens a day
+(2M since a grading run used up the 500k first set: about $8/day worst case on Sonnet 5.5).
