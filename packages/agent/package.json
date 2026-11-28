@@ -1,0 +1,25 @@
+{
+  "name": "@crm/agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.110",
+    "@ai-sdk/mcp": "^2.0.106",
+    "@aws-sdk/lib-dynamodb": "^3",
+    "@crm/shared": "workspace:*",
+    "ai": "^7.0.183",
+    "oracle-broward": "link:../../../oracle-property-intelligence-platform-pipeline-broward-fl",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
+  }
+}

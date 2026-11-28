@@ -9,13 +9,17 @@
     "db:create": "tsx --env-file-if-exists=../../.env src/create-local-table.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.110",
     "@aws-lambda-powertools/logger": "^2.22.0",
     "@aws-lambda-powertools/metrics": "^2.22.0",
     "@aws-lambda-powertools/tracer": "^2.22.0",
+    "@aws-sdk/client-ssm": "^3.840.0",
+    "@crm/agent": "workspace:^",
     "@crm/leads-db": "workspace:*",
     "@crm/oracle-data": "workspace:*",
     "@crm/shared": "workspace:*",
     "@trpc/server": "^11.4.0",
+    "ai": "^7.0.183",
     "oracle-broward": "link:../../../oracle-property-intelligence-platform-pipeline-broward-fl",
     "zod": "^4.1.0"
   },
@@ -23,5 +27,8 @@
     "@types/aws-lambda": "^8.10.150",
     "testcontainers": "^11.2.0",
     "tsx": "^4.20.0"
+  },
+  "exports": {
+    "./router": "./src/router.ts"
   }
 }

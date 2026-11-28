@@ -156,7 +156,9 @@ describe("workspaces", () => {
     const first = await caller();
     expect(first.ctx.setCookies).toHaveLength(1);
     const cookie = first.ctx.setCookies[0];
-    expect(cookie).toMatch(/^crm_ws=[0-9a-f-]{36}; Path=\/; Max-Age=604800; HttpOnly; SameSite=Lax; Secure$/);
+    expect(cookie).toMatch(
+      /^crm_ws=[0-9a-f-]{36}; Path=\/; Max-Age=604800; HttpOnly; SameSite=None; Secure$/,
+    );
     expect((await first.api.leads.list()).map((l) => l.propertyId)).toEqual([P2]);
 
     const header = cookie.split(";")[0];

@@ -30,7 +30,9 @@ export function workspaceFromCookie(cookieHeader: string | undefined | null): st
 }
 
 export function workspaceCookie(ws: string, opts: { secure: boolean }): string {
-  return `${WORKSPACE_COOKIE}=${ws}; Path=/; Max-Age=${WS_MAX_AGE_S}; HttpOnly; SameSite=Lax${opts.secure ? "; Secure" : ""}`;
+  // Hosted, the web app (Amplify) and the API (API Gateway) are different sites: SameSite=None.
+  const site = opts.secure ? "SameSite=None; Secure" : "SameSite=Lax";
+  return `${WORKSPACE_COOKIE}=${ws}; Path=/; Max-Age=${WS_MAX_AGE_S}; HttpOnly; ${site}`;
 }
 
 /**

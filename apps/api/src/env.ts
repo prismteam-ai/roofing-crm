@@ -9,6 +9,15 @@ const Env = z.object({
   DYNAMODB_ENDPOINT: z.url().optional(),
   LEAD_CREATES_PER_DAY: z.coerce.number().int().positive().default(200),
   PORT: z.coerce.number().int().positive().default(4318),
+  /** Agent: the key directly (local) or the SSM SecureString parameter that holds it (hosted). */
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY_PARAM: z.string().min(1).optional(),
+  CRM_AGENT_MODEL: z.string().min(1).default("claude-opus-5-5"),
+  AGENT_DAILY_TOKEN_BUDGET: z.coerce.number().int().positive().default(2_000_000),
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(10),
+  AGENT_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  /** Origins allowed to call the API with credentials (the Amplify domain when hosted). */
+  ALLOWED_ORIGINS: z.string().default(""),
 });
 export type Env = z.infer<typeof Env>;
 
