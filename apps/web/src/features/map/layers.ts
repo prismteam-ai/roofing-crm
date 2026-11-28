@@ -94,11 +94,28 @@ export const LAYER_SPECS = [
     source: "candidates",
     filter: ["==", ["get", "kind"], "permit"],
     paint: {
-      // Long-open permits are larger with a heavy dark ring.
-      "circle-radius": ["interpolate", ["linear"], ["get", "openYears"], 0, 5, 8, 11],
+      // Grows with zoom and with years open; long-open permits get a heavy dark ring.
+      "circle-radius": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        9,
+        ["+", 2, ["*", 0.25, ["get", "openYears"]]],
+        14,
+        ["+", 5, ["*", 0.8, ["get", "openYears"]]],
+      ],
       "circle-color": PERMIT_COLOR,
+      "circle-opacity": 0.9,
       "circle-stroke-color": ["case", ["get", "longOpen"], "#111827", "#ffffff"],
-      "circle-stroke-width": ["case", ["get", "longOpen"], 3, 1],
+      "circle-stroke-width": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        9,
+        ["case", ["get", "longOpen"], 1, 0.5],
+        14,
+        ["case", ["get", "longOpen"], 3, 1],
+      ],
     },
   },
   {

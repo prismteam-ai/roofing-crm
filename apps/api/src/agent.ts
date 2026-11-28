@@ -44,7 +44,7 @@ export async function createAgentEndpoint(
           limits,
         })
       : memoryBudget(limits);
-  return createAgentHandler({
+  const handler = createAgentHandler({
     connect: () => loadOracleTools({ url: env.ORACLE_MCP_URL }),
     model: createAnthropic({ apiKey: key })(env.CRM_AGENT_MODEL),
     modelId: env.CRM_AGENT_MODEL,
@@ -52,4 +52,5 @@ export async function createAgentEndpoint(
     timeoutMs: env.AGENT_TIMEOUT_MS,
     onError: opts.onError,
   });
+  return Object.assign(handler, { configured: true });
 }

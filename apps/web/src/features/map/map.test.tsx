@@ -141,7 +141,8 @@ describe("map", () => {
       ["aged", false, 0],
     ]);
     const spec = LAYER_SPECS.find((l) => l.id === "open-permits")!;
-    expect(JSON.stringify(spec.paint)).toContain('"circle-stroke-width":["case",["get","longOpen"],3,1]');
+    expect(JSON.stringify(spec.paint["circle-stroke-width"])).toContain('["case",["get","longOpen"],3,1]');
+    expect(JSON.stringify(spec.paint["circle-radius"])).toContain('["get","openYears"]');
 
     renderApp({ "map.search": () => searchResult([long, recent]) });
     const row = await screen.findByTestId("candidate-504202150320");

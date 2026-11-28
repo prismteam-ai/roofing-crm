@@ -13,7 +13,7 @@ import { appRouter } from "./router.ts";
 export function createApiServer(opts: {
   manifestCid: string;
   deps?: Deps;
-  agent?: AgentHttpHandler;
+  agent?: AgentHttpHandler & { configured?: boolean };
 }): Server {
   const createContext = opts.deps ? createContextFactory(opts.deps, { secureCookies: false }) : null;
   const trpc = createContext
@@ -31,7 +31,12 @@ export function createApiServer(opts: {
     if (req.method === "GET" && req.url === "/health") {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(
-        JSON.stringify({ ok: true, manifestCid: opts.manifestCid, viewsVersion: ROOFING_VIEWS_VERSION }),
+        JSON.stringify({
+          ok: true,
+          manifestCid: opts.manifestCid,
+          viewsVersion: ROOFING_VIEWS_VERSION,
+          agentConfigured: Boolean(opts.agent?.configured),
+        }),
       );
       return;
     }

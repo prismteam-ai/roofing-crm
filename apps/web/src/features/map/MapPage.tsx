@@ -80,7 +80,12 @@ export function MapPage({ debounceMs = 300 }: { debounceMs?: number }) {
       </div>
       <div className="list-column">
         {q.isFetching && !r ? <p className="muted">Searching…</p> : null}
-        <CandidateList candidates={candidates} selectedId={selectedId} onOpen={setSelectedId} />
+        <CandidateList
+          candidates={candidates}
+          selectedId={selectedId}
+          onOpen={setSelectedId}
+          busy={q.isFetching || input !== debounced}
+        />
         <AgentPanel />
       </div>
       {selectedId ? <DetailDrawer propertyId={selectedId} onClose={() => setSelectedId(null)} /> : null}

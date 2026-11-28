@@ -37,7 +37,8 @@ function PermitCard({ p }: { p: PermitSummary }) {
         {p.status === "open" ? <span> · {openFor(p.open_days)}</span> : null}
       </div>
       <div className="muted">
-        {p.description ?? p.permit_type ?? "roofing"} · issued {p.issue_date ?? "—"}
+        {p.description ?? p.permit_type ?? "roofing"} ·{" "}
+        {p.issue_date ? `issued ${p.issue_date}` : "issue date not recorded"}
         {p.completion_date ? ` · completed ${p.completion_date}` : ""}
       </div>
       <div>

@@ -11,7 +11,7 @@ export function ComingSoon({ label }: { label: string }) {
   return (
     <span className="nav-item disabled" role="link" aria-disabled="true" title="Coming soon" tabIndex={-1}>
       <LockIcon /> {label}
-      <span className="soon">Coming soon</span>
+      <span className="visually-hidden"> (coming soon)</span>
     </span>
   );
 }

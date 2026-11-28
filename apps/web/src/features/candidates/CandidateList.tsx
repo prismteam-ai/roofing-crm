@@ -16,10 +16,13 @@ export function CandidateList({
   candidates,
   selectedId,
   onOpen,
+  busy = false,
 }: {
   candidates: LeadCandidate[];
   selectedId?: string | null;
   onOpen(id: string): void;
+  /** A search is in flight (the list may still show the previous result). */
+  busy?: boolean;
 }) {
   const [shown, setShown] = useState(PAGE);
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -41,7 +44,7 @@ export function CandidateList({
   }
 
   return (
-    <section className="candidates" aria-label="Lead candidates">
+    <section className="candidates" aria-label="Lead candidates" aria-busy={busy}>
       <div className="list-toolbar">
         <strong data-testid="candidate-count">
           {candidates.length.toLocaleString()} candidate{candidates.length === 1 ? "" : "s"}

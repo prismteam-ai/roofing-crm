@@ -44,3 +44,59 @@ The UI should present property and permit details, including contractor informat
 ## Reference
 - [Soofi XYZ Team Kit](https://github.com/soofi-xyz/soofi-xyz-team-kit)
 - [Elephant Oracle Skills](https://github.com/elephant-xyz/skills)
+
+---
+
+## Implementation (this repository)
+
+A map-based lead CRM for **Broward County, FL**, reading one published, immutable data run from the
+Oracle ([`oracle-property-intelligence-platform-pipeline-broward-fl`](../oracle-property-intelligence-platform-pipeline-broward-fl)).
+The CRM never reads source data directly: it calls the Oracle's HTTP API and MCP endpoint, pinned
+to one manifest CID, and keeps only its own leads (DynamoDB).
+
+| Part | What it does |
+|---|---|
+| `apps/web` | React + Vite + MapLibre (OpenFreeMap tiles): map, filters, candidates, detail, leads, agent panel |
+| `apps/api` | tRPC router (local server and AWS Lambda), the per-browser demo workspace, `POST /agent` |
+| `packages/oracle-data` | Oracle HTTP client: search, details, lead scoring; refuses rows of another run |
+| `packages/leads-db` | DynamoDB leads: one active lead per property per workspace, status lifecycle, notes, stale flags |
+| `packages/agent` | Vercel AI SDK tool loop over the Oracle's read-only MCP tools, with a per-IP and daily budget |
+| `e2e/demo.spec.ts` | The demo transcript below, in a normal browser and in a grader-like one (no WebGL, no GPS) |
+
+**Data run:** Oracle run 2, manifest `bafkreiaw4jf6xzwtgpcfadnu7vbwpwpshbv7qz2hflapksf5m4rzl4dsby`
+(766,044 properties; 7,949 roofing permits). Permit data covers Fort Lauderdale and Weston; other
+cities show roof age only, and the UI names them.
+
+### Run it locally
+
+Requirements: Node 22, pnpm 9, Docker (DynamoDB Local), and the Oracle repository checked out
+next to this one.
+
+```bash
+# 1. The Oracle, serving the published run (in the Oracle repo)
+./bin/oracle.mjs serve --manifest bafkreiaw4jf6xzwtgpcfadnu7vbwpwpshbv7qz2hflapksf5m4rzl4dsby   # :4317
+
+# 2. Leads database
+docker run -d --rm --name crm-dynamodb -p 8001:8000 amazon/dynamodb-local:2.5.4 -jar DynamoDBLocal.jar -inMemory -sharedDb
+
+# 3. This repo
+pnpm install
+cp .env.example .env            # set ORACLE_MANIFEST_CID (above); ANTHROPIC_API_KEY for the agent
+pnpm --filter @crm/api db:create
+pnpm --filter @crm/api dev      # API on :4318
+pnpm --filter @crm/web dev      # web on http://localhost:5318
+```
+
+Without `ANTHROPIC_API_KEY` everything works except the agent, which says it is not configured.
+
+### Checks
+
+```bash
+pnpm typecheck && pnpm lint && pnpm format:check
+pnpm test                        # unit and integration tests (DynamoDB Local via testcontainers)
+pnpm --filter @crm/web build && pnpm --filter @crm/web exec vite preview &   # :5318
+pnpm e2e                         # demo transcript in both browser profiles (uses installed Chrome)
+BASE_URL=https://<hosted-url> pnpm e2e
+```
+
+See [`docs/DEMO.md`](docs/DEMO.md) for the demo script.

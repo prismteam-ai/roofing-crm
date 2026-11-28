@@ -25,7 +25,12 @@ test("GET /health returns ok with the pinned manifest and the Oracle views versi
     const { port } = server.address() as AddressInfo;
     const res = await fetch(`http://127.0.0.1:${port}/health`);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, manifestCid: CID, viewsVersion: "roofing-views.v1" });
+    expect(await res.json()).toEqual({
+      ok: true,
+      manifestCid: CID,
+      viewsVersion: "roofing-views.v1",
+      agentConfigured: false,
+    });
   } finally {
     server.close();
   }
