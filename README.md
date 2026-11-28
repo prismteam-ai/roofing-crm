@@ -1,5 +1,8 @@
 # Roofing CRM & Lead Identification UI
 
+> **Reviewers:** start at [Implementation (this repository)](#implementation-this-repository): demo
+> video, hosted app, how to run it.
+
 ## Context
 
 Roofing companies need a practical CRM for finding and qualifying residential and commercial roofing leads in their service area. The immediate requirement is a map-based CRM that helps sales teams explore local properties, surface roofs that are aging or have stalled open permits, and turn those signals into actionable outreach opportunities.
@@ -54,8 +57,22 @@ The UI should present property and permit details, including contractor informat
 > (https://jbahdp5wn5czd3bj2trxjjz6ha0tfyzg.lambda-url.us-east-2.on.aws/) on run 2.
 > Deployment: [`deploy/README.md`](deploy/README.md).
 
+### Review it in five minutes
+
+1. **Watch the demo video:**
+   [crm-demo.mov](https://drive.google.com/file/d/1ZK21als5zp0HEr8Z7B8wLdpp7Je7qzk-/view?usp=drive_link).
+2. **Open the hosted app:** https://main.dvy80s6giizfb.amplifyapp.com. There's no sign-in; each
+   browser gets its own workspace, with three seeded leads.
+3. **Follow the demo script:** [`docs/DEMO.md`](docs/DEMO.md) walks every README demo step.
+   - **Search:** search `Fort Lauderdale` and set the radius to 5. Untick **Open roofing permits**
+     to see aged roofs, then tick it again for long-open permits.
+   - **Detail and leads:** click an address for detail, tick two rows, then **Convert to leads**.
+   - **Agent:** ask the assistant, for example "open roofing permits older than five years within
+     five miles of Fort Lauderdale".
+   - **Leads page:** filter by roof age, permit open years and distance.
+
 A map-based lead CRM for **Broward County, FL**, reading one published, immutable data run from the
-Oracle ([`oracle-property-intelligence-platform-pipeline-broward-fl`](../oracle-property-intelligence-platform-pipeline-broward-fl)).
+Oracle ([`oracle-property-intelligence-platform-pipeline-broward-fl`](https://github.com/shengda/oracle-property-intelligence-platform-pipeline-broward-fl)).
 The CRM never reads source data directly: it calls the Oracle's HTTP API and MCP endpoint, pinned
 to one manifest CID, and keeps only its own leads (DynamoDB).
 
