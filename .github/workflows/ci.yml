@@ -7,14 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Sibling layout (architecture Decision 1): the CRM links the Oracle repo for its `contract`
-      # export (zod schemas and types) until the PR pins it as a github: dependency.
+      # export (zod schemas and types), at the commit pinned in deploy/hosted.json (oracleCommit).
       - uses: actions/checkout@v4
         with:
           path: roofing-crm
+      - id: pin
+        run: echo "sha=$(jq -r .oracleCommit roofing-crm/deploy/hosted.json)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           repository: shengda/oracle-property-intelligence-platform-pipeline-broward-fl
-          ref: main
+          ref: ${{ steps.pin.outputs.sha }}
           path: oracle-property-intelligence-platform-pipeline-broward-fl
       - uses: pnpm/action-setup@v4
         with:

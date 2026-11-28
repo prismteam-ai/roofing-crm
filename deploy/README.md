@@ -62,3 +62,11 @@ Idle: about $0.50–1/month (four alarms $0.40, logs; Lambda, API Gateway, Dynam
 stay inside the free tier at demo traffic). The agent is billed by Anthropic, capped at 500k
 tokens a day
 (2M since a grading run used up the 500k first set: about $8/day worst case on Sonnet 5.5).
+
+## Oracle pin
+
+`deploy/hosted.json` pins the Oracle twice: `oracleManifestCid` (the data run the CRM reads; the
+API refuses rows from any other run) and `oracleCommit` (the Oracle source whose `contract` export
+the CRM builds against). CI checks out exactly `oracleCommit`, and `deploy/deploy.sh` stops unless
+the sibling checkout is at that commit (`deploy/check-oracle-pin.sh`). To move either pin, change
+it here, run the checks and redeploy.

@@ -88,6 +88,7 @@ export const searchResult = (cs: LeadCandidate[], over: Partial<SearchResult> = 
   outsideCoverage: false,
   permitGaps: [],
   capped: [],
+  totals: {},
   rowLimit: 2000,
   manifestCid: CID,
   ...over,

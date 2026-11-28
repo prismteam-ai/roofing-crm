@@ -17,8 +17,9 @@ and names both CIDs, search pauses, and the Leads page keeps working.
    - A pin in the ocean (`26.1`, `-79.8` → **Set center**): "Outside Broward coverage".
 3. **Aged roofs.** Untick **Open roofing permits**: the list shows roofs at or above the
    threshold (15 years by default), colored on the map by age. Raise **Roof age ≥** to 90 to
-   narrow it. Within 5 miles of Fort Lauderdale more than 2,000 roofs qualify; the page says only
-   the first 2,000 (oldest first) are shown.
+   narrow it. Within 5 miles of Fort Lauderdale about 109,000 roofs qualify; the page shows 2,000
+   of them spread across the whole circle (the oldest in each part of it) and says so with the
+   total. Lowering the threshold brings younger roofs in.
 4. **Open roofing permits.** Tick it again and untick **Aged roofs**. Long-open permits (5+ years)
    are larger with a dark ring and a **Long-open** badge, and sort first. Fort Lauderdale's
    permit layer ends in January 2021, so every open permit there is at least 5 years old; set

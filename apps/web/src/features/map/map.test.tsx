@@ -166,9 +166,12 @@ describe("map", () => {
   });
 
   test("a capped layer says only the first rows are shown", async () => {
-    renderApp({ "map.search": () => searchResult([candidate()], { capped: ["aged_roofs"] }) });
+    renderApp({
+      "map.search": () =>
+        searchResult([candidate()], { capped: ["aged_roofs"], totals: { aged_roofs: 108_889 } }),
+    });
     expect(await screen.findByTestId("capped")).toHaveTextContent(
-      "Showing the first 2,000 aged roofs (the oldest roofs first)",
+      "Showing 2,000 of 108,889 aged roofs, spread across the radius",
     );
   });
 });

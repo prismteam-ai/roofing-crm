@@ -2,6 +2,7 @@
   "oracleUrl": "https://jbahdp5wn5czd3bj2trxjjz6ha0tfyzg.lambda-url.us-east-2.on.aws",
   "oracleMcpUrl": "https://jbahdp5wn5czd3bj2trxjjz6ha0tfyzg.lambda-url.us-east-2.on.aws/mcp",
   "oracleManifestCid": "bafkreiaw4jf6xzwtgpcfadnu7vbwpwpshbv7qz2hflapksf5m4rzl4dsby",
+  "oracleCommit": "9b71d81806888b4b47ba7ab7de56ab1576dc36c4",
   "anthropicKeyParam": "/roofing/anthropic-key",
   "agentModel": "claude-sonnet-5-5",
   "agentDailyTokens": 2000000,

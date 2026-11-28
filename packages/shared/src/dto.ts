@@ -53,8 +53,15 @@ export const SearchResult = z.object({
   outsideCoverage: z.boolean(),
   /** Jurisdictions in the radius without permit data (Oracle permitCoverage). */
   permitGaps: z.array(z.string()),
-  /** Layers whose Oracle query hit the row limit (aged roofs: the oldest are kept). */
+  /**
+   * Layers whose Oracle query hit the row limit. Aged roofs are then spread over the circle (the
+   * oldest roofs of each part of it); open permits keep the longest-open.
+   */
   capped: z.array(Layer).default([]),
+  /** How many rows each layer matched in the Oracle, before the row limit. */
+  totals: z
+    .object({ aged_roofs: z.number().int().optional(), open_permits: z.number().int().optional() })
+    .default({}),
   rowLimit: z.number().int().positive().default(2000),
   manifestCid: z.string(),
 });

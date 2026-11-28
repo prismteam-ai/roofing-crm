@@ -11,8 +11,6 @@ import { CenterControl } from "./CenterControl.tsx";
 import { MapView } from "./MapView.tsx";
 import { SearchControls } from "./SearchControls.tsx";
 
-const LAYER_NAME = { aged_roofs: "aged roofs", open_permits: "open permits" } as const;
-
 export function MapPage({ debounceMs = 300 }: { debounceMs?: number }) {
   const trpc = useTRPC();
   const { search, update, setCenter, agentResults } = useSearch();
@@ -63,9 +61,8 @@ export function MapPage({ debounceMs = 300 }: { debounceMs?: number }) {
         ) : null}
         {r && r.capped.length ? (
           <p className="notice" data-testid="capped">
-            Showing the first {r.rowLimit.toLocaleString()} {r.capped.map((l) => LAYER_NAME[l]).join(" and ")}
-            {r.capped.includes("aged_roofs") ? " (the oldest roofs first)" : ""}. Narrow the radius or raise
-            the roof-age threshold to see the rest.
+            {r.capped.map((l) => cappedText(l, r.rowLimit, r.totals[l])).join(" ")} Narrow the radius or raise
+            the threshold to see them all.
           </p>
         ) : null}
         {q.error ? (
@@ -91,4 +88,12 @@ export function MapPage({ debounceMs = 300 }: { debounceMs?: number }) {
       {selectedId ? <DetailDrawer propertyId={selectedId} onClose={() => setSelectedId(null)} /> : null}
     </div>
   );
+}
+
+/** "Showing 2,000 of 108,889 aged roofs, …" for a layer that hit the row limit. */
+export function cappedText(layer: "aged_roofs" | "open_permits", limit: number, total?: number) {
+  const of = total && total > limit ? ` of ${total.toLocaleString()}` : "";
+  return layer === "aged_roofs"
+    ? `Showing ${limit.toLocaleString()}${of} aged roofs, spread across the radius (the oldest in each part of it).`
+    : `Showing the ${limit.toLocaleString()} longest-open${of} open roofing permits.`;
 }

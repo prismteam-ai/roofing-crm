@@ -10,6 +10,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 REGION=us-east-2
 OUT=infra/cdk.out/outputs.json
+bash deploy/check-oracle-pin.sh
 export CDK_DEFAULT_ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 
 ctx=()

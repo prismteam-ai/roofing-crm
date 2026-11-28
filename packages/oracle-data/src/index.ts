@@ -96,6 +96,7 @@ export function createOracleData(opts: {
           outsideCoverage: true,
           permitGaps: [],
           capped: [],
+          totals: {},
           rowLimit: ROW_LIMIT,
           manifestCid: expected,
         };
@@ -110,8 +111,8 @@ export function createOracleData(opts: {
         input.layers.includes("aged_roofs")
           ? oracleGet(
               http,
-              // Nearest first: a capped layer still covers the area, and the threshold changes it.
-              `/api/query/aged-roofs?${qs({ ...base, minRoofAgeYears: input.minRoofAgeYears, order: "nearest" })}`,
+              // Spread: a capped layer still covers the whole radius, and the threshold changes it.
+              `/api/query/aged-roofs?${qs({ ...base, minRoofAgeYears: input.minRoofAgeYears, order: "spread" })}`,
               AgedRoofs,
             )
           : null,
@@ -186,6 +187,7 @@ export function createOracleData(opts: {
         outsideCoverage: false,
         permitGaps,
         capped,
+        totals: { aged_roofs: aged?.total, open_permits: open?.total },
         rowLimit: ROW_LIMIT,
         manifestCid: expected,
       };
