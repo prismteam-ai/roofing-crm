@@ -1,5 +1,8 @@
 # Roofing CRM & Lead Identification UI
 
+> **Reviewers:** start at [Implementation (this repository)](#implementation-this-repository): demo
+> video, hosted app, how to run it.
+
 ## Context
 
 Roofing companies need a practical CRM for finding and qualifying residential and commercial roofing leads in their service area. The immediate requirement is a map-based CRM that helps sales teams explore local properties, surface roofs that are aging or have stalled open permits, and turn those signals into actionable outreach opportunities.
@@ -44,3 +47,85 @@ The UI should present property and permit details, including contractor informat
 ## Reference
 - [Soofi XYZ Team Kit](https://github.com/soofi-xyz/soofi-xyz-team-kit)
 - [Elephant Oracle Skills](https://github.com/elephant-xyz/skills)
+
+---
+
+## Implementation (this repository)
+
+> **Hosted:** https://main.dvy80s6giizfb.amplifyapp.com — public; every browser gets its own demo
+> workspace with seeded leads (no sign-in). It reads the hosted Oracle
+> (https://jbahdp5wn5czd3bj2trxjjz6ha0tfyzg.lambda-url.us-east-2.on.aws/) on run 2.
+> Deployment: [`deploy/README.md`](deploy/README.md).
+
+### Review it in five minutes
+
+1. **Watch the demo video:**
+   [crm-demo.mov](https://drive.google.com/file/d/1ZK21als5zp0HEr8Z7B8wLdpp7Je7qzk-/view?usp=drive_link).
+2. **Open the hosted app:** https://main.dvy80s6giizfb.amplifyapp.com. There's no sign-in; each
+   browser gets its own workspace, with three seeded leads.
+3. **Follow the demo script:** [`docs/DEMO.md`](docs/DEMO.md) walks every README demo step.
+   - **Search:** search `Fort Lauderdale` and set the radius to 5. Untick **Open roofing permits**
+     to see aged roofs, then tick it again for long-open permits.
+   - **Detail and leads:** click an address for detail, tick two rows, then **Convert to leads**.
+   - **Agent:** ask the assistant, for example "open roofing permits older than five years within
+     five miles of Fort Lauderdale".
+   - **Leads page:** filter by roof age, permit open years and distance.
+
+A map-based lead CRM for **Broward County, FL**, reading one published, immutable data run from the
+Oracle ([`oracle-property-intelligence-platform-pipeline-broward-fl`](https://github.com/shengda/oracle-property-intelligence-platform-pipeline-broward-fl)).
+The CRM never reads source data directly: it calls the Oracle's HTTP API and MCP endpoint, pinned
+to one manifest CID, and keeps only its own leads (DynamoDB).
+
+| Part | What it does |
+|---|---|
+| `apps/web` | React + Vite + MapLibre (OpenFreeMap tiles): map, filters, candidates, detail, leads, agent panel |
+| `apps/api` | tRPC router (local server and AWS Lambda), the per-browser demo workspace, `POST /agent` |
+| `packages/oracle-data` | Oracle HTTP client: search, details, lead scoring; refuses rows of another run |
+| `packages/leads-db` | DynamoDB leads: one active lead per property per workspace, status lifecycle, notes, stale flags |
+| `packages/agent` | Vercel AI SDK tool loop over the Oracle's read-only MCP tools, with a per-IP and daily budget |
+| `e2e/demo.spec.ts` | The demo transcript below, in a normal browser and in a grader-like one (no WebGL, no GPS) |
+
+**Data run:** Oracle run 2, manifest `bafkreiaw4jf6xzwtgpcfadnu7vbwpwpshbv7qz2hflapksf5m4rzl4dsby`
+(766,044 properties; 7,949 roofing permits). Limits of this run, also shown in the app's run banner:
+
+- **Permits cover Fort Lauderdale and Weston only.** Other cities show roof age only, and the UI
+  names them. Fort Lauderdale's permit layer stopped updating in January 2021, so its "open"
+  statuses are as of then; a permit "open 8 years" may have closed since.
+- **No BBB grades.** BBB refused automated access (HTTP 403) and the Oracle did not bypass it, so
+  every BBB field is empty and the detail view says "No BBB data".
+- **Contractors** are named on about 29% of open permits (Fort Lauderdale's layer has no
+  contractor field; names come from a bounded license lookup).
+
+### Run it locally
+
+Requirements: Node 22, pnpm 9, Docker (DynamoDB Local), and the Oracle repository checked out
+next to this one.
+
+```bash
+# 1. The Oracle, serving the published run (in the Oracle repo)
+./bin/oracle.mjs serve --manifest bafkreiaw4jf6xzwtgpcfadnu7vbwpwpshbv7qz2hflapksf5m4rzl4dsby   # :4317
+
+# 2. Leads database
+docker run -d --rm --name crm-dynamodb -p 8001:8000 amazon/dynamodb-local:2.5.4 -jar DynamoDBLocal.jar -inMemory -sharedDb
+
+# 3. This repo
+pnpm install
+cp .env.example .env            # set ORACLE_MANIFEST_CID (above); ANTHROPIC_API_KEY for the agent
+pnpm --filter @crm/api db:create
+pnpm --filter @crm/api dev      # API on :4318
+pnpm --filter @crm/web dev      # web on http://localhost:5318
+```
+
+Without `ANTHROPIC_API_KEY` everything works except the agent, which says it is not configured.
+
+### Checks
+
+```bash
+pnpm typecheck && pnpm lint && pnpm format:check
+pnpm test                        # unit and integration tests (DynamoDB Local via testcontainers)
+pnpm --filter @crm/web build && pnpm --filter @crm/web exec vite preview &   # :5318
+pnpm e2e                         # demo transcript in both browser profiles (uses installed Chrome)
+BASE_URL=https://<hosted-url> pnpm e2e
+```
+
+See [`docs/DEMO.md`](docs/DEMO.md) for the demo script.
