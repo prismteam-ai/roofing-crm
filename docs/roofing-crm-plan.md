@@ -27,7 +27,7 @@ in a browser at a public HTTPS URL. It:
 - AWS: CDK (`aws-cdk-lib`: Amplify, API Gateway HTTP API, Lambda, Function URL, DynamoDB, SSM, Budgets), Powertools for AWS Lambda (TypeScript).
 - Quality: vitest, Testing Library, Playwright, DynamoDB Local (Docker) for repository tests, Prettier + ESLint, GitHub Actions CI.
 
-**Spec:** [`../README.md`](../README.md) · Architecture (in the Oracle repo, which owns the data contract): [`../../oracle-property-intelligence-platform-pipeline-broward-fl/docs/2026-11-25-roofing-oracle-architecture-and-roadmap.md`](../../oracle-property-intelligence-platform-pipeline-broward-fl/docs/2026-11-25-roofing-oracle-architecture-and-roadmap.md) (decisions, §0 grading, §0.1 kit deviations, §5 contract) · Data contract: Oracle plan Tasks 2, 13, 14, 15.
+**Spec:** [`../README.md`](../README.md) · Architecture (in the Oracle repo, which owns the data contract): [`../../oracle-property-intelligence-platform-pipeline-broward-fl/docs/roofing-oracle-architecture-and-roadmap.md`](../../oracle-property-intelligence-platform-pipeline-broward-fl/docs/roofing-oracle-architecture-and-roadmap.md) (decisions, §0 grading, §0.1 kit deviations, §5 contract) · Data contract: Oracle plan Tasks 2, 13, 14, 15.
 
 **Repo:** `~/git/roofing-crm/`. `origin` = `github.com/shengda/roofing-crm`, `upstream` = `github.com/prismteam-ai/roofing-crm`. The PR goes from the fork to the designated repo; confirm the fork relationship in Oracle Task 0. Paths below are relative to this folder. The team kit is not modified. Test command: `pnpm vitest run <path>` from the repo root (vitest workspace); e2e: `pnpm playwright test`.
 
