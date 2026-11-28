@@ -91,7 +91,14 @@ export function createOracleData(opts: {
 
     async search(input) {
       if (!isInsideCoverage(input.center)) {
-        return { candidates: [], outsideCoverage: true, permitGaps: [], manifestCid: expected };
+        return {
+          candidates: [],
+          outsideCoverage: true,
+          permitGaps: [],
+          capped: [],
+          rowLimit: ROW_LIMIT,
+          manifestCid: expected,
+        };
       }
       const base = {
         lat: input.center.lat,
@@ -169,7 +176,17 @@ export function createOracleData(opts: {
       const permitGaps = [
         ...new Set([...(aged?.uncovered ?? []), ...(open?.uncovered ?? [])].map((u) => u.name)),
       ];
-      return { candidates, outsideCoverage: false, permitGaps, manifestCid: expected };
+      const capped: SearchResult["capped"] = [];
+      if ((aged?.rows.length ?? 0) >= ROW_LIMIT) capped.push("aged_roofs");
+      if ((open?.rows.length ?? 0) >= ROW_LIMIT) capped.push("open_permits");
+      return {
+        candidates,
+        outsideCoverage: false,
+        permitGaps,
+        capped,
+        rowLimit: ROW_LIMIT,
+        manifestCid: expected,
+      };
     },
 
     property,

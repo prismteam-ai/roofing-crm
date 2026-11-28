@@ -71,6 +71,18 @@ describe("search", () => {
     await expect(oracle(f).search(search())).rejects.toBeInstanceOf(OracleManifestMismatch);
   });
 
+  test("a layer that hits the row limit is reported as capped", async () => {
+    const many = Array.from({ length: 2000 }, (_, i) =>
+      property({ parcel_identifier: `5042${String(i).padStart(8, "0")}` }),
+    );
+    const f = fakeOracle({ properties: many, permits: [] });
+    const r = await oracle(f).search(search());
+    expect(r.capped).toEqual(["aged_roofs"]);
+    expect(r.rowLimit).toBe(2000);
+    const few = await oracle(fakeOracle({ properties: [property()] })).search(search());
+    expect(few.capped).toEqual([]);
+  });
+
   test("a permit-status filter keeps only those permits", async () => {
     const f = fakeOracle({
       permits: [permit(), permit({ permit_key: "x", parcel_identifier: "X", status: "needs_review" })],

@@ -53,6 +53,9 @@ export const SearchResult = z.object({
   outsideCoverage: z.boolean(),
   /** Jurisdictions in the radius without permit data (Oracle permitCoverage). */
   permitGaps: z.array(z.string()),
+  /** Layers whose Oracle query hit the row limit (aged roofs: the oldest are kept). */
+  capped: z.array(Layer).default([]),
+  rowLimit: z.number().int().positive().default(2000),
   manifestCid: z.string(),
 });
 export type SearchResult = z.infer<typeof SearchResult>;

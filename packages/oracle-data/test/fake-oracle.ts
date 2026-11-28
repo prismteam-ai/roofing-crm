@@ -136,7 +136,8 @@ export function fakeOracle(data: {
     }
     if (url.pathname === "/api/query/aged-roofs") {
       const min = Number(url.searchParams.get("minRoofAgeYears") ?? 15);
-      const rows = props.filter((p) => (p.roof_age_years ?? -1) >= min);
+      const limit = Number(url.searchParams.get("limit") ?? 200);
+      const rows = props.filter((p) => (p.roof_age_years ?? -1) >= min).slice(0, limit);
       if (data.fail === "bad-shape") return json({ total: 1, rows: [{ parcel_identifier: 7 }], uncovered });
       return json({ total: rows.length, rows, uncovered });
     }
