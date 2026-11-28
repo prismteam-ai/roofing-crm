@@ -8,6 +8,7 @@ import {
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context as LambdaContext } from "aws-lambda";
 import { type Context, createContextFactory, type Deps } from "./context.ts";
 import { createDeps } from "./deps.ts";
+import { ROOFING_VIEWS_VERSION } from "oracle-broward/contract";
 import { loadEnv } from "./env.ts";
 import { appRouter } from "./router.ts";
 
@@ -15,8 +16,14 @@ const logger = new Logger({ serviceName: "roofing-crm-api" });
 const metrics = new Metrics({ namespace: "RoofingCrm", serviceName: "roofing-crm-api" });
 const tracer = new Tracer({ serviceName: "roofing-crm-api" });
 
-/** The tRPC router behind API Gateway (HTTP API, payload v2), with Powertools logging, metrics and tracing. */
-export function createLambdaHandler(deps: Deps) {
+/**
+ * The tRPC router behind API Gateway (HTTP API, payload v2, route `ANY /trpc/{proxy+}`) plus
+ * `GET /health`, with Powertools logging, metrics and tracing.
+ */
+export function createLambdaHandler(
+  deps: Deps,
+  opts: { manifestCid?: string; agentConfigured?: boolean } = {},
+) {
   const createContext = createContextFactory(deps, { secureCookies: true });
   const trpc = awsLambdaRequestHandler({
     router: appRouter,
@@ -33,6 +40,18 @@ export function createLambdaHandler(deps: Deps) {
   });
   return async (event: APIGatewayProxyEventV2, context: LambdaContext): Promise<APIGatewayProxyResultV2> => {
     logger.addContext(context);
+    if (event.rawPath === "/health")
+      return {
+        statusCode: 200,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ok: true,
+          manifestCid: opts.manifestCid,
+          viewsVersion: ROOFING_VIEWS_VERSION,
+          // The agent runs in its own Lambda with the same settings; configured = it has a key source.
+          agentConfigured: Boolean(opts.agentConfigured),
+        }),
+      };
     try {
       const res = await trpc(event, context);
       metrics.addMetric("Requests", MetricUnit.Count, 1);
@@ -48,6 +67,12 @@ let cached: ReturnType<typeof createLambdaHandler> | undefined;
 export async function handler(event: APIGatewayProxyEventV2, context: LambdaContext) {
   tracer.annotateColdStart();
   tracer.addServiceNameAnnotation();
-  cached ??= createLambdaHandler(createDeps(loadEnv()));
+  if (!cached) {
+    const env = loadEnv();
+    cached = createLambdaHandler(createDeps(env), {
+      manifestCid: env.ORACLE_MANIFEST_CID,
+      agentConfigured: Boolean(env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY_PARAM),
+    });
+  }
   return cached(event, context);
 }

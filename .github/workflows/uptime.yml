@@ -1,0 +1,21 @@
+name: uptime
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Web, API (through Amplify) and Oracle answer on the pinned manifest
+        run: |
+          set -euo pipefail
+          web=https://main.dvy80s6giizfb.amplifyapp.com
+          want=$(jq -r .oracleManifestCid deploy/hosted.json)
+          oracle=$(jq -r .oracleUrl deploy/hosted.json)
+          curl -sf --max-time 30 -o /dev/null "$web/"
+          api=$(curl -sf --max-time 30 "$web/health"); echo "$api"
+          test "$(echo "$api" | jq -r .manifestCid)" = "$want"
+          o=$(curl -sf --max-time 60 "$oracle/api/health"); echo "$o"
+          test "$(echo "$o" | jq -r .manifestCid)" = "$want"

@@ -1,0 +1,18 @@
+{
+  "name": "@crm/infra",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "aws-cdk": "^2.1149.0",
+    "aws-cdk-lib": "^2.278.0",
+    "constructs": "^10.4.0",
+    "esbuild": "^0.25.12",
+    "tsx": "^4.20.0"
+  }
+}

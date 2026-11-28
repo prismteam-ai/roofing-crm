@@ -16,6 +16,63 @@ export const ORACLE_READ_TOOLS = [
   "get_contractor",
 ] as const;
 
+/** Rows of one tool result the model sees; the full result stays in the step (UI evidence). */
+export const MODEL_ROW_LIMIT = 40;
+/** Per-row fields the model does not need to answer: provenance, URLs, content ids. */
+const MODEL_DROP_KEYS = new Set([
+  "provenance",
+  "source_url",
+  "source_system",
+  "retrieved_at",
+  "manifest_cid",
+  "property_cid",
+  "property_improvement_cid",
+  "contractor_company_cid",
+  "company_cid",
+]);
+
+function compactValue(v: unknown, depth: number): unknown {
+  if (Array.isArray(v)) return v.map((x) => compactValue(x, depth + 1));
+  if (!v || typeof v !== "object") return v;
+  const out: Record<string, unknown> = {};
+  for (const [k, x] of Object.entries(v)) {
+    // Keep the top-level manifest id once; drop it (and the other ids/URLs) inside every row.
+    if (x === null || (depth > 0 && MODEL_DROP_KEYS.has(k)) || (depth === 0 && k === "provenance")) continue;
+    out[k] = compactValue(x, depth + 1);
+  }
+  return out;
+}
+
+/**
+ * What the model reads from an Oracle MCP result: rows without provenance, URLs, ids or nulls,
+ * at most MODEL_ROW_LIMIT of them, with the true totals kept. One 174-row answer otherwise cost
+ * ~240k tokens across the agent's steps; the citations and map pins still use the full result.
+ */
+export function compactForModel(output: unknown): string {
+  const content = (output as { content?: { type: string; text?: string }[] } | null)?.content;
+  const texts = Array.isArray(content)
+    ? content.filter((c) => c.type === "text").map((c) => c.text ?? "")
+    : [];
+  if (!texts.length) return JSON.stringify(output);
+  return texts
+    .map((t) => {
+      let j: unknown;
+      try {
+        j = JSON.parse(t);
+      } catch {
+        return t;
+      }
+      const c = compactValue(j, 0) as Record<string, unknown>;
+      if (c && Array.isArray(c.rows) && c.rows.length > MODEL_ROW_LIMIT) {
+        const shown = c.rows.length;
+        c.rows = c.rows.slice(0, MODEL_ROW_LIMIT);
+        c.rows_note = `Showing ${MODEL_ROW_LIMIT} of the ${shown} rows returned (total_matching and count cover all of them). The user sees every row on the map.`;
+      }
+      return JSON.stringify(c);
+    })
+    .join("\n");
+}
+
 export class OracleMcpUnavailable extends Error {
   override name = "OracleMcpUnavailable";
 }
@@ -37,7 +94,20 @@ export async function loadOracleTools(opts: {
   try {
     const all = await client.tools();
     const allowed = new Set<string>(ORACLE_READ_TOOLS);
-    const tools = Object.fromEntries(Object.entries(all).filter(([name]) => allowed.has(name))) as ToolSet;
+    const tools = Object.fromEntries(
+      Object.entries(all)
+        .filter(([name]) => allowed.has(name))
+        .map(([name, t]) => [
+          name,
+          {
+            ...t,
+            toModelOutput: ({ output }: { output: unknown }) => ({
+              type: "text",
+              value: compactForModel(output),
+            }),
+          },
+        ]),
+    ) as ToolSet;
     if (!tools.resolve_place || !tools.find_aged_roofs) {
       throw new OracleMcpUnavailable(`Oracle MCP at ${opts.url} does not offer the roofing tools`);
     }

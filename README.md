@@ -49,6 +49,11 @@ The UI should present property and permit details, including contractor informat
 
 ## Implementation (this repository)
 
+> **Hosted:** https://main.dvy80s6giizfb.amplifyapp.com — public; every browser gets its own demo
+> workspace with seeded leads (no sign-in). It reads the hosted Oracle
+> (https://jbahdp5wn5czd3bj2trxjjz6ha0tfyzg.lambda-url.us-east-2.on.aws/) on run 2.
+> Deployment: [`deploy/README.md`](deploy/README.md).
+
 A map-based lead CRM for **Broward County, FL**, reading one published, immutable data run from the
 Oracle ([`oracle-property-intelligence-platform-pipeline-broward-fl`](../oracle-property-intelligence-platform-pipeline-broward-fl)).
 The CRM never reads source data directly: it calls the Oracle's HTTP API and MCP endpoint, pinned

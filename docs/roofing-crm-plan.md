@@ -415,9 +415,9 @@ Load `apply-engineering-guidelines` (`cloud-aws-primary`, `observability-logging
 - Consumes: `appRouter` Lambda handler, agent Lambda handler, `createLeadsRepo`, `createOracleData`, `loadOracleTools`.
 - Produces `CrmStack` (CDK, `env: { region: "us-east-2" }`, `tags: { project_name: "roofing-crm" }`):
   - DynamoDB table (on-demand, TTL attribute `expiresAt` for budget counters and demo workspaces, point-in-time recovery).
-  - API Lambda (tRPC) behind an API Gateway HTTP API (CORS to the Amplify domain).
+  - API Lambda (tRPC) behind an API Gateway HTTP API, reached through Amplify's same-origin `/trpc` proxy (first-party cookie, no CORS).
   - Agent Lambda with a Function URL (60 s timeout).
-  - Scheduled reconcile Lambda (daily).
+  - No scheduled reconcile Lambda: the CRM is pinned to one manifest, so leads can only go stale when it is redeployed on a new run; reconcile stays on demand (Leads page).
   - Amplify app for `apps/web` (env `VITE_API_URL`, `VITE_AGENT_URL`).
   - SSM SecureString for the Anthropic key; Lambda env `ORACLE_API_URL`, `ORACLE_MCP_URL`, `ORACLE_MANIFEST_CID`, `LEADS_TABLE`, `CRM_AGENT_MODEL`, `AGENT_DAILY_TOKEN_BUDGET`, `RATE_LIMIT_PER_MINUTE`, `ANTHROPIC_KEY_PARAM`.
   - Powertools on every Lambda; CloudWatch error alarm → SNS email (documented PagerDuty replacement); agent budget-use alarm at 80% of `AGENT_DAILY_TOKEN_BUDGET`; AWS Budgets alarm at $5/month. Env also `LEAD_CREATES_PER_DAY`.
