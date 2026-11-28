@@ -68,5 +68,5 @@ tokens a day
 `deploy/hosted.json` pins the Oracle twice: `oracleManifestCid` (the data run the CRM reads; the
 API refuses rows from any other run) and `oracleCommit` (the Oracle source whose `contract` export
 the CRM builds against). CI checks out exactly `oracleCommit`, and `deploy/deploy.sh` stops unless
-the sibling checkout is at that commit (`deploy/check-oracle-pin.sh`). To move either pin, change
+the sibling checkout's contract and client sources match that commit (`deploy/check-oracle-pin.sh`). To move either pin, change
 it here, run the checks and redeploy.

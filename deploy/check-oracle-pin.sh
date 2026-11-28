@@ -7,8 +7,9 @@ cd "$(dirname "$0")/.."
 want=$(node -p "require('./deploy/hosted.json').oracleCommit")
 dir=../oracle-property-intelligence-platform-pipeline-broward-fl
 have=$(git -C "$dir" rev-parse HEAD)
-if [ "$have" != "$want" ]; then
-  echo "Oracle checkout is at $have, but deploy/hosted.json pins oracleCommit $want." >&2
+# A later Oracle commit is fine when the contract and client sources are unchanged since the pin.
+if [ "$have" != "$want" ] && ! git -C "$dir" diff --quiet "$want" "$have" -- src/contract src/client; then
+  echo "Oracle checkout is at $have; its contract differs from oracleCommit $want in deploy/hosted.json." >&2
   echo "Check out the pinned commit in $dir, or update oracleCommit (and test) to move the pin." >&2
   exit 1
 fi
